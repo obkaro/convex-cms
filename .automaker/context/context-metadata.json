@@ -6,8 +6,14 @@
     "convex-undersanding-components.md": {
       "description": "Understanding components overview from convex"
     },
+    "convex-using-components.md": {
+      "description": "How to install and use Convex components in an app"
+    },
     "convex-rules.mdc": {
       "description": "Convex rules documentation"
+    },
+    "user-types-and-use-cases.md": {
+      "description": "Comprehensive documentation of target user types, personas, use cases, user journeys, and feature prioritization for the Convex CMS component"
     }
   }
 }

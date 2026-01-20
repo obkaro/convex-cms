@@ -548,6 +548,47 @@ describe("validateMediaField", () => {
     expect(errors).toHaveLength(1);
     expect(errors[0].code).toBe("MAX_ITEMS");
   });
+
+  it("should validate minItems for gallery", () => {
+    const fieldDef = makeMediaFieldDef({
+      options: { multiple: true, minItems: 3 },
+    });
+    const errors = validateMediaField(["media_1", "media_2"], fieldDef);
+    expect(errors).toHaveLength(1);
+    expect(errors[0].code).toBe("MIN_ITEMS");
+    expect(errors[0].message).toContain("at least 3 media assets");
+  });
+
+  it("should pass when gallery meets minItems requirement", () => {
+    const fieldDef = makeMediaFieldDef({
+      options: { multiple: true, minItems: 2 },
+    });
+    const errors = validateMediaField(["media_1", "media_2", "media_3"], fieldDef);
+    expect(errors).toHaveLength(0);
+  });
+
+  it("should validate both minItems and max for gallery", () => {
+    const fieldDef = makeMediaFieldDef({
+      options: { multiple: true, minItems: 2, max: 5 },
+    });
+
+    // Too few
+    const errorsTooFew = validateMediaField(["media_1"], fieldDef);
+    expect(errorsTooFew).toHaveLength(1);
+    expect(errorsTooFew[0].code).toBe("MIN_ITEMS");
+
+    // Just right
+    const errorsOk = validateMediaField(["media_1", "media_2", "media_3"], fieldDef);
+    expect(errorsOk).toHaveLength(0);
+
+    // Too many
+    const errorsTooMany = validateMediaField(
+      ["m1", "m2", "m3", "m4", "m5", "m6"],
+      fieldDef
+    );
+    expect(errorsTooMany).toHaveLength(1);
+    expect(errorsTooMany[0].code).toBe("MAX_ITEMS");
+  });
 });
 
 // =============================================================================

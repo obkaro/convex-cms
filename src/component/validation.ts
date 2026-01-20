@@ -4,8 +4,15 @@
  * Runtime validation helpers that check content data against field configurations.
  * These complement the Convex validators by providing detailed validation logic
  * and human-readable error messages.
+ *
+ * Supports both plain field values and localized field values (LocalizedFieldValue<T>)
+ * for fields marked as `localized: true` in their field definition.
  */
 import { FieldType } from "./validators.js";
+import {
+  isLocalizedFieldValue,
+  type LocalizedFieldValue,
+} from "./localeFields.js";
 
 /**
  * Field options structure (matches schema.ts fieldOptionsValidator)
@@ -38,6 +45,15 @@ export interface FieldOptions {
   // Rich text fields
   allowedBlocks?: string[];
   allowedMarks?: string[];
+
+  // Tag fields
+  taxonomyId?: string;
+  allowCreate?: boolean;
+  maxTags?: number;
+  minTags?: number;
+
+  // Category fields
+  allowMultiple?: boolean;
 }
 
 /**
@@ -99,7 +115,9 @@ export type ValidationErrorCode =
   | "INVALID_CONTENT_TYPE"
   | "UNKNOWN_FIELD"
   | "INVALID_MIME_TYPE"
-  | "FILE_TOO_LARGE";
+  | "FILE_TOO_LARGE"
+  | "INVALID_LOCALIZED_STRUCTURE"
+  | "MISSING_LOCALE";
 
 export type ValidationResult =
   | { valid: true; errors: [] }
@@ -555,7 +573,49 @@ export async function validateReferenceContentType(
 }
 
 /**
- * Validate a media field value against its configuration
+ * Validate a media field value against its configuration.
+ *
+ * Media fields store IDs to media assets. They support:
+ * - Single reference: `string` (one media asset ID)
+ * - Multiple references (gallery): `string[]` (array of media asset IDs) when `multiple: true`
+ *
+ * Configuration options:
+ * - `allowedMimeTypes`: Array of allowed MIME types (supports wildcards like "image/*")
+ * - `multiple`: If true, accepts an array of references (gallery mode)
+ * - `minItems`: Minimum number of media assets required (only when `multiple: true`)
+ * - `max`: Maximum number of media assets allowed (only when `multiple: true`)
+ * - `maxFileSize`: Maximum file size in bytes (validated at upload time, not here)
+ *
+ * Note: MIME type validation requires database lookups and is performed by
+ * `validateAllMediaReferences` in the mediaReferenceResolver module.
+ *
+ * @example
+ * ```typescript
+ * // Single featured image (images only)
+ * const featuredImageField: FieldDefinition = {
+ *   name: "featuredImage",
+ *   label: "Featured Image",
+ *   type: "media",
+ *   required: true,
+ *   options: {
+ *     allowedMimeTypes: ["image/*"],
+ *   },
+ * };
+ *
+ * // Gallery with 2-10 images
+ * const galleryField: FieldDefinition = {
+ *   name: "gallery",
+ *   label: "Photo Gallery",
+ *   type: "media",
+ *   required: true,
+ *   options: {
+ *     allowedMimeTypes: ["image/jpeg", "image/png", "image/webp"],
+ *     multiple: true,
+ *     minItems: 2,
+ *     max: 10,
+ *   },
+ * };
+ * ```
  */
 export function validateMediaField(
   value: unknown,
@@ -600,7 +660,7 @@ export function validateMediaField(
       });
     }
 
-    // Check each item is a string
+    // Check each item is a string (valid ID format)
     for (const item of value) {
       if (typeof item !== "string") {
         errors.push({
@@ -612,11 +672,20 @@ export function validateMediaField(
       }
     }
 
+    // Min items validation (only for multiple/gallery media fields)
+    if (options?.minItems !== undefined && value.length < options.minItems) {
+      errors.push({
+        field: name,
+        message: `${name} requires at least ${options.minItems} media asset${options.minItems === 1 ? "" : "s"}`,
+        code: "MIN_ITEMS",
+      });
+    }
+
     // Max items (using max from options)
     if (options?.max !== undefined && value.length > options.max) {
       errors.push({
         field: name,
-        message: `${name} can have at most ${options.max} media assets`,
+        message: `${name} can have at most ${options.max} media asset${options.max === 1 ? "" : "s"}`,
         code: "MAX_ITEMS",
       });
     }
@@ -776,14 +845,246 @@ export function validateJsonField(
   return errors;
 }
 
+/**
+ * Validate a tags field value against its configuration.
+ *
+ * Tags fields store arrays of taxonomy term IDs for flexible content categorization.
+ * They support:
+ * - Multiple term selection
+ * - Optional inline term creation (when allowCreate is true)
+ * - Min/max limits on number of tags
+ *
+ * Configuration options:
+ * - `taxonomyId`: The taxonomy these tags belong to (required at content type level)
+ * - `allowCreate`: If true, users can create new tags inline
+ * - `minTags`: Minimum number of tags required
+ * - `maxTags`: Maximum number of tags allowed
+ *
+ * @example
+ * ```typescript
+ * const tagsField: FieldDefinition = {
+ *   name: "tags",
+ *   label: "Tags",
+ *   type: "tags",
+ *   required: true,
+ *   options: {
+ *     taxonomyId: "tags_taxonomy_id",
+ *     allowCreate: true,
+ *     minTags: 1,
+ *     maxTags: 10,
+ *   },
+ * };
+ * ```
+ */
+export function validateTagsField(
+  value: unknown,
+  fieldDef: FieldDefinition
+): ValidationError[] {
+  const errors: ValidationError[] = [];
+  const { name, required, options } = fieldDef;
+
+  // Check required
+  if (required && (value === null || value === undefined)) {
+    errors.push({
+      field: name,
+      message: `${name} is required`,
+      code: "REQUIRED",
+    });
+    return errors;
+  }
+
+  // Skip further validation if value is empty and not required
+  if (value === null || value === undefined) {
+    return errors;
+  }
+
+  // Type check - must be array of strings (term IDs)
+  if (!Array.isArray(value)) {
+    errors.push({
+      field: name,
+      message: `${name} must be an array of tag IDs`,
+      code: "INVALID_TYPE",
+    });
+    return errors;
+  }
+
+  // Check if required and empty array
+  if (required && value.length === 0) {
+    errors.push({
+      field: name,
+      message: `${name} requires at least one tag`,
+      code: "REQUIRED",
+    });
+    return errors;
+  }
+
+  // Validate each item is a string
+  for (const item of value) {
+    if (typeof item !== "string") {
+      errors.push({
+        field: name,
+        message: `${name} contains invalid tag IDs`,
+        code: "INVALID_TYPE",
+      });
+      break;
+    }
+  }
+
+  // Min tags validation
+  const minTags = options?.minTags;
+  if (minTags !== undefined && value.length < minTags) {
+    errors.push({
+      field: name,
+      message: `${name} requires at least ${minTags} tag${minTags === 1 ? "" : "s"}`,
+      code: "MIN_ITEMS",
+    });
+  }
+
+  // Max tags validation
+  const maxTags = options?.maxTags;
+  if (maxTags !== undefined && value.length > maxTags) {
+    errors.push({
+      field: name,
+      message: `${name} can have at most ${maxTags} tag${maxTags === 1 ? "" : "s"}`,
+      code: "MAX_ITEMS",
+    });
+  }
+
+  return errors;
+}
+
+/**
+ * Validate a category field value against its configuration.
+ *
+ * Category fields store taxonomy term IDs for hierarchical content organization.
+ * They support:
+ * - Single category selection (default)
+ * - Multiple category selection (when allowMultiple is true)
+ *
+ * Configuration options:
+ * - `taxonomyId`: The taxonomy these categories belong to (required at content type level)
+ * - `allowMultiple`: If true, accepts an array of category IDs
+ *
+ * @example
+ * ```typescript
+ * // Single category selection
+ * const categoryField: FieldDefinition = {
+ *   name: "category",
+ *   label: "Category",
+ *   type: "category",
+ *   required: true,
+ *   options: {
+ *     taxonomyId: "categories_taxonomy_id",
+ *   },
+ * };
+ *
+ * // Multiple category selection
+ * const categoriesField: FieldDefinition = {
+ *   name: "categories",
+ *   label: "Categories",
+ *   type: "category",
+ *   required: true,
+ *   options: {
+ *     taxonomyId: "categories_taxonomy_id",
+ *     allowMultiple: true,
+ *   },
+ * };
+ * ```
+ */
+export function validateCategoryField(
+  value: unknown,
+  fieldDef: FieldDefinition
+): ValidationError[] {
+  const errors: ValidationError[] = [];
+  const { name, required, options } = fieldDef;
+  const allowMultiple = options?.allowMultiple ?? false;
+
+  // Check required
+  if (required && (value === null || value === undefined)) {
+    errors.push({
+      field: name,
+      message: `${name} is required`,
+      code: "REQUIRED",
+    });
+    return errors;
+  }
+
+  // Skip further validation if value is empty and not required
+  if (value === null || value === undefined) {
+    return errors;
+  }
+
+  // Type check based on allowMultiple setting
+  if (allowMultiple) {
+    if (!Array.isArray(value)) {
+      errors.push({
+        field: name,
+        message: `${name} must be an array of category IDs`,
+        code: "INVALID_TYPE",
+      });
+      return errors;
+    }
+
+    // Check if required and empty array
+    if (required && value.length === 0) {
+      errors.push({
+        field: name,
+        message: `${name} requires at least one category`,
+        code: "REQUIRED",
+      });
+    }
+
+    // Check each item is a string (valid ID format)
+    for (const item of value) {
+      if (typeof item !== "string") {
+        errors.push({
+          field: name,
+          message: `${name} contains invalid category IDs`,
+          code: "INVALID_TYPE",
+        });
+        break;
+      }
+    }
+  } else {
+    // Single category selection
+    if (typeof value !== "string") {
+      errors.push({
+        field: name,
+        message: `${name} must be a category ID`,
+        code: "INVALID_TYPE",
+      });
+    }
+  }
+
+  return errors;
+}
+
 // =============================================================================
 // Main Validation Function
 // =============================================================================
 
 /**
- * Validate a single field value based on its definition
+ * Options for validating localized fields.
  */
-export function validateFieldValue(
+export interface LocalizedValidationOptions {
+  /**
+   * The locale to validate. If provided, only that locale's value is validated
+   * for localized fields. If not provided, all locale values are validated.
+   */
+  locale?: string;
+
+  /**
+   * Locales that must have values for required localized fields.
+   * If not provided, only checks if at least one locale has a value for required fields.
+   */
+  requiredLocales?: string[];
+}
+
+/**
+ * Validate a single field value (non-localized) based on its type.
+ * This is the core validation logic that handles the actual value checking.
+ */
+function validateSingleValue(
   value: unknown,
   fieldDef: FieldDefinition
 ): ValidationError[] {
@@ -811,6 +1112,10 @@ export function validateFieldValue(
       return validateMultiSelectField(value, fieldDef);
     case "json":
       return validateJsonField(value, fieldDef);
+    case "tags":
+      return validateTagsField(value, fieldDef);
+    case "category":
+      return validateCategoryField(value, fieldDef);
     default: {
       // Unknown field type
       return [
@@ -825,36 +1130,208 @@ export function validateFieldValue(
 }
 
 /**
+ * Validate a localized field value.
+ *
+ * For localized fields, the value should be a LocalizedFieldValue structure:
+ * `{ "en-US": "Hello", "es-ES": "Hola" }`
+ *
+ * This function validates:
+ * 1. The structure is a valid LocalizedFieldValue
+ * 2. Each locale's value passes the field type validation
+ * 3. Required locales have values (if specified)
+ *
+ * @param value - The localized field value to validate
+ * @param fieldDef - The field definition
+ * @param options - Validation options for localized fields
+ * @returns Array of validation errors
+ */
+export function validateLocalizedFieldValue(
+  value: unknown,
+  fieldDef: FieldDefinition,
+  options: LocalizedValidationOptions = {}
+): ValidationError[] {
+  const errors: ValidationError[] = [];
+  const { name, required } = fieldDef;
+  const { locale, requiredLocales } = options;
+
+  // Handle null/undefined for required fields
+  if (value === null || value === undefined) {
+    if (required) {
+      errors.push({
+        field: name,
+        message: `${name} is required`,
+        code: "REQUIRED",
+      });
+    }
+    return errors;
+  }
+
+  // Check if the value is a valid LocalizedFieldValue structure
+  if (!isLocalizedFieldValue(value)) {
+    errors.push({
+      field: name,
+      message: `${name} must be a localized field structure (object with locale codes as keys)`,
+      code: "INVALID_LOCALIZED_STRUCTURE",
+    });
+    return errors;
+  }
+
+  const localizedValue = value as LocalizedFieldValue;
+  const locales = Object.keys(localizedValue);
+
+  // Check if required and empty
+  if (required && locales.length === 0) {
+    errors.push({
+      field: name,
+      message: `${name} requires at least one locale value`,
+      code: "REQUIRED",
+    });
+    return errors;
+  }
+
+  // Check required locales
+  if (requiredLocales && requiredLocales.length > 0) {
+    for (const requiredLocale of requiredLocales) {
+      if (!(requiredLocale in localizedValue)) {
+        errors.push({
+          field: name,
+          message: `${name} is missing required translation for locale: ${requiredLocale}`,
+          code: "MISSING_LOCALE",
+        });
+      }
+    }
+  }
+
+  // If a specific locale is specified, validate only that locale
+  if (locale) {
+    if (locale in localizedValue) {
+      // Create a non-localized field definition for single value validation
+      const nonLocalizedFieldDef = { ...fieldDef, localized: false };
+      const localeErrors = validateSingleValue(
+        localizedValue[locale],
+        nonLocalizedFieldDef
+      );
+      // Prefix errors with locale info
+      for (const error of localeErrors) {
+        errors.push({
+          ...error,
+          field: `${name}[${locale}]`,
+          message: `${name} (${locale}): ${error.message.replace(`${name} `, "")}`,
+        });
+      }
+    }
+  } else {
+    // Validate all locale values
+    for (const [localeCode, localeValue] of Object.entries(localizedValue)) {
+      // Create a non-localized field definition for single value validation
+      const nonLocalizedFieldDef = { ...fieldDef, localized: false, required: false };
+      const localeErrors = validateSingleValue(localeValue, nonLocalizedFieldDef);
+      // Prefix errors with locale info
+      for (const error of localeErrors) {
+        errors.push({
+          ...error,
+          field: `${name}[${localeCode}]`,
+          message: `${name} (${localeCode}): ${error.message.replace(`${name} `, "")}`,
+        });
+      }
+    }
+  }
+
+  return errors;
+}
+
+/**
+ * Validate a single field value based on its definition.
+ *
+ * Handles both localized and non-localized fields:
+ * - Non-localized fields: Validates the value directly
+ * - Localized fields: Validates the LocalizedFieldValue structure and each locale's value
+ *
+ * @param value - The field value to validate (plain value or LocalizedFieldValue)
+ * @param fieldDef - The field definition
+ * @param options - Optional validation options for localized fields
+ * @returns Array of validation errors
+ */
+export function validateFieldValue(
+  value: unknown,
+  fieldDef: FieldDefinition,
+  options?: LocalizedValidationOptions
+): ValidationError[] {
+  // Check if this is a localized field
+  if (fieldDef.localized) {
+    return validateLocalizedFieldValue(value, fieldDef, options);
+  }
+
+  // Non-localized field - use standard validation
+  return validateSingleValue(value, fieldDef);
+}
+
+/**
+ * Options for validating content data.
+ */
+export interface ContentValidationOptions {
+  /**
+   * If true, reports unknown fields as errors.
+   * If false (default), unknown fields are silently ignored.
+   */
+  strictFields?: boolean;
+
+  /**
+   * Locale to validate for localized fields.
+   * If provided, only that locale's values are validated.
+   */
+  locale?: string;
+
+  /**
+   * Locales that must have values for required localized fields.
+   */
+  requiredLocales?: string[];
+}
+
+/**
  * Validate content data against a content type schema
  *
  * @param data - The content data to validate
  * @param schema - The content type schema defining expected fields
  * @param options - Validation options
  * @returns ValidationResult with any errors found
+ *
+ * @example
+ * ```typescript
+ * // Basic validation
+ * const result = validateContentData(data, schema);
+ *
+ * // Validate with localized field support
+ * const result = validateContentData(data, schema, {
+ *   locale: "en-US",
+ *   requiredLocales: ["en-US", "es-ES"],
+ * });
+ * ```
  */
 export function validateContentData(
   data: ContentData,
   schema: ContentTypeSchema,
-  options: {
-    /**
-     * If true, reports unknown fields as errors.
-     * If false (default), unknown fields are silently ignored.
-     */
-    strictFields?: boolean;
-  } = {}
+  options: ContentValidationOptions = {}
 ): ValidationResult {
   const errors: ValidationError[] = [];
   const fieldMap = new Map(schema.fields.map((f) => [f.name, f]));
+  const { strictFields, locale, requiredLocales } = options;
+
+  // Create localized validation options
+  const localizedOptions: LocalizedValidationOptions = {
+    locale,
+    requiredLocales,
+  };
 
   // Validate each defined field
   for (const fieldDef of schema.fields) {
     const value = data[fieldDef.name];
-    const fieldErrors = validateFieldValue(value, fieldDef);
+    const fieldErrors = validateFieldValue(value, fieldDef, localizedOptions);
     errors.push(...fieldErrors);
   }
 
   // Check for unknown fields if strict mode
-  if (options.strictFields) {
+  if (strictFields) {
     for (const key of Object.keys(data)) {
       if (!fieldMap.has(key)) {
         errors.push({

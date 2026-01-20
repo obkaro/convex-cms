@@ -143,6 +143,376 @@ Key architectural goals:
       <name>Content Pagination</name>
       <description>Query enhancement for cursor-based pagination using convex-helpers paginator. Returns page results with continuation cursors.</description>
     </feature>
+    <feature>
+      <name>Get Media Asset</name>
+      <description>Query to retrieve a single media asset by ID. Returns asset metadata, storage URL, and optimization hints.</description>
+    </feature>
+    <feature>
+      <name>Get Content Type</name>
+      <description>Query to retrieve a single content type by ID or slug. Returns the full type definition including all field configurations.</description>
+    </feature>
+    <feature>
+      <name>List Content Types</name>
+      <description>Query to list all defined content types with optional filtering. Returns type definitions sorted by name or creation date.</description>
+    </feature>
+    <feature>
+      <name>Media Reference Field Type</name>
+      <description>Field type for referencing media assets in content. Supports single and gallery (multiple) media references with MIME type constraints.</description>
+    </feature>
+    <feature>
+      <name>Content Entry Validation</name>
+      <description>Internal function to validate content entry data against its content type schema. Checks required fields, type correctness, and custom field constraints.</description>
+    </feature>
+    <feature>
+      <name>Generate Upload URL</name>
+      <description>Mutation to generate a Convex storage upload URL for client-side file uploads. Returns temporary URL with optional size limits.</description>
+    </feature>
+    <feature>
+      <name>Update Content Type</name>
+      <description>Mutation to update an existing content type&apos;s fields and configuration. Includes validation to prevent breaking changes to fields with existing content.</description>
+    </feature>
+    <feature>
+      <name>Update Content Entry</name>
+      <description>Mutation to update an existing content entry. Re-validates content against type schema, optionally regenerates slug, and updates modification timestamp.</description>
+    </feature>
+    <feature>
+      <name>Create Content Entry</name>
+      <description>Mutation to create a new content entry of a specified type. Validates content against type schema, generates slug, and sets initial draft status.</description>
+    </feature>
+    <feature>
+      <name>Create Media Asset Record</name>
+      <description>Mutation to create a media asset record after file upload. Stores storage ID, filename, MIME type, size, and optional folder assignment.</description>
+    </feature>
+    <feature>
+      <name>Client Content Entries API</name>
+      <description>Methods on client wrapper class for content entry operations including create, read, update, delete, publish, and unpublish. Provides typed interface with proper error handling.</description>
+    </feature>
+    <feature>
+      <name>Entry Form Editor</name>
+      <description>Dynamic form for creating and editing content entries. Renders appropriate field components based on content type schema. Handles validation, autosave draft, and form submission. Displays validation errors.</description>
+    </feature>
+    <feature>
+      <name>Extract Media Metadata</name>
+      <description>Internal function to extract metadata from uploaded files. Captures dimensions for images, duration for video/audio, and file-specific properties.</description>
+    </feature>
+    <feature>
+      <name>Built-in Default Roles</name>
+      <description>Define default role configurations (admin, editor, author, viewer) with sensible permission presets for content types, entries, media, and settings. Roles are exported as constants for easy customization.</description>
+    </feature>
+    <feature>
+      <name>List Version History</name>
+      <description>Query to retrieve version history for a content entry. Returns list of versions with metadata, ordered by version number descending.</description>
+    </feature>
+    <feature>
+      <name>Create Version Snapshot</name>
+      <description>Internal function to create a version snapshot of content entry. Stores complete content state with version number and timestamp in content_versions table.</description>
+    </feature>
+    <feature>
+      <name>User-to-Role Mapping Hook</name>
+      <description>Provide a getUserRole hook that developers implement to map their user system to CMS roles. Receives userId and returns role name. Enables integration with any auth system without CMS owning user tables.</description>
+    </feature>
+    <feature>
+      <name>Permission Check System</name>
+      <description>Core permission checking logic that evaluates user role against requested action and resource. Called internally by all CMS operations. Returns boolean or throws UnauthorizedError with descriptive message.</description>
+    </feature>
+    <feature>
+      <name>Publish Content Entry</name>
+      <description>Mutation to publish a draft content entry. Changes status to published, sets publishedAt timestamp, and optionally creates a version snapshot.</description>
+    </feature>
+    <feature>
+      <name>Admin Authentication Flow</name>
+      <description>Integrate authentication with the admin UI. Handle login state, protect admin routes, display current user info, and enforce RBAC permissions in the UI. Uses the parent app&apos;s auth system via hooks.</description>
+    </feature>
+    <feature>
+      <name>Access Control Hook System</name>
+      <description>Infrastructure for passing authorization function handles from parent app. Enables custom permission logic for all CMS operations.</description>
+    </feature>
+    <feature>
+      <name>Content Type List View</name>
+      <description>Display all content types in a list/grid view showing name, field count, entry count, and last updated. Link to entry list for each type. Read-only view for v1 (type editing deferred).</description>
+    </feature>
+    <feature>
+      <name>Entry List with Filters</name>
+      <description>Display entries for a content type in a table/list view. Include status filter (draft/published), basic search, pagination, and sorting. Show title, status, author, and dates. Link to entry editor.</description>
+    </feature>
+    <feature>
+      <name>Bulk Content Operations</name>
+      <description>Mutations to perform bulk operations on content entries including bulk publish, unpublish, delete, and update. Processes entries in batches to respect Convex limits.</description>
+    </feature>
+    <feature>
+      <name>Duplicate Content Entry</name>
+      <description>Mutation to clone an existing content entry with a new slug. Optionally copies associated media references and creates as draft. Useful for content templating workflows.</description>
+    </feature>
+    <feature>
+      <name>Filter by Field Values</name>
+      <description>Query enhancement to filter content by field values. Supports equality, comparison, and contains operators for different field types.</description>
+    </feature>
+    <feature>
+      <name>Scheduled Publishing</name>
+      <description>Feature to schedule content for future publication. Uses Convex scheduled functions to automatically publish at specified datetime.</description>
+    </feature>
+    <feature>
+      <name>Client Query Builder API</name>
+      <description>Fluent query builder interface on client wrapper for constructing complex content queries. Supports chaining filters, sorting, pagination, and search with TypeScript inference.</description>
+    </feature>
+    <feature>
+      <name>Content Full-Text Search</name>
+      <description>Query to search content entries by text across title and searchable fields. Uses Convex search indexes for performance.</description>
+    </feature>
+    <feature>
+      <name>Soft Delete and Trash Recovery</name>
+      <description>Adds soft delete functionality with trash storage and recovery. Content moves to trash instead of permanent deletion with configurable retention period and restore capability.</description>
+    </feature>
+    <feature>
+      <name>AI Agent Tool Definitions</name>
+      <description>Export tool-compatible function wrappers for @convex-dev/agent integration. Provides structured tool definitions with clear parameter schemas for content creation, querying, and management.</description>
+    </feature>
+    <feature>
+      <name>Content Sorting</name>
+      <description>Query enhancement to sort content entries by any field, creation date, publish date, or custom order. Supports ascending and descending.</description>
+    </feature>
+    <feature>
+      <name>Delete Content Type</name>
+      <description>Mutation to delete a content type. Optionally cascade deletes to all content entries of that type, or prevent deletion if entries exist.</description>
+    </feature>
+    <feature>
+      <name>Unpublish Content Entry</name>
+      <description>Mutation to unpublish a content entry. Reverts to draft status while preserving content data and version history.</description>
+    </feature>
+    <feature>
+      <name>Publish and Status Controls</name>
+      <description>UI controls for publishing, unpublishing, and viewing entry status. Display current status badge, publish/unpublish buttons with confirmation, and last published timestamp.</description>
+    </feature>
+    <feature>
+      <name>Client Content Types API</name>
+      <description>Methods on client wrapper class for content type operations. Provides typed interface for create, read, update, delete content types.</description>
+    </feature>
+    <feature>
+      <name>Locale Field Storage</name>
+      <description>Schema and storage structure for locale-specific content field values. Stores translations keyed by locale code within content entries.</description>
+    </feature>
+    <feature>
+      <name>Delete Media Asset</name>
+      <description>Mutation to delete a media asset. Removes the storage file and database record. Checks for content references before deletion.</description>
+    </feature>
+    <feature>
+      <name>Update Media Asset</name>
+      <description>Mutation to update media asset metadata like filename, alt text, or folder assignment. Does not modify the underlying file.</description>
+    </feature>
+    <feature>
+      <name>Locale Fallback Configuration</name>
+      <description>Configuration and utility for locale fallback chains. When content isn&apos;t available in requested locale, falls back through configured chain.</description>
+    </feature>
+    <feature>
+      <name>Resolve Localized Content</name>
+      <description>Query enhancement to resolve content in requested locale with fallback support. Merges localized and default field values.</description>
+    </feature>
+    <feature>
+      <name>Create Media Folder</name>
+      <description>Mutation to create a media folder for organizing assets. Supports nested folder hierarchy with path validation.</description>
+    </feature>
+    <feature>
+      <name>List Media Folders</name>
+      <description>Query to list media folders with optional parent filter. Returns folder tree structure for navigation.</description>
+    </feature>
+    <feature>
+      <name>List Media Assets</name>
+      <description>Query to list media assets with optional folder filter and pagination. Supports filtering by MIME type and sorting options.</description>
+    </feature>
+    <feature>
+      <name>Authorization Override Hook</name>
+      <description>Optional authorize hook for complex authorization logic beyond role-based checks. Called after role check, receives full context (user, action, resource, default decision). Can override or augment the default permission decision.</description>
+    </feature>
+    <feature>
+      <name>Media Library Browser</name>
+      <description>Grid view of media assets with thumbnails. Support folder navigation, basic search, and selection for insertion into content. Display file name, type, size, and upload date.</description>
+    </feature>
+    <feature>
+      <name>Custom Role Definitions</name>
+      <description>Allow developers to define custom roles by extending or overriding default roles. Supports merging with DEFAULT_ROLES, adding new permission scopes, and per-content-type permission granularity.</description>
+    </feature>
+    <feature>
+      <name>Media Upload Interface</name>
+      <description>Drag-and-drop file upload zone with progress indicators. Support multiple file selection, upload queue, and basic error handling. Integrate with Convex file storage upload URLs.</description>
+    </feature>
+    <feature>
+      <name>Client Media Management API</name>
+      <description>Methods on client wrapper class for media operations including upload, list, update metadata, and folder management. Simplifies media handling for parent applications.</description>
+    </feature>
+    <feature>
+      <name>Resource Ownership Rules</name>
+      <description>Implement ownership-based permission logic where users can have elevated permissions on resources they created. Supports &apos;own&apos; scope in permissions (e.g., author can edit own entries only).</description>
+    </feature>
+    <feature>
+      <name>Reference Resolution</name>
+      <description>Utility to resolve referenced content and media when fetching entries. Supports depth limiting and circular reference prevention.</description>
+    </feature>
+    <feature>
+      <name>Test Helpers Module</name>
+      <description>Export test utilities for convex-test integration. Provides component registration helpers, mock data factories for content types and entries, and assertion utilities.</description>
+    </feature>
+    <feature>
+      <name>User Context Handling</name>
+      <description>Functions to receive and validate user context passed from parent app. Extracts user ID and roles for permission checks.</description>
+    </feature>
+    <feature>
+      <name>RAG Content Chunking Utility</name>
+      <description>Utility to extract and structure content for @convex-dev/rag indexing. Splits rich text into semantic chunks with metadata tagging, handles embedded references, and provides embedding-friendly output.</description>
+    </feature>
+    <feature>
+      <name>Get Specific Version</name>
+      <description>Query to retrieve a specific version of a content entry by version ID or number. Returns complete content state at that version.</description>
+    </feature>
+    <feature>
+      <name>Content Export and Import</name>
+      <description>Functions to export content entries to JSON format and import from JSON. Supports selective export by type or filter, handles reference resolution, and validates imports against schemas.</description>
+    </feature>
+    <feature>
+      <name>Rollback to Version</name>
+      <description>Mutation to restore content entry to a previous version. Creates a new version with the restored content state, preserving history.</description>
+    </feature>
+    <feature>
+      <name>Content Locking for Concurrent Editing</name>
+      <description>Implements optimistic locking to prevent concurrent edit conflicts. Tracks editing user and provides lock acquisition, release, and force-unlock for admins.</description>
+    </feature>
+    <feature>
+      <name>Client Versioning API</name>
+      <description>Methods on client wrapper class for version operations including history retrieval, version comparison, and rollback functionality. Enables intuitive version management.</description>
+    </feature>
+    <feature>
+      <name>Content Type Field Migration</name>
+      <description>Utility to safely migrate content when content type schemas change. Handles field additions, removals, renames, and type changes with data transformation functions.</description>
+    </feature>
+    <feature>
+      <name>Move Media to Folder</name>
+      <description>Mutation to move media assets between folders. Supports bulk operations and validates folder existence.</description>
+    </feature>
+    <feature>
+      <name>Content Event Emission</name>
+      <description>Internal system to emit events on content changes (created, updated, published, deleted). Events stored for async processing.</description>
+    </feature>
+    <feature>
+      <name>Rate Limiting Hook System</name>
+      <description>Infrastructure for rate limiting CMS operations via function handles. Parent app can define rate limit strategies for different operations and user tiers.</description>
+    </feature>
+    <feature>
+      <name>Audit Log System</name>
+      <description>Comprehensive audit logging for all CMS operations. Records user, action, timestamp, and before/after states. Provides query functions for audit trail retrieval and filtering.</description>
+    </feature>
+    <feature>
+      <name>Media Optimization Variants</name>
+      <description>System to generate and store optimized media variants (thumbnails, responsive sizes). Tracks variants per asset and provides URL generation for different sizes and formats.</description>
+    </feature>
+    <feature>
+      <name>Compare Versions</name>
+      <description>Query to compare two versions of a content entry. Returns diff showing field-level changes between versions.</description>
+    </feature>
+    <feature>
+      <name>RAG Content Index Integration</name>
+      <description>Background job system to automatically index published content for RAG pipelines. Triggers on content publish events and maintains sync between CMS content and vector indexes.</description>
+    </feature>
+    <feature>
+      <name>Webhook Trigger System</name>
+      <description>Scheduled function to process content events and trigger configured webhooks. Supports retry logic and delivery confirmation.</description>
+    </feature>
+    <feature>
+      <name>Fix Agent Tools Referencing Non-Existent API Modules</name>
+      <description>In agentTools.ts, the AgentComponentApi type and tool handlers reference modules that don&apos;t exist in TypedComponentApi (wrapper.ts): 1) contentTypeMutations.createContentType/updateContentType/deleteContentType, 2) contentEntryMutations.createEntry/updateEntry/publishEntry/etc., 3) bulkOperations.bulkPublish/bulkUnpublish/bulkDelete/bulkUpdate. The wrapper uses a different namespace pattern (contentTypes.create vs contentTypeMutations.createContentType). Either align the wrapper exports with agent expectations or update agent tools to use the correct API paths.</description>
+    </feature>
+    <feature>
+      <name>Enable Content Type Creation in Admin UI</name>
+      <description>In content-types.tsx line 144, the &apos;Create Content Type&apos; button is disabled with placeholder text &apos;Type editing coming in v2&apos;. Users cannot create new content types through the admin UI. Need to implement the content type creation modal/form that calls the createContentType mutation.</description>
+    </feature>
+    <feature>
+      <name>Fix Search Debounce Bug in Entry List</name>
+      <description>In routes/entries/type/$contentTypeId.tsx lines 36-42, the debounce logic uses useState() with a callback function instead of useEffect(). This is incorrect React usage - useState callbacks are for lazy initialization, not for side effects. The timer resets every render causing the debounce to not work properly, resulting in API calls on every keystroke. Change useState to useEffect with proper cleanup.</description>
+    </feature>
+    <feature>
+      <name>CRITICAL: Integrate Authorization into Mutations</name>
+      <description>The authorization system (authorization.ts, authorizationHooks.ts) is fully implemented but NEVER called from mutation functions. All content entry, content type, media, and version mutations bypass the RBAC system entirely. This means any user can perform any operation regardless of their role. Mutations need to call executeAuthorizationHooks() or requirePermission() before performing operations. Affected files: contentEntryMutations.ts, contentTypeMutations.ts, mediaAssetMutations.ts, mediaFolderMutations.ts, versionMutations.ts, bulkOperations.ts.</description>
+    </feature>
+    <feature>
+      <name>Add Error Handling Across Admin UI</name>
+      <description>Multiple admin pages have silent failures: 1) content.tsx - No check for contentTypesResult?.error or entriesResult?.error, API failures show empty lists, 2) content-types.tsx - Checks isLoading but not error state, 3) ContentEntryEditor.tsx - Server errors parsed with brittle string parsing, autosave errors only shown for 2 seconds with no retry. Need to add comprehensive error states, error boundaries, and retry mechanisms throughout the admin UI.</description>
+    </feature>
+    <feature>
+      <name>Complete Media Management CRUD Operations</name>
+      <description>In admin/convex/media.ts, several critical operations are missing: 1) No updateAsset mutation (users can&apos;t edit asset metadata), 2) No updateFolder mutation (can&apos;t rename folders), 3) No moveFolder or moveAsset mutations (can&apos;t organize media), 4) No deleteAsset operation exposed. The media management page only supports creation and viewing. Need to add full CRUD support for both assets and folders.</description>
+    </feature>
+    <feature>
+      <name>Implement Media Field Renderer</name>
+      <description>In FieldRenderer.tsx lines 143-153, media fields show placeholder text &apos;Media fields require integration with the media library&apos;. Need to create a MediaField component that integrates with the media library, allowing users to browse/select existing media or upload new files. Should display media preview and handle media ID storage.</description>
+    </feature>
+    <feature>
+      <name>Implement Reference Field Renderer</name>
+      <description>In FieldRenderer.tsx lines 132-142, reference fields show placeholder text &apos;not yet implemented&apos; instead of a working field. Need to create a ReferenceField component that allows users to select and link to other content entries. Should support searching entries, displaying selected references, and handling the reference ID storage.</description>
+    </feature>
+    <feature>
+      <name>Fix 15 Failing Scheduled Publish Tests</name>
+      <description>15 tests in scheduledPublish.test.ts are failing with &apos;TypeError: (intermediate value).glob is not a function&apos;. The issue is that convexTest() is being called incorrectly or there&apos;s a version mismatch with convex-test. Tests affected: processScheduledPublish (scheduler tests), getScheduledEntries (range, filter, sort tests). Need to investigate convex-test setup and fix the module initialization.</description>
+    </feature>
+    <feature>
+      <name>Add Missing Bulk Operation Methods to Wrapper</name>
+      <description>The ContentEntriesApi class in wrapper.ts is missing bulk operation methods that agent tools expect: bulkPublish(), bulkUnpublish(), bulkDelete(), bulkUpdate(), bulkRestore(). Also missing duplicateEntry() method. These are defined in the component (bulkOperations.ts) but not exposed through the client wrapper. Need to add wrapper methods that call the component&apos;s bulk operation functions.</description>
+    </feature>
+    <feature>
+      <name>Implement Live Dashboard Statistics</name>
+      <description>In routes/index.tsx lines 47-51, dashboard stats show hardcoded placeholder values (em-dash &apos;—&apos;) for Content Types, Content Entries, Media Assets, and Published counts. Need to fetch actual counts from the API and display real statistics. Should use appropriate Convex queries and handle loading/error states.</description>
+    </feature>
+    <feature>
+      <name>Integrate Rate Limiting into Mutations</name>
+      <description>The rate limiting system (rateLimitHooks.ts) is fully implemented with executeRateLimitHooks() and requireRateLimit() functions, but these are never called from any mutation. Rate limiting infrastructure exists but provides no protection. Need to add rate limiting calls to high-frequency operations like createEntry, updateEntry, media uploads, and bulk operations.</description>
+    </feature>
+    <feature>
+      <name>Fix Entry List Sorting Using Wrong Timestamp</name>
+      <description>In routes/entries/type/$contentTypeId.tsx lines 79-84, both &apos;updatedAt&apos; and &apos;createdAt&apos; sort options use _creationTime for comparison. This means sorting by &apos;Updated&apos; doesn&apos;t reflect actual update times - both sorts produce identical results. Need to use the entry&apos;s updatedAt field (if it exists) for the updatedAt sort case.</description>
+    </feature>
+    <feature>
+      <name>Make Settings Form Functional</name>
+      <description>In routes/settings.tsx, the settings form has multiple issues: 1) No onChange handlers on form fields, 2) No form submission handler, 3) Settings are not saved to backend, 4) Default locale selector has no effect, 5) Feature toggle checkboxes (Versioning, Scheduling, etc.) are non-functional. Need to implement full settings CRUD with backend persistence, loading states, and success/error feedback.</description>
+    </feature>
+    <feature>
+      <name>Add Entry Delete Button to Admin UI</name>
+      <description>The ContentEntryEditor component and entry list pages have no delete functionality exposed in the UI. Users cannot delete content entries from the admin interface. Need to add a delete button with confirmation dialog, integrate with the deleteEntry mutation, and handle the soft-delete/trash system.</description>
+    </feature>
+    <feature>
+      <name>Fix UploadDropzone Reliability Issues</name>
+      <description>In UploadDropzone.tsx: 1) Image dimension extraction (lines 206-212) silently fails in try-catch, 2) Progress tracking only works with XMLHttpRequest, not modern fetch, 3) Cancellation logic isn&apos;t fully connected to abort controllers, 4) No retry mechanism persists across page reloads. Upload failures may silently fail to notify users and cancel operations may not work reliably.</description>
+    </feature>
+    <feature>
+      <name>Implement 24 Skipped Audit Log Tests</name>
+      <description>auditLog.test.ts has 11 skipped unit tests and auditLog.integration.test.ts has the entire suite (13+ tests) skipped with &apos;describe.skip&apos;. Skipped tests cover: logAuditEntry, getResourceAuditLogs, getUserAuditLogs, listAuditLogs filtering, getAuditLogStats, getAuditLogDiff, cleanupOldAuditLogs, and helper functions. Integration tests are skipped due to missing convex-test generated files. Need to implement these tests to verify audit log functionality.</description>
+    </feature>
+    <feature>
+      <name>Fix QueryBuilder toOptions Including Unexpected Sort Fields</name>
+      <description>queryBuilder.test.ts has 1 failing test: &apos;complex query chain builds correct options&apos;. The toOptions() method includes sortDirection and sortField even when not explicitly set. Test expects these not to be present but implementation adds default values. Either update test expectations or make toOptions() only include explicitly set fields.</description>
+    </feature>
+    <feature>
+      <name>Fix Inaccurate Entry Counts for Large Content Types</name>
+      <description>In admin/convex/contentTypes.ts lines 37-51, entry counts are fetched using numItems: 1000 limit. If a content type has more than 1000 entries, the count will be wrong. Need to implement proper counting that handles pagination or use a separate count query that doesn&apos;t have this limitation.</description>
+    </feature>
+    <feature>
+      <name>Implement Header Button Functionality</name>
+      <description>In Header.tsx, several buttons have no functionality: 1) Profile button (line 196) has onClick that only closes menu, no profile action, 2) Notification button (line 140) has aria-label but no click handler, 3) Help button (line 147) has aria-label but no click handler. Need to either implement these features or remove the non-functional UI elements.</description>
+    </feature>
+    <feature>
+      <name>Reduce Excessive &apos;as any&apos; Type Casting in Client</name>
+      <description>wrapper.ts and queryBuilder.ts use excessive &apos;as any&apos; type assertions that bypass TypeScript safety. Examples: ctx.runMutation(this.api.contentTypes.create as any, args) appears 20+ times. This means: 1) Type safety completely bypassed for core operations, 2) IDE autocomplete can&apos;t verify correctness, 3) Runtime errors not caught at compile time. Need to properly type the API references or create proper generic types instead of casting to any.</description>
+    </feature>
+    <feature>
+      <name>Improve Client Hooks Fail-Fast Behavior</name>
+      <description>In src/client/index.ts, methods like getUserRole() and checkPermission() throw runtime errors if hooks aren&apos;t configured: &apos;No getUserRole hook configured&apos;. These should fail at initialization time (when createCmsClient is called) if required hooks are missing, not at runtime when methods are called. Add upfront validation of required hooks based on which features are being used.</description>
+    </feature>
+    <feature>
+      <name>Improve Error Messages in Component Mutations</name>
+      <description>Across mutation files (contentEntryMutations.ts, contentTypeMutations.ts, etc.), error messages are generic: &apos;Content type not found: {id}&apos;. They don&apos;t distinguish between: not found vs deleted vs inactive vs permission denied. Need to add error codes and more descriptive messages that help users and developers understand the actual cause of failures.</description>
+    </feature>
+    <feature>
+      <name>Content Taxonomy and Tagging System</name>
+      <description>Implement a flexible tagging and category system allowing users to organize content with multiple taxonomies. Support hierarchical categories, tag suggestions, tag management, and filtering content by tags across the admin interface.
+
+**Rationale:** Content discovery and organization become critical as content volume grows. Tags and categories enable better content findability, SEO optimization, and user navigation. Essential for any content-heavy application.</description>
+    </feature>
   </implemented_features>
 
   <additional_requirements>

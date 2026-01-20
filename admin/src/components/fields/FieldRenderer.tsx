@@ -5,6 +5,13 @@ import { NumberField } from './NumberField';
 import { BooleanField } from './BooleanField';
 import { DateField } from './DateField';
 import { RichTextField } from './RichTextField';
+import { SelectField } from './SelectField';
+import { MultiSelectField } from './MultiSelectField';
+import { JsonField } from './JsonField';
+import { MediaField } from './MediaField';
+import { ReferenceField } from './ReferenceField';
+import { TagField } from './TagField';
+import { CategoryField } from './CategoryField';
 
 /**
  * FieldRenderer is the main entry point for rendering any field type.
@@ -98,27 +105,67 @@ export function FieldRenderer({
         />
       );
 
-    // For field types not yet implemented, render a placeholder
-    case 'reference':
-    case 'media':
-    case 'json':
     case 'select':
+      return (
+        <SelectField
+          {...commonProps}
+          value={(value as string) ?? ''}
+          onChange={onChange as (value: string) => void}
+        />
+      );
+
     case 'multiSelect':
       return (
-        <div className={`field-wrapper field-wrapper--unsupported ${className}`}>
-          <label className="field-label">
-            {field.label}
-            {field.required && <span className="field-required">*</span>}
-          </label>
-          <div className="field-unsupported">
-            <span className="field-unsupported-text">
-              Field type "{field.type}" is not yet implemented.
-            </span>
-          </div>
-          {field.description && (
-            <p className="field-description">{field.description}</p>
-          )}
-        </div>
+        <MultiSelectField
+          {...commonProps}
+          value={(value as string[]) ?? []}
+          onChange={onChange as (value: string[]) => void}
+        />
+      );
+
+    case 'json':
+      return (
+        <JsonField
+          {...commonProps}
+          value={value ?? null}
+          onChange={onChange}
+        />
+      );
+
+    case 'media':
+      return (
+        <MediaField
+          {...commonProps}
+          value={(value as string | null) ?? null}
+          onChange={onChange as (value: string | null) => void}
+        />
+      );
+
+    case 'reference':
+      return (
+        <ReferenceField
+          {...commonProps}
+          value={(value as string | string[] | null) ?? null}
+          onChange={onChange as (value: string | string[] | null) => void}
+        />
+      );
+
+    case 'tags':
+      return (
+        <TagField
+          {...commonProps}
+          value={(value as string[]) ?? []}
+          onChange={onChange as (value: string[]) => void}
+        />
+      );
+
+    case 'category':
+      return (
+        <CategoryField
+          {...commonProps}
+          value={(value as string | string[] | null) ?? null}
+          onChange={onChange as (value: string | string[] | null) => void}
+        />
       );
 
     default:

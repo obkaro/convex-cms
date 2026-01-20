@@ -20,9 +20,36 @@ import {
   updateContentEntryArgs,
   publishEntryArgs,
   deleteContentEntryArgs,
+  duplicateContentEntryArgs,
 } from "./validators.js";
 import { generateSlug } from "./lib/slugGenerator.js";
 import { ensureUniqueSlug } from "./lib/slugUniqueness.js";
+import {
+  validateContentData,
+  ContentTypeSchema,
+  FieldDefinition,
+} from "./validation.js";
+import { validateLockForUpdate } from "./contentLock.js";
+import {
+  emitEvent,
+  contentEntryEventType,
+  ContentEntryEventPayload,
+} from "./eventEmitter.js";
+import {
+  contentTypeNotFound,
+  contentTypeDeleted,
+  contentTypeInactive,
+  contentEntryNotFound,
+  contentEntryDeleted,
+  contentEntryNotDeleted,
+  contentEntryAlreadyPublished,
+  contentEntryNotPublished,
+  contentEntryArchived,
+  contentEntryValidationFailed,
+  contentEntryLocked,
+  contentEntryCreateFailed,
+  contentEntryUpdateFailed,
+} from "./lib/errors.js";
 
 // =============================================================================
 // Create Entry Mutation
@@ -83,18 +110,35 @@ export const createEntry = mutation({
     // Validate content type exists and is active
     const contentType = await ctx.db.get(contentTypeId);
     if (!contentType) {
-      throw new Error(`Content type not found: ${contentTypeId}`);
+      throw contentTypeNotFound(contentTypeId as unknown as string);
     }
     if (!contentType.isActive) {
-      throw new Error(`Content type is not active: ${contentType.name}`);
+      throw contentTypeInactive(contentTypeId as unknown as string, contentType.name);
     }
     if (contentType.deletedAt !== undefined) {
-      throw new Error(`Content type has been deleted: ${contentType.name}`);
+      throw contentTypeDeleted(contentTypeId as unknown as string, contentType.name);
     }
 
     // Determine which field to use for slug generation
     const slugField = contentType.slugField ?? "title";
     const contentData = data as Record<string, unknown>;
+
+    // Build the schema for validation
+    const schema: ContentTypeSchema = {
+      name: contentType.name,
+      displayName: contentType.displayName,
+      description: contentType.description,
+      fields: contentType.fields as FieldDefinition[],
+      titleField: contentType.titleField,
+      slugField: contentType.slugField,
+      singleton: contentType.singleton,
+    };
+
+    // Validate content data against the content type schema
+    const validationResult = validateContentData(contentData, schema);
+    if (!validationResult.valid) {
+      throw contentEntryValidationFailed(validationResult.errors);
+    }
 
     // Generate or validate slug
     let slug = args.slug;
@@ -155,8 +199,25 @@ export const createEntry = mutation({
     // Retrieve and return the created entry
     const entry = await ctx.db.get(entryId);
     if (!entry) {
-      throw new Error("Failed to create content entry");
+      throw contentEntryCreateFailed(contentTypeId as unknown as string);
     }
+
+    // Emit content entry created event
+    await emitEvent(ctx, {
+      eventType: contentEntryEventType("created"),
+      resourceType: "contentEntry",
+      resourceId: entryId as unknown as string,
+      action: "created",
+      payload: {
+        slug: uniqueSlug,
+        contentTypeName: contentType.name,
+        contentTypeId: contentTypeId as unknown as string,
+        status,
+        version: 1,
+        locale,
+      } as ContentEntryEventPayload,
+      userId: createdBy,
+    });
 
     return entry;
   },
@@ -169,38 +230,58 @@ export const createEntry = mutation({
 /**
  * Mutation to update an existing content entry.
  *
- * Updates are allowed regardless of status, but the behavior differs:
+ * Re-validates content against the type schema, optionally regenerates slug,
+ * and updates the modification timestamp. Updates are allowed regardless of status:
  * - Draft entries: All fields can be updated freely
  * - Published entries: Updates create a new "working draft" that doesn't
  *   affect the live version until republished
  * - Scheduled entries: Updates modify the scheduled content
  *
+ * Key behaviors:
+ * 1. **Content Validation**: When data is provided, it's merged with existing data
+ *    and validated against the content type schema. Invalid data throws an error.
+ * 2. **Slug Handling**: Explicit slug takes precedence. If `regenerateSlug` is true
+ *    and data is updated, the slug is regenerated from the slugField value.
+ * 3. **Search Text**: Automatically regenerated from searchable fields when data changes.
+ * 4. **Version Tracking**: Version number is incremented on every update.
+ *
  * @param id - The content entry ID to update
  * @param slug - Optional new slug (uniqueness will be validated)
- * @param data - Optional new content data (merged with existing)
+ * @param data - Optional new content data (merged with existing, then validated)
  * @param status - Optional new status
  * @param scheduledPublishAt - Optional scheduled publish time (for "scheduled" status)
  * @param updatedBy - Optional user ID for audit trail
+ * @param regenerateSlug - If true, regenerates slug from slugField when data is updated
  *
  * @returns The updated content entry
  *
  * @throws Error if the entry does not exist
  * @throws Error if the entry has been deleted
+ * @throws Error if the content type has been deleted
+ * @throws Error if content validation fails
  * @throws Error if the new slug is not unique
  *
  * @example
  * ```typescript
- * // Update content data
+ * // Update content data (validates against schema)
  * await ctx.runMutation(api.contentEntryMutations.updateEntry, {
  *   id: entryId,
- *   data: { title: "Updated Title" },
+ *   data: { title: "Updated Title", content: "<p>New content</p>" },
  *   updatedBy: currentUserId,
  * });
  *
- * // Change slug
+ * // Change slug explicitly
  * await ctx.runMutation(api.contentEntryMutations.updateEntry, {
  *   id: entryId,
  *   slug: "new-url-slug",
+ * });
+ *
+ * // Update title and regenerate slug from it
+ * await ctx.runMutation(api.contentEntryMutations.updateEntry, {
+ *   id: entryId,
+ *   data: { title: "My New Blog Post Title" },
+ *   regenerateSlug: true,
+ *   updatedBy: currentUserId,
  * });
  * ```
  */
@@ -208,15 +289,44 @@ export const updateEntry = mutation({
   args: updateContentEntryArgs.fields,
   returns: contentEntryDoc,
   handler: async (ctx, args) => {
-    const { id, slug, data, status, scheduledPublishAt, updatedBy } = args;
+    const { id, slug, data, status, scheduledPublishAt, updatedBy, regenerateSlug } = args;
 
     // Retrieve the existing entry
     const entry = await ctx.db.get(id);
     if (!entry) {
-      throw new Error(`Content entry not found: ${id}`);
+      throw contentEntryNotFound(id as unknown as string);
     }
     if (entry.deletedAt !== undefined) {
-      throw new Error(`Content entry has been deleted: ${id}`);
+      throw contentEntryDeleted(id as unknown as string);
+    }
+
+    // Check lock status - only the lock holder can update a locked entry
+    const lockValidation = validateLockForUpdate(entry, updatedBy);
+    if (!lockValidation.isAllowed) {
+      // Extract lock info from entry for detailed error
+      if (entry.lockedBy && entry.lockExpiresAt) {
+        throw contentEntryLocked(
+          id as unknown as string,
+          entry.lockedBy,
+          entry.lockExpiresAt,
+          updatedBy
+        );
+      }
+      throw contentEntryLocked(
+        id as unknown as string,
+        "unknown",
+        Date.now(),
+        updatedBy
+      );
+    }
+
+    // Retrieve the content type for validation and schema info
+    const contentType = await ctx.db.get(entry.contentTypeId);
+    if (!contentType) {
+      throw contentTypeNotFound(entry.contentTypeId as unknown as string);
+    }
+    if (contentType.deletedAt !== undefined) {
+      throw contentTypeDeleted(entry.contentTypeId as unknown as string, contentType.name);
     }
 
     // Build the update object
@@ -224,48 +334,86 @@ export const updateEntry = mutation({
       updatedBy,
     };
 
-    // Handle slug update with uniqueness check
-    if (slug !== undefined && slug !== entry.slug) {
-      const queryFn = async (candidateSlug: string) => {
-        const existing = await ctx.db
-          .query("content_entries")
-          .withIndex("by_content_type_and_slug", (q) =>
-            q.eq("contentTypeId", entry.contentTypeId).eq("slug", candidateSlug)
-          )
-          .filter((q) => q.eq(q.field("deletedAt"), undefined))
-          .first();
-        // Exclude current entry from uniqueness check
-        if (existing && existing._id !== id) {
-          return existing;
-        }
-        return null;
+    // Merge data if provided, otherwise use existing data
+    let mergedData: Record<string, unknown>;
+    if (data !== undefined) {
+      mergedData = { ...(entry.data as Record<string, unknown>), ...data };
+    } else {
+      mergedData = entry.data as Record<string, unknown>;
+    }
+
+    // Validate content data against the content type schema
+    if (data !== undefined) {
+      const schema: ContentTypeSchema = {
+        name: contentType.name,
+        displayName: contentType.displayName,
+        description: contentType.description,
+        fields: contentType.fields as FieldDefinition[],
+        titleField: contentType.titleField,
+        slugField: contentType.slugField,
+        singleton: contentType.singleton,
       };
 
-      const uniqueSlug = await ensureUniqueSlug(slug, queryFn, {
+      const validationResult = validateContentData(mergedData, schema);
+      if (!validationResult.valid) {
+        throw contentEntryValidationFailed(validationResult.errors);
+      }
+
+      updates.data = mergedData;
+    }
+
+    // Helper function for slug uniqueness queries
+    const slugQueryFn = async (candidateSlug: string) => {
+      const existing = await ctx.db
+        .query("content_entries")
+        .withIndex("by_content_type_and_slug", (q) =>
+          q.eq("contentTypeId", entry.contentTypeId).eq("slug", candidateSlug)
+        )
+        .filter((q) => q.eq(q.field("deletedAt"), undefined))
+        .first();
+      // Exclude current entry from uniqueness check
+      if (existing && existing._id !== id) {
+        return existing;
+      }
+      return null;
+    };
+
+    // Handle slug: explicit slug takes precedence, then regeneration if requested
+    if (slug !== undefined && slug !== entry.slug) {
+      // Explicit slug provided - validate and ensure uniqueness
+      const uniqueSlug = await ensureUniqueSlug(slug, slugQueryFn, {
         excludeEntryId: id as unknown as string,
       });
       updates.slug = uniqueSlug;
+    } else if (regenerateSlug && data !== undefined) {
+      // Regenerate slug from the slug field value
+      const slugField = contentType.slugField ?? "title";
+      const slugSource = mergedData[slugField];
+
+      if (typeof slugSource === "string" && slugSource.trim()) {
+        const newSlug = generateSlug(slugSource);
+        // Only update if the regenerated slug is different from current
+        if (newSlug !== entry.slug) {
+          const uniqueSlug = await ensureUniqueSlug(newSlug, slugQueryFn, {
+            excludeEntryId: id as unknown as string,
+          });
+          updates.slug = uniqueSlug;
+        }
+      }
     }
 
-    // Handle data update (merge with existing data)
+    // Update search text if data changed
     if (data !== undefined) {
-      const mergedData = { ...(entry.data as Record<string, unknown>), ...data };
-      updates.data = mergedData;
-
-      // Update search text if data changed
-      const contentType = await ctx.db.get(entry.contentTypeId);
-      if (contentType) {
-        let searchText = "";
-        for (const field of contentType.fields) {
-          if (field.searchable && mergedData[field.name]) {
-            const value = mergedData[field.name];
-            if (typeof value === "string") {
-              searchText += ` ${value}`;
-            }
+      let searchText = "";
+      for (const field of contentType.fields) {
+        if (field.searchable && mergedData[field.name]) {
+          const value = mergedData[field.name];
+          if (typeof value === "string") {
+            searchText += ` ${value}`;
           }
         }
-        updates.searchText = searchText.trim() || undefined;
       }
+      updates.searchText = searchText.trim() || undefined;
     }
 
     // Handle status update
@@ -287,8 +435,25 @@ export const updateEntry = mutation({
     // Return the updated entry
     const updatedEntry = await ctx.db.get(id);
     if (!updatedEntry) {
-      throw new Error("Failed to retrieve updated entry");
+      throw contentEntryUpdateFailed(id as unknown as string);
     }
+
+    // Emit content entry updated event
+    await emitEvent(ctx, {
+      eventType: contentEntryEventType("updated"),
+      resourceType: "contentEntry",
+      resourceId: id as unknown as string,
+      action: "updated",
+      payload: {
+        slug: updatedEntry.slug,
+        contentTypeName: contentType.name,
+        contentTypeId: entry.contentTypeId as unknown as string,
+        status: updatedEntry.status,
+        version: updatedEntry.version,
+        locale: updatedEntry.locale,
+      } as ContentEntryEventPayload,
+      userId: updatedBy,
+    });
 
     return updatedEntry;
   },
@@ -339,16 +504,16 @@ export const publishEntry = mutation({
     // Retrieve the existing entry
     const entry = await ctx.db.get(id);
     if (!entry) {
-      throw new Error(`Content entry not found: ${id}`);
+      throw contentEntryNotFound(id as unknown as string);
     }
     if (entry.deletedAt !== undefined) {
-      throw new Error(`Content entry has been deleted: ${id}`);
+      throw contentEntryDeleted(id as unknown as string);
     }
     if (entry.status === "published") {
-      throw new Error(`Content entry is already published: ${id}`);
+      throw contentEntryAlreadyPublished(id as unknown as string);
     }
     if (entry.status === "archived") {
-      throw new Error(`Cannot publish archived content. Restore it first: ${id}`);
+      throw contentEntryArchived(id as unknown as string);
     }
 
     const now = Date.now();
@@ -386,8 +551,29 @@ export const publishEntry = mutation({
     // Return the published entry
     const publishedEntry = await ctx.db.get(id);
     if (!publishedEntry) {
-      throw new Error("Failed to retrieve published entry");
+      throw contentEntryUpdateFailed(id as unknown as string);
     }
+
+    // Get content type for event payload
+    const contentType = await ctx.db.get(entry.contentTypeId);
+
+    // Emit content entry published event
+    await emitEvent(ctx, {
+      eventType: contentEntryEventType("published"),
+      resourceType: "contentEntry",
+      resourceId: id as unknown as string,
+      action: "published",
+      payload: {
+        slug: publishedEntry.slug,
+        contentTypeName: contentType?.name ?? "unknown",
+        contentTypeId: entry.contentTypeId as unknown as string,
+        status: "published",
+        version: publishedEntry.version,
+        locale: publishedEntry.locale,
+        changeDescription,
+      } as ContentEntryEventPayload,
+      userId: updatedBy,
+    });
 
     return publishedEntry;
   },
@@ -440,13 +626,13 @@ export const unpublishEntry = mutation({
     // Retrieve the existing entry
     const entry = await ctx.db.get(id);
     if (!entry) {
-      throw new Error(`Content entry not found: ${id}`);
+      throw contentEntryNotFound(id as unknown as string);
     }
     if (entry.deletedAt !== undefined) {
-      throw new Error(`Content entry has been deleted: ${id}`);
+      throw contentEntryDeleted(id as unknown as string);
     }
     if (entry.status !== "published") {
-      throw new Error(`Content entry is not published. Current status: ${entry.status}`);
+      throw contentEntryNotPublished(id as unknown as string, entry.status);
     }
 
     // Update status to draft
@@ -459,8 +645,28 @@ export const unpublishEntry = mutation({
     // Return the unpublished entry
     const unpublishedEntry = await ctx.db.get(id);
     if (!unpublishedEntry) {
-      throw new Error("Failed to retrieve unpublished entry");
+      throw contentEntryUpdateFailed(id as unknown as string);
     }
+
+    // Get content type for event payload
+    const contentType = await ctx.db.get(entry.contentTypeId);
+
+    // Emit content entry unpublished event
+    await emitEvent(ctx, {
+      eventType: contentEntryEventType("unpublished"),
+      resourceType: "contentEntry",
+      resourceId: id as unknown as string,
+      action: "unpublished",
+      payload: {
+        slug: unpublishedEntry.slug,
+        contentTypeName: contentType?.name ?? "unknown",
+        contentTypeId: entry.contentTypeId as unknown as string,
+        status: "draft",
+        version: unpublishedEntry.version,
+        locale: unpublishedEntry.locale,
+      } as ContentEntryEventPayload,
+      userId: updatedBy,
+    });
 
     return unpublishedEntry;
   },
@@ -525,12 +731,12 @@ export const deleteEntry = mutation({
 
     // Validate entry exists
     if (!entry) {
-      throw new Error(`Content entry not found: ${id}`);
+      throw contentEntryNotFound(id as unknown as string);
     }
 
     // For soft delete, check if already deleted
     if (!hardDelete && entry.deletedAt !== undefined) {
-      throw new Error(`Content entry has already been deleted: ${id}`);
+      throw contentEntryDeleted(id as unknown as string);
     }
 
     // Get all associated versions for this entry
@@ -541,6 +747,9 @@ export const deleteEntry = mutation({
 
     const deletedVersionsCount = versions.length;
 
+    // Get content type for event payload
+    const contentType = await ctx.db.get(entry.contentTypeId);
+
     if (hardDelete) {
       // Hard delete: permanently remove all versions
       for (const version of versions) {
@@ -549,6 +758,24 @@ export const deleteEntry = mutation({
 
       // Permanently delete the entry itself
       await ctx.db.delete(id);
+
+      // Emit content entry deleted event (for hard delete)
+      await emitEvent(ctx, {
+        eventType: contentEntryEventType("deleted"),
+        resourceType: "contentEntry",
+        resourceId: id as unknown as string,
+        action: "deleted",
+        payload: {
+          slug: entry.slug,
+          contentTypeName: contentType?.name ?? "unknown",
+          contentTypeId: entry.contentTypeId as unknown as string,
+          status: entry.status,
+          version: entry.version,
+          locale: entry.locale,
+        } as ContentEntryEventPayload,
+        userId: deletedBy,
+        metadata: { hardDelete: true },
+      });
 
       // Return the entry as it was before deletion
       return {
@@ -564,6 +791,24 @@ export const deleteEntry = mutation({
       await ctx.db.patch(id, {
         deletedAt: now,
         updatedBy: deletedBy,
+      });
+
+      // Emit content entry deleted event (for soft delete)
+      await emitEvent(ctx, {
+        eventType: contentEntryEventType("deleted"),
+        resourceType: "contentEntry",
+        resourceId: id as unknown as string,
+        action: "deleted",
+        payload: {
+          slug: entry.slug,
+          contentTypeName: contentType?.name ?? "unknown",
+          contentTypeId: entry.contentTypeId as unknown as string,
+          status: entry.status,
+          version: entry.version,
+          locale: entry.locale,
+        } as ContentEntryEventPayload,
+        userId: deletedBy,
+        metadata: { hardDelete: false },
       });
 
       // Return the updated entry
@@ -615,12 +860,12 @@ export const restoreEntry = mutation({
 
     // Validate entry exists
     if (!entry) {
-      throw new Error(`Content entry not found: ${id}`);
+      throw contentEntryNotFound(id as unknown as string);
     }
 
     // Validate entry is soft-deleted
     if (entry.deletedAt === undefined) {
-      throw new Error(`Content entry is not deleted: ${id}`);
+      throw contentEntryNotDeleted(id as unknown as string);
     }
 
     // Remove the deletedAt marker to restore the entry
@@ -629,11 +874,237 @@ export const restoreEntry = mutation({
       updatedBy: restoredBy,
     });
 
+    // Get content type for event payload
+    const contentType = await ctx.db.get(entry.contentTypeId);
+
+    // Emit content entry restored event
+    await emitEvent(ctx, {
+      eventType: contentEntryEventType("restored"),
+      resourceType: "contentEntry",
+      resourceId: id as unknown as string,
+      action: "restored",
+      payload: {
+        slug: entry.slug,
+        contentTypeName: contentType?.name ?? "unknown",
+        contentTypeId: entry.contentTypeId as unknown as string,
+        status: entry.status,
+        version: entry.version,
+        locale: entry.locale,
+      } as ContentEntryEventPayload,
+      userId: restoredBy,
+    });
+
     // Return the restored entry
     return {
       ...entry,
       deletedAt: undefined,
       updatedBy: restoredBy ?? entry.updatedBy,
     };
+  },
+});
+
+// =============================================================================
+// Duplicate Entry Mutation
+// =============================================================================
+
+/**
+ * Mutation to duplicate (clone) an existing content entry.
+ *
+ * Creates a new content entry with the same data as the source entry,
+ * but with a new unique slug. The duplicated entry is always created
+ * as a draft, regardless of the source entry's status.
+ *
+ * This is useful for:
+ * - Content templating workflows (copy a template to create new content)
+ * - Creating localized variants of content
+ * - Quick duplication of similar content pieces
+ *
+ * Key behaviors:
+ * 1. **Data Cloning**: All content data is deep-copied to the new entry
+ * 2. **Media References**: By default, media references (IDs) are copied,
+ *    pointing to the same media assets. Set `copyMediaReferences: false`
+ *    to clear media fields in the duplicate.
+ * 3. **Slug Generation**: A new unique slug is generated from the source
+ *    entry's slug (e.g., "my-post" → "my-post-1") unless a custom slug
+ *    is provided.
+ * 4. **Status Reset**: The duplicate always starts as "draft" with version 1
+ * 5. **Timestamps Reset**: Publishing timestamps are cleared in the duplicate
+ *
+ * @param sourceEntryId - The ID of the content entry to duplicate
+ * @param slug - Optional custom slug (auto-generated if not provided)
+ * @param copyMediaReferences - Whether to copy media IDs (default: true)
+ * @param locale - Optional locale for the duplicated entry
+ * @param createdBy - Optional user ID for audit trail
+ *
+ * @returns The newly created duplicate content entry
+ *
+ * @throws Error if the source entry does not exist
+ * @throws Error if the source entry has been deleted
+ * @throws Error if the content type does not exist or is not active
+ *
+ * @example
+ * ```typescript
+ * // Simple duplication (keeps all media references)
+ * const duplicate = await ctx.runMutation(api.contentEntryMutations.duplicateEntry, {
+ *   sourceEntryId: originalPostId,
+ *   createdBy: currentUserId,
+ * });
+ *
+ * // Duplicate with custom slug
+ * const duplicate = await ctx.runMutation(api.contentEntryMutations.duplicateEntry, {
+ *   sourceEntryId: templateId,
+ *   slug: "new-post-from-template",
+ *   createdBy: currentUserId,
+ * });
+ *
+ * // Duplicate without media references (for a fresh start)
+ * const duplicate = await ctx.runMutation(api.contentEntryMutations.duplicateEntry, {
+ *   sourceEntryId: originalPostId,
+ *   copyMediaReferences: false,
+ *   createdBy: currentUserId,
+ * });
+ * ```
+ */
+export const duplicateEntry = mutation({
+  args: duplicateContentEntryArgs.fields,
+  returns: contentEntryDoc,
+  handler: async (ctx, args) => {
+    const { sourceEntryId, slug, copyMediaReferences = true, locale, createdBy } = args;
+
+    // Retrieve the source entry
+    const sourceEntry = await ctx.db.get(sourceEntryId);
+    if (!sourceEntry) {
+      throw contentEntryNotFound(sourceEntryId as unknown as string);
+    }
+    if (sourceEntry.deletedAt !== undefined) {
+      throw contentEntryDeleted(sourceEntryId as unknown as string);
+    }
+
+    // Retrieve and validate the content type
+    const contentType = await ctx.db.get(sourceEntry.contentTypeId);
+    if (!contentType) {
+      throw contentTypeNotFound(sourceEntry.contentTypeId as unknown as string);
+    }
+    if (!contentType.isActive) {
+      throw contentTypeInactive(sourceEntry.contentTypeId as unknown as string, contentType.name);
+    }
+    if (contentType.deletedAt !== undefined) {
+      throw contentTypeDeleted(sourceEntry.contentTypeId as unknown as string, contentType.name);
+    }
+
+    // Deep copy the content data
+    let newData: Record<string, unknown> = JSON.parse(
+      JSON.stringify(sourceEntry.data)
+    );
+
+    // Optionally clear media references
+    if (!copyMediaReferences) {
+      const fields = contentType.fields as FieldDefinition[];
+      for (const field of fields) {
+        if (field.type === "media" && newData[field.name] !== undefined) {
+          // Clear media field - set to null for single, empty array for multiple
+          const isMultiple = field.options?.multiple;
+          newData[field.name] = isMultiple ? [] : null;
+        }
+      }
+    }
+
+    // Build the schema for validation
+    const schema: ContentTypeSchema = {
+      name: contentType.name,
+      displayName: contentType.displayName,
+      description: contentType.description,
+      fields: contentType.fields as FieldDefinition[],
+      titleField: contentType.titleField,
+      slugField: contentType.slugField,
+      singleton: contentType.singleton,
+    };
+
+    // Validate the cloned data against the content type schema
+    const validationResult = validateContentData(newData, schema);
+    if (!validationResult.valid) {
+      throw contentEntryValidationFailed(validationResult.errors);
+    }
+
+    // Generate or validate slug
+    let targetSlug = slug;
+    if (!targetSlug) {
+      // Generate a slug based on the source entry's slug
+      // This will result in something like "original-slug-1" if "original-slug" exists
+      targetSlug = sourceEntry.slug;
+    }
+
+    // Ensure slug is unique within this content type
+    const queryFn = async (candidateSlug: string) => {
+      return await ctx.db
+        .query("content_entries")
+        .withIndex("by_content_type_and_slug", (q) =>
+          q.eq("contentTypeId", sourceEntry.contentTypeId).eq("slug", candidateSlug)
+        )
+        .filter((q) => q.eq(q.field("deletedAt"), undefined))
+        .first();
+    };
+
+    const uniqueSlug = await ensureUniqueSlug(targetSlug, queryFn);
+
+    // Generate searchable text from text fields
+    let searchText: string | undefined = "";
+    for (const field of contentType.fields) {
+      if (field.searchable && newData[field.name]) {
+        const value = newData[field.name];
+        if (typeof value === "string") {
+          searchText += ` ${value}`;
+        }
+      }
+    }
+    searchText = searchText.trim() || undefined;
+
+    // Create the duplicate entry (always as draft with version 1)
+    const entryId = await ctx.db.insert("content_entries", {
+      contentTypeId: sourceEntry.contentTypeId,
+      slug: uniqueSlug,
+      status: "draft",
+      data: newData,
+      locale: locale ?? sourceEntry.locale,
+      // Don't copy primaryEntryId - this is a new independent entry
+      version: 1,
+      // Reset publishing timestamps - this is a new entry
+      firstPublishedAt: undefined,
+      lastPublishedAt: undefined,
+      scheduledPublishAt: undefined,
+      // Don't copy locks
+      lockedBy: undefined,
+      lockExpiresAt: undefined,
+      // Set new audit trail
+      createdBy,
+      updatedBy: createdBy,
+      searchText,
+    });
+
+    // Retrieve and return the created entry
+    const entry = await ctx.db.get(entryId);
+    if (!entry) {
+      throw contentEntryCreateFailed(sourceEntry.contentTypeId as unknown as string);
+    }
+
+    // Emit content entry duplicated event
+    await emitEvent(ctx, {
+      eventType: contentEntryEventType("duplicated"),
+      resourceType: "contentEntry",
+      resourceId: entryId as unknown as string,
+      action: "duplicated",
+      payload: {
+        slug: uniqueSlug,
+        contentTypeName: contentType.name,
+        contentTypeId: sourceEntry.contentTypeId as unknown as string,
+        status: "draft",
+        version: 1,
+        locale: locale ?? sourceEntry.locale,
+        sourceEntryId: sourceEntryId as unknown as string,
+      } as ContentEntryEventPayload,
+      userId: createdBy,
+    });
+
+    return entry;
   },
 });

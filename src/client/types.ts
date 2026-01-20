@@ -68,6 +68,862 @@ export interface FeatureFlags {
   searchIndexing?: boolean;
 }
 
+// =============================================================================
+// User Role Hook Types
+// =============================================================================
+
+/**
+ * Context passed to the getUserRole hook.
+ * Contains information about the current request context.
+ */
+export interface GetUserRoleContext {
+  /**
+   * The user ID to look up the role for.
+   * This is the same ID passed to createdBy/updatedBy in CMS operations.
+   */
+  userId: string;
+}
+
+// =============================================================================
+// Authorization Hook Types
+// =============================================================================
+
+/**
+ * CMS operations that can have authorization hooks applied.
+ */
+export type CmsOperation =
+  // Content Type operations
+  | "contentTypes.create"
+  | "contentTypes.update"
+  | "contentTypes.delete"
+  | "contentTypes.read"
+  // Content Entry operations
+  | "contentEntries.create"
+  | "contentEntries.update"
+  | "contentEntries.delete"
+  | "contentEntries.read"
+  | "contentEntries.publish"
+  | "contentEntries.unpublish"
+  | "contentEntries.restore"
+  | "contentEntries.schedule"
+  // Media Asset operations
+  | "mediaAssets.create"
+  | "mediaAssets.update"
+  | "mediaAssets.delete"
+  | "mediaAssets.read"
+  // Media Folder operations
+  | "mediaFolders.create"
+  | "mediaFolders.update"
+  | "mediaFolders.delete"
+  | "mediaFolders.read"
+  | "mediaFolders.move"
+  // Version operations
+  | "versions.read"
+  | "versions.rollback";
+
+/**
+ * Context passed to authorization hooks.
+ * Contains all information needed to make authorization decisions.
+ */
+export interface AuthorizationHookContext {
+  /**
+   * The operation being performed.
+   */
+  operation: CmsOperation;
+
+  /**
+   * The user ID performing the operation.
+   * May be undefined for unauthenticated operations.
+   */
+  userId?: string;
+
+  /**
+   * The user's CMS role (if resolved via getUserRole hook).
+   */
+  role?: string | null;
+
+  /**
+   * The resource ID being accessed (for read/update/delete operations).
+   */
+  resourceId?: string;
+
+  /**
+   * The ID of the user who owns the resource (for ownership-based authorization).
+   */
+  resourceOwnerId?: string;
+
+  /**
+   * The content type ID (for content entry operations).
+   */
+  contentTypeId?: string;
+
+  /**
+   * The content type name (for content entry operations).
+   */
+  contentTypeName?: string;
+
+  /**
+   * Additional operation-specific data.
+   * Contains the arguments passed to the operation.
+   */
+  operationData?: Record<string, unknown>;
+}
+
+/**
+ * Result from an authorization hook.
+ */
+export interface AuthorizationHookResult {
+  /**
+   * Whether the operation is allowed.
+   */
+  allowed: boolean;
+
+  /**
+   * Optional reason for denial (used in error messages).
+   */
+  reason?: string;
+
+  /**
+   * Optional modified data to use instead of the original.
+   * Allows hooks to filter or transform operation data.
+   */
+  modifiedData?: Record<string, unknown>;
+}
+
+/**
+ * Context passed to the authorize hook.
+ * Extends AuthorizationHookContext with information about the default RBAC decision.
+ */
+export interface AuthorizeHookContext extends AuthorizationHookContext {
+  /**
+   * The default decision from the built-in RBAC check.
+   * This allows the authorize hook to see what RBAC decided before making its own decision.
+   */
+  defaultDecision: {
+    /**
+     * Whether RBAC allowed the operation.
+     */
+    allowed: boolean;
+
+    /**
+     * The reason for denial (if denied by RBAC).
+     */
+    reason?: string;
+
+    /**
+     * The error code from RBAC (if denied).
+     * Possible values: 'NO_ROLE', 'UNKNOWN_ROLE', 'PERMISSION_DENIED', 'OWNERSHIP_REQUIRED'
+     */
+    code?: string;
+
+    /**
+     * The scope that was granted by RBAC (if allowed).
+     * 'all' means the user can access any resource.
+     * 'own' means the user can only access resources they own.
+     */
+    grantedScope?: "all" | "own";
+
+    /**
+     * Whether ownership was verified during the RBAC check.
+     */
+    ownershipVerified?: boolean;
+  };
+}
+
+/**
+ * Authorize hook function signature.
+ *
+ * This hook is called AFTER the built-in RBAC check and receives the default
+ * decision. It can override or augment the RBAC decision based on custom logic.
+ *
+ * Unlike other hooks, this receives full context including the RBAC decision,
+ * allowing for complex authorization logic that considers what RBAC decided.
+ *
+ * @param context - Contains operation details, user info, resource info, AND the default RBAC decision
+ * @returns AuthorizationHookResult indicating whether to allow or deny the operation
+ *
+ * @example
+ * ```typescript
+ * // Override RBAC denial for premium users
+ * const premiumOverride: AuthorizeHook = async (context) => {
+ *   // If RBAC allowed, don't interfere
+ *   if (context.defaultDecision.allowed) {
+ *     return { allowed: true };
+ *   }
+ *
+ *   // Check if user is premium and can bypass normal restrictions
+ *   const isPremium = await checkPremiumStatus(context.userId);
+ *   if (isPremium && context.operation === "contentEntries.publish") {
+ *     return { allowed: true }; // Override RBAC denial
+ *   }
+ *
+ *   // Respect RBAC decision
+ *   return { allowed: false, reason: context.defaultDecision.reason };
+ * };
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // Add content-type specific restrictions after RBAC
+ * const contentTypeRestrictions: AuthorizeHook = async (context) => {
+ *   // Check RBAC decision first
+ *   if (!context.defaultDecision.allowed) {
+ *     return { allowed: false, reason: context.defaultDecision.reason };
+ *   }
+ *
+ *   // Add extra checks for sensitive content types
+ *   if (context.contentTypeName === "legal_notices") {
+ *     const hasLegalAccess = await checkLegalTeamMembership(context.userId);
+ *     if (!hasLegalAccess) {
+ *       return { allowed: false, reason: "Legal content requires legal team membership" };
+ *     }
+ *   }
+ *
+ *   return { allowed: true };
+ * };
+ * ```
+ */
+export type AuthorizeHook = (
+  context: AuthorizeHookContext
+) => Promise<AuthorizationHookResult> | AuthorizationHookResult;
+
+/**
+ * Authorization hook function signature.
+ *
+ * Authorization hooks are called before CMS operations to determine if the
+ * operation should be allowed. They enable custom permission logic beyond
+ * the built-in RBAC system.
+ *
+ * @param context - Contains operation details, user info, and resource info
+ * @returns AuthorizationHookResult indicating if the operation is allowed
+ *
+ * @example
+ * ```typescript
+ * // Custom hook that only allows publishing on weekdays
+ * const onlyWeekdayPublish: AuthorizationHook = async (context) => {
+ *   if (context.operation === "contentEntries.publish") {
+ *     const day = new Date().getDay();
+ *     if (day === 0 || day === 6) {
+ *       return { allowed: false, reason: "Publishing is only allowed on weekdays" };
+ *     }
+ *   }
+ *   return { allowed: true };
+ * };
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // Custom hook that checks team membership
+ * const teamBasedAuth: AuthorizationHook = async (context) => {
+ *   if (!context.userId) {
+ *     return { allowed: false, reason: "Authentication required" };
+ *   }
+ *
+ *   // Check if user is in the team that owns this content type
+ *   const userTeams = await getUserTeams(context.userId);
+ *   const contentTypeTeam = await getContentTypeTeam(context.contentTypeId);
+ *
+ *   if (!userTeams.includes(contentTypeTeam)) {
+ *     return { allowed: false, reason: "You must be a member of the team" };
+ *   }
+ *
+ *   return { allowed: true };
+ * };
+ * ```
+ */
+export type AuthorizationHook = (
+  context: AuthorizationHookContext
+) => Promise<AuthorizationHookResult> | AuthorizationHookResult;
+
+/**
+ * Configuration for authorization hooks.
+ *
+ * Hooks are organized by when they run relative to the built-in RBAC checks:
+ * - `beforeRbac`: Runs before built-in permission checks. Can reject early or skip RBAC.
+ * - `afterRbac`: Runs after RBAC passes. Can add additional restrictions.
+ * - `onDeny`: Called when authorization is denied. Can override denials.
+ *
+ * @example
+ * ```typescript
+ * const authHooks: AuthorizationHooks = {
+ *   // Run custom checks before RBAC
+ *   beforeRbac: async (context) => {
+ *     // Maintenance mode check
+ *     if (isMaintenanceMode() && !isAdmin(context.userId)) {
+ *       return { allowed: false, reason: "System is in maintenance mode" };
+ *     }
+ *     return { allowed: true };
+ *   },
+ *
+ *   // Additional checks after RBAC passes
+ *   afterRbac: async (context) => {
+ *     // Rate limiting
+ *     if (context.operation.startsWith("contentEntries.")) {
+ *       const isRateLimited = await checkRateLimit(context.userId);
+ *       if (isRateLimited) {
+ *         return { allowed: false, reason: "Rate limit exceeded" };
+ *       }
+ *     }
+ *     return { allowed: true };
+ *   },
+ *
+ *   // Handle denials (logging, custom error messages)
+ *   onDeny: async (context) => {
+ *     await logDeniedAccess(context);
+ *     // Return allowed: true to override the denial
+ *     return { allowed: false };
+ *   },
+ * };
+ * ```
+ */
+export interface AuthorizationHooks {
+  /**
+   * Hook that runs before built-in RBAC permission checks.
+   *
+   * Use this for:
+   * - Early rejection (maintenance mode, IP blocking, etc.)
+   * - Bypassing RBAC for certain conditions (return allowed: true to skip RBAC)
+   * - Pre-authorization validation
+   *
+   * If this hook returns `{ allowed: false }`, the operation is denied
+   * immediately without running RBAC checks.
+   *
+   * If this hook returns `{ allowed: true, skipRbac: true }`, RBAC is skipped.
+   */
+  beforeRbac?: AuthorizationHook;
+
+  /**
+   * Hook that runs after built-in RBAC permission checks pass.
+   *
+   * Use this for:
+   * - Additional restrictions beyond RBAC (team membership, quotas, etc.)
+   * - Rate limiting
+   * - Time-based restrictions
+   *
+   * This hook only runs if RBAC allowed the operation.
+   * If this hook returns `{ allowed: false }`, the operation is denied.
+   */
+  afterRbac?: AuthorizationHook;
+
+  /**
+   * Optional authorize hook for complex authorization logic beyond role-based checks.
+   *
+   * This hook is called AFTER the RBAC check and receives the full context including
+   * the default RBAC decision. It can override or augment the default permission decision.
+   *
+   * Key differences from other hooks:
+   * - Runs after RBAC check regardless of RBAC outcome (pass or fail)
+   * - Receives the RBAC decision in context.defaultDecision
+   * - Can override RBAC denials (grant access RBAC would deny)
+   * - Can override RBAC grants (deny access RBAC would allow)
+   *
+   * Use this for:
+   * - Complex multi-factor authorization decisions
+   * - Premium user overrides
+   * - Content-type specific access rules that need to know the base RBAC decision
+   * - Audit logging with access to both context and decision
+   * - Implementing "break glass" emergency access patterns
+   *
+   * Execution order in the hook chain:
+   * 1. beforeRbac (can skip RBAC)
+   * 2. RBAC check (if not skipped)
+   * 3. **authorize** (this hook - receives RBAC decision)
+   * 4. afterRbac (only if authorize allowed)
+   * 5. operationHooks (only if afterRbac allowed)
+   * 6. onDeny (if any step denied)
+   *
+   * @example
+   * ```typescript
+   * authorize: async (context) => {
+   *   // Premium users can bypass rate limits that RBAC doesn't know about
+   *   if (!context.defaultDecision.allowed) {
+   *     const isPremium = await checkPremiumStatus(context.userId);
+   *     if (isPremium && context.defaultDecision.code === "RATE_LIMITED") {
+   *       return { allowed: true }; // Override denial for premium users
+   *     }
+   *   }
+   *
+   *   // Add extra checks for sensitive operations even if RBAC allowed
+   *   if (context.defaultDecision.allowed && context.contentTypeName === "pii_data") {
+   *     const hasPiiAccess = await checkPiiCertification(context.userId);
+   *     if (!hasPiiAccess) {
+   *       return { allowed: false, reason: "PII access requires certification" };
+   *     }
+   *   }
+   *
+   *   // Return the default RBAC decision if no overrides apply
+   *   return {
+   *     allowed: context.defaultDecision.allowed,
+   *     reason: context.defaultDecision.reason,
+   *   };
+   * }
+   * ```
+   */
+  authorize?: AuthorizeHook;
+
+  /**
+   * Hook that runs when authorization is denied (by RBAC or other hooks).
+   *
+   * Use this for:
+   * - Custom logging of denied access
+   * - Overriding denials in special cases
+   * - Custom error messages
+   *
+   * If this hook returns `{ allowed: true }`, the denial is overridden
+   * and the operation proceeds.
+   */
+  onDeny?: AuthorizationHook;
+
+  /**
+   * Operation-specific hooks that run for specific operations only.
+   *
+   * These hooks run after the general hooks and allow fine-grained control
+   * over specific operations.
+   *
+   * @example
+   * ```typescript
+   * operationHooks: {
+   *   "contentEntries.publish": async (context) => {
+   *     // Require approval for certain content types
+   *     if (context.contentTypeName === "legal_document") {
+   *       const isApproved = await checkApproval(context.resourceId);
+   *       if (!isApproved) {
+   *         return { allowed: false, reason: "Legal documents require approval" };
+   *       }
+   *     }
+   *     return { allowed: true };
+   *   },
+   * }
+   * ```
+   */
+  operationHooks?: Partial<Record<CmsOperation, AuthorizationHook>>;
+}
+
+// =============================================================================
+// Rate Limiting Hook Types
+// =============================================================================
+
+/**
+ * Operation categories for rate limiting.
+ * Allows configuring rate limits by operation type rather than individual operations.
+ */
+export type OperationCategory =
+  | "read"
+  | "write"
+  | "publish"
+  | "media"
+  | "admin";
+
+/**
+ * Context passed to rate limit hooks.
+ * Contains all information needed to make rate limiting decisions.
+ */
+export interface RateLimitHookContext {
+  /**
+   * The operation being performed.
+   */
+  operation: CmsOperation;
+
+  /**
+   * The category of operation (read, write, publish, media, admin).
+   * Useful for applying rate limits by category.
+   */
+  operationCategory: OperationCategory;
+
+  /**
+   * The user ID performing the operation.
+   * May be undefined for unauthenticated operations.
+   */
+  userId?: string;
+
+  /**
+   * The user's CMS role (if resolved via getUserRole hook).
+   */
+  role?: string | null;
+
+  /**
+   * The content type ID (for content entry operations).
+   */
+  contentTypeId?: string;
+
+  /**
+   * The content type name (for content entry operations).
+   */
+  contentTypeName?: string;
+
+  /**
+   * Additional metadata that can be used for rate limiting decisions.
+   * For example: IP address, session ID, API key, user tier, etc.
+   */
+  metadata?: Record<string, unknown>;
+
+  /**
+   * The current timestamp in milliseconds.
+   * Useful for time-based rate limiting.
+   */
+  timestamp: number;
+}
+
+/**
+ * Result from a rate limit check hook.
+ */
+export interface RateLimitCheckResult {
+  /**
+   * Whether the operation is allowed (not rate limited).
+   */
+  allowed: boolean;
+
+  /**
+   * The timestamp when the operation can be retried (if rate limited).
+   * In milliseconds since epoch.
+   */
+  retryAt?: number;
+
+  /**
+   * Optional reason for rate limiting (for error messages).
+   */
+  reason?: string;
+
+  /**
+   * Optional metadata about the rate limit state.
+   * Can include remaining tokens, limit info, etc.
+   */
+  rateLimitInfo?: {
+    /** The name of the rate limit that was triggered */
+    limitName?: string;
+    /** Remaining tokens/requests before hitting the limit */
+    remaining?: number;
+    /** Total limit for the time window */
+    limit?: number;
+    /** Time window in milliseconds */
+    windowMs?: number;
+    /** Whether this is a soft limit (warning) vs hard limit (denial) */
+    isSoftLimit?: boolean;
+  };
+}
+
+/**
+ * Result from consuming a rate limit (actually recording the operation).
+ */
+export interface RateLimitConsumeResult extends RateLimitCheckResult {
+  /**
+   * Whether the rate limit was successfully consumed.
+   * This is true if the operation was allowed and recorded.
+   */
+  consumed: boolean;
+}
+
+/**
+ * Hook function signature for checking if an operation is rate limited.
+ *
+ * This hook is called BEFORE the operation executes to check if the user
+ * has exceeded their rate limit. It should NOT modify rate limit state -
+ * use the consume hook for that.
+ *
+ * @param context - Contains operation details, user info, and metadata
+ * @returns RateLimitCheckResult indicating if the operation is allowed
+ *
+ * @example
+ * ```typescript
+ * // Check rate limit using convex-helpers
+ * const checkRateLimit: RateLimitCheckHook = async (context) => {
+ *   if (!context.userId) {
+ *     return { allowed: true }; // Skip rate limiting for anonymous users
+ *   }
+ *
+ *   const result = await checkRateLimitFn(ctx, {
+ *     name: `cms.${context.operationCategory}`,
+ *     key: context.userId,
+ *   });
+ *
+ *   return {
+ *     allowed: result.ok,
+ *     retryAt: result.retryAt,
+ *     reason: result.ok ? undefined : "Rate limit exceeded",
+ *   };
+ * };
+ * ```
+ */
+export type RateLimitCheckHook = (
+  context: RateLimitHookContext
+) => Promise<RateLimitCheckResult> | RateLimitCheckResult;
+
+/**
+ * Hook function signature for consuming/recording a rate limit.
+ *
+ * This hook is called AFTER the rate limit check passes but BEFORE
+ * the actual operation executes. It should record the rate limit usage.
+ *
+ * @param context - Contains operation details, user info, and metadata
+ * @returns RateLimitConsumeResult indicating if consumption was successful
+ *
+ * @example
+ * ```typescript
+ * // Consume rate limit using convex-helpers
+ * const consumeRateLimit: RateLimitConsumeHook = async (context) => {
+ *   const result = await rateLimitFn(ctx, {
+ *     name: `cms.${context.operationCategory}`,
+ *     key: context.userId,
+ *   });
+ *
+ *   return {
+ *     allowed: result.ok,
+ *     consumed: result.ok,
+ *     retryAt: result.retryAt,
+ *   };
+ * };
+ * ```
+ */
+export type RateLimitConsumeHook = (
+  context: RateLimitHookContext
+) => Promise<RateLimitConsumeResult> | RateLimitConsumeResult;
+
+/**
+ * Hook function signature for getting rate limit configuration.
+ *
+ * This hook allows dynamic rate limit configuration based on user tier,
+ * operation type, content type, or other factors.
+ *
+ * @param context - Contains operation details, user info, and metadata
+ * @returns Rate limit configuration for this context
+ *
+ * @example
+ * ```typescript
+ * // Dynamic rate limits based on user tier
+ * const getRateLimitConfig: RateLimitConfigHook = async (context) => {
+ *   const userTier = await getUserTier(context.userId);
+ *
+ *   const tierLimits = {
+ *     free: { rate: 10, period: 60000 },    // 10 per minute
+ *     pro: { rate: 100, period: 60000 },    // 100 per minute
+ *     enterprise: { rate: 1000, period: 60000 }, // 1000 per minute
+ *   };
+ *
+ *   return {
+ *     enabled: true,
+ *     config: tierLimits[userTier] ?? tierLimits.free,
+ *   };
+ * };
+ * ```
+ */
+export type RateLimitConfigHook = (
+  context: RateLimitHookContext
+) => Promise<RateLimitConfigResult> | RateLimitConfigResult;
+
+/**
+ * Result from the rate limit configuration hook.
+ */
+export interface RateLimitConfigResult {
+  /**
+   * Whether rate limiting is enabled for this context.
+   * If false, rate limiting is skipped entirely.
+   */
+  enabled: boolean;
+
+  /**
+   * Rate limit configuration if enabled.
+   */
+  config?: {
+    /** Number of tokens/requests allowed per period */
+    rate: number;
+    /** Time period in milliseconds */
+    period: number;
+    /** Maximum burst capacity (optional) */
+    capacity?: number;
+    /** Maximum tokens that can be reserved (optional) */
+    maxReserved?: number;
+  };
+
+  /**
+   * Custom key to use for rate limiting.
+   * Defaults to userId if not specified.
+   */
+  key?: string;
+
+  /**
+   * Number of tokens to consume for this operation.
+   * Defaults to 1 if not specified.
+   */
+  cost?: number;
+}
+
+/**
+ * Configuration for rate limiting hooks.
+ *
+ * Rate limiting hooks enable parent applications to implement custom rate
+ * limiting strategies for CMS operations. The hooks are designed to integrate
+ * with various rate limiting libraries (like convex-helpers/rateLimit) or
+ * custom implementations.
+ *
+ * Hook execution order:
+ * 1. getConfig (optional) - Get dynamic rate limit configuration
+ * 2. check - Check if operation is rate limited
+ * 3. consume - Record the rate limit usage (only if check passed)
+ *
+ * @example
+ * ```typescript
+ * import { defineRateLimits } from "convex-helpers/server/rateLimit";
+ *
+ * const { checkRateLimit, rateLimit } = defineRateLimits({
+ *   "cms.write": { kind: "token bucket", rate: 10, period: 60000 },
+ *   "cms.publish": { kind: "token bucket", rate: 5, period: 60000 },
+ *   "cms.read": { kind: "token bucket", rate: 100, period: 60000 },
+ * });
+ *
+ * const cms = createCmsClient(components.convexCms, {
+ *   rateLimitHooks: {
+ *     check: async (context) => {
+ *       const result = await checkRateLimit(ctx, {
+ *         name: `cms.${context.operationCategory}`,
+ *         key: context.userId,
+ *       });
+ *       return { allowed: result.ok, retryAt: result.retryAt };
+ *     },
+ *     consume: async (context) => {
+ *       const result = await rateLimit(ctx, {
+ *         name: `cms.${context.operationCategory}`,
+ *         key: context.userId,
+ *       });
+ *       return { allowed: result.ok, consumed: result.ok, retryAt: result.retryAt };
+ *     },
+ *   },
+ * });
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // Per-operation rate limits with user tier support
+ * const cms = createCmsClient(components.convexCms, {
+ *   rateLimitHooks: {
+ *     getConfig: async (context) => {
+ *       // Different limits for different user tiers
+ *       const tier = context.metadata?.userTier as string ?? "free";
+ *       const limits = {
+ *         free: { rate: 10, period: 60000 },
+ *         pro: { rate: 100, period: 60000 },
+ *       };
+ *       return { enabled: true, config: limits[tier] };
+ *     },
+ *
+ *     check: async (context) => {
+ *       // Your rate limit check logic
+ *       return { allowed: true };
+ *     },
+ *
+ *     // Operation-specific overrides
+ *     operationHooks: {
+ *       "contentEntries.publish": {
+ *         check: async (context) => {
+ *           // Stricter limits for publish operations
+ *           return { allowed: true };
+ *         },
+ *       },
+ *     },
+ *   },
+ * });
+ * ```
+ */
+export interface RateLimitHooks {
+  /**
+   * Hook for checking if an operation is rate limited.
+   * Called before the operation executes.
+   */
+  check?: RateLimitCheckHook;
+
+  /**
+   * Hook for consuming/recording rate limit usage.
+   * Called after check passes, before operation executes.
+   * If not provided, check is used for both checking and consuming.
+   */
+  consume?: RateLimitConsumeHook;
+
+  /**
+   * Hook for getting dynamic rate limit configuration.
+   * Allows different limits based on user tier, operation, etc.
+   */
+  getConfig?: RateLimitConfigHook;
+
+  /**
+   * Whether to skip rate limiting for admin role users.
+   * @default false
+   */
+  skipForAdmin?: boolean;
+
+  /**
+   * Operations to exclude from rate limiting.
+   * Read operations are often excluded to avoid limiting content viewing.
+   */
+  excludeOperations?: CmsOperation[];
+
+  /**
+   * Operation categories to exclude from rate limiting.
+   */
+  excludeCategories?: OperationCategory[];
+
+  /**
+   * Operation-specific rate limit hooks.
+   * These override the global hooks for specific operations.
+   */
+  operationHooks?: Partial<
+    Record<CmsOperation, {
+      check?: RateLimitCheckHook;
+      consume?: RateLimitConsumeHook;
+      getConfig?: RateLimitConfigHook;
+    }>
+  >;
+
+  /**
+   * Callback invoked when rate limiting denies an operation.
+   * Useful for logging, analytics, or custom error handling.
+   */
+  onRateLimited?: (context: RateLimitHookContext, result: RateLimitCheckResult) => void | Promise<void>;
+}
+
+/**
+ * Result from the getUserRole hook.
+ * Can return a role name or null if the user has no CMS role.
+ */
+export type GetUserRoleResult = string | null;
+
+/**
+ * Hook function signature for mapping user IDs to CMS roles.
+ *
+ * Developers implement this hook to integrate their authentication system
+ * with the CMS role-based access control. The hook receives a userId and
+ * should return the corresponding CMS role name.
+ *
+ * @param context - Contains the userId to look up
+ * @returns The role name (e.g., 'admin', 'editor', 'author', 'viewer', or custom role)
+ *          or null if the user has no CMS role
+ *
+ * @example
+ * ```typescript
+ * // Simple mapping from your user table
+ * const getUserRole: GetUserRoleHook = async ({ userId }) => {
+ *   const user = await db.query("users").filter(q => q.eq(q.field("_id"), userId)).first();
+ *   return user?.cmsRole ?? null;
+ * };
+ *
+ * // Integration with Clerk
+ * const getUserRole: GetUserRoleHook = async ({ userId }) => {
+ *   const user = await clerkClient.users.getUser(userId);
+ *   return user.publicMetadata.cmsRole as string ?? "viewer";
+ * };
+ *
+ * // Role based on user type
+ * const getUserRole: GetUserRoleHook = async ({ userId }) => {
+ *   const user = await getUser(userId);
+ *   if (user.isAdmin) return "admin";
+ *   if (user.isEditor) return "editor";
+ *   if (user.canWriteContent) return "author";
+ *   return "viewer";
+ * };
+ * ```
+ */
+export type GetUserRoleHook = (
+  context: GetUserRoleContext
+) => Promise<GetUserRoleResult> | GetUserRoleResult;
+
 /**
  * Configuration options for the Convex CMS component.
  *
@@ -80,6 +936,11 @@ export interface FeatureFlags {
  *     versioning: true,
  *     localization: true,
  *     scheduling: true,
+ *   },
+ *   // Map user IDs to CMS roles
+ *   getUserRole: async ({ userId }) => {
+ *     const user = await db.query("users").filter(q => q.eq(q.field("_id"), userId)).first();
+ *     return user?.cmsRole ?? null;
  *   },
  * };
  * ```
@@ -97,6 +958,43 @@ export interface ComponentConfig {
    * @default ["en"]
    */
   supportedLocales?: LocaleCode[];
+
+  /**
+   * Locale fallback chains configuration.
+   *
+   * Defines how the system should resolve content when the requested locale
+   * is not available. Each locale can have an ordered array of fallback locales
+   * to try before falling back to the default locale.
+   *
+   * @example
+   * ```typescript
+   * localeFallbackChains: {
+   *   "es-MX": ["es-ES", "en-US"],  // Mexican Spanish -> Spain Spanish -> US English
+   *   "es-AR": ["es-ES", "en-US"],  // Argentine Spanish -> Spain Spanish -> US English
+   *   "pt-BR": ["pt-PT", "en-US"],  // Brazilian Portuguese -> Portugal Portuguese
+   *   "zh-Hans-CN": ["zh-Hans", "en-US"], // Simplified Chinese (China) -> Simplified Chinese
+   * }
+   * ```
+   *
+   * When `autoGenerateLocaleFallbacks` is enabled, the system will automatically
+   * generate fallback chains based on locale hierarchy (e.g., "en-US" -> ["en"]).
+   * Explicit chains take precedence over auto-generated ones.
+   */
+  localeFallbackChains?: Record<LocaleCode, LocaleCode[]>;
+
+  /**
+   * Whether to automatically generate fallback chains based on locale hierarchy.
+   *
+   * When enabled, the system will automatically create fallback chains based on
+   * the BCP 47 locale structure:
+   * - "zh-Hans-CN" -> ["zh-Hans", "zh", defaultLocale]
+   * - "en-US" -> ["en", defaultLocale]
+   *
+   * Explicit `localeFallbackChains` take precedence over auto-generated ones.
+   *
+   * @default true
+   */
+  autoGenerateLocaleFallbacks?: boolean;
 
   /**
    * Feature flags to enable/disable specific CMS capabilities.
@@ -122,14 +1020,331 @@ export interface ComponentConfig {
    * @default 52428800 (50MB)
    */
   maxMediaFileSize?: number;
+
+  /**
+   * Hook for mapping user IDs to CMS roles.
+   *
+   * This hook enables integration with any authentication system without
+   * the CMS owning user tables. Implement this function to return the
+   * appropriate CMS role for a given user ID.
+   *
+   * Built-in roles: 'admin', 'editor', 'author', 'viewer'
+   * Custom roles can be defined and will be checked against customRoles config.
+   *
+   * @example
+   * ```typescript
+   * getUserRole: async ({ userId }) => {
+   *   const user = await db.query("users")
+   *     .filter(q => q.eq(q.field("_id"), userId))
+   *     .first();
+   *   return user?.cmsRole ?? null;
+   * }
+   * ```
+   */
+  getUserRole?: GetUserRoleHook;
+
+  /**
+   * Authorization hooks for custom permission logic.
+   *
+   * These hooks allow you to implement custom authorization logic beyond
+   * the built-in RBAC system. They can be used for:
+   * - Team-based access control
+   * - Subscription-based feature gating
+   * - Time-based restrictions
+   * - Content-type specific rules
+   * - Custom approval workflows
+   *
+   * @example
+   * ```typescript
+   * authorizationHooks: {
+   *   // Early rejection or bypass
+   *   beforeRbac: async (context) => {
+   *     if (isMaintenanceMode()) {
+   *       return { allowed: false, reason: "System in maintenance" };
+   *     }
+   *     return { allowed: true };
+   *   },
+   *
+   *   // Additional checks after RBAC passes
+   *   afterRbac: async (context) => {
+   *     if (context.operation === "contentEntries.publish") {
+   *       const quota = await getPublishQuota(context.userId);
+   *       if (quota.remaining <= 0) {
+   *         return { allowed: false, reason: "Publish quota exceeded" };
+   *       }
+   *     }
+   *     return { allowed: true };
+   *   },
+   *
+   *   // Operation-specific hooks
+   *   operationHooks: {
+   *     "contentEntries.publish": async (context) => {
+   *       // Require approval for legal documents
+   *       if (context.contentTypeName === "legal") {
+   *         const approved = await checkApproval(context.resourceId);
+   *         if (!approved) {
+   *           return { allowed: false, reason: "Approval required" };
+   *         }
+   *       }
+   *       return { allowed: true };
+   *     },
+   *   },
+   * }
+   * ```
+   */
+  authorizationHooks?: AuthorizationHooks;
+
+  /**
+   * Rate limiting hooks for controlling CMS operation frequency.
+   *
+   * Rate limiting hooks enable parent applications to implement custom rate
+   * limiting strategies for CMS operations. This is useful for:
+   * - Preventing abuse and DoS attacks
+   * - Implementing tiered usage limits (free vs pro users)
+   * - Protecting expensive operations like publish/media upload
+   * - Meeting API quota requirements
+   *
+   * The CMS provides the hook infrastructure while the parent app owns
+   * the actual rate limit storage and checking logic. This allows integration
+   * with various rate limiting libraries (like convex-helpers/rateLimit) or
+   * custom implementations.
+   *
+   * @example
+   * ```typescript
+   * import { defineRateLimits } from "convex-helpers/server/rateLimit";
+   *
+   * const { checkRateLimit, rateLimit } = defineRateLimits({
+   *   "cms.write": { kind: "token bucket", rate: 10, period: 60000 },
+   *   "cms.publish": { kind: "token bucket", rate: 5, period: 60000 },
+   * });
+   *
+   * const config: ComponentConfig = {
+   *   rateLimitHooks: {
+   *     check: async (context) => {
+   *       const result = await checkRateLimit(ctx, {
+   *         name: `cms.${context.operationCategory}`,
+   *         key: context.userId,
+   *       });
+   *       return { allowed: result.ok, retryAt: result.retryAt };
+   *     },
+   *     consume: async (context) => {
+   *       const result = await rateLimit(ctx, {
+   *         name: `cms.${context.operationCategory}`,
+   *         key: context.userId,
+   *       });
+   *       return { allowed: result.ok, consumed: result.ok };
+   *     },
+   *     skipForAdmin: true,
+   *     excludeCategories: ["read"], // Don't rate limit reads
+   *   },
+   * };
+   * ```
+   */
+  rateLimitHooks?: RateLimitHooks;
+
+  /**
+   * Whether to skip built-in RBAC checks entirely.
+   *
+   * When set to `true`, the built-in role-based permission checks are skipped,
+   * and authorization is handled entirely by the `authorizationHooks`.
+   *
+   * This is useful when you want to implement a completely custom authorization
+   * system without using the built-in RBAC roles.
+   *
+   * @default false
+   *
+   * @example
+   * ```typescript
+   * // Use only custom authorization logic
+   * const config = {
+   *   skipRbac: true,
+   *   authorizationHooks: {
+   *     beforeRbac: async (context) => {
+   *       // Your custom authorization logic here
+   *       const allowed = await myCustomAuthCheck(context);
+   *       return { allowed };
+   *     },
+   *   },
+   * };
+   * ```
+   */
+  skipRbac?: boolean;
+
+  /**
+   * Validate required hooks at initialization time.
+   *
+   * When specified, the CMS client will validate that the required hooks are
+   * configured when `createCmsClient()` is called, rather than waiting until
+   * the methods are invoked at runtime.
+   *
+   * This is useful for:
+   * - Catching configuration errors early during app startup
+   * - Ensuring RBAC features work before deployment
+   * - Failing fast rather than at runtime when a user triggers an operation
+   *
+   * Available validation options:
+   * - `getUserRole`: Requires the `getUserRole` hook for role-based methods
+   * - `authorizationHooks`: Requires at least one authorization hook
+   * - `rateLimitHooks`: Requires the rate limiting check hook
+   *
+   * @default undefined (no upfront validation)
+   *
+   * @example
+   * ```typescript
+   * // Validate getUserRole hook is configured at init time
+   * const cms = createCmsClient(components.convexCms, {
+   *   requireHooks: ["getUserRole"],
+   *   getUserRole: async ({ userId }) => {
+   *     // This is now required - init will fail without it
+   *     return user?.role ?? null;
+   *   },
+   * });
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // This will throw at initialization time:
+   * // "Missing required hook: getUserRole. Configure getUserRole in createCmsClient options."
+   * const cms = createCmsClient(components.convexCms, {
+   *   requireHooks: ["getUserRole"],
+   *   // getUserRole is missing!
+   * });
+   * ```
+   */
+  requireHooks?: Array<"getUserRole" | "authorizationHooks" | "rateLimitHooks">;
+
+  /**
+   * Custom roles to extend or override the default RBAC roles.
+   *
+   * This allows developers to define additional roles beyond the built-in
+   * admin, editor, author, and viewer roles. Custom roles can:
+   * - Define entirely new roles with specific permissions
+   * - Extend existing roles with additional or restricted permissions
+   * - Restrict permissions to specific content types
+   *
+   * Custom roles are merged with the default roles. Built-in role names
+   * cannot be overridden - use extendRole() to create a modified version
+   * with a different name.
+   *
+   * @example
+   * ```typescript
+   * import { createCustomRole, extendRole, fullCrudForContentType } from "@convex-cms/core";
+   *
+   * // Create a blog-specific author role
+   * const blogAuthor = createCustomRole({
+   *   name: "blog-author",
+   *   displayName: "Blog Author",
+   *   description: "Can create and manage blog posts only",
+   *   permissions: [
+   *     { resource: "contentTypes", action: "read" },
+   *     ...fullCrudForContentType("contentEntries", {
+   *       scope: "own",
+   *       contentTypes: ["blog_post"],
+   *     }),
+   *     { resource: "mediaAssets", action: "create" },
+   *     { resource: "mediaAssets", action: "read" },
+   *   ],
+   * });
+   *
+   * // Extend the editor role with restricted content type access
+   * const blogEditor = extendRole({
+   *   name: "blog-editor",
+   *   displayName: "Blog Editor",
+   *   description: "Editor for blog content only",
+   *   extends: "editor",
+   *   restrictToContentTypes: ["blog_post", "blog_category"],
+   * });
+   *
+   * // Configure the CMS with custom roles
+   * const cms = createCmsClient(components.convexCms, {
+   *   customRoles: [blogAuthor, blogEditor],
+   *   getUserRole: async ({ userId }) => {
+   *     // Return custom role names like "blog-author" or "blog-editor"
+   *     const user = await getUser(userId);
+   *     return user.cmsRole;
+   *   },
+   * });
+   * ```
+   */
+  customRoles?: Array<CustomRoleInput>;
 }
+
+/**
+ * Input type for custom role definitions when configuring the CMS.
+ * The isSystem field is optional and defaults to false.
+ */
+export interface CustomRoleInput {
+  /** Unique role identifier */
+  name: string;
+  /** Human-readable display name */
+  displayName: string;
+  /** Description of the role's purpose */
+  description: string;
+  /** List of permissions granted to this role */
+  permissions: CustomPermission[];
+  /** Whether this is a system role that cannot be deleted (defaults to false) */
+  isSystem?: boolean;
+  /** If this role was extended from another, the source role name */
+  extendsRole?: string;
+}
+
+/**
+ * Resolved custom role definition with all defaults applied.
+ * This is the runtime representation stored in the config.
+ */
+export interface CustomRoleDefinition {
+  /** Unique role identifier */
+  name: string;
+  /** Human-readable display name */
+  displayName: string;
+  /** Description of the role's purpose */
+  description: string;
+  /** List of permissions granted to this role */
+  permissions: CustomPermission[];
+  /** Whether this is a system role that cannot be deleted */
+  isSystem: boolean;
+  /** If this role was extended from another, the source role name */
+  extendsRole?: string;
+}
+
+/**
+ * Permission that may include content-type-specific restrictions.
+ */
+export interface CustomPermission {
+  /** The resource this permission applies to */
+  resource: "contentTypes" | "contentEntries" | "mediaAssets" | "mediaFolders" | "settings";
+  /** The action being granted */
+  action: "create" | "read" | "update" | "delete" | "publish" | "unpublish" | "restore" | "manage";
+  /** Ownership scope (defaults to "all" if not specified) */
+  scope?: "all" | "own";
+  /** Whitelist of content type names this permission applies to */
+  contentTypes?: string[];
+  /** Blacklist of content type names this permission does NOT apply to */
+  excludeContentTypes?: string[];
+}
+
+/**
+ * Resolved configuration type.
+ * This is the configuration with all defaults applied, excluding the getUserRole hook
+ * and authorizationHooks which are stored separately in the client closure.
+ */
+export type ResolvedComponentConfig = Required<Omit<ComponentConfig, "getUserRole" | "authorizationHooks" | "rateLimitHooks" | "localeFallbackChains" | "customRoles" | "requireHooks">> & {
+  getUserRole?: GetUserRoleHook;
+  authorizationHooks?: AuthorizationHooks;
+  rateLimitHooks?: RateLimitHooks;
+  localeFallbackChains: Record<LocaleCode, LocaleCode[]>;
+  customRoles: Record<string, CustomRoleDefinition>;
+  requireHooks: Array<"getUserRole" | "authorizationHooks" | "rateLimitHooks">;
+};
 
 /**
  * Default component configuration values.
  */
-export const DEFAULT_CONFIG: Required<ComponentConfig> = {
+export const DEFAULT_CONFIG: Omit<ResolvedComponentConfig, "getUserRole" | "authorizationHooks" | "rateLimitHooks"> = {
   defaultLocale: "en",
   supportedLocales: ["en"],
+  localeFallbackChains: {},
+  autoGenerateLocaleFallbacks: true,
   features: {
     versioning: true,
     scheduling: true,
@@ -142,17 +1357,173 @@ export const DEFAULT_CONFIG: Required<ComponentConfig> = {
   maxVersionsPerEntry: 50,
   lockDurationMs: 300000, // 5 minutes
   maxMediaFileSize: 52428800, // 50MB
+  skipRbac: false,
+  customRoles: {},
+  requireHooks: [],
 };
+
+/**
+ * Hook validation error types.
+ */
+export type RequiredHookName = "getUserRole" | "authorizationHooks" | "rateLimitHooks";
+
+/**
+ * Error thrown when a required hook is not configured.
+ *
+ * This error is thrown at initialization time when `requireHooks` is specified
+ * in the configuration but the required hook is not provided.
+ *
+ * @example
+ * ```typescript
+ * try {
+ *   const cms = createCmsClient(components.convexCms, {
+ *     requireHooks: ["getUserRole"],
+ *     // getUserRole is missing!
+ *   });
+ * } catch (error) {
+ *   if (error instanceof MissingHookError) {
+ *     console.error(`Missing hook: ${error.hookName}`);
+ *     console.error(`Suggestion: ${error.suggestion}`);
+ *   }
+ * }
+ * ```
+ */
+export class MissingHookError extends Error {
+  /**
+   * The name of the missing hook.
+   */
+  readonly hookName: RequiredHookName;
+
+  /**
+   * A suggestion for how to fix the error.
+   */
+  readonly suggestion: string;
+
+  /**
+   * List of methods that require this hook.
+   */
+  readonly affectedMethods: string[];
+
+  constructor(hookName: RequiredHookName) {
+    const hookInfo = HOOK_INFO[hookName];
+    const message = `Missing required hook: ${hookName}. ${hookInfo.suggestion}`;
+
+    super(message);
+    this.name = "MissingHookError";
+    this.hookName = hookName;
+    this.suggestion = hookInfo.suggestion;
+    this.affectedMethods = hookInfo.affectedMethods;
+
+    // Maintains proper prototype chain for instanceof checks
+    Object.setPrototypeOf(this, MissingHookError.prototype);
+  }
+}
+
+/**
+ * Information about each hook including what it enables and how to configure it.
+ */
+const HOOK_INFO: Record<RequiredHookName, { suggestion: string; affectedMethods: string[] }> = {
+  getUserRole: {
+    suggestion: "Configure a getUserRole function in createCmsClient options to map user IDs to CMS roles.",
+    affectedMethods: [
+      "getUserRole()",
+      "hasPermissionForUser()",
+      "hasContentTypePermissionForUser()",
+      "getPermittedContentTypesForUser()",
+      "canUserPerformOnResource()",
+      "requireUserCanPerformOnResource()",
+    ],
+  },
+  authorizationHooks: {
+    suggestion: "Configure authorizationHooks in createCmsClient options (beforeRbac, afterRbac, authorize, onDeny, or operationHooks).",
+    affectedMethods: [
+      "authorize()",
+      "requireAuthorization()",
+    ],
+  },
+  rateLimitHooks: {
+    suggestion: "Configure rateLimitHooks.check in createCmsClient options to implement rate limiting.",
+    affectedMethods: [
+      "Rate-limited CMS operations",
+    ],
+  },
+};
+
+/**
+ * Validates that required hooks are configured.
+ *
+ * @param config - The component configuration to validate
+ * @throws MissingHookError if a required hook is not configured
+ *
+ * @example
+ * ```typescript
+ * // Called internally by createCmsClient
+ * validateRequiredHooks({
+ *   requireHooks: ["getUserRole"],
+ *   // getUserRole is missing - will throw MissingHookError
+ * });
+ * ```
+ */
+export function validateRequiredHooks(config?: ComponentConfig): void {
+  const requireHooks = config?.requireHooks ?? [];
+
+  for (const hookName of requireHooks) {
+    switch (hookName) {
+      case "getUserRole":
+        if (!config?.getUserRole) {
+          throw new MissingHookError("getUserRole");
+        }
+        break;
+
+      case "authorizationHooks":
+        if (!config?.authorizationHooks) {
+          throw new MissingHookError("authorizationHooks");
+        }
+        // Check that at least one hook is configured
+        const hooks = config.authorizationHooks;
+        const hasHook = !!(
+          hooks.beforeRbac ||
+          hooks.afterRbac ||
+          hooks.authorize ||
+          hooks.onDeny ||
+          (hooks.operationHooks && Object.keys(hooks.operationHooks).length > 0)
+        );
+        if (!hasHook) {
+          throw new MissingHookError("authorizationHooks");
+        }
+        break;
+
+      case "rateLimitHooks":
+        if (!config?.rateLimitHooks?.check) {
+          throw new MissingHookError("rateLimitHooks");
+        }
+        break;
+    }
+  }
+}
 
 /**
  * Merges user configuration with defaults.
  * @param config - User-provided configuration
  * @returns Complete configuration with defaults applied
  */
-export function resolveConfig(config?: ComponentConfig): Required<ComponentConfig> {
+export function resolveConfig(config?: ComponentConfig): ResolvedComponentConfig {
+  // Build custom roles record from array, ensuring isSystem defaults to false
+  const customRolesRecord: Record<string, CustomRoleDefinition> = {};
+  if (config?.customRoles) {
+    for (const role of config.customRoles) {
+      customRolesRecord[role.name] = {
+        ...role,
+        isSystem: role.isSystem ?? false, // Default isSystem to false
+      };
+    }
+  }
+
   return {
     defaultLocale: config?.defaultLocale ?? DEFAULT_CONFIG.defaultLocale,
     supportedLocales: config?.supportedLocales ?? DEFAULT_CONFIG.supportedLocales,
+    localeFallbackChains: config?.localeFallbackChains ?? DEFAULT_CONFIG.localeFallbackChains,
+    autoGenerateLocaleFallbacks: config?.autoGenerateLocaleFallbacks ?? DEFAULT_CONFIG.autoGenerateLocaleFallbacks,
     features: {
       ...DEFAULT_CONFIG.features,
       ...config?.features,
@@ -160,6 +1531,12 @@ export function resolveConfig(config?: ComponentConfig): Required<ComponentConfi
     maxVersionsPerEntry: config?.maxVersionsPerEntry ?? DEFAULT_CONFIG.maxVersionsPerEntry,
     lockDurationMs: config?.lockDurationMs ?? DEFAULT_CONFIG.lockDurationMs,
     maxMediaFileSize: config?.maxMediaFileSize ?? DEFAULT_CONFIG.maxMediaFileSize,
+    skipRbac: config?.skipRbac ?? DEFAULT_CONFIG.skipRbac,
+    getUserRole: config?.getUserRole,
+    authorizationHooks: config?.authorizationHooks,
+    rateLimitHooks: config?.rateLimitHooks,
+    customRoles: customRolesRecord,
+    requireHooks: config?.requireHooks ?? DEFAULT_CONFIG.requireHooks,
   };
 }
 
@@ -222,6 +1599,135 @@ export interface FieldOptions {
 }
 
 // =============================================================================
+// Field Filter Types
+// =============================================================================
+
+// =============================================================================
+// Sort Types
+// =============================================================================
+
+/**
+ * Sort direction for query results.
+ */
+export type SortDirection = "asc" | "desc";
+
+/**
+ * System fields that can be used for sorting.
+ * These are fields that exist on all content entries.
+ */
+export type SystemSortField =
+  | "_creationTime"
+  | "_id"
+  | "firstPublishedAt"
+  | "lastPublishedAt"
+  | "scheduledPublishAt"
+  | "version";
+
+/**
+ * Sort field can be a system field or a custom data field (prefixed with "data.").
+ *
+ * @example
+ * ```typescript
+ * // System field sorting
+ * sortField: "_creationTime"
+ * sortField: "firstPublishedAt"
+ *
+ * // Custom data field sorting (prefix with "data.")
+ * sortField: "data.title"
+ * sortField: "data.price"
+ * sortField: "data.sortOrder"
+ * ```
+ */
+export type SortField = SystemSortField | `data.${string}` | string;
+
+/**
+ * Sort options for content entry queries.
+ *
+ * @example
+ * ```typescript
+ * // Sort by creation time (newest first)
+ * { sortField: "_creationTime", sortDirection: "desc" }
+ *
+ * // Sort by publish date (oldest published first)
+ * { sortField: "firstPublishedAt", sortDirection: "asc" }
+ *
+ * // Sort by custom field (e.g., price low to high)
+ * { sortField: "data.price", sortDirection: "asc" }
+ * ```
+ */
+export interface SortOptions {
+  /** The field to sort by (system field or "data.fieldName" for custom fields) */
+  sortField: SortField;
+  /** The sort direction ("asc" for ascending, "desc" for descending) */
+  sortDirection: SortDirection;
+}
+
+// =============================================================================
+// Field Filter Types
+// =============================================================================
+
+/**
+ * Comparison operators for field filtering.
+ *
+ * - `eq`: Exact equality (works with all field types)
+ * - `ne`: Not equal (works with all field types)
+ * - `gt`: Greater than (numbers, dates)
+ * - `gte`: Greater than or equal (numbers, dates)
+ * - `lt`: Less than (numbers, dates)
+ * - `lte`: Less than or equal (numbers, dates)
+ * - `contains`: String contains substring, or array contains value
+ * - `startsWith`: String starts with prefix
+ * - `endsWith`: String ends with suffix
+ * - `in`: Value is in array of allowed values
+ * - `notIn`: Value is not in array of disallowed values
+ */
+export type FilterOperator =
+  | "eq"
+  | "ne"
+  | "gt"
+  | "gte"
+  | "lt"
+  | "lte"
+  | "contains"
+  | "startsWith"
+  | "endsWith"
+  | "in"
+  | "notIn";
+
+/**
+ * A single field filter condition.
+ *
+ * Used to filter content entries by their field values.
+ * Multiple filters are combined with AND logic.
+ *
+ * @example
+ * ```typescript
+ * // Filter by exact title match
+ * { field: "title", operator: "eq", value: "My Post" }
+ *
+ * // Filter by price range
+ * { field: "price", operator: "gte", value: 100 }
+ *
+ * // Filter by category (in list)
+ * { field: "category", operator: "in", value: ["tech", "science"] }
+ *
+ * // Filter by tag contains
+ * { field: "tags", operator: "contains", value: "javascript" }
+ *
+ * // Filter by string prefix
+ * { field: "slug", operator: "startsWith", value: "2024-" }
+ * ```
+ */
+export interface FieldFilter {
+  /** The name of the field in the content entry's data object */
+  field: string;
+  /** The comparison operator to use */
+  operator: FilterOperator;
+  /** The value to compare against (type depends on field type and operator) */
+  value: unknown;
+}
+
+// =============================================================================
 // Reference Field Types
 // =============================================================================
 
@@ -273,6 +1779,129 @@ export interface ResolvedReference {
   exists: boolean;
 }
 
+// =============================================================================
+// Deep Reference Resolution Types
+// =============================================================================
+
+/**
+ * Options for deep reference resolution.
+ * Used when resolving nested references within content entries.
+ */
+export interface DeepResolveOptions {
+  /**
+   * Maximum depth to resolve nested references.
+   * - 0: Don't resolve any references (just return IDs)
+   * - 1: Resolve immediate references only
+   * - 2: Resolve references and their references
+   * - etc.
+   *
+   * @default 1
+   */
+  maxDepth?: number;
+
+  /**
+   * Whether to resolve media references.
+   * When true, media IDs are replaced with full asset data including URLs.
+   *
+   * @default true
+   */
+  resolveMedia?: boolean;
+
+  /**
+   * Whether to resolve content references.
+   * When true, content entry IDs are replaced with full entry data.
+   *
+   * @default true
+   */
+  resolveContent?: boolean;
+
+  /**
+   * Only resolve references to published entries.
+   * Useful for frontend/public API usage.
+   *
+   * @default false
+   */
+  publishedOnly?: boolean;
+
+  /**
+   * Include soft-deleted entries when resolving.
+   *
+   * @default false
+   */
+  includeDeleted?: boolean;
+
+  /**
+   * Specific fields to include from resolved entries.
+   * If not specified, all fields are included.
+   * Only applies to content references.
+   */
+  fields?: string[];
+
+  /**
+   * Specific field names to resolve references for.
+   * If not specified, all reference/media fields are resolved.
+   * Useful for selective resolution of expensive operations.
+   */
+  onlyFields?: string[];
+
+  /**
+   * Field names to skip when resolving references.
+   * Useful for excluding specific fields from resolution.
+   */
+  excludeFields?: string[];
+
+  /**
+   * Whether to preserve the original reference ID alongside resolved data.
+   * When true, resolved objects include an `_originalId` field.
+   *
+   * @default false
+   */
+  preserveOriginalIds?: boolean;
+}
+
+/**
+ * A content entry with all references recursively resolved.
+ * The data object will have reference fields replaced with resolved content.
+ */
+export interface ResolvedContentEntry {
+  /** The content entry ID */
+  id: string;
+  /** The content type name */
+  contentTypeName: string;
+  /** The content type display name */
+  contentTypeDisplayName: string;
+  /** The entry's URL slug */
+  slug: string;
+  /** The entry's publishing status */
+  status: ContentStatus;
+  /** The entry's data with resolved references */
+  data: Record<string, unknown>;
+  /** Whether the entry exists */
+  exists: boolean;
+  /** Locale code if localized */
+  locale?: string;
+  /** Version number */
+  version?: number;
+  /** Fields that had circular references (were not resolved) */
+  _circularReferences?: string[];
+  /** Fields that had unresolved references (not found) */
+  _unresolvedReferences?: Record<string, string[]>;
+  /** Original entry ID (only if preserveOriginalIds is true) */
+  _originalId?: string;
+}
+
+/**
+ * Result of resolving references for multiple entries in batch.
+ */
+export interface BatchResolveResult {
+  /** Successfully resolved entries */
+  resolved: ResolvedContentEntry[];
+  /** Entry IDs that could not be resolved */
+  unresolved: string[];
+  /** Summary of circular references detected across all entries */
+  circularReferencesDetected: number;
+}
+
 /**
  * A field definition within a content type.
  */
@@ -314,6 +1943,66 @@ export type ContentStatus = "draft" | "published" | "archived" | "scheduled";
  * Classification of media assets.
  */
 export type MediaType = "image" | "video" | "audio" | "document" | "other";
+
+/**
+ * Classification of media variant types.
+ */
+export type VariantType = "thumbnail" | "responsive" | "format";
+
+/**
+ * Status of media variant generation.
+ */
+export type VariantStatus = "pending" | "processing" | "completed" | "failed";
+
+/**
+ * A media variant (optimized version of a media asset).
+ */
+export interface MediaVariant {
+  _id: string;
+  _creationTime: number;
+  /** Parent media asset ID */
+  assetId: string;
+  /** Storage ID for the variant file */
+  storageId: string;
+  /** Type of variant */
+  variantType: VariantType;
+  /** Width in pixels */
+  width?: number;
+  /** Height in pixels */
+  height?: number;
+  /** Output format (e.g., "webp", "avif") */
+  format: string;
+  /** MIME type */
+  mimeType: string;
+  /** File size in bytes */
+  size: number;
+  /** Quality setting (0-100) */
+  quality?: number;
+  /** Preset name if generated from preset */
+  preset?: string;
+  /** Whether auto-generated */
+  autoGenerated: boolean;
+  /** Generation status */
+  status: VariantStatus;
+  /** Error message if failed */
+  errorMessage?: string;
+  /** When processing started */
+  processingStartedAt?: number;
+  /** When processing completed */
+  processingCompletedAt?: number;
+  /** Soft delete timestamp */
+  deletedAt?: number;
+  /** User who created this variant */
+  createdBy?: string;
+}
+
+/**
+ * Media variant with resolved storage URL.
+ */
+export interface MediaVariantWithUrl extends MediaVariant {
+  /** Resolved URL for the variant file */
+  url: string | null;
+}
 
 // =============================================================================
 // Content Type
@@ -426,6 +2115,68 @@ export interface ContentVersion {
 }
 
 // =============================================================================
+// Version Comparison Types
+// =============================================================================
+
+/**
+ * Type of change detected in a field comparison.
+ */
+export type FieldChangeType = "added" | "removed" | "modified" | "unchanged";
+
+/**
+ * Represents a change in a single field between two versions.
+ */
+export interface FieldChange {
+  /** The field name */
+  field: string;
+  /** Type of change */
+  changeType: FieldChangeType;
+  /** Value in the older version (undefined if field was added) */
+  oldValue?: unknown;
+  /** Value in the newer version (undefined if field was removed) */
+  newValue?: unknown;
+}
+
+/**
+ * Result of comparing two content versions.
+ */
+export interface VersionComparison {
+  /** The older version being compared */
+  fromVersion: ContentVersion;
+  /** The newer version being compared */
+  toVersion: ContentVersion;
+  /** List of field-level changes */
+  changes: FieldChange[];
+  /** Whether the slug changed between versions */
+  slugChanged: boolean;
+  /** Whether the status changed between versions */
+  statusChanged: boolean;
+  /** Summary statistics */
+  summary: {
+    /** Number of fields added */
+    fieldsAdded: number;
+    /** Number of fields removed */
+    fieldsRemoved: number;
+    /** Number of fields modified */
+    fieldsModified: number;
+    /** Total number of changes */
+    totalChanges: number;
+  };
+}
+
+/**
+ * Options for version history queries.
+ */
+export interface VersionHistoryOptions {
+  /** The content entry ID to get history for */
+  entryId: string;
+  /** Only include published versions */
+  publishedOnly?: boolean;
+  /** Pagination options */
+  paginationOpts: PaginationOpts;
+}
+
+// =============================================================================
 // Media Asset
 // =============================================================================
 
@@ -528,12 +2279,15 @@ export interface PaginationResult<T> {
 /**
  * Standard Convex pagination options.
  * Pass this to paginated queries.
+ *
+ * Note: The cursor field is required by the Convex runtime but can be null
+ * for the first page. If you don't have a cursor, pass `null` explicitly.
  */
 export interface PaginationOpts {
   /** Number of items to fetch per page */
   numItems: number;
-  /** Cursor from previous page's continueCursor (omit for first page) */
-  cursor?: string | null;
+  /** Cursor from previous page's continueCursor (pass null for first page) */
+  cursor: string | null;
 }
 
 // =============================================================================
@@ -571,6 +2325,71 @@ export interface ContentQueryOptions {
   locale?: string;
   search?: string;
   includeDeleted?: boolean;
+  /**
+   * Field-level filters to apply to content entry data.
+   * All filters are combined with AND logic.
+   *
+   * @example
+   * ```typescript
+   * // Filter by exact field value
+   * const { page } = await cms.contentEntries.list(ctx, {
+   *   contentTypeName: "products",
+   *   fieldFilters: [
+   *     { field: "category", operator: "eq", value: "electronics" }
+   *   ],
+   *   paginationOpts: { numItems: 10 },
+   * });
+   *
+   * // Filter by numeric range
+   * const { page } = await cms.contentEntries.list(ctx, {
+   *   contentTypeName: "products",
+   *   fieldFilters: [
+   *     { field: "price", operator: "gte", value: 100 },
+   *     { field: "price", operator: "lte", value: 500 }
+   *   ],
+   *   paginationOpts: { numItems: 10 },
+   * });
+   *
+   * // Filter by array contains
+   * const { page } = await cms.contentEntries.list(ctx, {
+   *   contentTypeName: "blog_posts",
+   *   fieldFilters: [
+   *     { field: "tags", operator: "contains", value: "featured" }
+   *   ],
+   *   paginationOpts: { numItems: 10 },
+   * });
+   * ```
+   */
+  fieldFilters?: FieldFilter[];
+  /**
+   * Field to sort results by.
+   * Can be a system field (e.g., "_creationTime", "firstPublishedAt") or
+   * a custom data field prefixed with "data." (e.g., "data.title", "data.price").
+   *
+   * @default "_creationTime"
+   *
+   * @example
+   * ```typescript
+   * // Sort by publish date
+   * sortField: "firstPublishedAt"
+   *
+   * // Sort by custom field
+   * sortField: "data.sortOrder"
+   * ```
+   */
+  sortField?: SortField;
+  /**
+   * Sort direction for results.
+   *
+   * @default "desc" (newest first)
+   *
+   * @example
+   * ```typescript
+   * sortDirection: "asc"  // Ascending (oldest/lowest first)
+   * sortDirection: "desc" // Descending (newest/highest first)
+   * ```
+   */
+  sortDirection?: SortDirection;
   /**
    * Pagination options using standard Convex format.
    * Compatible with usePaginatedQuery hook.

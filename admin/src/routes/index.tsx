@@ -1,10 +1,18 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { useQuery } from 'convex/react'
+import { api } from '../../convex/_generated/api'
 
 export const Route = createFileRoute('/')({
   component: DashboardPage,
 })
 
 function DashboardPage() {
+  const stats = useQuery(api.stats.getDashboardStats)
+
+  // Determine loading and error states
+  const isLoading = stats === undefined
+  const hasError = stats === null
+
   return (
     <div className="page dashboard-page">
       <header className="page-header">
@@ -44,10 +52,26 @@ function DashboardPage() {
       <section className="dashboard-section">
         <h2>Quick Stats</h2>
         <div className="stats-grid">
-          <StatCard label="Content Types" value="—" />
-          <StatCard label="Content Entries" value="—" />
-          <StatCard label="Media Assets" value="—" />
-          <StatCard label="Published" value="—" />
+          <StatCard
+            label="Content Types"
+            value={isLoading ? '...' : hasError ? '—' : String(stats.contentTypes)}
+            isLoading={isLoading}
+          />
+          <StatCard
+            label="Content Entries"
+            value={isLoading ? '...' : hasError ? '—' : String(stats.contentEntries)}
+            isLoading={isLoading}
+          />
+          <StatCard
+            label="Media Assets"
+            value={isLoading ? '...' : hasError ? '—' : String(stats.mediaAssets)}
+            isLoading={isLoading}
+          />
+          <StatCard
+            label="Published"
+            value={isLoading ? '...' : hasError ? '—' : String(stats.published)}
+            isLoading={isLoading}
+          />
         </div>
       </section>
     </div>
@@ -74,9 +98,17 @@ function DashboardCard({
   )
 }
 
-function StatCard({ label, value }: { label: string; value: string }) {
+function StatCard({
+  label,
+  value,
+  isLoading = false,
+}: {
+  label: string
+  value: string
+  isLoading?: boolean
+}) {
   return (
-    <div className="stat-card">
+    <div className={`stat-card${isLoading ? ' stat-card-loading' : ''}`}>
       <span className="stat-value">{value}</span>
       <span className="stat-label">{label}</span>
     </div>
