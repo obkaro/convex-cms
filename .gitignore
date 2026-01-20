@@ -38,7 +38,9 @@ playwright-report/
 
 # Automaker artifacts
 .automaker/events/
+.automaker/features/
 .automaker/features/**/*.bak*
+.automaker/features/**/*.json*
 .automaker/features/**/agent-output.md
 
 # Logs

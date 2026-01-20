@@ -20,7 +20,9 @@ export type FieldType =
   | 'media'
   | 'json'
   | 'select'
-  | 'multiSelect';
+  | 'multiSelect'
+  | 'tags'
+  | 'category';
 
 /**
  * Select option for select/multiSelect fields.
@@ -62,6 +64,15 @@ export interface FieldOptions {
   // Rich text fields
   allowedBlocks?: string[];
   allowedMarks?: string[];
+
+  // Tag fields
+  taxonomyId?: string;
+  allowCreate?: boolean;
+  maxTags?: number;
+  minTags?: number;
+
+  // Category fields
+  allowMultiple?: boolean;
 }
 
 /**

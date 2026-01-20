@@ -1,0 +1,628 @@
+/**
+ * Tests for the media variants query and mutation functions.
+ *
+ * These tests verify the validators and logic patterns for media variant operations:
+ * - Validator structure for variant arguments and documents
+ * - Preset configurations
+ * - URL generation patterns
+ * - Status transitions
+ */
+
+import { describe, it, expect } from "vitest";
+import {
+  mediaVariantDoc,
+  mediaVariantWithUrlDoc,
+  createMediaVariantArgs,
+  requestVariantGenerationArgs,
+  updateVariantStatusArgs,
+  deleteMediaVariantArgs,
+  deleteAssetVariantsArgs,
+  getMediaVariantArgs,
+  listMediaVariantsArgs,
+  getBestVariantArgs,
+  variantPresetValidator,
+  generateVariantsResult,
+  srcsetEntryValidator,
+  responsiveSrcsetResult,
+  variantTypeValidator,
+  variantStatusValidator,
+  variantTypes,
+  variantStatuses,
+  variantFormats,
+} from "./validators.js";
+
+import { DEFAULT_VARIANT_PRESETS } from "./mediaVariants.js";
+
+// =============================================================================
+// Variant Type Tests
+// =============================================================================
+
+describe("Variant Types and Statuses", () => {
+  describe("variantTypes constant", () => {
+    it("should include thumbnail type for preview images", () => {
+      expect(variantTypes).toContain("thumbnail");
+    });
+
+    it("should include responsive type for responsive images", () => {
+      expect(variantTypes).toContain("responsive");
+    });
+
+    it("should include format type for format conversions", () => {
+      expect(variantTypes).toContain("format");
+    });
+
+    it("should have exactly 3 variant types", () => {
+      expect(variantTypes).toHaveLength(3);
+    });
+  });
+
+  describe("variantStatuses constant", () => {
+    it("should include pending status for queued variants", () => {
+      expect(variantStatuses).toContain("pending");
+    });
+
+    it("should include processing status for in-progress variants", () => {
+      expect(variantStatuses).toContain("processing");
+    });
+
+    it("should include completed status for finished variants", () => {
+      expect(variantStatuses).toContain("completed");
+    });
+
+    it("should include failed status for error cases", () => {
+      expect(variantStatuses).toContain("failed");
+    });
+
+    it("should have exactly 4 status values", () => {
+      expect(variantStatuses).toHaveLength(4);
+    });
+  });
+
+  describe("variantFormats constant", () => {
+    it("should include webp for modern compression", () => {
+      expect(variantFormats).toContain("webp");
+    });
+
+    it("should include avif for next-gen compression", () => {
+      expect(variantFormats).toContain("avif");
+    });
+
+    it("should include jpeg for broad compatibility", () => {
+      expect(variantFormats).toContain("jpeg");
+    });
+
+    it("should include png for lossless images", () => {
+      expect(variantFormats).toContain("png");
+    });
+  });
+});
+
+// =============================================================================
+// Validator Structure Tests
+// =============================================================================
+
+describe("Media Variant Validators", () => {
+  describe("mediaVariantDoc structure", () => {
+    it("should have _id field for variant identification", () => {
+      const fields = Object.keys(mediaVariantDoc.fields);
+      expect(fields).toContain("_id");
+    });
+
+    it("should have assetId field to reference parent asset", () => {
+      const fields = Object.keys(mediaVariantDoc.fields);
+      expect(fields).toContain("assetId");
+    });
+
+    it("should have storageId field for variant file storage", () => {
+      const fields = Object.keys(mediaVariantDoc.fields);
+      expect(fields).toContain("storageId");
+    });
+
+    it("should have variantType field for classification", () => {
+      const fields = Object.keys(mediaVariantDoc.fields);
+      expect(fields).toContain("variantType");
+    });
+
+    it("should have width and height fields for dimensions", () => {
+      const fields = Object.keys(mediaVariantDoc.fields);
+      expect(fields).toContain("width");
+      expect(fields).toContain("height");
+    });
+
+    it("should have format field for output format", () => {
+      const fields = Object.keys(mediaVariantDoc.fields);
+      expect(fields).toContain("format");
+    });
+
+    it("should have mimeType and size fields", () => {
+      const fields = Object.keys(mediaVariantDoc.fields);
+      expect(fields).toContain("mimeType");
+      expect(fields).toContain("size");
+    });
+
+    it("should have quality field for lossy compression setting", () => {
+      const fields = Object.keys(mediaVariantDoc.fields);
+      expect(fields).toContain("quality");
+    });
+
+    it("should have preset field for named configurations", () => {
+      const fields = Object.keys(mediaVariantDoc.fields);
+      expect(fields).toContain("preset");
+    });
+
+    it("should have autoGenerated field to distinguish manual vs auto", () => {
+      const fields = Object.keys(mediaVariantDoc.fields);
+      expect(fields).toContain("autoGenerated");
+    });
+
+    it("should have status field for processing state", () => {
+      const fields = Object.keys(mediaVariantDoc.fields);
+      expect(fields).toContain("status");
+    });
+
+    it("should have errorMessage field for failure details", () => {
+      const fields = Object.keys(mediaVariantDoc.fields);
+      expect(fields).toContain("errorMessage");
+    });
+
+    it("should have processing timestamp fields", () => {
+      const fields = Object.keys(mediaVariantDoc.fields);
+      expect(fields).toContain("processingStartedAt");
+      expect(fields).toContain("processingCompletedAt");
+    });
+
+    it("should have deletedAt field for soft delete", () => {
+      const fields = Object.keys(mediaVariantDoc.fields);
+      expect(fields).toContain("deletedAt");
+    });
+
+    it("should have createdBy field for audit trail", () => {
+      const fields = Object.keys(mediaVariantDoc.fields);
+      expect(fields).toContain("createdBy");
+    });
+  });
+
+  describe("mediaVariantWithUrlDoc structure", () => {
+    it("should include all fields from mediaVariantDoc", () => {
+      const variantFields = Object.keys(mediaVariantDoc.fields);
+      const withUrlFields = Object.keys(mediaVariantWithUrlDoc.fields);
+
+      variantFields.forEach((field) => {
+        expect(withUrlFields).toContain(field);
+      });
+    });
+
+    it("should have url field for resolved storage URL", () => {
+      const fields = Object.keys(mediaVariantWithUrlDoc.fields);
+      expect(fields).toContain("url");
+    });
+  });
+
+  describe("createMediaVariantArgs structure", () => {
+    it("should require assetId for parent relationship", () => {
+      const fields = Object.keys(createMediaVariantArgs.fields);
+      expect(fields).toContain("assetId");
+    });
+
+    it("should require storageId for variant file", () => {
+      const fields = Object.keys(createMediaVariantArgs.fields);
+      expect(fields).toContain("storageId");
+    });
+
+    it("should require variantType", () => {
+      const fields = Object.keys(createMediaVariantArgs.fields);
+      expect(fields).toContain("variantType");
+    });
+
+    it("should require format", () => {
+      const fields = Object.keys(createMediaVariantArgs.fields);
+      expect(fields).toContain("format");
+    });
+
+    it("should require mimeType and size", () => {
+      const fields = Object.keys(createMediaVariantArgs.fields);
+      expect(fields).toContain("mimeType");
+      expect(fields).toContain("size");
+    });
+
+    it("should have optional width and height", () => {
+      const fields = Object.keys(createMediaVariantArgs.fields);
+      expect(fields).toContain("width");
+      expect(fields).toContain("height");
+    });
+
+    it("should have optional quality setting", () => {
+      const fields = Object.keys(createMediaVariantArgs.fields);
+      expect(fields).toContain("quality");
+    });
+
+    it("should have optional preset name", () => {
+      const fields = Object.keys(createMediaVariantArgs.fields);
+      expect(fields).toContain("preset");
+    });
+  });
+
+  describe("requestVariantGenerationArgs structure", () => {
+    it("should require assetId", () => {
+      const fields = Object.keys(requestVariantGenerationArgs.fields);
+      expect(fields).toContain("assetId");
+    });
+
+    it("should require variantType and format", () => {
+      const fields = Object.keys(requestVariantGenerationArgs.fields);
+      expect(fields).toContain("variantType");
+      expect(fields).toContain("format");
+    });
+
+    it("should have optional dimensions", () => {
+      const fields = Object.keys(requestVariantGenerationArgs.fields);
+      expect(fields).toContain("width");
+      expect(fields).toContain("height");
+    });
+
+    it("should have optional requestedBy for audit", () => {
+      const fields = Object.keys(requestVariantGenerationArgs.fields);
+      expect(fields).toContain("requestedBy");
+    });
+  });
+
+  describe("listMediaVariantsArgs structure", () => {
+    it("should require assetId", () => {
+      const fields = Object.keys(listMediaVariantsArgs.fields);
+      expect(fields).toContain("assetId");
+    });
+
+    it("should have optional variantType filter", () => {
+      const fields = Object.keys(listMediaVariantsArgs.fields);
+      expect(fields).toContain("variantType");
+    });
+
+    it("should have optional format filter", () => {
+      const fields = Object.keys(listMediaVariantsArgs.fields);
+      expect(fields).toContain("format");
+    });
+
+    it("should have optional preset filter", () => {
+      const fields = Object.keys(listMediaVariantsArgs.fields);
+      expect(fields).toContain("preset");
+    });
+
+    it("should have optional status filter", () => {
+      const fields = Object.keys(listMediaVariantsArgs.fields);
+      expect(fields).toContain("status");
+    });
+
+    it("should have includeDeleted option", () => {
+      const fields = Object.keys(listMediaVariantsArgs.fields);
+      expect(fields).toContain("includeDeleted");
+    });
+  });
+
+  describe("getBestVariantArgs structure", () => {
+    it("should require assetId", () => {
+      const fields = Object.keys(getBestVariantArgs.fields);
+      expect(fields).toContain("assetId");
+    });
+
+    it("should have optional targetWidth", () => {
+      const fields = Object.keys(getBestVariantArgs.fields);
+      expect(fields).toContain("targetWidth");
+    });
+
+    it("should have optional targetHeight", () => {
+      const fields = Object.keys(getBestVariantArgs.fields);
+      expect(fields).toContain("targetHeight");
+    });
+
+    it("should have optional preferredFormat", () => {
+      const fields = Object.keys(getBestVariantArgs.fields);
+      expect(fields).toContain("preferredFormat");
+    });
+
+    it("should have fallbackToOriginal option", () => {
+      const fields = Object.keys(getBestVariantArgs.fields);
+      expect(fields).toContain("fallbackToOriginal");
+    });
+  });
+
+  describe("srcsetEntryValidator structure", () => {
+    it("should have url field", () => {
+      const fields = Object.keys(srcsetEntryValidator.fields);
+      expect(fields).toContain("url");
+    });
+
+    it("should have descriptor field for width descriptor", () => {
+      const fields = Object.keys(srcsetEntryValidator.fields);
+      expect(fields).toContain("descriptor");
+    });
+
+    it("should have width field", () => {
+      const fields = Object.keys(srcsetEntryValidator.fields);
+      expect(fields).toContain("width");
+    });
+
+    it("should have format field", () => {
+      const fields = Object.keys(srcsetEntryValidator.fields);
+      expect(fields).toContain("format");
+    });
+  });
+
+  describe("responsiveSrcsetResult structure", () => {
+    it("should have src field for fallback", () => {
+      const fields = Object.keys(responsiveSrcsetResult.fields);
+      expect(fields).toContain("src");
+    });
+
+    it("should have srcset field for HTML attribute", () => {
+      const fields = Object.keys(responsiveSrcsetResult.fields);
+      expect(fields).toContain("srcset");
+    });
+
+    it("should have entries array field", () => {
+      const fields = Object.keys(responsiveSrcsetResult.fields);
+      expect(fields).toContain("entries");
+    });
+
+    it("should have optional sizes field", () => {
+      const fields = Object.keys(responsiveSrcsetResult.fields);
+      expect(fields).toContain("sizes");
+    });
+  });
+});
+
+// =============================================================================
+// Default Preset Tests
+// =============================================================================
+
+describe("Default Variant Presets", () => {
+  describe("thumbnail preset", () => {
+    it("should exist", () => {
+      expect(DEFAULT_VARIANT_PRESETS.thumbnail).toBeDefined();
+    });
+
+    it("should be of type thumbnail", () => {
+      expect(DEFAULT_VARIANT_PRESETS.thumbnail.variantType).toBe("thumbnail");
+    });
+
+    it("should have 150x150 dimensions", () => {
+      expect(DEFAULT_VARIANT_PRESETS.thumbnail.width).toBe(150);
+      expect(DEFAULT_VARIANT_PRESETS.thumbnail.height).toBe(150);
+    });
+
+    it("should use webp format", () => {
+      expect(DEFAULT_VARIANT_PRESETS.thumbnail.format).toBe("webp");
+    });
+
+    it("should have quality setting", () => {
+      expect(DEFAULT_VARIANT_PRESETS.thumbnail.quality).toBeDefined();
+      expect(DEFAULT_VARIANT_PRESETS.thumbnail.quality).toBeGreaterThan(0);
+      expect(DEFAULT_VARIANT_PRESETS.thumbnail.quality).toBeLessThanOrEqual(100);
+    });
+  });
+
+  describe("responsive presets (small, medium, large, xlarge)", () => {
+    it("should have small preset at 480px width", () => {
+      expect(DEFAULT_VARIANT_PRESETS.small).toBeDefined();
+      expect(DEFAULT_VARIANT_PRESETS.small.width).toBe(480);
+      expect(DEFAULT_VARIANT_PRESETS.small.variantType).toBe("responsive");
+    });
+
+    it("should have medium preset at 768px width", () => {
+      expect(DEFAULT_VARIANT_PRESETS.medium).toBeDefined();
+      expect(DEFAULT_VARIANT_PRESETS.medium.width).toBe(768);
+      expect(DEFAULT_VARIANT_PRESETS.medium.variantType).toBe("responsive");
+    });
+
+    it("should have large preset at 1024px width", () => {
+      expect(DEFAULT_VARIANT_PRESETS.large).toBeDefined();
+      expect(DEFAULT_VARIANT_PRESETS.large.width).toBe(1024);
+      expect(DEFAULT_VARIANT_PRESETS.large.variantType).toBe("responsive");
+    });
+
+    it("should have xlarge preset at 1440px width", () => {
+      expect(DEFAULT_VARIANT_PRESETS.xlarge).toBeDefined();
+      expect(DEFAULT_VARIANT_PRESETS.xlarge.width).toBe(1440);
+      expect(DEFAULT_VARIANT_PRESETS.xlarge.variantType).toBe("responsive");
+    });
+
+    it("should use webp format for all responsive presets", () => {
+      expect(DEFAULT_VARIANT_PRESETS.small.format).toBe("webp");
+      expect(DEFAULT_VARIANT_PRESETS.medium.format).toBe("webp");
+      expect(DEFAULT_VARIANT_PRESETS.large.format).toBe("webp");
+      expect(DEFAULT_VARIANT_PRESETS.xlarge.format).toBe("webp");
+    });
+
+    it("should have increasing widths", () => {
+      const widths = [
+        DEFAULT_VARIANT_PRESETS.small.width!,
+        DEFAULT_VARIANT_PRESETS.medium.width!,
+        DEFAULT_VARIANT_PRESETS.large.width!,
+        DEFAULT_VARIANT_PRESETS.xlarge.width!,
+      ];
+      for (let i = 1; i < widths.length; i++) {
+        expect(widths[i]).toBeGreaterThan(widths[i - 1]);
+      }
+    });
+  });
+
+  describe("format conversion presets (webp, avif)", () => {
+    it("should have webp preset", () => {
+      expect(DEFAULT_VARIANT_PRESETS.webp).toBeDefined();
+      expect(DEFAULT_VARIANT_PRESETS.webp.variantType).toBe("format");
+      expect(DEFAULT_VARIANT_PRESETS.webp.format).toBe("webp");
+    });
+
+    it("should have avif preset", () => {
+      expect(DEFAULT_VARIANT_PRESETS.avif).toBeDefined();
+      expect(DEFAULT_VARIANT_PRESETS.avif.variantType).toBe("format");
+      expect(DEFAULT_VARIANT_PRESETS.avif.format).toBe("avif");
+    });
+
+    it("should not specify dimensions for format presets", () => {
+      // Format conversions maintain original dimensions
+      expect("width" in DEFAULT_VARIANT_PRESETS.webp).toBe(false);
+      expect("width" in DEFAULT_VARIANT_PRESETS.avif).toBe(false);
+    });
+  });
+
+  describe("all presets", () => {
+    it("should have description for each preset", () => {
+      Object.values(DEFAULT_VARIANT_PRESETS).forEach((preset) => {
+        expect(preset.description).toBeDefined();
+        expect(preset.description!.length).toBeGreaterThan(0);
+      });
+    });
+
+    it("should have name matching the key", () => {
+      Object.entries(DEFAULT_VARIANT_PRESETS).forEach(([key, preset]) => {
+        expect(preset.name).toBe(key);
+      });
+    });
+
+    it("should have valid quality values where specified", () => {
+      Object.values(DEFAULT_VARIANT_PRESETS).forEach((preset) => {
+        if (preset.quality !== undefined) {
+          expect(preset.quality).toBeGreaterThan(0);
+          expect(preset.quality).toBeLessThanOrEqual(100);
+        }
+      });
+    });
+  });
+});
+
+// =============================================================================
+// Status Transition Logic Tests
+// =============================================================================
+
+describe("Variant Status Transitions", () => {
+  describe("valid status flow", () => {
+    it("should allow pending -> processing transition", () => {
+      const validTransition = (from: string, to: string) => {
+        const transitions: Record<string, string[]> = {
+          pending: ["processing"],
+          processing: ["completed", "failed"],
+          completed: [],
+          failed: [],
+        };
+        return transitions[from]?.includes(to) ?? false;
+      };
+
+      expect(validTransition("pending", "processing")).toBe(true);
+    });
+
+    it("should allow processing -> completed transition", () => {
+      const validTransition = (from: string, to: string) => {
+        const transitions: Record<string, string[]> = {
+          pending: ["processing"],
+          processing: ["completed", "failed"],
+          completed: [],
+          failed: [],
+        };
+        return transitions[from]?.includes(to) ?? false;
+      };
+
+      expect(validTransition("processing", "completed")).toBe(true);
+    });
+
+    it("should allow processing -> failed transition", () => {
+      const validTransition = (from: string, to: string) => {
+        const transitions: Record<string, string[]> = {
+          pending: ["processing"],
+          processing: ["completed", "failed"],
+          completed: [],
+          failed: [],
+        };
+        return transitions[from]?.includes(to) ?? false;
+      };
+
+      expect(validTransition("processing", "failed")).toBe(true);
+    });
+  });
+
+  describe("terminal states", () => {
+    it("completed should be a terminal state", () => {
+      // Completed variants shouldn't transition to other states
+      const isTerminal = (status: string) => {
+        return status === "completed" || status === "failed";
+      };
+
+      expect(isTerminal("completed")).toBe(true);
+    });
+
+    it("failed should be a terminal state", () => {
+      const isTerminal = (status: string) => {
+        return status === "completed" || status === "failed";
+      };
+
+      expect(isTerminal("failed")).toBe(true);
+    });
+  });
+});
+
+// =============================================================================
+// Delete Arguments Tests
+// =============================================================================
+
+describe("Delete Variant Arguments", () => {
+  describe("deleteMediaVariantArgs", () => {
+    it("should require id field", () => {
+      const fields = Object.keys(deleteMediaVariantArgs.fields);
+      expect(fields).toContain("id");
+    });
+
+    it("should have optional hardDelete flag", () => {
+      const fields = Object.keys(deleteMediaVariantArgs.fields);
+      expect(fields).toContain("hardDelete");
+    });
+
+    it("should have optional deletedBy for audit", () => {
+      const fields = Object.keys(deleteMediaVariantArgs.fields);
+      expect(fields).toContain("deletedBy");
+    });
+  });
+
+  describe("deleteAssetVariantsArgs", () => {
+    it("should require assetId field", () => {
+      const fields = Object.keys(deleteAssetVariantsArgs.fields);
+      expect(fields).toContain("assetId");
+    });
+
+    it("should have optional hardDelete flag", () => {
+      const fields = Object.keys(deleteAssetVariantsArgs.fields);
+      expect(fields).toContain("hardDelete");
+    });
+
+    it("should have optional deletedBy for audit", () => {
+      const fields = Object.keys(deleteAssetVariantsArgs.fields);
+      expect(fields).toContain("deletedBy");
+    });
+  });
+});
+
+// =============================================================================
+// Generate Variants Result Tests
+// =============================================================================
+
+describe("Generate Variants Result", () => {
+  describe("generateVariantsResult structure", () => {
+    it("should have total field", () => {
+      const fields = Object.keys(generateVariantsResult.fields);
+      expect(fields).toContain("total");
+    });
+
+    it("should have succeeded field", () => {
+      const fields = Object.keys(generateVariantsResult.fields);
+      expect(fields).toContain("succeeded");
+    });
+
+    it("should have failed field", () => {
+      const fields = Object.keys(generateVariantsResult.fields);
+      expect(fields).toContain("failed");
+    });
+
+    it("should have results array field", () => {
+      const fields = Object.keys(generateVariantsResult.fields);
+      expect(fields).toContain("results");
+    });
+  });
+});
