@@ -1,0 +1,79 @@
+name: TS2589 Prevention Checks
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  type-safety-checks:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript compilation check
+        run: npx tsc --noEmit
+        continue-on-error: false
+
+      - name: Run ESLint
+        run: npx eslint "convex/**/*.ts"
+        continue-on-error: false
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Audit Convex schema
+        run: |
+          if [ -f "convex/schema.ts" ]; then
+            python3 scripts/audit_schema.py convex/schema.ts
+          else
+            echo "No schema.ts found, skipping schema audit"
+          fi
+
+      - name: Check type complexity
+        run: |
+          for file in convex/*.ts; do
+            if [ -f "$file" ]; then
+              echo "Checking complexity: $file"
+              python3 scripts/check_complexity.py "$file" || exit 1
+            fi
+          done
+
+      - name: Verify no TS2589 errors
+        run: |
+          output=$(npx tsc --noEmit 2>&1 || true)
+          if echo "$output" | grep -q "TS2589"; then
+            echo "❌ TS2589 errors detected!"
+            echo "$output" | grep "TS2589"
+            exit 1
+          else
+            echo "✅ No TS2589 errors found"
+          fi
+
+      - name: Generate complexity report
+        if: always()
+        run: |
+          mkdir -p reports
+          python3 scripts/check_complexity.py convex/schema.ts > reports/complexity.txt || true
+          python3 scripts/audit_schema.py convex/schema.ts > reports/audit.txt || true
+
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: ts2589-reports
+          path: reports/

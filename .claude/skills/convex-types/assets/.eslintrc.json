@@ -1,0 +1,35 @@
+{
+  "extends": ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
+  "parser": "@typescript-eslint/parser",
+  "plugins": ["@typescript-eslint"],
+  "root": true,
+  "rules": {
+    "@typescript-eslint/explicit-function-return-type": "error",
+    "@typescript-eslint/explicit-module-boundary-types": "error",
+    "@typescript-eslint/no-explicit-any": "warn",
+
+    "@typescript-eslint/ban-types": [
+      "error",
+      {
+        "types": {
+          "{}": "Use Record<string, unknown> instead",
+          "object": "Use Record<string, unknown> instead"
+        },
+        "extendDefaults": true
+      }
+    ],
+
+    "max-depth": ["error", 3],
+    "max-lines-per-function": ["warn", { "max": 50 }],
+    "complexity": ["warn", 10]
+  },
+  "overrides": [
+    {
+      "files": ["convex/**/*.ts"],
+      "rules": {
+        "@typescript-eslint/explicit-function-return-type": "error",
+        "max-lines": ["error", { "max": 300 }]
+      }
+    }
+  ]
+}

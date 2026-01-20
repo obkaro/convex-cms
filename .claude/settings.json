@@ -1,0 +1,54 @@
+{
+  "includeCoAuthoredBy": true,
+  "env": {
+    "INSIDE_CLAUDE_CODE": "1",
+    "BASH_DEFAULT_TIMEOUT_MS": "300000",
+    "BASH_MAX_TIMEOUT_MS": "600000"
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|MultiEdit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "# Prevent editing on main branch\n[ \"$(git branch --show-current)\" != \"main\" ] || { echo '{\"block\": true, \"message\": \"Cannot edit files on main branch. Create a feature branch first.\"}' >&2; exit 2; }",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|MultiEdit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "# Auto-format JS/TS files with Prettier\nif [[ \"$CLAUDE_TOOL_INPUT_FILE_PATH\" =~ \\.(js|jsx|ts|tsx)$ ]]; then\n  file_path=\"${CLAUDE_TOOL_INPUT_FILE_PATH}\"\n  npx prettier --write \"$file_path\" 2>&1\n  exit_code=$?\n  if [ $exit_code -ne 0 ]; then\n    echo '{\"feedback\": \"Formatting failed. Check file for syntax errors.\"}' >&2\n    exit 1\n  else\n    echo '{\"feedback\": \"Formatting applied.\", \"suppressOutput\": true}'\n  fi\nfi",
+            "timeout": 30
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|MultiEdit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "# Auto-install dependencies when package.json changes\nif [[ \"$CLAUDE_TOOL_INPUT_FILE_PATH\" =~ package\\.json$ ]]; then\n  echo '{\"feedback\": \"Installing dependencies...\"}' >&2\n  npm install >/dev/null 2>&1 && echo '{\"feedback\": \"Dependencies installed.\", \"suppressOutput\": true}' || {\n    echo '{\"feedback\": \"Failed to install dependencies.\"}' >&2\n    exit 1\n  }\nfi",
+            "timeout": 120
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|MultiEdit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "# Regenerate Convex types after component changes\nif [[ \"$CLAUDE_TOOL_INPUT_FILE_PATH\" =~ ^.*/src/component/.*\\.(ts|tsx)$ ]]; then\n  echo '{\"feedback\": \"Regenerating Convex component types...\"}' >&2\n  output=$(npx convex codegen --component-dir ./src/component 2>&1)\n  exit_code=$?\n  if [ $exit_code -eq 0 ]; then\n    echo '{\"feedback\": \"Convex codegen completed.\", \"suppressOutput\": true}'\n  else\n    errors=$(echo \"$output\" | grep -E \"error|Error\" | head -10)\n    if [ -n \"$errors\" ]; then\n      echo '{\"feedback\": \"Convex codegen errors found:\"}' >&2\n      echo \"$errors\" >&2\n    fi\n  fi\n  # Non-blocking\n  exit 0\nfi",
+            "timeout": 60
+          }
+        ]
+      }
+    ]
+  }
+}

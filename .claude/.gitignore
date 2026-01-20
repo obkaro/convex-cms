@@ -1,0 +1,8 @@
+# Local settings (user-specific)
+settings.local.json
+
+# Ralph loop state (transient)
+ralph-loop.local.md
+
+# MCP local config (user-specific credentials)
+mcp.local.json
