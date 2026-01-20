@@ -1,0 +1,24 @@
+{
+	"compilerOptions": {
+		"target": "ES2022",
+		"lib": ["ES2022", "DOM", "DOM.Iterable"],
+		"types": ["vite/client"],
+		"module": "ESNext",
+		"moduleResolution": "bundler",
+		"strict": true,
+		"esModuleInterop": true,
+		"skipLibCheck": true,
+		"forceConsistentCasingInFileNames": true,
+		"resolveJsonModule": true,
+		"isolatedModules": true,
+		"noEmit": true,
+		"jsx": "react-jsx",
+		"paths": {
+			"~/*": ["./src/*"],
+			"@convex-cms/core": ["../src/client/index.ts"],
+			"@convex-cms/core/*": ["../src/client/*"]
+		}
+	},
+	"include": ["src", "convex"],
+	"exclude": ["node_modules", "dist"]
+}

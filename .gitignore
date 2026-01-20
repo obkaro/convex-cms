@@ -1,0 +1,50 @@
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Build outputs
+dist/
+*.tsbuildinfo
+
+# Convex generated files
+**/convex/_generated/
+
+# TanStack Start generated files
+**/routeTree.gen.ts
+**/.vinxi/
+**/.output/
+
+# Test outputs
+test-results/
+coverage/
+playwright-report/
+*.lcov
+
+# Environment variables
+.env
+.env.local
+.env*.local
+
+# IDE / Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Automaker artifacts
+.automaker/events/
+.automaker/features/**/*.bak*
+.automaker/features/**/agent-output.md
+
+# Logs
+logs/
+*.log
+
+# Temporary files
+*.tmp
+.cache/
