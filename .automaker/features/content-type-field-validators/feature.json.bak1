@@ -1,0 +1,12 @@
+{
+  "id": "content-type-field-validators",
+  "category": "Core",
+  "title": "Field Type Validators",
+  "description": "Create Convex validators for each supported field type (text, rich text, number, boolean, date, reference, media). These validators ensure content data matches the expected field type schema.",
+  "status": "backlog",
+  "priority": 1,
+  "complexity": "moderate",
+  "dependencies": [],
+  "createdAt": "2026-01-20T00:37:38.734Z",
+  "updatedAt": "2026-01-20T00:37:38.734Z"
+}

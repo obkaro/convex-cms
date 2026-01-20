@@ -1,0 +1,12 @@
+{
+  "id": "admin-publish-controls",
+  "category": "Admin UI",
+  "title": "Publish and Status Controls",
+  "description": "UI controls for publishing, unpublishing, and viewing entry status. Display current status badge, publish/unpublish buttons with confirmation, and last published timestamp.",
+  "status": "backlog",
+  "priority": 1,
+  "complexity": "simple",
+  "dependencies": ["admin-entry-editor", "content-publish", "content-unpublish"],
+  "createdAt": "2026-01-20T01:00:00.000Z",
+  "updatedAt": "2026-01-20T01:00:00.000Z"
+}

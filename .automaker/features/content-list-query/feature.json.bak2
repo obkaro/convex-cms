@@ -1,0 +1,14 @@
+{
+  "id": "content-list-query",
+  "category": "Querying",
+  "title": "List Content Entries Query",
+  "description": "Query to list content entries with type filtering. Provides base query functionality for the content querying system.",
+  "status": "backlog",
+  "priority": 1,
+  "complexity": "simple",
+  "dependencies": [
+    "content-entry-get"
+  ],
+  "createdAt": "2026-01-20T00:37:38.752Z",
+  "updatedAt": "2026-01-20T00:37:38.752Z"
+}

@@ -1,0 +1,15 @@
+{
+  "id": "rag-content-indexer",
+  "category": "AI Integration",
+  "title": "RAG Content Index Integration",
+  "description": "Background job system to automatically index published content for RAG pipelines. Triggers on content publish events and maintains sync between CMS content and vector indexes.",
+  "status": "backlog",
+  "priority": 2,
+  "complexity": "complex",
+  "dependencies": [
+    "rag-content-chunker",
+    "event-emitter"
+  ],
+  "createdAt": "2026-01-20T00:42:03.888Z",
+  "updatedAt": "2026-01-20T00:42:03.888Z"
+}

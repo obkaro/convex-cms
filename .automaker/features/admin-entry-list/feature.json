@@ -1,0 +1,12 @@
+{
+  "id": "admin-entry-list",
+  "category": "Admin UI",
+  "title": "Entry List with Filters",
+  "description": "Display entries for a content type in a table/list view. Include status filter (draft/published), basic search, pagination, and sorting. Show title, status, author, and dates. Link to entry editor.",
+  "status": "backlog",
+  "priority": 1,
+  "complexity": "moderate",
+  "dependencies": ["admin-content-type-list", "content-list-query", "content-filter-status"],
+  "createdAt": "2026-01-20T01:00:00.000Z",
+  "updatedAt": "2026-01-20T01:00:00.000Z"
+}

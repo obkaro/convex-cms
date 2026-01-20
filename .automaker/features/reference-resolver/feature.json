@@ -1,0 +1,15 @@
+{
+  "id": "reference-resolver",
+  "category": "Relations",
+  "title": "Reference Resolution",
+  "description": "Utility to resolve referenced content and media when fetching entries. Supports depth limiting and circular reference prevention.",
+  "status": "backlog",
+  "priority": 2,
+  "complexity": "complex",
+  "dependencies": [
+    "content-reference-field",
+    "media-reference-field"
+  ],
+  "createdAt": "2026-01-20T00:37:38.752Z",
+  "updatedAt": "2026-01-20T00:37:38.752Z"
+}

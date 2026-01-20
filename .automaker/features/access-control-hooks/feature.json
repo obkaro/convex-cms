@@ -1,0 +1,15 @@
+{
+  "id": "access-control-hooks",
+  "category": "Authorization",
+  "title": "Access Control Hook System",
+  "description": "Infrastructure for passing authorization function handles from parent app. Enables custom permission logic for all CMS operations.",
+  "status": "backlog",
+  "priority": 2,
+  "complexity": "complex",
+  "dependencies": [
+    "component-initialization"
+  ],
+  "createdAt": "2026-01-20T00:37:38.754Z",
+  "updatedAt": "2026-01-20T00:37:38.754Z",
+  "descriptionHistory": []
+}

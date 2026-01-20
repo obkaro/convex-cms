@@ -1,0 +1,14 @@
+{
+  "id": "media-folder-list",
+  "category": "Media",
+  "title": "List Media Folders",
+  "description": "Query to list media folders with optional parent filter. Returns folder tree structure for navigation.",
+  "status": "backlog",
+  "priority": 2,
+  "complexity": "simple",
+  "dependencies": [
+    "media-folder-create"
+  ],
+  "createdAt": "2026-01-20T00:37:38.748Z",
+  "updatedAt": "2026-01-20T00:37:38.748Z"
+}

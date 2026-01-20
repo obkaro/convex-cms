@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project_specification>
+  <project_name>convex-cms</project_name>
+
+  <overview>
+    A developer-first Convex Component for content management with a built-in React admin playground, flexible RBAC, and AI-ready architecture. This headless CMS runs entirely within a Convex backend, providing content modeling, versioning, publishing workflows, and media management through a sandboxed component architecture with isolated database tables and type-safe APIs.
+
+The component is designed for seamless integration with the Convex AI ecosystem - including @convex-dev/agent for AI-powered content operations, @convex-dev/rag for semantic search and retrieval-augmented generation, and collaborative editing components for real-time multi-user content authoring. By leveraging Convex&apos;s component architecture, it maintains strict API boundaries while enabling powerful composition with other Convex components.
+
+Key architectural goals:
+- Provide a complete headless CMS as a drop-in Convex component
+- Include a batteries-included Admin UI built with React and TanStack Start
+- Offer flexible RBAC with sensible defaults and customization hooks
+- Enable AI agents to create, query, and manage content programmatically through tool integrations
+- Support content retrieval for RAG pipelines with structured content chunks
+- Maintain real-time reactivity across all content queries
+- Design for AI-assisted development with clean, predictable patterns
+- Expose webhook/event systems for external AI pipeline integrations
+  </overview>
+
+  <technology_stack>
+    <technology>Convex (backend-as-a-service platform)</technology>
+    <technology>TypeScript</technology>
+    <technology>Convex Components Architecture (sandboxed component pattern)</technology>
+    <technology>Convex File Storage API (media asset storage)</technology>
+    <technology>Convex Validators (v.object, v.string, etc.)</technology>
+    <technology>Convex Search Indexes (full-text search)</technology>
+    <technology>convex-helpers (pagination, utilities)</technology>
+    <technology>convex-test (component testing)</technology>
+    <technology>Function Handles (cross-component callbacks)</technology>
+    <technology>@convex-dev/agent compatible (AI agent integration)</technology>
+    <technology>@convex-dev/rag compatible (semantic search integration)</technology>
+    <technology>React (Admin UI)</technology>
+    <technology>TanStack Start (Admin UI framework)</technology>
+    <technology>NPM (package distribution)</technology>
+  </technology_stack>
+
+  <core_capabilities>
+    <capability>Content Type Definition - Define custom content schemas with typed fields (text, rich text, number, boolean, date, reference, media) using Convex validators</capability>
+    <capability>Content CRUD Operations - Create, read, update, delete content entries with full validation against type schemas</capability>
+    <capability>Content Versioning - Track content history with version snapshots, rollback capabilities, and version comparison</capability>
+    <capability>Publishing Workflow - Draft/published state management with scheduled publishing support via Convex scheduler</capability>
+    <capability>Media Asset Management - Upload, store, and organize files using Convex File Storage with automatic metadata extraction</capability>
+    <capability>Slug Management - Automatic URL-safe slug generation with uniqueness validation per content type</capability>
+    <capability>Content Relations - Reference other content entries and media assets with typed relationships and depth-limited resolution</capability>
+    <capability>Content Querying - Filter, sort, and paginate content with reactive real-time updates using convex-helpers paginator</capability>
+    <capability>Full-Text Search - Search content entries across title and searchable fields using Convex search indexes</capability>
+    <capability>Localization Support - Multi-locale content with configurable fallback chains</capability>
+    <capability>Flexible RBAC - Built-in roles (admin, editor, author, viewer) with customizable permissions and override hooks for complex authorization logic</capability>
+    <capability>Access Control Hooks - Extensible authorization via function handles passed from parent app (since ctx.auth unavailable in components)</capability>
+    <capability>Event/Webhook System - Emit events on content changes for external integrations and AI pipeline triggers</capability>
+    <capability>Admin UI Playground - Pre-built React admin interface using TanStack Start for content management, media library, and publishing controls</capability>
+    <capability>AI Agent Integration - Expose tool-compatible APIs for @convex-dev/agent to manage content programmatically</capability>
+    <capability>RAG Pipeline Support - Structure content for retrieval-augmented generation with @convex-dev/rag compatibility</capability>
+  </core_capabilities>
+
+  <implemented_features>
+    <feature>
+      <name>Project Planning &amp; Feature Specification</name>
+      <description>Comprehensive feature breakdown with 50+ individual features organized by category (Content Types, Content Entries, Publishing, Versioning, Media, Relations, Querying, Localization, Authorization, Events, Client API)</description>
+      <file_locations>
+        <location>.automaker/app_spec.txt</location>
+        <location>.automaker/features/</location>
+      </file_locations>
+    </feature>
+    <feature>
+      <name>Convex Component Architecture Documentation</name>
+      <description>Reference documentation for authoring Convex components including function visibility, ID type handling, pagination strategies, function handles, and client wrapper patterns</description>
+      <file_locations>
+        <location>.automaker/context/convex-authoring-components.md</location>
+        <location>.automaker/context/convex-using-components.md</location>
+      </file_locations>
+    </feature>
+  </implemented_features>
+
+  <additional_requirements>
+    <requirement>Convex deployment required for backend hosting (convex.dev)</requirement>
+    <requirement>Parent application must handle authentication and pass user identifiers explicitly to component functions (ctx.auth unavailable in components)</requirement>
+    <requirement>Media uploads use Convex file storage (subject to Convex storage limits and pricing)</requirement>
+    <requirement>Environment variables must be passed as function arguments, not accessed via process.env inside component</requirement>
+    <requirement>Use convex-helpers paginator instead of built-in .paginate() for pagination within components</requirement>
+    <requirement>Content queries are reactive by default - consider caching strategies for high-traffic scenarios</requirement>
+    <requirement>Component isolation means no direct database access from parent - all operations through typed API functions</requirement>
+    <requirement>Function handles required for callback patterns (authorization hooks, event handlers)</requirement>
+    <requirement>For AI integration: Component APIs should be designed as tools for @convex-dev/agent consumption</requirement>
+    <requirement>For RAG integration: Content should be structurable as chunks with metadata for @convex-dev/rag indexing</requirement>
+  </additional_requirements>
+
+  <development_guidelines>
+    <guideline>All public component functions must have explicit argument and return validators using Convex v.* validators</guideline>
+    <guideline>Export ComponentApi type from _generated/component.js for type-safe client usage</guideline>
+    <guideline>Pass userId or auth context explicitly to component functions rather than relying on ctx.auth</guideline>
+    <guideline>Use function handles (createFunctionHandle) for callback patterns where parent app provides custom logic</guideline>
+    <guideline>Provide test helpers in src/test.ts for convex-test registration pattern</guideline>
+    <guideline>Maintain backwards compatibility when updating - component state persists across version updates</guideline>
+    <guideline>Document all public functions with JSDoc comments for better developer experience</guideline>
+    <guideline>Use sub-transactions appropriately - each component mutation call is isolated and can be caught/handled</guideline>
+    <guideline>HTTP actions must be mounted by parent app in convex/http.ts - component cannot expose routes directly</guideline>
+    <guideline>Design APIs to be AI-agent friendly: clear parameter names, predictable return shapes, tool-compatible signatures</guideline>
+    <guideline>Structure content retrieval for RAG: support chunk extraction, metadata tagging, and embedding-friendly formats</guideline>
+  </development_guidelines>
+
+  <implementation_roadmap>
+    <phase>
+      <name>Phase 1: Foundation</name>
+      <status>pending</status>
+      <description>Define database schemas for content_types, content_entries, content_versions, media_assets, and media_folders tables with comprehensive validators. Establish field type system supporting text, rich text, number, boolean, date, reference, and media fields. Set up component initialization.</description>
+    </phase>
+    <phase>
+      <name>Phase 2: Content Types</name>
+      <status>pending</status>
+      <description>Implement CRUD operations for content type definitions - create, update, delete content types with field schema validation. Include field validators for all supported field types and migration utilities.</description>
+    </phase>
+    <phase>
+      <name>Phase 3: Content Entries</name>
+      <status>pending</status>
+      <description>Implement content entry CRUD with automatic slug generation with uniqueness validation, and content validation against type schemas.</description>
+    </phase>
+    <phase>
+      <name>Phase 4: Publishing</name>
+      <status>pending</status>
+      <description>Implement draft/publish workflow, status management, publish/unpublish operations, and scheduled publishing via Convex scheduler.</description>
+    </phase>
+    <phase>
+      <name>Phase 5: Versioning</name>
+      <status>pending</status>
+      <description>Add version history tracking with snapshot creation on publish, version listing, rollback functionality, and version comparison utilities for content entries.</description>
+    </phase>
+    <phase>
+      <name>Phase 6: Media</name>
+      <status>pending</status>
+      <description>Implement media upload URL generation, asset record creation, metadata extraction (dimensions, MIME type, size), folder organization, and media-content relationship management.</description>
+    </phase>
+    <phase>
+      <name>Phase 7: Querying</name>
+      <status>pending</status>
+      <description>Build flexible content querying with status filters, field filters, sorting, pagination using convex-helpers, and full-text search using Convex search indexes.</description>
+    </phase>
+    <phase>
+      <name>Phase 8: Relations</name>
+      <status>pending</status>
+      <description>Implement content and media reference fields, reference resolution with depth limiting and circular reference prevention.</description>
+    </phase>
+    <phase>
+      <name>Phase 9: Localization</name>
+      <status>pending</status>
+      <description>Add multi-locale content support with locale-specific fields, configurable fallback chains, and localized content resolution.</description>
+    </phase>
+    <phase>
+      <name>Phase 10: RBAC</name>
+      <status>pending</status>
+      <description>Implement flexible role-based access control with built-in default roles (admin, editor, author, viewer), custom role definitions, user-to-role mapping hooks, permission checking, resource ownership rules, and authorization override hooks.</description>
+    </phase>
+    <phase>
+      <name>Phase 11: Events</name>
+      <status>pending</status>
+      <description>Build content event emission infrastructure and webhook trigger system with retry logic for external integrations.</description>
+    </phase>
+    <phase>
+      <name>Phase 12: Client SDK</name>
+      <status>pending</status>
+      <description>Create ergonomic TypeScript client wrapper class with typed methods for all CMS operations, including query builder API for content retrieval.</description>
+    </phase>
+    <phase>
+      <name>Phase 13: AI Integration</name>
+      <status>pending</status>
+      <description>Design tool-compatible APIs for @convex-dev/agent integration, implement content chunking utilities, and RAG index integration for @convex-dev/rag pipelines.</description>
+    </phase>
+    <phase>
+      <name>Phase 14: Admin UI</name>
+      <status>pending</status>
+      <description>Build React admin interface using TanStack Start with content type browsing, entry list/editor, media library, file upload, and publish controls. Integrate with RBAC for permission-aware UI.</description>
+    </phase>
+    <phase>
+      <name>Phase 15: Testing &amp; Docs</name>
+      <status>pending</status>
+      <description>Write comprehensive tests with convex-test, export test helpers for component registration, create usage documentation, and publish as NPM package following Convex component conventions.</description>
+    </phase>
+  </implementation_roadmap>
+</project_specification>

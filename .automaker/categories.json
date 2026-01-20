@@ -1,0 +1,104 @@
+[
+  {
+    "id": "core",
+    "name": "Core",
+    "description": "Foundation schemas, component initialization, and base infrastructure",
+    "phase": 1
+  },
+  {
+    "id": "content-types",
+    "name": "Content Types",
+    "description": "Content type definition, field validators, and schema management",
+    "phase": 2
+  },
+  {
+    "id": "content-entries",
+    "name": "Content Entries",
+    "description": "Content entry CRUD operations, validation, and slug management",
+    "phase": 3
+  },
+  {
+    "id": "publishing",
+    "name": "Publishing",
+    "description": "Draft/publish workflow, status management, and scheduled publishing",
+    "phase": 4
+  },
+  {
+    "id": "versioning",
+    "name": "Versioning",
+    "description": "Version history, snapshots, rollback, and comparison",
+    "phase": 5
+  },
+  {
+    "id": "media",
+    "name": "Media",
+    "description": "Media asset upload, storage, metadata, and folder organization",
+    "phase": 6
+  },
+  {
+    "id": "querying",
+    "name": "Querying",
+    "description": "Content filtering, sorting, pagination, and full-text search",
+    "phase": 7
+  },
+  {
+    "id": "relations",
+    "name": "Relations",
+    "description": "Content and media references with resolution",
+    "phase": 8
+  },
+  {
+    "id": "localization",
+    "name": "Localization",
+    "description": "Multi-locale content support and fallback chains",
+    "phase": 9
+  },
+  {
+    "id": "rbac",
+    "name": "RBAC",
+    "description": "Role-based access control with built-in roles and customization hooks",
+    "phase": 10
+  },
+  {
+    "id": "authorization",
+    "name": "Authorization",
+    "description": "Legacy authorization hooks (being consolidated into RBAC)",
+    "phase": 10
+  },
+  {
+    "id": "access-control",
+    "name": "Access Control",
+    "description": "Rate limiting and additional access control mechanisms",
+    "phase": 10
+  },
+  {
+    "id": "events",
+    "name": "Events",
+    "description": "Event emission and webhook triggers for external integrations",
+    "phase": 11
+  },
+  {
+    "id": "client-api",
+    "name": "Client API",
+    "description": "TypeScript client wrapper and query builder API",
+    "phase": 12
+  },
+  {
+    "id": "ai-integration",
+    "name": "AI Integration",
+    "description": "Agent tool definitions and RAG pipeline support",
+    "phase": 13
+  },
+  {
+    "id": "admin-ui",
+    "name": "Admin UI",
+    "description": "React admin interface built with TanStack Start",
+    "phase": 14
+  },
+  {
+    "id": "testing",
+    "name": "Testing",
+    "description": "Test helpers and convex-test integration",
+    "phase": 15
+  }
+]

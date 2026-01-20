@@ -1,0 +1,14 @@
+{
+  "id": "locale-fallback-chain",
+  "category": "Localization",
+  "title": "Locale Fallback Configuration",
+  "description": "Configuration and utility for locale fallback chains. When content isn't available in requested locale, falls back through configured chain.",
+  "status": "backlog",
+  "priority": 2,
+  "complexity": "moderate",
+  "dependencies": [
+    "locale-content-field"
+  ],
+  "createdAt": "2026-01-20T00:37:38.754Z",
+  "updatedAt": "2026-01-20T00:37:38.754Z"
+}

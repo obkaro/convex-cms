@@ -1,0 +1,15 @@
+{
+  "id": "content-lock-system",
+  "category": "Content Entries",
+  "title": "Content Locking for Concurrent Editing",
+  "description": "Implements optimistic locking to prevent concurrent edit conflicts. Tracks editing user and provides lock acquisition, release, and force-unlock for admins.",
+  "status": "backlog",
+  "priority": 3,
+  "complexity": "moderate",
+  "dependencies": [
+    "content-entry-update",
+    "user-context-handler"
+  ],
+  "createdAt": "2026-01-20T00:42:03.887Z",
+  "updatedAt": "2026-01-20T00:42:03.887Z"
+}

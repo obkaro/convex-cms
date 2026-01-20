@@ -1,0 +1,16 @@
+{
+  "id": "client-versioning-api",
+  "category": "Client API",
+  "title": "Client Versioning API",
+  "description": "Methods on client wrapper class for version operations including history retrieval, version comparison, and rollback functionality. Enables intuitive version management.",
+  "status": "backlog",
+  "priority": 2,
+  "complexity": "simple",
+  "dependencies": [
+    "client-wrapper-class",
+    "version-history-list",
+    "version-rollback"
+  ],
+  "createdAt": "2026-01-20T00:42:03.885Z",
+  "updatedAt": "2026-01-20T00:42:03.885Z"
+}

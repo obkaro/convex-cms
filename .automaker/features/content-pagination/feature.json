@@ -1,0 +1,14 @@
+{
+  "id": "content-pagination",
+  "category": "Querying",
+  "title": "Content Pagination",
+  "description": "Query enhancement for cursor-based pagination using convex-helpers paginator. Returns page results with continuation cursors.",
+  "status": "backlog",
+  "priority": 1,
+  "complexity": "moderate",
+  "dependencies": [
+    "content-list-query"
+  ],
+  "createdAt": "2026-01-20T00:37:38.753Z",
+  "updatedAt": "2026-01-20T00:37:38.753Z"
+}

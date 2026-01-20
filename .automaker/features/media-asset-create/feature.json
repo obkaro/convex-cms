@@ -1,0 +1,14 @@
+{
+  "id": "media-asset-create",
+  "category": "Media",
+  "title": "Create Media Asset Record",
+  "description": "Mutation to create a media asset record after file upload. Stores storage ID, filename, MIME type, size, and optional folder assignment.",
+  "status": "backlog",
+  "priority": 1,
+  "complexity": "moderate",
+  "dependencies": [
+    "media-upload-url"
+  ],
+  "createdAt": "2026-01-20T00:37:38.749Z",
+  "updatedAt": "2026-01-20T00:37:38.749Z"
+}

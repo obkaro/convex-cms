@@ -1,0 +1,15 @@
+{
+  "id": "media-folder-move",
+  "category": "Media",
+  "title": "Move Media to Folder",
+  "description": "Mutation to move media assets between folders. Supports bulk operations and validates folder existence.",
+  "status": "backlog",
+  "priority": 3,
+  "complexity": "simple",
+  "dependencies": [
+    "media-asset-update",
+    "media-folder-list"
+  ],
+  "createdAt": "2026-01-20T00:37:38.751Z",
+  "updatedAt": "2026-01-20T00:37:38.751Z"
+}

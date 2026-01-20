@@ -1,0 +1,12 @@
+{
+  "id": "admin-layout-shell",
+  "category": "Admin UI",
+  "title": "Admin Layout and Navigation",
+  "description": "Create the main admin layout with sidebar navigation, header, and content area. Include navigation links to content types, entries, media library, and settings. Responsive design for desktop use.",
+  "status": "backlog",
+  "priority": 1,
+  "complexity": "moderate",
+  "dependencies": ["admin-app-scaffold"],
+  "createdAt": "2026-01-20T01:00:00.000Z",
+  "updatedAt": "2026-01-20T01:00:00.000Z"
+}

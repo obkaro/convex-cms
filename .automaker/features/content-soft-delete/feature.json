@@ -1,0 +1,15 @@
+{
+  "id": "content-soft-delete",
+  "category": "Content Entries",
+  "title": "Soft Delete and Trash Recovery",
+  "description": "Adds soft delete functionality with trash storage and recovery. Content moves to trash instead of permanent deletion with configurable retention period and restore capability.",
+  "status": "backlog",
+  "priority": 2,
+  "complexity": "moderate",
+  "dependencies": [
+    "content-entry-delete",
+    "core-schema-definitions"
+  ],
+  "createdAt": "2026-01-20T00:42:03.886Z",
+  "updatedAt": "2026-01-20T00:42:03.886Z"
+}

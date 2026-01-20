@@ -1,0 +1,12 @@
+{
+  "id": "rbac-resource-ownership",
+  "category": "RBAC",
+  "title": "Resource Ownership Rules",
+  "description": "Implement ownership-based permission logic where users can have elevated permissions on resources they created. Supports 'own' scope in permissions (e.g., author can edit own entries only).",
+  "status": "backlog",
+  "priority": 2,
+  "complexity": "moderate",
+  "dependencies": ["rbac-permission-check"],
+  "createdAt": "2026-01-20T01:00:00.000Z",
+  "updatedAt": "2026-01-20T01:00:00.000Z"
+}

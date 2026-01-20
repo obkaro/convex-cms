@@ -1,0 +1,12 @@
+{
+  "id": "admin-app-scaffold",
+  "category": "Admin UI",
+  "title": "TanStack Start App Scaffold",
+  "description": "Initialize the Admin UI as a TanStack Start application with React. Set up project structure, routing configuration, Convex client integration, and development tooling. Establish the foundation for all admin features.",
+  "status": "backlog",
+  "priority": 1,
+  "complexity": "moderate",
+  "dependencies": ["client-wrapper-class"],
+  "createdAt": "2026-01-20T01:00:00.000Z",
+  "updatedAt": "2026-01-20T01:00:00.000Z"
+}

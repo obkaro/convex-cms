@@ -1,0 +1,14 @@
+{
+  "id": "content-status-draft",
+  "category": "Publishing",
+  "title": "Draft Status Management",
+  "description": "Functions to manage content draft status. Content starts as draft and can be edited without affecting published version.",
+  "status": "backlog",
+  "priority": 1,
+  "complexity": "simple",
+  "dependencies": [
+    "content-entry-create"
+  ],
+  "createdAt": "2026-01-20T00:37:38.743Z",
+  "updatedAt": "2026-01-20T00:37:38.743Z"
+}

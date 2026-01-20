@@ -1,0 +1,14 @@
+{
+  "id": "content-type-delete",
+  "category": "Content Types",
+  "title": "Delete Content Type",
+  "description": "Mutation to delete a content type. Optionally cascade deletes to all content entries of that type, or prevent deletion if entries exist.",
+  "status": "backlog",
+  "priority": 2,
+  "complexity": "moderate",
+  "dependencies": [
+    "content-type-get"
+  ],
+  "createdAt": "2026-01-20T00:37:38.737Z",
+  "updatedAt": "2026-01-20T00:37:38.737Z"
+}

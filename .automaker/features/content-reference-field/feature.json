@@ -1,0 +1,15 @@
+{
+  "id": "content-reference-field",
+  "category": "Relations",
+  "title": "Content Reference Field Type",
+  "description": "Field type for referencing other content entries. Supports single and multiple references with content type constraints.",
+  "status": "backlog",
+  "priority": 1,
+  "complexity": "moderate",
+  "dependencies": [
+    "content-type-field-validators",
+    "content-entry-get"
+  ],
+  "createdAt": "2026-01-20T00:37:38.751Z",
+  "updatedAt": "2026-01-20T00:37:38.751Z"
+}

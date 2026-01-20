@@ -1,0 +1,16 @@
+{
+  "id": "event-emitter",
+  "category": "Events",
+  "title": "Content Event Emission",
+  "description": "Internal system to emit events on content changes (created, updated, published, deleted). Events stored for async processing.",
+  "status": "backlog",
+  "priority": 3,
+  "complexity": "moderate",
+  "dependencies": [
+    "content-entry-create",
+    "content-entry-update",
+    "content-publish"
+  ],
+  "createdAt": "2026-01-20T00:37:38.755Z",
+  "updatedAt": "2026-01-20T00:37:38.755Z"
+}

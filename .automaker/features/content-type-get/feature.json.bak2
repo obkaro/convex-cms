@@ -1,0 +1,14 @@
+{
+  "id": "content-type-get",
+  "category": "Content Types",
+  "title": "Get Content Type",
+  "description": "Query to retrieve a single content type by ID or slug. Returns the full type definition including all field configurations.",
+  "status": "backlog",
+  "priority": 1,
+  "complexity": "simple",
+  "dependencies": [
+    "content-type-create"
+  ],
+  "createdAt": "2026-01-20T00:37:38.736Z",
+  "updatedAt": "2026-01-20T00:37:38.736Z"
+}

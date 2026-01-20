@@ -1,0 +1,16 @@
+{
+  "id": "client-media-api",
+  "category": "Client API",
+  "title": "Client Media Management API",
+  "description": "Methods on client wrapper class for media operations including upload, list, update metadata, and folder management. Simplifies media handling for parent applications.",
+  "status": "backlog",
+  "priority": 1,
+  "complexity": "moderate",
+  "dependencies": [
+    "client-wrapper-class",
+    "media-asset-create",
+    "media-asset-list"
+  ],
+  "createdAt": "2026-01-20T00:42:03.885Z",
+  "updatedAt": "2026-01-20T00:42:03.885Z"
+}

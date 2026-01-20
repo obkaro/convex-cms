@@ -1,0 +1,14 @@
+{
+  "id": "version-get",
+  "category": "Versioning",
+  "title": "Get Specific Version",
+  "description": "Query to retrieve a specific version of a content entry by version ID or number. Returns complete content state at that version.",
+  "status": "backlog",
+  "priority": 2,
+  "complexity": "simple",
+  "dependencies": [
+    "version-history-list"
+  ],
+  "createdAt": "2026-01-20T00:37:38.745Z",
+  "updatedAt": "2026-01-20T00:37:38.745Z"
+}

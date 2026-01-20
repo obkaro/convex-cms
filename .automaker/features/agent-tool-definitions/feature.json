@@ -1,0 +1,16 @@
+{
+  "id": "agent-tool-definitions",
+  "category": "AI Integration",
+  "title": "AI Agent Tool Definitions",
+  "description": "Export tool-compatible function wrappers for @convex-dev/agent integration. Provides structured tool definitions with clear parameter schemas for content creation, querying, and management.",
+  "status": "backlog",
+  "priority": 2,
+  "complexity": "moderate",
+  "dependencies": [
+    "client-wrapper-class",
+    "content-entry-create",
+    "content-search"
+  ],
+  "createdAt": "2026-01-20T00:42:03.887Z",
+  "updatedAt": "2026-01-20T00:42:03.887Z"
+}

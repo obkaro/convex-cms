@@ -1,0 +1,14 @@
+{
+  "id": "content-type-create",
+  "category": "Content Types",
+  "title": "Create Content Type",
+  "description": "Mutation to create a new content type with a unique name, slug, and field definitions. Validates field configurations and stores the type definition in the content_types table.",
+  "status": "backlog",
+  "priority": 1,
+  "complexity": "moderate",
+  "dependencies": [
+    "content-type-field-validators"
+  ],
+  "createdAt": "2026-01-20T00:37:38.735Z",
+  "updatedAt": "2026-01-20T00:37:38.735Z"
+}

@@ -1,0 +1,15 @@
+{
+  "id": "media-asset-get",
+  "category": "Media",
+  "title": "Get Media Asset",
+  "description": "Query to retrieve a single media asset by ID. Returns asset metadata, storage URL, and optimization hints.",
+  "status": "backlog",
+  "priority": 1,
+  "complexity": "simple",
+  "dependencies": [
+    "core-schema-definitions"
+  ],
+  "createdAt": "2026-01-20T00:37:38.750Z",
+  "updatedAt": "2026-01-20T00:37:38.750Z",
+  "descriptionHistory": []
+}

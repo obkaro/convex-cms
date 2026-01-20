@@ -1,0 +1,14 @@
+{
+  "id": "content-type-update",
+  "category": "Content Types",
+  "title": "Update Content Type",
+  "description": "Mutation to update an existing content type's fields and configuration. Includes validation to prevent breaking changes to fields with existing content.",
+  "status": "backlog",
+  "priority": 1,
+  "complexity": "moderate",
+  "dependencies": [
+    "content-type-get"
+  ],
+  "createdAt": "2026-01-20T00:37:38.737Z",
+  "updatedAt": "2026-01-20T00:37:38.737Z"
+}

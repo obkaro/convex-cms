@@ -1,0 +1,14 @@
+{
+  "id": "user-context-handler",
+  "category": "Authorization",
+  "title": "User Context Handling",
+  "description": "Functions to receive and validate user context passed from parent app. Extracts user ID and roles for permission checks.",
+  "status": "backlog",
+  "priority": 2,
+  "complexity": "moderate",
+  "dependencies": [
+    "access-control-hooks"
+  ],
+  "createdAt": "2026-01-20T00:37:38.755Z",
+  "updatedAt": "2026-01-20T00:37:38.755Z"
+}

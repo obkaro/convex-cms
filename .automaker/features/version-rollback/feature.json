@@ -1,0 +1,15 @@
+{
+  "id": "version-rollback",
+  "category": "Versioning",
+  "title": "Rollback to Version",
+  "description": "Mutation to restore content entry to a previous version. Creates a new version with the restored content state, preserving history.",
+  "status": "backlog",
+  "priority": 2,
+  "complexity": "moderate",
+  "dependencies": [
+    "version-get",
+    "content-entry-update"
+  ],
+  "createdAt": "2026-01-20T00:37:38.746Z",
+  "updatedAt": "2026-01-20T00:37:38.746Z"
+}

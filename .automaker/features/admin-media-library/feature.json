@@ -1,0 +1,12 @@
+{
+  "id": "admin-media-library",
+  "category": "Admin UI",
+  "title": "Media Library Browser",
+  "description": "Grid view of media assets with thumbnails. Support folder navigation, basic search, and selection for insertion into content. Display file name, type, size, and upload date.",
+  "status": "backlog",
+  "priority": 1,
+  "complexity": "moderate",
+  "dependencies": ["admin-auth-integration", "media-asset-list", "media-folder-list"],
+  "createdAt": "2026-01-20T01:00:00.000Z",
+  "updatedAt": "2026-01-20T01:00:00.000Z"
+}

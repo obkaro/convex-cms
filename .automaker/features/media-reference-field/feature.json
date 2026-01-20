@@ -1,0 +1,15 @@
+{
+  "id": "media-reference-field",
+  "category": "Relations",
+  "title": "Media Reference Field Type",
+  "description": "Field type for referencing media assets in content. Supports single and gallery (multiple) media references with MIME type constraints.",
+  "status": "backlog",
+  "priority": 1,
+  "complexity": "moderate",
+  "dependencies": [
+    "content-type-field-validators",
+    "media-asset-get"
+  ],
+  "createdAt": "2026-01-20T00:37:38.751Z",
+  "updatedAt": "2026-01-20T00:37:38.751Z"
+}

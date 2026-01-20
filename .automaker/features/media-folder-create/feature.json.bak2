@@ -1,0 +1,12 @@
+{
+  "id": "media-folder-create",
+  "category": "Media",
+  "title": "Create Media Folder",
+  "description": "Mutation to create a media folder for organizing assets. Supports nested folder hierarchy with path validation.",
+  "status": "backlog",
+  "priority": 2,
+  "complexity": "simple",
+  "dependencies": [],
+  "createdAt": "2026-01-20T00:37:38.747Z",
+  "updatedAt": "2026-01-20T00:37:38.747Z"
+}

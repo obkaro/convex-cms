@@ -1,0 +1,12 @@
+{
+  "id": "rbac-authorize-override",
+  "category": "RBAC",
+  "title": "Authorization Override Hook",
+  "description": "Optional authorize hook for complex authorization logic beyond role-based checks. Called after role check, receives full context (user, action, resource, default decision). Can override or augment the default permission decision.",
+  "status": "backlog",
+  "priority": 2,
+  "complexity": "simple",
+  "dependencies": ["rbac-permission-check"],
+  "createdAt": "2026-01-20T01:00:00.000Z",
+  "updatedAt": "2026-01-20T01:00:00.000Z"
+}

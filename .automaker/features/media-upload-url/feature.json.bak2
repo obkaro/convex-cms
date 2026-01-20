@@ -1,0 +1,12 @@
+{
+  "id": "media-upload-url",
+  "category": "Media",
+  "title": "Generate Upload URL",
+  "description": "Mutation to generate a Convex storage upload URL for client-side file uploads. Returns temporary URL with optional size limits.",
+  "status": "backlog",
+  "priority": 1,
+  "complexity": "simple",
+  "dependencies": [],
+  "createdAt": "2026-01-20T00:37:38.748Z",
+  "updatedAt": "2026-01-20T00:37:38.748Z"
+}

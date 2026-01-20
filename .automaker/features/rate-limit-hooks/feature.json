@@ -1,0 +1,15 @@
+{
+  "id": "rate-limit-hooks",
+  "category": "Access Control",
+  "title": "Rate Limiting Hook System",
+  "description": "Infrastructure for rate limiting CMS operations via function handles. Parent app can define rate limit strategies for different operations and user tiers.",
+  "status": "backlog",
+  "priority": 3,
+  "complexity": "moderate",
+  "dependencies": [
+    "access-control-hooks",
+    "user-context-handler"
+  ],
+  "createdAt": "2026-01-20T00:42:03.890Z",
+  "updatedAt": "2026-01-20T00:42:03.890Z"
+}

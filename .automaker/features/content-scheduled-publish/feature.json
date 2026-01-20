@@ -1,0 +1,14 @@
+{
+  "id": "content-scheduled-publish",
+  "category": "Publishing",
+  "title": "Scheduled Publishing",
+  "description": "Feature to schedule content for future publication. Uses Convex scheduled functions to automatically publish at specified datetime.",
+  "status": "backlog",
+  "priority": 2,
+  "complexity": "complex",
+  "dependencies": [
+    "content-publish"
+  ],
+  "createdAt": "2026-01-20T00:37:38.744Z",
+  "updatedAt": "2026-01-20T00:37:38.744Z"
+}

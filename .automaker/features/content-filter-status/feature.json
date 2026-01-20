@@ -1,0 +1,14 @@
+{
+  "id": "content-filter-status",
+  "category": "Querying",
+  "title": "Filter by Publish Status",
+  "description": "Query enhancement to filter content entries by publish status (draft, published, scheduled). Essential for frontend vs admin views.",
+  "status": "backlog",
+  "priority": 1,
+  "complexity": "simple",
+  "dependencies": [
+    "content-list-query"
+  ],
+  "createdAt": "2026-01-20T00:37:38.752Z",
+  "updatedAt": "2026-01-20T00:37:38.752Z"
+}

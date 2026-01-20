@@ -1,0 +1,12 @@
+{
+  "id": "rbac-default-roles",
+  "category": "RBAC",
+  "title": "Built-in Default Roles",
+  "description": "Define default role configurations (admin, editor, author, viewer) with sensible permission presets for content types, entries, media, and settings. Roles are exported as constants for easy customization.",
+  "status": "backlog",
+  "priority": 1,
+  "complexity": "simple",
+  "dependencies": ["core-schema-definitions"],
+  "createdAt": "2026-01-20T01:00:00.000Z",
+  "updatedAt": "2026-01-20T01:00:00.000Z"
+}

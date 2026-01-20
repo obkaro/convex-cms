@@ -1,0 +1,14 @@
+{
+  "id": "content-entry-delete",
+  "category": "Content Entries",
+  "title": "Delete Content Entry",
+  "description": "Mutation to delete a content entry. Handles cleanup of associated versions and media references. Supports soft delete option.",
+  "status": "backlog",
+  "priority": 1,
+  "complexity": "moderate",
+  "dependencies": [
+    "content-entry-get"
+  ],
+  "createdAt": "2026-01-20T00:37:38.743Z",
+  "updatedAt": "2026-01-20T00:37:38.743Z"
+}

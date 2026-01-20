@@ -1,0 +1,20 @@
+{
+  "id": "client-content-types-api",
+  "category": "Client API",
+  "title": "Client Content Types API",
+  "description": "Methods on client wrapper class for content type operations. Provides typed interface for create, read, update, delete content types.",
+  "status": "backlog",
+  "priority": 1,
+  "complexity": "moderate",
+  "dependencies": [
+    "client-wrapper-class",
+    "content-type-create",
+    "content-type-get",
+    "content-type-list",
+    "content-type-update",
+    "content-type-delete"
+  ],
+  "createdAt": "2026-01-20T00:37:38.756Z",
+  "updatedAt": "2026-01-20T00:37:38.756Z",
+  "descriptionHistory": []
+}

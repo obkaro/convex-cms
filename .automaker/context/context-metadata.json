@@ -1,0 +1,10 @@
+{
+  "files": {
+    "convex-authoring-components.md": {
+      "description": "Authoring components overview docs"
+    },
+    "convex-undersanding-components.md": {
+      "description": "Understanding components overview from convex"
+    }
+  }
+}

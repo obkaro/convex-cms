@@ -1,0 +1,12 @@
+{
+  "id": "core-schema-definitions",
+  "category": "Core",
+  "title": "Core Database Schema Definitions",
+  "description": "Define the base database schema tables for content_types, content_entries, content_versions, media_assets, and media_folders using Convex schema.ts. Establishes indexes for efficient querying and search capabilities.",
+  "status": "backlog",
+  "priority": 1,
+  "complexity": "moderate",
+  "dependencies": [],
+  "createdAt": "2026-01-20T00:42:03.881Z",
+  "updatedAt": "2026-01-20T00:42:03.881Z"
+}

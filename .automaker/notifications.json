@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "notifications": [
+    {
+      "id": "34a7ae04-2c0b-4107-8d56-7f77872094f4",
+      "type": "spec_regeneration_complete",
+      "title": "Spec Generation Complete",
+      "message": "Created 50 features from the project specification.",
+      "createdAt": "2026-01-20T00:31:07.755Z",
+      "read": true,
+      "dismissed": false,
+      "projectPath": "/Users/home/Developer/projects/convex-cms"
+    },
+    {
+      "id": "87254c4b-eb23-4145-991f-d5707a855730",
+      "type": "spec_regeneration_complete",
+      "title": "Spec Generation Complete",
+      "message": "Created 50 features from the project specification.",
+      "createdAt": "2026-01-20T00:37:38.758Z",
+      "read": false,
+      "dismissed": false,
+      "projectPath": "/Users/home/Developer/projects/convex-cms"
+    },
+    {
+      "id": "85c895e7-6841-4604-9f2e-6ff882d14adb",
+      "type": "spec_regeneration_complete",
+      "title": "Spec Generation Complete",
+      "message": "Created 20 features from the project specification.",
+      "createdAt": "2026-01-20T00:42:03.892Z",
+      "read": false,
+      "dismissed": false,
+      "projectPath": "/Users/home/Developer/projects/convex-cms"
+    }
+  ]
+}

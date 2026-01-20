@@ -1,0 +1,12 @@
+{
+  "id": "rbac-permission-check",
+  "category": "RBAC",
+  "title": "Permission Check System",
+  "description": "Core permission checking logic that evaluates user role against requested action and resource. Called internally by all CMS operations. Returns boolean or throws UnauthorizedError with descriptive message.",
+  "status": "backlog",
+  "priority": 1,
+  "complexity": "moderate",
+  "dependencies": ["rbac-user-role-mapping", "rbac-default-roles"],
+  "createdAt": "2026-01-20T01:00:00.000Z",
+  "updatedAt": "2026-01-20T01:00:00.000Z"
+}

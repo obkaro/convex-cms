@@ -1,0 +1,15 @@
+{
+  "id": "media-asset-list",
+  "category": "Media",
+  "title": "List Media Assets",
+  "description": "Query to list media assets with optional folder filter and pagination. Supports filtering by MIME type and sorting options.",
+  "status": "backlog",
+  "priority": 1,
+  "complexity": "moderate",
+  "dependencies": [
+    "media-asset-get",
+    "media-folder-list"
+  ],
+  "createdAt": "2026-01-20T00:37:38.750Z",
+  "updatedAt": "2026-01-20T00:37:38.750Z"
+}

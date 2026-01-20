@@ -1,0 +1,12 @@
+{
+  "id": "rbac-custom-roles",
+  "category": "RBAC",
+  "title": "Custom Role Definitions",
+  "description": "Allow developers to define custom roles by extending or overriding default roles. Supports merging with DEFAULT_ROLES, adding new permission scopes, and per-content-type permission granularity.",
+  "status": "backlog",
+  "priority": 2,
+  "complexity": "moderate",
+  "dependencies": ["rbac-default-roles"],
+  "createdAt": "2026-01-20T01:00:00.000Z",
+  "updatedAt": "2026-01-20T01:00:00.000Z"
+}

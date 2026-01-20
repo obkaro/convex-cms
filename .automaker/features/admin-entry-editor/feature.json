@@ -1,0 +1,12 @@
+{
+  "id": "admin-entry-editor",
+  "category": "Admin UI",
+  "title": "Entry Form Editor",
+  "description": "Dynamic form for creating and editing content entries. Renders appropriate field components based on content type schema. Handles validation, autosave draft, and form submission. Displays validation errors.",
+  "status": "backlog",
+  "priority": 1,
+  "complexity": "complex",
+  "dependencies": ["admin-field-renderers", "content-entry-create", "content-entry-update", "content-entry-validate"],
+  "createdAt": "2026-01-20T01:00:00.000Z",
+  "updatedAt": "2026-01-20T01:00:00.000Z"
+}
