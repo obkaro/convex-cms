@@ -1,0 +1,24 @@
+{
+	"compilerOptions": {
+		"target": "ES2022",
+		"module": "ESNext",
+		"moduleResolution": "bundler",
+		"lib": ["ES2022", "DOM"],
+		"strict": true,
+		"esModuleInterop": true,
+		"skipLibCheck": true,
+		"forceConsistentCasingInFileNames": true,
+		"resolveJsonModule": true,
+		"declaration": true,
+		"declarationMap": true,
+		"sourceMap": true,
+		"outDir": "./dist",
+		"rootDir": "./src",
+		"paths": {
+			"@convex-cms/core": ["./src/client/index.ts"],
+			"@convex-cms/core/*": ["./src/*"]
+		}
+	},
+	"include": ["src/**/*"],
+	"exclude": ["node_modules", "dist", "example", "**/_generated/**"]
+}

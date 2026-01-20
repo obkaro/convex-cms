@@ -1,0 +1,17 @@
+{
+  "name": "convex-cms-example",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "convex dev",
+    "test": "vitest"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "convex": "^1.17.0",
+    "convex-test": "^0.0.35",
+    "typescript": "^5.3.3",
+    "vitest": "^1.2.0"
+  }
+}

@@ -30,6 +30,204 @@
       "read": false,
       "dismissed": false,
       "projectPath": "/Users/home/Developer/projects/convex-cms"
+    },
+    {
+      "id": "b31e468a-71ee-4f8d-8ca5-23eb12161230",
+      "type": "feature_verified",
+      "title": "Feature Verified",
+      "message": "\"slug-generator\" has been verified and is complete.",
+      "createdAt": "2026-01-20T01:23:19.823Z",
+      "read": false,
+      "dismissed": false,
+      "featureId": "slug-generator",
+      "projectPath": "/Users/home/Developer/projects/convex-cms"
+    },
+    {
+      "id": "f091b601-112e-49d6-92fa-a0e3dda6bb8f",
+      "type": "feature_verified",
+      "title": "Feature Verified",
+      "message": "\"core-schema-definitions\" has been verified and is complete.",
+      "createdAt": "2026-01-20T01:26:05.013Z",
+      "read": false,
+      "dismissed": false,
+      "featureId": "core-schema-definitions",
+      "projectPath": "/Users/home/Developer/projects/convex-cms"
+    },
+    {
+      "id": "61e0769e-0036-48f4-a26c-f1e835f9de93",
+      "type": "feature_verified",
+      "title": "Feature Verified",
+      "message": "\"content-type-field-validators\" has been verified and is complete.",
+      "createdAt": "2026-01-20T01:27:36.670Z",
+      "read": false,
+      "dismissed": false,
+      "featureId": "content-type-field-validators",
+      "projectPath": "/Users/home/Developer/projects/convex-cms"
+    },
+    {
+      "id": "4e8f5b20-f62f-4eaa-bd0c-3f5914f6bd5a",
+      "type": "feature_verified",
+      "title": "Feature Verified",
+      "message": "\"slug-uniqueness-check\" has been verified and is complete.",
+      "createdAt": "2026-01-20T01:28:20.572Z",
+      "read": false,
+      "dismissed": false,
+      "featureId": "slug-uniqueness-check",
+      "projectPath": "/Users/home/Developer/projects/convex-cms"
+    },
+    {
+      "id": "a82dc690-c2b9-4b40-8e6c-6e31b0321231",
+      "type": "feature_verified",
+      "title": "Feature Verified",
+      "message": "\"component-initialization\" has been verified and is complete.",
+      "createdAt": "2026-01-20T01:32:42.015Z",
+      "read": false,
+      "dismissed": false,
+      "featureId": "component-initialization",
+      "projectPath": "/Users/home/Developer/projects/convex-cms"
+    },
+    {
+      "id": "0dcd0ce6-9a8d-4542-b710-8fbc82690019",
+      "type": "feature_verified",
+      "title": "Feature Verified",
+      "message": "\"client-wrapper-class\" has been verified and is complete.",
+      "createdAt": "2026-01-20T01:43:15.214Z",
+      "read": false,
+      "dismissed": false,
+      "featureId": "client-wrapper-class",
+      "projectPath": "/Users/home/Developer/projects/convex-cms"
+    },
+    {
+      "id": "7080b358-7654-43a2-8708-9f223ca0999e",
+      "type": "feature_verified",
+      "title": "Feature Verified",
+      "message": "\"content-entry-get\" has been verified and is complete.",
+      "createdAt": "2026-01-20T01:44:58.784Z",
+      "read": false,
+      "dismissed": false,
+      "featureId": "content-entry-get",
+      "projectPath": "/Users/home/Developer/projects/convex-cms"
+    },
+    {
+      "id": "a0dba355-5f85-4d81-8bd1-cd6448c8b941",
+      "type": "feature_verified",
+      "title": "Feature Verified",
+      "message": "\"content-entry-get-by-slug\" has been verified and is complete.",
+      "createdAt": "2026-01-20T01:45:43.838Z",
+      "read": false,
+      "dismissed": false,
+      "featureId": "content-entry-get-by-slug",
+      "projectPath": "/Users/home/Developer/projects/convex-cms"
+    },
+    {
+      "id": "0de04428-fbfc-46db-ba90-09a29d01a0a9",
+      "type": "feature_verified",
+      "title": "Feature Verified",
+      "message": "\"content-entry-delete\" has been verified and is complete.",
+      "createdAt": "2026-01-20T01:50:24.080Z",
+      "read": false,
+      "dismissed": false,
+      "featureId": "content-entry-delete",
+      "projectPath": "/Users/home/Developer/projects/convex-cms"
+    },
+    {
+      "id": "a8d42234-5657-41f4-b4c9-3ea7b71ffc53",
+      "type": "feature_verified",
+      "title": "Feature Verified",
+      "message": "\"admin-app-scaffold\" has been verified and is complete.",
+      "createdAt": "2026-01-20T01:56:38.126Z",
+      "read": false,
+      "dismissed": false,
+      "featureId": "admin-app-scaffold",
+      "projectPath": "/Users/home/Developer/projects/convex-cms"
+    },
+    {
+      "id": "32b4a2c5-057c-4bbb-88dd-18c6a9d2c817",
+      "type": "feature_verified",
+      "title": "Feature Verified",
+      "message": "\"content-reference-field\" has been verified and is complete.",
+      "createdAt": "2026-01-20T01:57:14.627Z",
+      "read": false,
+      "dismissed": false,
+      "featureId": "content-reference-field",
+      "projectPath": "/Users/home/Developer/projects/convex-cms"
+    },
+    {
+      "id": "a030364b-71cb-484e-afeb-f1b5f4caa73a",
+      "type": "feature_verified",
+      "title": "Feature Verified",
+      "message": "\"content-list-query\" has been verified and is complete.",
+      "createdAt": "2026-01-20T01:58:55.122Z",
+      "read": false,
+      "dismissed": false,
+      "featureId": "content-list-query",
+      "projectPath": "/Users/home/Developer/projects/convex-cms"
+    },
+    {
+      "id": "e88d94bd-bd2f-4b50-ba13-5b0530ef5433",
+      "type": "feature_verified",
+      "title": "Feature Verified",
+      "message": "\"content-filter-status\" has been verified and is complete.",
+      "createdAt": "2026-01-20T02:12:13.147Z",
+      "read": false,
+      "dismissed": false,
+      "featureId": "content-filter-status",
+      "projectPath": "/Users/home/Developer/projects/convex-cms"
+    },
+    {
+      "id": "d95779f7-e58d-4bb1-a6bd-9e1b31273e4f",
+      "type": "feature_verified",
+      "title": "Feature Verified",
+      "message": "\"admin-layout-shell\" has been verified and is complete.",
+      "createdAt": "2026-01-20T02:12:22.415Z",
+      "read": false,
+      "dismissed": false,
+      "featureId": "admin-layout-shell",
+      "projectPath": "/Users/home/Developer/projects/convex-cms"
+    },
+    {
+      "id": "4a0c1d31-b68c-4cb2-9b2a-d8b46e97294f",
+      "type": "feature_verified",
+      "title": "Feature Verified",
+      "message": "\"admin-field-renderers\" has been verified and is complete.",
+      "createdAt": "2026-01-20T02:17:54.888Z",
+      "read": false,
+      "dismissed": false,
+      "featureId": "admin-field-renderers",
+      "projectPath": "/Users/home/Developer/projects/convex-cms"
+    },
+    {
+      "id": "0d6929d5-09a3-40e1-893d-5c5be13dc892",
+      "type": "feature_verified",
+      "title": "Feature Verified",
+      "message": "\"content-status-draft\" has been verified and is complete.",
+      "createdAt": "2026-01-20T02:39:33.530Z",
+      "read": false,
+      "dismissed": false,
+      "featureId": "content-status-draft",
+      "projectPath": "/Users/home/Developer/projects/convex-cms"
+    },
+    {
+      "id": "f97df2cf-ee09-46ab-8f46-5ca3761ef4a4",
+      "type": "feature_verified",
+      "title": "Feature Verified",
+      "message": "\"content-type-create\" has been verified and is complete.",
+      "createdAt": "2026-01-20T02:41:08.191Z",
+      "read": false,
+      "dismissed": false,
+      "featureId": "content-type-create",
+      "projectPath": "/Users/home/Developer/projects/convex-cms"
+    },
+    {
+      "id": "fffcc499-0b42-4298-a596-31070814a6a3",
+      "type": "feature_verified",
+      "title": "Feature Verified",
+      "message": "\"content-pagination\" has been verified and is complete.",
+      "createdAt": "2026-01-20T02:46:04.429Z",
+      "read": false,
+      "dismissed": false,
+      "featureId": "content-pagination",
+      "projectPath": "/Users/home/Developer/projects/convex-cms"
     }
   ]
 }

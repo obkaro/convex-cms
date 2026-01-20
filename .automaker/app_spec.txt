@@ -71,6 +71,78 @@ Key architectural goals:
         <location>.automaker/context/convex-using-components.md</location>
       </file_locations>
     </feature>
+    <feature>
+      <name>Slug Generation Utility</name>
+      <description>Utility function to generate URL-friendly slugs from content titles. Handles special characters, unicode, and ensures slug format consistency.</description>
+    </feature>
+    <feature>
+      <name>Core Database Schema Definitions</name>
+      <description>Define the base database schema tables for content_types, content_entries, content_versions, media_assets, and media_folders using Convex schema.ts. Establishes indexes for efficient querying and search capabilities.</description>
+    </feature>
+    <feature>
+      <name>Field Type Validators</name>
+      <description>Create Convex validators for each supported field type (text, rich text, number, boolean, date, reference, media). These validators ensure content data matches the expected field type schema.</description>
+    </feature>
+    <feature>
+      <name>Slug Uniqueness Validation</name>
+      <description>Function to check slug uniqueness within a content type scope. Generates incremental suffixes (slug-1, slug-2) when conflicts exist.</description>
+    </feature>
+    <feature>
+      <name>Component Initialization Setup</name>
+      <description>Create the component entry point with component.config.ts, export ComponentApi type, and establish the sandboxed component architecture. Includes configuration options for default locale and feature flags.</description>
+    </feature>
+    <feature>
+      <name>Client Wrapper Base Class</name>
+      <description>Create the main CMS client wrapper class that wraps all component functions with typed methods. Provides ergonomic API for parent applications to interact with the CMS component.</description>
+    </feature>
+    <feature>
+      <name>Get Content Entry</name>
+      <description>Query to retrieve a single content entry by ID. Returns full content data including metadata, status, and optional version info.</description>
+    </feature>
+    <feature>
+      <name>Get Content Entry by Slug</name>
+      <description>Query to retrieve a content entry by its slug and content type. Commonly used for frontend routing and SEO-friendly URLs.</description>
+    </feature>
+    <feature>
+      <name>Delete Content Entry</name>
+      <description>Mutation to delete a content entry. Handles cleanup of associated versions and media references. Supports soft delete option.</description>
+    </feature>
+    <feature>
+      <name>TanStack Start App Scaffold</name>
+      <description>Initialize the Admin UI as a TanStack Start application with React. Set up project structure, routing configuration, Convex client integration, and development tooling. Establish the foundation for all admin features.</description>
+    </feature>
+    <feature>
+      <name>Content Reference Field Type</name>
+      <description>Field type for referencing other content entries. Supports single and multiple references with content type constraints.</description>
+    </feature>
+    <feature>
+      <name>List Content Entries Query</name>
+      <description>Query to list content entries with type filtering. Provides base query functionality for the content querying system.</description>
+    </feature>
+    <feature>
+      <name>Filter by Publish Status</name>
+      <description>Query enhancement to filter content entries by publish status (draft, published, scheduled). Essential for frontend vs admin views.</description>
+    </feature>
+    <feature>
+      <name>Admin Layout and Navigation</name>
+      <description>Create the main admin layout with sidebar navigation, header, and content area. Include navigation links to content types, entries, media library, and settings. Responsive design for desktop use.</description>
+    </feature>
+    <feature>
+      <name>Field Type UI Components</name>
+      <description>React components for rendering each field type in forms: text input, textarea, number input, boolean toggle, date picker, and basic rich text (markdown). Components are composable and follow consistent styling.</description>
+    </feature>
+    <feature>
+      <name>Draft Status Management</name>
+      <description>Functions to manage content draft status. Content starts as draft and can be edited without affecting published version.</description>
+    </feature>
+    <feature>
+      <name>Create Content Type</name>
+      <description>Mutation to create a new content type with a unique name, slug, and field definitions. Validates field configurations and stores the type definition in the content_types table.</description>
+    </feature>
+    <feature>
+      <name>Content Pagination</name>
+      <description>Query enhancement for cursor-based pagination using convex-helpers paginator. Returns page results with continuation cursors.</description>
+    </feature>
   </implemented_features>
 
   <additional_requirements>

@@ -5,6 +5,9 @@
     },
     "convex-undersanding-components.md": {
       "description": "Understanding components overview from convex"
+    },
+    "convex-rules.mdc": {
+      "description": "Convex rules documentation"
     }
   }
 }

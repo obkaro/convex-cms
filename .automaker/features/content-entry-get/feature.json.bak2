@@ -3,12 +3,15 @@
   "category": "Content Entries",
   "title": "Get Content Entry",
   "description": "Query to retrieve a single content entry by ID. Returns full content data including metadata, status, and optional version info.",
-  "status": "backlog",
+  "status": "in_progress",
   "priority": 1,
   "complexity": "simple",
   "dependencies": [
-    "content-entry-create"
+    "core-schema-definitions"
   ],
   "createdAt": "2026-01-20T00:37:38.741Z",
-  "updatedAt": "2026-01-20T00:37:38.741Z"
+  "updatedAt": "2026-01-20T00:37:38.741Z",
+  "descriptionHistory": [],
+  "branchName": "main",
+  "startedAt": "2026-01-20T01:37:34.335Z"
 }
