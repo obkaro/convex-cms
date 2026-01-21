@@ -20,11 +20,17 @@
   },
   "files": [
     "dist",
-    "src"
+    "src",
+    "admin-dist"
   ],
+  "bin": {
+    "convex-cms": "./dist/cli/index.js"
+  },
   "scripts": {
-    "build": "npm run build:esm && npm run build:cjs",
-    "build:esm": "tsc --project tsconfig.build.json",
+    "build": "npm run build:component && npm run build:cli && npm run build:admin",
+    "build:component": "tsc --project tsconfig.build.json",
+    "build:cli": "tsc --project tsconfig.cli.json",
+    "build:admin": "cd admin && npm run build && cp -r .output ../admin-dist",
     "dev": "npm-run-all --parallel dev:*",
     "dev:component": "npx convex codegen --component-dir ./src/component --watch",
     "dev:build": "tsc --project tsconfig.build.json --watch",
@@ -67,6 +73,8 @@
     "zod": "^4.3.5"
   },
   "dependencies": {
-    "convex-helpers": "^0.1.66"
+    "commander": "^12.0.0",
+    "convex-helpers": "^0.1.66",
+    "open": "^10.0.0"
   }
 }
