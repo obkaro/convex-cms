@@ -727,78 +727,90 @@ describe("getUserRole Hook", () => {
 
     it("returns true when hook is configured", () => {
       const cms = createCmsClient(mockApi, {
-        getUserRole: () => "admin",
+        getUserRole: (ctx, { userId }) => "admin",
       });
       expect(cms.hasUserRoleHook()).toBe(true);
     });
   });
 
   describe("getUserRole", () => {
+    let mockCtx: ConvexContext;
+
+    beforeEach(() => {
+      mockCtx = createMockContext();
+    });
+
     it("throws error when no hook is configured", async () => {
       const cms = createCmsClient(mockApi, { permissiveMode: true });
 
-      await expect(cms.getUserRole("user-123")).rejects.toThrow(
+      await expect(cms.getUserRole(mockCtx, "user-123")).rejects.toThrow(
         "No getUserRole hook configured"
       );
     });
 
-    it("calls the hook with userId", async () => {
+    it("calls the hook with ctx and userId", async () => {
       const mockHook = vi.fn().mockResolvedValue("editor");
 
       const cms = createCmsClient(mockApi, {
         getUserRole: mockHook,
       });
 
-      const role = await cms.getUserRole("user-123");
+      const role = await cms.getUserRole(mockCtx, "user-123");
 
-      expect(mockHook).toHaveBeenCalledWith({ userId: "user-123" });
+      expect(mockHook).toHaveBeenCalledWith(mockCtx, { userId: "user-123" });
       expect(role).toBe("editor");
     });
 
     it("supports synchronous hooks", async () => {
       const cms = createCmsClient(mockApi, {
-        getUserRole: ({ userId }) => {
+        getUserRole: (ctx, { userId }) => {
           if (userId === "admin-user") return "admin";
           return "viewer";
         },
       });
 
-      expect(await cms.getUserRole("admin-user")).toBe("admin");
-      expect(await cms.getUserRole("other-user")).toBe("viewer");
+      expect(await cms.getUserRole(mockCtx, "admin-user")).toBe("admin");
+      expect(await cms.getUserRole(mockCtx, "other-user")).toBe("viewer");
     });
 
     it("supports async hooks", async () => {
       const cms = createCmsClient(mockApi, {
-        getUserRole: async ({ userId }) => {
+        getUserRole: async (ctx, { userId }) => {
           // Simulate async database lookup
           await new Promise((resolve) => setTimeout(resolve, 10));
           return userId.startsWith("admin") ? "admin" : "author";
         },
       });
 
-      expect(await cms.getUserRole("admin-123")).toBe("admin");
-      expect(await cms.getUserRole("user-456")).toBe("author");
+      expect(await cms.getUserRole(mockCtx, "admin-123")).toBe("admin");
+      expect(await cms.getUserRole(mockCtx, "user-456")).toBe("author");
     });
 
     it("can return null for users without CMS roles", async () => {
       const cms = createCmsClient(mockApi, {
-        getUserRole: ({ userId }) => {
+        getUserRole: (ctx, { userId }) => {
           if (userId === "cms-user") return "author";
           return null;
         },
       });
 
-      expect(await cms.getUserRole("cms-user")).toBe("author");
-      expect(await cms.getUserRole("non-cms-user")).toBeNull();
+      expect(await cms.getUserRole(mockCtx, "cms-user")).toBe("author");
+      expect(await cms.getUserRole(mockCtx, "non-cms-user")).toBeNull();
     });
   });
 
   describe("hasPermissionForUser", () => {
+    let mockCtx: ConvexContext;
+
+    beforeEach(() => {
+      mockCtx = createMockContext();
+    });
+
     it("throws error when no hook is configured", async () => {
       const cms = createCmsClient(mockApi, { permissiveMode: true });
 
       await expect(
-        cms.hasPermissionForUser("user-123", {
+        cms.hasPermissionForUser(mockCtx, "user-123", {
           resource: "contentEntries",
           action: "create",
         })
@@ -807,10 +819,10 @@ describe("getUserRole Hook", () => {
 
     it("returns allowed: false when user has no role", async () => {
       const cms = createCmsClient(mockApi, {
-        getUserRole: () => null,
+        getUserRole: (ctx, { userId }) => null,
       });
 
-      const result = await cms.hasPermissionForUser("user-123", {
+      const result = await cms.hasPermissionForUser(mockCtx, "user-123", {
         resource: "contentEntries",
         action: "create",
       });
@@ -825,18 +837,18 @@ describe("getUserRole Hook", () => {
 
     it("checks permissions for admin role", async () => {
       const cms = createCmsClient(mockApi, {
-        getUserRole: () => "admin",
+        getUserRole: (ctx, { userId }) => "admin",
       });
 
       // Admin should be able to do everything
-      const createResult = await cms.hasPermissionForUser("admin-user", {
+      const createResult = await cms.hasPermissionForUser(mockCtx, "admin-user", {
         resource: "contentEntries",
         action: "create",
       });
       expect(createResult.allowed).toBe(true);
       expect(createResult.role).toBe("admin");
 
-      const manageSettingsResult = await cms.hasPermissionForUser("admin-user", {
+      const manageSettingsResult = await cms.hasPermissionForUser(mockCtx, "admin-user", {
         resource: "settings",
         action: "manage",
       });
@@ -845,18 +857,18 @@ describe("getUserRole Hook", () => {
 
     it("checks permissions for editor role", async () => {
       const cms = createCmsClient(mockApi, {
-        getUserRole: () => "editor",
+        getUserRole: (ctx, { userId }) => "editor",
       });
 
       // Editor can create content
-      const createResult = await cms.hasPermissionForUser("editor-user", {
+      const createResult = await cms.hasPermissionForUser(mockCtx, "editor-user", {
         resource: "contentEntries",
         action: "create",
       });
       expect(createResult.allowed).toBe(true);
 
       // Editor cannot manage settings
-      const manageSettingsResult = await cms.hasPermissionForUser("editor-user", {
+      const manageSettingsResult = await cms.hasPermissionForUser(mockCtx, "editor-user", {
         resource: "settings",
         action: "manage",
       });
@@ -865,18 +877,18 @@ describe("getUserRole Hook", () => {
 
     it("checks permissions for author role", async () => {
       const cms = createCmsClient(mockApi, {
-        getUserRole: () => "author",
+        getUserRole: (ctx, { userId }) => "author",
       });
 
       // Author can create content
-      const createResult = await cms.hasPermissionForUser("author-user", {
+      const createResult = await cms.hasPermissionForUser(mockCtx, "author-user", {
         resource: "contentEntries",
         action: "create",
       });
       expect(createResult.allowed).toBe(true);
 
       // Author can update own content
-      const updateOwnResult = await cms.hasPermissionForUser("author-user", {
+      const updateOwnResult = await cms.hasPermissionForUser(mockCtx, "author-user", {
         resource: "contentEntries",
         action: "update",
         scope: "own",
@@ -884,7 +896,7 @@ describe("getUserRole Hook", () => {
       expect(updateOwnResult.allowed).toBe(true);
 
       // Author cannot update all content
-      const updateAllResult = await cms.hasPermissionForUser("author-user", {
+      const updateAllResult = await cms.hasPermissionForUser(mockCtx, "author-user", {
         resource: "contentEntries",
         action: "update",
         scope: "all",
@@ -894,18 +906,18 @@ describe("getUserRole Hook", () => {
 
     it("checks permissions for viewer role", async () => {
       const cms = createCmsClient(mockApi, {
-        getUserRole: () => "viewer",
+        getUserRole: (ctx, { userId }) => "viewer",
       });
 
       // Viewer can read content
-      const readResult = await cms.hasPermissionForUser("viewer-user", {
+      const readResult = await cms.hasPermissionForUser(mockCtx, "viewer-user", {
         resource: "contentEntries",
         action: "read",
       });
       expect(readResult.allowed).toBe(true);
 
       // Viewer cannot create content
-      const createResult = await cms.hasPermissionForUser("viewer-user", {
+      const createResult = await cms.hasPermissionForUser(mockCtx, "viewer-user", {
         resource: "contentEntries",
         action: "create",
       });
@@ -914,10 +926,10 @@ describe("getUserRole Hook", () => {
 
     it("returns full result with role and permission info", async () => {
       const cms = createCmsClient(mockApi, {
-        getUserRole: () => "editor",
+        getUserRole: (ctx, { userId }) => "editor",
       });
 
-      const result = await cms.hasPermissionForUser("user-123", {
+      const result = await cms.hasPermissionForUser(mockCtx, "user-123", {
         resource: "contentEntries",
         action: "publish",
       });
@@ -948,11 +960,12 @@ describe("getUserRole Hook", () => {
       };
 
       const cms = createCmsClient(mockApi, {
-        getUserRole: () => "moderator",
+        getUserRole: (ctx, { userId }) => "moderator",
       });
 
       // Check permission with custom role
       const publishResult = await cms.hasPermissionForUser(
+        mockCtx,
         "mod-user",
         { resource: "contentEntries", action: "publish" },
         { customRoles }
@@ -962,6 +975,7 @@ describe("getUserRole Hook", () => {
 
       // Moderator cannot create content
       const createResult = await cms.hasPermissionForUser(
+        mockCtx,
         "mod-user",
         { resource: "contentEntries", action: "create" },
         { customRoles }
@@ -1248,7 +1262,7 @@ describe("Required Hooks Validation", () => {
     it("creates client when getUserRole hook is required and provided", () => {
       const cms = createCmsClient(testMockApi, {
         requireHooks: ["getUserRole"],
-        getUserRole: async () => "admin",
+        getUserRole: async (ctx, { userId }) => "admin",
       });
       expect(cms).toBeDefined();
     });
@@ -1366,7 +1380,7 @@ describe("Required Hooks Validation", () => {
     it("creates client when all required hooks are provided", () => {
       const cms = createCmsClient(testMockApi, {
         requireHooks: ["getUserRole", "authorizationHooks", "rateLimitHooks"],
-        getUserRole: async () => "editor",
+        getUserRole: async (ctx, { userId }) => "editor",
         authorizationHooks: {
           beforeRbac: async () => ({ allowed: true }),
         },
@@ -1459,7 +1473,7 @@ describe("Required Hooks Validation", () => {
       expect(() =>
         validateRequiredHooks({
           requireHooks: ["getUserRole"],
-          getUserRole: async () => "admin",
+          getUserRole: async (ctx, { userId }) => "admin",
         })
       ).not.toThrow();
     });
@@ -1469,20 +1483,21 @@ describe("Required Hooks Validation", () => {
     it("existing code without requireHooks continues to work", async () => {
       // Old pattern: no validation, errors at runtime
       const cms = createCmsClient(testMockApi);
+      const mockCtx = createMockContext();
 
       // Client is created without hooks
       expect(cms).toBeDefined();
       expect(cms.hasUserRoleHook()).toBe(false);
 
       // Method throws at runtime (unchanged behavior)
-      await expect(cms.getUserRole("user-123")).rejects.toThrow(
+      await expect(cms.getUserRole(mockCtx, "user-123")).rejects.toThrow(
         "No getUserRole hook configured"
       );
     });
 
     it("existing code with hooks continues to work", () => {
       const cms = createCmsClient(testMockApi, {
-        getUserRole: async () => "admin",
+        getUserRole: async (ctx, { userId }) => "admin",
       });
 
       expect(cms).toBeDefined();
@@ -1605,7 +1620,7 @@ describe("Authorization Enforcement", () => {
   describe("with getUserRole configured (proper authorization)", () => {
     it("allows operations when user has proper role", async () => {
       const cms = createCmsClient(mockApi, {
-        getUserRole: async () => "admin",
+        getUserRole: async (ctx, { userId }) => "admin",
       });
 
       // Should not throw - admin role has all permissions
@@ -1620,7 +1635,7 @@ describe("Authorization Enforcement", () => {
 
     it("throws UnauthorizedError when user has no role", async () => {
       const cms = createCmsClient(mockApi, {
-        getUserRole: async () => null,
+        getUserRole: async (ctx, { userId }) => null,
       });
 
       await expect(
@@ -1636,7 +1651,7 @@ describe("Authorization Enforcement", () => {
   describe("anonymous operations without permissiveMode", () => {
     it("throws when no userId provided and permissiveMode is false", async () => {
       const cms = createCmsClient(mockApi, {
-        getUserRole: async () => "admin",
+        getUserRole: async (ctx, { userId }) => "admin",
       });
 
       // Even with getUserRole configured, no userId should fail

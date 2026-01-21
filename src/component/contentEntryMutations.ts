@@ -21,6 +21,7 @@ import {
   publishEntryArgs,
   deleteContentEntryArgs,
   duplicateContentEntryArgs,
+  mutationAuthContext,
 } from "./validators.js";
 import { generateSlug } from "./lib/slugGenerator.js";
 import { ensureUniqueSlug } from "./lib/slugUniqueness.js";
@@ -50,6 +51,7 @@ import {
   contentEntryCreateFailed,
   contentEntryUpdateFailed,
 } from "./lib/errors.js";
+import { requireMutationAuth, withResourceOwner } from "./lib/mutationAuth.js";
 
 // =============================================================================
 // Create Entry Mutation
@@ -102,10 +104,17 @@ import {
  * ```
  */
 export const createEntry = mutation({
-  args: createContentEntryArgs.fields,
+  args: {
+    ...createContentEntryArgs.fields,
+    /** Optional auth context for mutation-level authorization */
+    _auth: v.optional(mutationAuthContext),
+  },
   returns: contentEntryDoc,
   handler: async (ctx, args) => {
-    const { contentTypeId, data, locale, primaryEntryId, createdBy } = args;
+    const { contentTypeId, data, locale, primaryEntryId, createdBy, _auth } = args;
+
+    // Authorization check - contentEntries.create permission
+    requireMutationAuth(_auth, "contentEntries", "create");
 
     // Validate content type exists and is active
     const contentType = await ctx.db.get(contentTypeId);
@@ -286,10 +295,14 @@ export const createEntry = mutation({
  * ```
  */
 export const updateEntry = mutation({
-  args: updateContentEntryArgs.fields,
+  args: {
+    ...updateContentEntryArgs.fields,
+    /** Optional auth context for mutation-level authorization */
+    _auth: v.optional(mutationAuthContext),
+  },
   returns: contentEntryDoc,
   handler: async (ctx, args) => {
-    const { id, slug, data, status, scheduledPublishAt, updatedBy, regenerateSlug } = args;
+    const { id, slug, data, status, scheduledPublishAt, updatedBy, regenerateSlug, _auth } = args;
 
     // Retrieve the existing entry
     const entry = await ctx.db.get(id);
@@ -299,6 +312,13 @@ export const updateEntry = mutation({
     if (entry.deletedAt !== undefined) {
       throw contentEntryDeleted(id as unknown as string);
     }
+
+    // Authorization check - contentEntries.update permission (with ownership check)
+    requireMutationAuth(
+      withResourceOwner(_auth, entry.createdBy),
+      "contentEntries",
+      "update"
+    );
 
     // Check lock status - only the lock holder can update a locked entry
     const lockValidation = validateLockForUpdate(entry, updatedBy);
@@ -496,10 +516,14 @@ export const updateEntry = mutation({
  * ```
  */
 export const publishEntry = mutation({
-  args: publishEntryArgs.fields,
+  args: {
+    ...publishEntryArgs.fields,
+    /** Optional auth context for mutation-level authorization */
+    _auth: v.optional(mutationAuthContext),
+  },
   returns: contentEntryDoc,
   handler: async (ctx, args) => {
-    const { id, changeDescription, updatedBy } = args;
+    const { id, changeDescription, updatedBy, _auth } = args;
 
     // Retrieve the existing entry
     const entry = await ctx.db.get(id);
@@ -509,6 +533,14 @@ export const publishEntry = mutation({
     if (entry.deletedAt !== undefined) {
       throw contentEntryDeleted(id as unknown as string);
     }
+
+    // Authorization check - contentEntries.publish permission (with ownership check)
+    requireMutationAuth(
+      withResourceOwner(_auth, entry.createdBy),
+      "contentEntries",
+      "publish"
+    );
+
     if (entry.status === "published") {
       throw contentEntryAlreadyPublished(id as unknown as string);
     }
@@ -618,10 +650,12 @@ export const unpublishEntry = mutation({
     id: v.id("content_entries"),
     /** User ID performing the unpublish (for audit trail) */
     updatedBy: v.optional(v.string()),
+    /** Optional auth context for mutation-level authorization */
+    _auth: v.optional(mutationAuthContext),
   },
   returns: contentEntryDoc,
   handler: async (ctx, args) => {
-    const { id, updatedBy } = args;
+    const { id, updatedBy, _auth } = args;
 
     // Retrieve the existing entry
     const entry = await ctx.db.get(id);
@@ -631,6 +665,14 @@ export const unpublishEntry = mutation({
     if (entry.deletedAt !== undefined) {
       throw contentEntryDeleted(id as unknown as string);
     }
+
+    // Authorization check - contentEntries.unpublish permission (with ownership check)
+    requireMutationAuth(
+      withResourceOwner(_auth, entry.createdBy),
+      "contentEntries",
+      "unpublish"
+    );
+
     if (entry.status !== "published") {
       throw contentEntryNotPublished(id as unknown as string, entry.status);
     }
@@ -721,10 +763,14 @@ const deleteResultDoc = v.object({
  * ```
  */
 export const deleteEntry = mutation({
-  args: deleteContentEntryArgs.fields,
+  args: {
+    ...deleteContentEntryArgs.fields,
+    /** Optional auth context for mutation-level authorization */
+    _auth: v.optional(mutationAuthContext),
+  },
   returns: deleteResultDoc,
   handler: async (ctx, args) => {
-    const { id, deletedBy, hardDelete = false } = args;
+    const { id, deletedBy, hardDelete = false, _auth } = args;
 
     // Retrieve the content entry by ID
     const entry = await ctx.db.get(id);
@@ -733,6 +779,13 @@ export const deleteEntry = mutation({
     if (!entry) {
       throw contentEntryNotFound(id as unknown as string);
     }
+
+    // Authorization check - contentEntries.delete permission (with ownership check)
+    requireMutationAuth(
+      withResourceOwner(_auth, entry.createdBy),
+      "contentEntries",
+      "delete"
+    );
 
     // For soft delete, check if already deleted
     if (!hardDelete && entry.deletedAt !== undefined) {
@@ -850,10 +903,12 @@ export const restoreEntry = mutation({
     id: v.id("content_entries"),
     /** User ID performing the restoration (for audit trail) */
     restoredBy: v.optional(v.string()),
+    /** Optional auth context for mutation-level authorization */
+    _auth: v.optional(mutationAuthContext),
   },
   returns: contentEntryDoc,
   handler: async (ctx, args) => {
-    const { id, restoredBy } = args;
+    const { id, restoredBy, _auth } = args;
 
     // Retrieve the content entry by ID
     const entry = await ctx.db.get(id);
@@ -862,6 +917,13 @@ export const restoreEntry = mutation({
     if (!entry) {
       throw contentEntryNotFound(id as unknown as string);
     }
+
+    // Authorization check - contentEntries.restore permission (with ownership check)
+    requireMutationAuth(
+      withResourceOwner(_auth, entry.createdBy),
+      "contentEntries",
+      "restore"
+    );
 
     // Validate entry is soft-deleted
     if (entry.deletedAt === undefined) {
@@ -966,10 +1028,17 @@ export const restoreEntry = mutation({
  * ```
  */
 export const duplicateEntry = mutation({
-  args: duplicateContentEntryArgs.fields,
+  args: {
+    ...duplicateContentEntryArgs.fields,
+    /** Optional auth context for mutation-level authorization */
+    _auth: v.optional(mutationAuthContext),
+  },
   returns: contentEntryDoc,
   handler: async (ctx, args) => {
-    const { sourceEntryId, slug, copyMediaReferences = true, locale, createdBy } = args;
+    const { sourceEntryId, slug, copyMediaReferences = true, locale, createdBy, _auth } = args;
+
+    // Authorization check - contentEntries.create permission (duplicate creates a new entry)
+    requireMutationAuth(_auth, "contentEntries", "create");
 
     // Retrieve the source entry
     const sourceEntry = await ctx.db.get(sourceEntryId);

@@ -69,12 +69,105 @@ export interface FeatureFlags {
 }
 
 // =============================================================================
+// Convex Context Types for Hooks
+// =============================================================================
+
+/**
+ * Database access interface for authorization hooks.
+ * This provides a minimal type-safe interface for querying the parent app's database.
+ *
+ * Note: The actual ctx.db at runtime has full capabilities based on the parent app's
+ * context type. Users can cast to their specific MutationCtx/QueryCtx for full type safety.
+ */
+export interface CmsHookDatabaseAccess {
+  /**
+   * Query a table in the parent app's database.
+   * @param tableName - The name of the table to query
+   * @returns A query builder (actual type depends on parent app's schema)
+   */
+  query<TableName extends string>(tableName: TableName): {
+    filter(predicate: (q: unknown) => unknown): unknown;
+    first(): Promise<unknown>;
+    collect(): Promise<unknown[]>;
+  };
+
+  /**
+   * Get a document by ID from the parent app's database.
+   * @param id - The document ID
+   * @returns The document or null
+   */
+  get(id: unknown): Promise<unknown>;
+}
+
+/**
+ * Authentication access interface for authorization hooks.
+ * Provides access to the authenticated user identity from the parent app.
+ */
+export interface CmsHookAuthAccess {
+  /**
+   * Get the authenticated user's identity.
+   * @returns The user identity or null if not authenticated
+   */
+  getUserIdentity(): Promise<{
+    tokenIdentifier: string;
+    subject: string;
+    issuer: string;
+    [key: string]: unknown;
+  } | null>;
+}
+
+/**
+ * Extended Convex context for CMS authorization hooks.
+ *
+ * This extends the minimal ConvexContext with database and auth access,
+ * allowing hooks to query the parent app's database and check authentication.
+ *
+ * @example
+ * ```typescript
+ * // In getUserRole hook - query parent app's users table
+ * getUserRole: async (ctx, { userId }) => {
+ *   const user = await ctx.db.query("users")
+ *     .filter(q => q.eq(q.field("_id"), userId))
+ *     .first();
+ *   return user?.cmsRole ?? null;
+ * }
+ *
+ * // For full type safety, cast to your app's context type
+ * getUserRole: async (ctx, { userId }) => {
+ *   const typedCtx = ctx as MutationCtx; // Your app's MutationCtx
+ *   const user = await typedCtx.db.get(userId as Id<"users">);
+ *   return user?.role ?? null;
+ * }
+ * ```
+ */
+export interface CmsHookContext {
+  /**
+   * Database access for querying the parent app's tables.
+   */
+  db: CmsHookDatabaseAccess;
+
+  /**
+   * Authentication access (available if auth is configured in parent app).
+   */
+  auth: CmsHookAuthAccess;
+
+  /**
+   * Run a mutation on a component.
+   */
+  runMutation: (mutation: unknown, ...args: unknown[]) => Promise<unknown>;
+
+  /**
+   * Run a query on a component.
+   */
+  runQuery: (query: unknown, ...args: unknown[]) => Promise<unknown>;
+}
+
+// =============================================================================
 // User Role Hook Types
 // =============================================================================
 
 /**
- * Context passed to the getUserRole hook.
- * Contains information about the current request context.
+ * Context passed to the getUserRole hook (excluding ctx which is passed separately).
  */
 export interface GetUserRoleContext {
   /**
@@ -124,8 +217,28 @@ export type CmsOperation =
 /**
  * Context passed to authorization hooks.
  * Contains all information needed to make authorization decisions.
+ *
+ * The ctx property provides access to the parent app's database and auth,
+ * allowing hooks to perform custom queries for authorization decisions.
  */
 export interface AuthorizationHookContext {
+  /**
+   * The Convex context from the parent app.
+   * Provides access to the database and authentication.
+   *
+   * @example
+   * ```typescript
+   * // Query parent app's database in authorization hook
+   * authorize: async (context) => {
+   *   const user = await context.ctx.db.query("users")
+   *     .filter(q => q.eq(q.field("_id"), context.userId))
+   *     .first();
+   *   return { allowed: user?.isApproved === true };
+   * }
+   * ```
+   */
+  ctx: CmsHookContext;
+
   /**
    * The operation being performed.
    */
@@ -898,34 +1011,209 @@ export type GetUserRoleResult = string | null;
  *
  * @example
  * ```typescript
- * // Simple mapping from your user table
- * const getUserRole: GetUserRoleHook = async ({ userId }) => {
- *   const user = await db.query("users").filter(q => q.eq(q.field("_id"), userId)).first();
+ * // Query your database directly - ctx has full db access!
+ * const getUserRole: GetUserRoleHook = async (ctx, { userId }) => {
+ *   const user = await ctx.db.query("users")
+ *     .filter(q => q.eq(q.field("_id"), userId))
+ *     .first();
  *   return user?.cmsRole ?? null;
  * };
  *
- * // Integration with Clerk
- * const getUserRole: GetUserRoleHook = async ({ userId }) => {
- *   const user = await clerkClient.users.getUser(userId);
- *   return user.publicMetadata.cmsRole as string ?? "viewer";
+ * // Integration with Clerk (access publicMetadata stored in your users table)
+ * const getUserRole: GetUserRoleHook = async (ctx, { userId }) => {
+ *   const user = await ctx.db.get(userId);
+ *   return user?.role ?? "viewer";
  * };
  *
  * // Role based on user type
- * const getUserRole: GetUserRoleHook = async ({ userId }) => {
- *   const user = await getUser(userId);
+ * const getUserRole: GetUserRoleHook = async (ctx, { userId }) => {
+ *   const user = await ctx.db.get(userId);
+ *   if (!user) return null;
  *   if (user.isAdmin) return "admin";
  *   if (user.isEditor) return "editor";
  *   if (user.canWriteContent) return "author";
  *   return "viewer";
  * };
+ *
+ * // For full type safety, cast ctx to your app's type
+ * const getUserRole: GetUserRoleHook = async (ctx, { userId }) => {
+ *   const typedCtx = ctx as MutationCtx; // Your app's MutationCtx
+ *   const user = await typedCtx.db.get(userId as Id<"users">);
+ *   return user?.role ?? null;
+ * };
  * ```
  */
 export type GetUserRoleHook = (
+  ctx: CmsHookContext,
   context: GetUserRoleContext
 ) => Promise<GetUserRoleResult> | GetUserRoleResult;
 
+// =============================================================================
+// Simplified Configuration Types (Progressive Disclosure)
+// =============================================================================
+
+/**
+ * Minimal CMS configuration for basic setup.
+ *
+ * This is the simplest way to configure the CMS - just provide the role lookup hook.
+ * All other settings use sensible defaults.
+ *
+ * @example
+ * ```typescript
+ * // Minimal setup - just map users to roles
+ * const cms = createCmsClient(components.convexCms, {
+ *   getUserRole: async (ctx, { userId }) => {
+ *     const user = await db.query("users").filter(...).first();
+ *     return user?.cmsRole ?? null;
+ *   },
+ * });
+ * ```
+ */
+export interface CmsConfig {
+  /**
+   * Hook for mapping user IDs to CMS roles.
+   *
+   * This is the only required configuration for basic CMS usage.
+   * Built-in roles: 'admin', 'editor', 'author', 'viewer'
+   */
+  getUserRole: GetUserRoleHook;
+
+  /**
+   * Default locale for content when no locale is specified.
+   * @default "en"
+   */
+  defaultLocale?: LocaleCode;
+}
+
+/**
+ * CMS configuration with feature flags.
+ *
+ * Extends the minimal config with optional feature toggles.
+ * Use this when you need to customize which CMS features are enabled.
+ *
+ * @example
+ * ```typescript
+ * const cms = createCmsClient(components.convexCms, {
+ *   getUserRole: async (ctx, { userId }) => getUserCmsRole(userId),
+ *   features: {
+ *     versioning: true,
+ *     localization: true,
+ *   },
+ * });
+ * ```
+ */
+export interface CmsConfigWithFeatures extends CmsConfig {
+  /**
+   * Feature flags to enable/disable specific CMS capabilities.
+   */
+  features?: FeatureFlags;
+
+  /**
+   * List of supported locales (only relevant when localization is enabled).
+   */
+  supportedLocales?: LocaleCode[];
+}
+
+/**
+ * Full CMS configuration with all advanced options.
+ *
+ * Extends CmsConfigWithFeatures with authorization hooks, rate limiting,
+ * custom roles, and other advanced settings. Use this for complex setups
+ * that need fine-grained control over CMS behavior.
+ *
+ * For most applications, use `CmsConfig` or `CmsConfigWithFeatures` instead.
+ *
+ * @example
+ * ```typescript
+ * const cms = createCmsClient(components.convexCms, {
+ *   getUserRole: async (ctx, { userId }) => getUserCmsRole(userId),
+ *   features: { versioning: true },
+ *   authorizationHooks: {
+ *     beforeRbac: async (ctx) => {
+ *       if (isMaintenanceMode()) {
+ *         return { allowed: false, reason: "Maintenance mode" };
+ *       }
+ *       return { allowed: true };
+ *     },
+ *   },
+ * });
+ * ```
+ */
+export interface FullCmsConfig extends CmsConfigWithFeatures {
+  /**
+   * Authorization hooks for custom permission logic.
+   */
+  authorizationHooks?: AuthorizationHooks;
+
+  /**
+   * Rate limiting hooks for controlling CMS operation frequency.
+   */
+  rateLimitHooks?: RateLimitHooks;
+
+  /**
+   * Custom roles to extend or override the default RBAC roles.
+   */
+  customRoles?: Array<CustomRoleInput>;
+
+  /**
+   * Whether to skip built-in RBAC checks entirely.
+   * @default false
+   */
+  skipRbac?: boolean;
+}
+
+/**
+ * Development-only CMS configuration.
+ *
+ * Enables permissive mode for development without setting up authentication.
+ *
+ * **WARNING**: Never use in production - this bypasses all authorization!
+ *
+ * @example
+ * ```typescript
+ * // Development only!
+ * const cms = createCmsClient(components.convexCms, {
+ *   permissiveMode: true, // Bypasses all auth - NEVER in production!
+ * });
+ * ```
+ */
+export interface CmsDevConfig {
+  /**
+   * Enable permissive mode - bypasses all authorization checks.
+   * Only use for local development!
+   */
+  permissiveMode: true;
+
+  /**
+   * Default locale for content when no locale is specified.
+   * @default "en"
+   */
+  defaultLocale?: LocaleCode;
+}
+
+/**
+ * Union type for all simplified CMS configurations.
+ *
+ * Use this type when you want to accept any of the simplified config formats.
+ */
+export type SimplifiedCmsConfig =
+  | CmsConfig
+  | CmsConfigWithFeatures
+  | FullCmsConfig
+  | CmsDevConfig;
+
+// =============================================================================
+// Legacy Configuration (Full)
+// =============================================================================
+
 /**
  * Configuration options for the Convex CMS component.
+ *
+ * This is the full configuration interface with all options.
+ * For simpler setups, consider using:
+ * - `CmsConfig` - Minimal config (just getUserRole)
+ * - `CmsConfigWithFeatures` - With feature flags
+ * - `FullCmsConfig` - With hooks and custom roles
  *
  * @example
  * ```typescript
@@ -938,7 +1226,7 @@ export type GetUserRoleHook = (
  *     scheduling: true,
  *   },
  *   // Map user IDs to CMS roles
- *   getUserRole: async ({ userId }) => {
+ *   getUserRole: async (ctx, { userId }) => {
  *     const user = await db.query("users").filter(q => q.eq(q.field("_id"), userId)).first();
  *     return user?.cmsRole ?? null;
  *   },
@@ -1033,7 +1321,7 @@ export interface ComponentConfig {
    *
    * @example
    * ```typescript
-   * getUserRole: async ({ userId }) => {
+   * getUserRole: async (ctx, { userId }) => {
    *   const user = await db.query("users")
    *     .filter(q => q.eq(q.field("_id"), userId))
    *     .first();
@@ -1197,7 +1485,7 @@ export interface ComponentConfig {
    *
    * // Production mode (default) - require authorization
    * const cms = createCmsClient(components.convexCms, {
-   *   getUserRole: async ({ userId }) => {
+   *   getUserRole: async (ctx, { userId }) => {
    *     const user = await db.query("users").filter(...).first();
    *     return user?.cmsRole ?? null;
    *   },
@@ -1230,7 +1518,7 @@ export interface ComponentConfig {
    * // Validate getUserRole hook is configured at init time
    * const cms = createCmsClient(components.convexCms, {
    *   requireHooks: ["getUserRole"],
-   *   getUserRole: async ({ userId }) => {
+   *   getUserRole: async (ctx, { userId }) => {
    *     // This is now required - init will fail without it
    *     return user?.role ?? null;
    *   },
@@ -1294,7 +1582,7 @@ export interface ComponentConfig {
    * // Configure the CMS with custom roles
    * const cms = createCmsClient(components.convexCms, {
    *   customRoles: [blogAuthor, blogEditor],
-   *   getUserRole: async ({ userId }) => {
+   *   getUserRole: async (ctx, { userId }) => {
    *     // Return custom role names like "blog-author" or "blog-editor"
    *     const user = await getUser(userId);
    *     return user.cmsRole;
@@ -1303,6 +1591,67 @@ export interface ComponentConfig {
    * ```
    */
   customRoles?: Array<CustomRoleInput>;
+
+  /**
+   * Content type schema for type-safe content access.
+   *
+   * When provided, the CMS client methods can infer content data types
+   * based on the defined content type schemas.
+   *
+   * @example
+   * ```typescript
+   * import { v } from "convex/values";
+   * import { defineContentType, createContentSchema } from "@convex-cms/core";
+   *
+   * const blogPost = defineContentType({
+   *   name: "blog_post",
+   *   validator: v.object({
+   *     title: v.string(),
+   *     content: v.string(),
+   *   }),
+   *   meta: { displayName: "Blog Post" },
+   * });
+   *
+   * const contentSchema = createContentSchema({ blogPost });
+   *
+   * const cms = createCmsClient(components.convexCms, {
+   *   schema: contentSchema,
+   * });
+   *
+   * // Now content entries are typed
+   * const post = await cms.contentEntries.get<"blog_post">(ctx, id);
+   * post.data.title  // ✅ TypeScript knows this is a string
+   * ```
+   */
+  schema?: ContentSchemaConfig;
+}
+
+/**
+ * Content schema configuration type.
+ * Accepts any schema created via createContentSchema().
+ */
+export type ContentSchemaConfig = {
+  definitions: Record<string, ContentTypeDefinitionBase>;
+  getDefinition(name: string): ContentTypeDefinitionBase | undefined;
+  getContentTypeNames(): string[];
+  hasContentType(name: string): boolean;
+};
+
+/**
+ * Base interface for content type definitions in schema config.
+ * This is the minimal interface needed for runtime operations.
+ */
+export interface ContentTypeDefinitionBase {
+  readonly name: string;
+  readonly validator: unknown;
+  readonly meta: {
+    displayName: string;
+    description?: string;
+    titleField?: string;
+    slugField?: string;
+    singleton?: boolean;
+  };
+  readonly _type: "content_type_definition";
 }
 
 /**
@@ -1364,13 +1713,14 @@ export interface CustomPermission {
  * This is the configuration with all defaults applied, excluding the getUserRole hook
  * and authorizationHooks which are stored separately in the client closure.
  */
-export type ResolvedComponentConfig = Required<Omit<ComponentConfig, "getUserRole" | "authorizationHooks" | "rateLimitHooks" | "localeFallbackChains" | "customRoles" | "requireHooks">> & {
+export type ResolvedComponentConfig = Required<Omit<ComponentConfig, "getUserRole" | "authorizationHooks" | "rateLimitHooks" | "localeFallbackChains" | "customRoles" | "requireHooks" | "schema">> & {
   getUserRole?: GetUserRoleHook;
   authorizationHooks?: AuthorizationHooks;
   rateLimitHooks?: RateLimitHooks;
   localeFallbackChains: Record<LocaleCode, LocaleCode[]>;
   customRoles: Record<string, CustomRoleDefinition>;
   requireHooks: Array<"getUserRole" | "authorizationHooks" | "rateLimitHooks">;
+  schema?: ContentSchemaConfig;
 };
 
 /**
@@ -1499,7 +1849,7 @@ export class AuthorizationNotConfiguredError extends Error {
     this.name = "AuthorizationNotConfiguredError";
     this.operation = operation;
     this.suggestion =
-      "Add getUserRole hook: createCmsClient(api, { getUserRole: async ({ userId }) => getUserRoleFromDb(userId) })";
+      "Add getUserRole hook: createCmsClient(api, { getUserRole: async (ctx, { userId }) => getUserRoleFromDb(userId) })";
 
     // Maintains proper prototype chain for instanceof checks
     Object.setPrototypeOf(this, AuthorizationNotConfiguredError.prototype);
@@ -1625,6 +1975,7 @@ export function resolveConfig(config?: ComponentConfig): ResolvedComponentConfig
     rateLimitHooks: config?.rateLimitHooks,
     customRoles: customRolesRecord,
     requireHooks: config?.requireHooks ?? DEFAULT_CONFIG.requireHooks,
+    schema: config?.schema,
   };
 }
 
