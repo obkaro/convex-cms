@@ -99,6 +99,8 @@ function ContentTypesPage() {
       json: '{}',
       select: '▼',
       multiSelect: '☰',
+      tags: '🏷',
+      category: '📁',
     };
     return icons[type] || '?';
   };
