@@ -6,9 +6,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is `@convex-cms/core` - a headless CMS built as a Convex Component. It provides content management with typed fields, versioning, publishing workflows, media management, RBAC, and AI-agent integration. Always use context7 mcp to get up to date docs on convex component authoring, convex patterns, tanstack start, react, and any other library in use.
 
-**Key architectural concept**: This is a Convex Component, meaning it runs in an isolated sandbox with its own database tables. The component cannot access `ctx.auth` or the parent app's tables directly - all user context must be passed explicitly to component functions.
+**Key architectural concept**: This is a Convex Component, meaning it runs in an isolated sandbox with its own database tables. The component takes a developer first approach to a CMS.
 
-**Target users**: Solo developers, agencies, startups, enterprise teams, and AI/agent developers. See `.automaker/context/user-types-and-use-cases.md` for detailed personas and use cases.
+**Target users**: Solo developers, agencies, startups, enterprise teams, and AI/agent developers. See `.automaker/context/user-types-and-use-cases.md` for detailed personas and use cases. See docs for additional documentation.
 
 ## Common Commands
 
@@ -48,64 +48,6 @@ npm run build        # Build for production
 
 ## Architecture
 
-### Directory Structure
-
-```
-src/
-├── component/           # Convex Component (runs in isolated sandbox)
-│   ├── convex.config.ts # Component definition (defineComponent)
-│   ├── schema.ts        # Database tables (11 tables, isolated from parent app)
-│   ├── validators.ts    # Convex validators for all operations
-│   ├── index.ts         # Internal exports for component
-│   ├── *Mutations.ts    # Mutation functions (contentEntryMutations, etc.)
-│   ├── *.ts             # Query functions and utilities
-│   └── lib/             # Internal utilities (slugGenerator, referenceResolver, etc.)
-├── client/              # NPM package exports (what developers import)
-│   ├── index.ts         # Main entry: createCmsClient, validators, utilities
-│   ├── wrapper.ts       # Typed API wrapper classes (ContentTypesApi, etc.)
-│   ├── types.ts         # TypeScript types for external use
-│   ├── queryBuilder.ts  # Fluent query builder for content queries
-│   └── agentTools.ts    # @convex-dev/agent tool definitions
-└── test.ts              # Test helpers for convex-test registration
-
-admin/                   # React Admin UI (TanStack Router + Vite)
-├── convex/              # Admin's Convex config (uses the CMS component)
-├── src/
-│   ├── routes/          # TanStack Router file-based routes
-│   ├── components/      # React components including field renderers
-│   └── contexts/        # Auth context for pluggable authentication
-```
-
-### Find Component Tables (in `schema.ts`)
-
-### Client Wrapper Pattern
-
-The component exposes raw Convex functions, but developers use a typed wrapper:
-
-```typescript
-// Developer creates a CMS client with configuration
-const cms = createCmsClient(components.convexCms, {
-  defaultLocale: "en-US",
-  features: { versioning: true },
-  getUserRole: async ({ userId }) => "editor",  // Maps app users to CMS roles
-});
-
-// Typed methods wrap component function calls
-await cms.contentTypes.create(ctx, { name: "blog_post", ... });
-await cms.contentEntries.publish(ctx, { id: entryId });
-```
-
-### Authorization Flow
-
-Since components can't access `ctx.auth`, authorization works via hooks:
-
-1. **getUserRole hook**: Developer provides function mapping userId → CMS role
-2. **Authorization hooks**: Optional beforeRbac/afterRbac/authorize hooks for custom logic
-3. **RBAC check**: Built-in roles (admin/editor/author/viewer) with permissions
-4. **Rate limiting hooks**: Optional rate limiting via parent app
-
-**Important**: Authorization is enforced by default - operations fail without `getUserRole` configured. Use `permissiveMode: true` for development without authorization.
-
 ### Package Exports
 
 ```
@@ -117,27 +59,6 @@ Since components can't access `ctx.auth`, authorization works via hooks:
 └── ./test                → Test helpers for convex-test
 ```
 
-## Key Patterns
-
-### Field Types
-
-Supported field types: `text`, `richText`, `number`, `boolean`, `date`, `datetime`, `reference`, `media`, `json`, `select`, `multiSelect`
-
-Each has validators in `validators.ts` and runtime validation in `validation.ts`.
-
-### Content Status Flow
-
-`draft` → `published` (via publish mutation)
-`published` → `draft` (via unpublish mutation)
-`draft` → `scheduled` (via schedule mutation) → auto-publishes at scheduled time
-
-### Soft Delete Pattern
-
-All deletions are soft by default (sets `deletedAt` timestamp). Hard delete available with `hardDelete: true`. Trash system with configurable retention and restore capability.
-
-### Version Snapshots
-
-Created automatically on publish. Rollback creates a new version with old content state (preserves history).
 
 ## Testing
 

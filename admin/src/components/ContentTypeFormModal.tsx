@@ -16,7 +16,9 @@ type FieldType =
   | 'media'
   | 'json'
   | 'select'
-  | 'multiSelect';
+  | 'multiSelect'
+  | 'tags'
+  | 'category';
 
 /**
  * Select option for select/multiSelect fields.
@@ -66,6 +68,8 @@ const FIELD_TYPE_INFO: Record<FieldType, { label: string; icon: string; descript
   json: { label: 'JSON', icon: '{}', description: 'Custom JSON data' },
   select: { label: 'Select', icon: '▼', description: 'Dropdown selection' },
   multiSelect: { label: 'Multi-Select', icon: '☰', description: 'Multiple selections' },
+  tags: { label: 'Tags', icon: '🏷', description: 'Free-form tag list' },
+  category: { label: 'Category', icon: '📁', description: 'Taxonomy category selection' },
 };
 
 /**

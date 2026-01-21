@@ -345,7 +345,9 @@ describe("Content Type Mutation Validators", () => {
       expect(fieldTypes).toContain("json");
       expect(fieldTypes).toContain("select");
       expect(fieldTypes).toContain("multiSelect");
-      expect(fieldTypes).toHaveLength(11);
+      expect(fieldTypes).toContain("tags");
+      expect(fieldTypes).toContain("category");
+      expect(fieldTypes).toHaveLength(13);
     });
   });
 
