@@ -1108,7 +1108,7 @@ export {
 //     "resourceId": "entry_id_here",
 //     "action": "published",
 //     "data": { "slug": "my-post", "contentTypeName": "blog_post", ... },
-//     "timestamp": "2024-01-15T10:30:00.000Z",
+//     "timestamp": "2026-01-15T10:30:00.000Z",
 //     "userId": "user_id_here"
 //   }
 //   ```

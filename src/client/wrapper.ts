@@ -3834,7 +3834,7 @@ export class MediaFoldersApi {
    * ```typescript
    * // Find folder by path
    * const folder = await cms.mediaFolders.getByPath(ctx, {
-   *   path: "/Images/Blog/2024",
+   *   path: "/Images/Blog/2026",
    * });
    * ```
    */

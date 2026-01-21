@@ -599,9 +599,9 @@ export class ContentQueryBuilder {
    *
    * @example
    * ```typescript
-   * const year2024 = await cms.contentEntries
+   * const year2026 = await cms.contentEntries
    *   .query()
-   *   .whereStartsWith("slug", "2024-")
+   *   .whereStartsWith("slug", "2026-")
    *   .execute(ctx);
    * ```
    */

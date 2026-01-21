@@ -2154,7 +2154,7 @@ export type FilterOperator =
  * { field: "tags", operator: "contains", value: "javascript" }
  *
  * // Filter by string prefix
- * { field: "slug", operator: "startsWith", value: "2024-" }
+ * { field: "slug", operator: "startsWith", value: "2026-" }
  * ```
  */
 export interface FieldFilter {

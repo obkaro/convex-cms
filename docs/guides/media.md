@@ -146,7 +146,7 @@ const folder = await cms.mediaFolders.create(ctx, {
 
 // Nested folder
 const subfolder = await cms.mediaFolders.create(ctx, {
-  name: "2024",
+  name: "2026",
   parentId: folder._id,
 });
 ```
@@ -168,7 +168,7 @@ const tree = await cms.mediaFolders.getFolderTree(ctx);
 // Returns flat list with path info:
 // [
 //   { _id, name: "Blog", path: "/Blog", depth: 0 },
-//   { _id, name: "2024", path: "/Blog/2024", depth: 1 },
+//   { _id, name: "2026", path: "/Blog/2026", depth: 1 },
 // ]
 ```
 
@@ -185,7 +185,7 @@ await cms.mediaFolders.move(ctx, {
 
 ```typescript
 const folder = await cms.mediaFolders.getByPath(ctx, {
-  path: "/Blog/2024/March",
+  path: "/Blog/2026/March",
 });
 ```
 
@@ -293,7 +293,7 @@ await cms.mediaAssets.update(ctx, {
 ```typescript
 await cms.mediaAssets.update(ctx, {
   id: assetId,
-  tags: ["blog", "featured", "2024"],
+  tags: ["blog", "featured", "2026"],
 });
 ```
 

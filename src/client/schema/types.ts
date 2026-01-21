@@ -228,7 +228,7 @@ export interface FieldMeta {
 
   /**
    * Minimum allowed date (ISO 8601 format).
-   * @example "2024-01-01"
+   * @example "2026-01-01"
    */
   minDate?: string;
 
