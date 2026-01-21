@@ -1171,6 +1171,42 @@ export interface ComponentConfig {
   skipRbac?: boolean;
 
   /**
+   * Enable permissive mode for development/migration scenarios.
+   *
+   * **Security Implications:**
+   * - When `false` (default): Write operations (create, update, delete, publish, etc.)
+   *   will throw an error if `getUserRole` is not configured. This is the secure default
+   *   that ensures authorization is properly set up before mutations can execute.
+   * - When `true`: Authorization checks are silently skipped when `getUserRole` is not
+   *   configured. A warning is logged to the console. This mode is ONLY recommended for:
+   *   - Initial development before auth is implemented
+   *   - Testing environments
+   *   - Migration from a previous version
+   *
+   * **CRITICAL**: Never enable permissive mode in production as it allows any user
+   * to perform any operation without authorization checks.
+   *
+   * @default false
+   *
+   * @example
+   * ```typescript
+   * // Development mode - temporarily allow unauthenticated operations
+   * const cms = createCmsClient(components.convexCms, {
+   *   permissiveMode: true, // WARNING: Only for development!
+   * });
+   *
+   * // Production mode (default) - require authorization
+   * const cms = createCmsClient(components.convexCms, {
+   *   getUserRole: async ({ userId }) => {
+   *     const user = await db.query("users").filter(...).first();
+   *     return user?.cmsRole ?? null;
+   *   },
+   * });
+   * ```
+   */
+  permissiveMode?: boolean;
+
+  /**
    * Validate required hooks at initialization time.
    *
    * When specified, the CMS client will validate that the required hooks are
@@ -1358,6 +1394,7 @@ export const DEFAULT_CONFIG: Omit<ResolvedComponentConfig, "getUserRole" | "auth
   lockDurationMs: 300000, // 5 minutes
   maxMediaFileSize: 52428800, // 50MB
   skipRbac: false,
+  permissiveMode: false,
   customRoles: {},
   requireHooks: [],
 };
@@ -1416,6 +1453,56 @@ export class MissingHookError extends Error {
 
     // Maintains proper prototype chain for instanceof checks
     Object.setPrototypeOf(this, MissingHookError.prototype);
+  }
+}
+
+/**
+ * Error thrown when a mutation is attempted without authorization configured.
+ *
+ * This error is thrown at runtime when:
+ * 1. `permissiveMode` is `false` (the secure default)
+ * 2. No `getUserRole` hook is configured
+ * 3. A write operation (create, update, delete, publish, etc.) is attempted
+ *
+ * This ensures that the CMS fails securely by default, requiring explicit
+ * authorization configuration before mutations can execute.
+ *
+ * @example
+ * ```typescript
+ * try {
+ *   await cms.contentEntries.create(ctx, { ... });
+ * } catch (error) {
+ *   if (error instanceof AuthorizationNotConfiguredError) {
+ *     // Authorization not set up - configure getUserRole hook
+ *     console.error("Configure getUserRole to enable mutations");
+ *   }
+ * }
+ * ```
+ */
+export class AuthorizationNotConfiguredError extends Error {
+  /**
+   * The operation that was attempted.
+   */
+  readonly operation: string;
+
+  /**
+   * A suggestion for how to fix the error.
+   */
+  readonly suggestion: string;
+
+  constructor(operation: string) {
+    const message =
+      `Authorization not configured for operation "${operation}". ` +
+      "Configure a getUserRole hook in createCmsClient options, or set permissiveMode: true for development.";
+
+    super(message);
+    this.name = "AuthorizationNotConfiguredError";
+    this.operation = operation;
+    this.suggestion =
+      "Add getUserRole hook: createCmsClient(api, { getUserRole: async ({ userId }) => getUserRoleFromDb(userId) })";
+
+    // Maintains proper prototype chain for instanceof checks
+    Object.setPrototypeOf(this, AuthorizationNotConfiguredError.prototype);
   }
 }
 
@@ -1532,6 +1619,7 @@ export function resolveConfig(config?: ComponentConfig): ResolvedComponentConfig
     lockDurationMs: config?.lockDurationMs ?? DEFAULT_CONFIG.lockDurationMs,
     maxMediaFileSize: config?.maxMediaFileSize ?? DEFAULT_CONFIG.maxMediaFileSize,
     skipRbac: config?.skipRbac ?? DEFAULT_CONFIG.skipRbac,
+    permissiveMode: config?.permissiveMode ?? DEFAULT_CONFIG.permissiveMode,
     getUserRole: config?.getUserRole,
     authorizationHooks: config?.authorizationHooks,
     rateLimitHooks: config?.rateLimitHooks,
