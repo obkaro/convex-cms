@@ -87,7 +87,7 @@ describe("VersionsApi", () => {
         runQuery: vi.fn().mockResolvedValue(mockHistory),
       });
 
-      const cms = createCmsClient(mockApi);
+      const cms = createCmsClient(mockApi, { permissiveMode: true });
       const result = await cms.versions.getHistory(mockCtx, {
         entryId: "entry_123",
         paginationOpts: { numItems: 10, cursor: null },
@@ -123,7 +123,7 @@ describe("VersionsApi", () => {
         runQuery: vi.fn().mockResolvedValue(mockVersion),
       });
 
-      const cms = createCmsClient(mockApi);
+      const cms = createCmsClient(mockApi, { permissiveMode: true });
       const result = await cms.versions.get(mockCtx, {
         entryId: "entry_123",
         versionNumber: 3,
@@ -143,7 +143,7 @@ describe("VersionsApi", () => {
         runQuery: vi.fn().mockResolvedValue(mockVersion),
       });
 
-      const cms = createCmsClient(mockApi);
+      const cms = createCmsClient(mockApi, { permissiveMode: true });
       const result = await cms.versions.get(mockCtx, {
         entryId: "entry_123",
         versionId: "version_abc",
@@ -161,7 +161,7 @@ describe("VersionsApi", () => {
         runQuery: vi.fn().mockResolvedValue(mockVersion),
       });
 
-      const cms = createCmsClient(mockApi);
+      const cms = createCmsClient(mockApi, { permissiveMode: true });
       const result = await cms.versions.getByNumber(mockCtx, "entry_123", 5);
 
       expect(result).not.toBeNull();
@@ -176,7 +176,7 @@ describe("VersionsApi", () => {
         runQuery: vi.fn().mockResolvedValue(mockVersion),
       });
 
-      const cms = createCmsClient(mockApi);
+      const cms = createCmsClient(mockApi, { permissiveMode: true });
       const result = await cms.versions.getById(mockCtx, "entry_123", "version_xyz");
 
       expect(result).not.toBeNull();
@@ -192,7 +192,7 @@ describe("VersionsApi", () => {
         runQuery: vi.fn().mockResolvedValue(mockHistory),
       });
 
-      const cms = createCmsClient(mockApi);
+      const cms = createCmsClient(mockApi, { permissiveMode: true });
       const result = await cms.versions.getLatest(mockCtx, "entry_123");
 
       expect(result).not.toBeNull();
@@ -205,7 +205,7 @@ describe("VersionsApi", () => {
         runQuery: vi.fn().mockResolvedValue(emptyHistory),
       });
 
-      const cms = createCmsClient(mockApi);
+      const cms = createCmsClient(mockApi, { permissiveMode: true });
       const result = await cms.versions.getLatest(mockCtx, "entry_123");
 
       expect(result).toBeNull();
@@ -228,7 +228,7 @@ describe("VersionsApi", () => {
         runQuery: vi.fn().mockResolvedValue(mockHistory),
       });
 
-      const cms = createCmsClient(mockApi);
+      const cms = createCmsClient(mockApi, { permissiveMode: true });
       const result = await cms.versions.getLatestPublished(mockCtx, "entry_123");
 
       expect(result).not.toBeNull();
@@ -246,7 +246,7 @@ describe("VersionsApi", () => {
         runQuery: vi.fn().mockResolvedValue(mockHistory),
       });
 
-      const cms = createCmsClient(mockApi);
+      const cms = createCmsClient(mockApi, { permissiveMode: true });
       const result = await cms.versions.getLatestPublished(mockCtx, "entry_123");
 
       expect(result).toBeNull();
@@ -267,7 +267,7 @@ describe("VersionsApi", () => {
         runQuery: vi.fn().mockResolvedValue(mockHistory),
       });
 
-      const cms = createCmsClient(mockApi);
+      const cms = createCmsClient(mockApi, { permissiveMode: true });
       const result = await cms.versions.getPublishedHistory(mockCtx, "entry_123");
 
       expect(result).toHaveLength(3);
@@ -286,7 +286,7 @@ describe("VersionsApi", () => {
         runQuery: vi.fn().mockResolvedValue(mockHistory),
       });
 
-      const cms = createCmsClient(mockApi);
+      const cms = createCmsClient(mockApi, { permissiveMode: true });
       const result = await cms.versions.getPublishedHistory(mockCtx, "entry_123", 2);
 
       expect(result).toHaveLength(2);
@@ -314,7 +314,7 @@ describe("VersionsApi", () => {
           .mockResolvedValueOnce(v2), // Second call for toVersion
       });
 
-      const cms = createCmsClient(mockApi);
+      const cms = createCmsClient(mockApi, { permissiveMode: true });
       const diff = await cms.versions.compare(mockCtx, {
         entryId: "entry_123",
         fromVersion: 1,
@@ -348,7 +348,7 @@ describe("VersionsApi", () => {
           .mockResolvedValueOnce(v2),
       });
 
-      const cms = createCmsClient(mockApi);
+      const cms = createCmsClient(mockApi, { permissiveMode: true });
       const diff = await cms.versions.compare(mockCtx, {
         entryId: "entry_123",
         fromVersion: 1,
@@ -365,7 +365,7 @@ describe("VersionsApi", () => {
         runQuery: vi.fn().mockResolvedValue(null),
       });
 
-      const cms = createCmsClient(mockApi);
+      const cms = createCmsClient(mockApi, { permissiveMode: true });
       const diff = await cms.versions.compare(mockCtx, {
         entryId: "entry_123",
         fromVersion: 99,
@@ -391,7 +391,7 @@ describe("VersionsApi", () => {
           .mockResolvedValueOnce(v2),
       });
 
-      const cms = createCmsClient(mockApi);
+      const cms = createCmsClient(mockApi, { permissiveMode: true });
       const diff = await cms.versions.compare(mockCtx, {
         entryId: "entry_123",
         fromVersion: 1,
@@ -409,7 +409,7 @@ describe("VersionsApi", () => {
         runQuery: vi.fn().mockResolvedValue(createMockVersion()),
       });
 
-      const cms = createCmsClient(mockApi);
+      const cms = createCmsClient(mockApi, { permissiveMode: true });
       const result = await cms.versions.exists(mockCtx, "entry_123", 1);
 
       expect(result).toBe(true);
@@ -420,7 +420,7 @@ describe("VersionsApi", () => {
         runQuery: vi.fn().mockResolvedValue(null),
       });
 
-      const cms = createCmsClient(mockApi);
+      const cms = createCmsClient(mockApi, { permissiveMode: true });
       const result = await cms.versions.exists(mockCtx, "entry_123", 99);
 
       expect(result).toBe(false);
@@ -446,7 +446,7 @@ describe("VersionsApi", () => {
         }),
       });
 
-      const cms = createCmsClient(mockApi);
+      const cms = createCmsClient(mockApi, { permissiveMode: true });
       const count = await cms.versions.count(mockCtx, "entry_123");
 
       expect(count).toBe(3);
@@ -468,7 +468,7 @@ describe("VersionsApi", () => {
         runMutation: vi.fn().mockResolvedValue(rolledBackEntry),
       });
 
-      const cms = createCmsClient(mockApi);
+      const cms = createCmsClient(mockApi, { permissiveMode: true });
       const result = await cms.versions.rollback(mockCtx, {
         entryId: "entry_123",
         versionNumber: 3,
@@ -505,7 +505,7 @@ describe("VersionsApi", () => {
         }),
       });
 
-      const cms = createCmsClient(mockApi);
+      const cms = createCmsClient(mockApi, { permissiveMode: true });
       const diff = await cms.versions.compareWithCurrent(mockCtx, "entry_123", 1);
 
       expect(diff).not.toBeNull();

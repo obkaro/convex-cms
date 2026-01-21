@@ -345,9 +345,9 @@ describe("checkPermission", () => {
       }
     });
 
-    it("should allow operation with 'own' scope when ownership cannot be verified", () => {
-      // When no resourceOwnerId is provided, we can't verify ownership
-      // but the permission still exists - caller is responsible for ensuring ownership
+    it("should deny operation with 'own' scope when ownership cannot be verified", () => {
+      // When no resourceOwnerId is provided, we cannot verify ownership
+      // and must deny access for defense-in-depth (callers must always provide resourceOwnerId)
       const result = checkPermission({
         userId: "user123",
         role: "author",
@@ -356,10 +356,10 @@ describe("checkPermission", () => {
         // No resourceOwnerId provided
       });
 
-      expect(result.allowed).toBe(true);
-      if (result.allowed) {
-        expect(result.grantedScope).toBe("own");
-        expect(result.ownershipVerified).toBe(false);
+      expect(result.allowed).toBe(false);
+      if (!result.allowed) {
+        expect(result.code).toBe("OWNERSHIP_REQUIRED");
+        expect(result.reason).toContain("resourceOwnerId not provided");
       }
     });
 

@@ -109,7 +109,7 @@ import type {
   MediaVariantWithUrl,
 } from "./types.js";
 
-import { resolveConfig } from "./types.js";
+import { resolveConfig, AuthorizationNotConfiguredError } from "./types.js";
 
 // Import query builder
 import { ContentQueryBuilder, createQueryBuilder } from "./queryBuilder.js";
@@ -1069,23 +1069,53 @@ export class ContentTypesApi {
 
   /**
    * Perform authorization check for content type operations.
+   *
+   * Authorization behavior:
+   * - If `getUserRole` is not configured and `permissiveMode` is false: throws AuthorizationNotConfiguredError
+   * - If `getUserRole` is not configured and `permissiveMode` is true: logs warning and allows operation
+   * - If `skipRbac` is enabled: skips RBAC checks but still validates auth is configured
+   * - If no `userId` is provided: same rules apply based on permissiveMode
+   *
    * @param operation - The CMS operation being performed
    * @param userId - The user performing the operation
    * @param resourceId - Optional resource ID (for update/delete operations)
+   * @throws AuthorizationNotConfiguredError if authorization is not configured and permissiveMode is false
    */
   private async authorize(
     operation: CmsOperation,
     userId: string | undefined,
     resourceId?: string
   ): Promise<void> {
-    // Skip if no auth helper configured or skipRbac is enabled
-    if (!this.authHelper || this.authHelper.skipRbac) {
+    // Check if authorization is configured
+    if (!this.authHelper) {
+      if (this.config.permissiveMode) {
+        console.warn(
+          `[ConvexCMS] Authorization not configured for "${operation}". ` +
+          "Operations are allowed in permissiveMode, but this should NOT be used in production. " +
+          "Configure getUserRole hook to enable proper authorization."
+        );
+        return;
+      }
+      throw new AuthorizationNotConfiguredError(operation);
+    }
+
+    // Skip RBAC checks if explicitly disabled
+    if (this.authHelper.skipRbac) {
       return;
     }
 
-    // Skip if no userId provided (anonymous operations not supported for mutations)
+    // Check if userId is provided
     if (!userId) {
-      return;
+      if (this.config.permissiveMode) {
+        console.warn(
+          `[ConvexCMS] Anonymous operation attempted for "${operation}". ` +
+          "Operations without userId are allowed in permissiveMode, but this should NOT be used in production."
+        );
+        return;
+      }
+      throw new AuthorizationNotConfiguredError(
+        `${operation} (no userId provided - anonymous operations require permissiveMode)`
+      );
     }
 
     const role = await this.authHelper.getUserRole(userId);
@@ -1547,11 +1577,19 @@ export class ContentEntriesApi {
 
   /**
    * Perform authorization check for content entry operations.
+   *
+   * Authorization behavior:
+   * - If `getUserRole` is not configured and `permissiveMode` is false: throws AuthorizationNotConfiguredError
+   * - If `getUserRole` is not configured and `permissiveMode` is true: logs warning and allows operation
+   * - If `skipRbac` is enabled: skips RBAC checks but still validates auth is configured
+   * - If no `userId` is provided: same rules apply based on permissiveMode
+   *
    * @param operation - The CMS operation being performed
    * @param userId - The user performing the operation
    * @param resourceId - Optional resource ID (for update/delete operations)
    * @param resourceOwnerId - Optional owner ID for ownership-based permissions
    * @param contentTypeId - Optional content type ID for content-type-specific permissions
+   * @throws AuthorizationNotConfiguredError if authorization is not configured and permissiveMode is false
    */
   private async authorize(
     operation: CmsOperation,
@@ -1560,14 +1598,41 @@ export class ContentEntriesApi {
     resourceOwnerId?: string,
     contentTypeId?: string
   ): Promise<void> {
-    // Skip if no auth helper configured or skipRbac is enabled
-    if (!this.authHelper || this.authHelper.skipRbac) {
+    // Check if authorization is configured
+    if (!this.authHelper) {
+      if (this.config.permissiveMode) {
+        // In permissive mode, allow operation but log a warning
+        console.warn(
+          `[ConvexCMS] Authorization not configured for "${operation}". ` +
+          "Operations are allowed in permissiveMode, but this should NOT be used in production. " +
+          "Configure getUserRole hook to enable proper authorization."
+        );
+        return;
+      }
+      // Fail securely - require authorization configuration
+      throw new AuthorizationNotConfiguredError(operation);
+    }
+
+    // Skip RBAC checks if explicitly disabled (but auth was still validated above)
+    if (this.authHelper.skipRbac) {
       return;
     }
 
-    // Skip if no userId provided (anonymous operations not supported for mutations)
+    // Check if userId is provided
     if (!userId) {
-      return;
+      if (this.config.permissiveMode) {
+        // In permissive mode, allow anonymous operations with a warning
+        console.warn(
+          `[ConvexCMS] Anonymous operation attempted for "${operation}". ` +
+          "Operations without userId are allowed in permissiveMode, but this should NOT be used in production. " +
+          "Ensure all operations include a userId for proper authorization."
+        );
+        return;
+      }
+      // Fail securely - require userId for authorization
+      throw new AuthorizationNotConfiguredError(
+        `${operation} (no userId provided - anonymous operations require permissiveMode)`
+      );
     }
 
     const role = await this.authHelper.getUserRole(userId);
@@ -1659,12 +1724,22 @@ export class ContentEntriesApi {
     ctx: ConvexContext,
     args: UpdateContentEntryArgs
   ): Promise<ContentEntry> {
-    // Authorization check - contentEntries.update
-    // Note: For ownership-based permissions, we'd need to fetch the entry first
-    // to get createdBy. This is a tradeoff between an extra query vs. simpler API.
-    await this.authorize("contentEntries.update", args.updatedBy, args.id);
+    // Fetch entry for ownership-based authorization
+    const entry = await ctx.runQuery(this.api.contentEntries.get, { id: args.id });
+    if (!entry) {
+      throw new Error(`Content entry not found: ${args.id}`);
+    }
+
+    // Authorization check - contentEntries.update (with ownership info)
+    await this.authorize(
+      "contentEntries.update",
+      args.updatedBy,
+      args.id,
+      entry.createdBy,
+      entry.contentTypeId
+    );
     // Rate limit check - contentEntries.update
-    await this.rateLimit("contentEntries.update", args.updatedBy);
+    await this.rateLimit("contentEntries.update", args.updatedBy, entry.contentTypeId);
     return ctx.runMutation(this.api.contentEntryMutations.updateEntry, args);
   }
 
@@ -1679,10 +1754,22 @@ export class ContentEntriesApi {
     ctx: ConvexContext,
     args: DeleteContentEntryArgs
   ): Promise<ContentEntry> {
-    // Authorization check - contentEntries.delete
-    await this.authorize("contentEntries.delete", args.deletedBy, args.id);
+    // Fetch entry for ownership-based authorization
+    const entry = await ctx.runQuery(this.api.contentEntries.get, { id: args.id });
+    if (!entry) {
+      throw new Error(`Content entry not found: ${args.id}`);
+    }
+
+    // Authorization check - contentEntries.delete (with ownership info)
+    await this.authorize(
+      "contentEntries.delete",
+      args.deletedBy,
+      args.id,
+      entry.createdBy,
+      entry.contentTypeId
+    );
     // Rate limit check - contentEntries.delete
-    await this.rateLimit("contentEntries.delete", args.deletedBy);
+    await this.rateLimit("contentEntries.delete", args.deletedBy, entry.contentTypeId);
     return ctx.runMutation(this.api.contentEntryMutations.deleteEntry, args);
   }
 
@@ -1766,10 +1853,22 @@ export class ContentEntriesApi {
     ctx: ConvexContext,
     args: PublishEntryArgs
   ): Promise<ContentEntry> {
-    // Authorization check - contentEntries.publish
-    await this.authorize("contentEntries.publish", args.updatedBy, args.id);
+    // Fetch entry for ownership-based authorization
+    const entry = await ctx.runQuery(this.api.contentEntries.get, { id: args.id });
+    if (!entry) {
+      throw new Error(`Content entry not found: ${args.id}`);
+    }
+
+    // Authorization check - contentEntries.publish (with ownership info)
+    await this.authorize(
+      "contentEntries.publish",
+      args.updatedBy,
+      args.id,
+      entry.createdBy,
+      entry.contentTypeId
+    );
     // Rate limit check - contentEntries.publish
-    await this.rateLimit("contentEntries.publish", args.updatedBy);
+    await this.rateLimit("contentEntries.publish", args.updatedBy, entry.contentTypeId);
     return ctx.runMutation(this.api.contentEntryMutations.publishEntry, args);
   }
 
@@ -1784,10 +1883,22 @@ export class ContentEntriesApi {
     ctx: ConvexContext,
     args: UnpublishEntryArgs
   ): Promise<ContentEntry> {
-    // Authorization check - contentEntries.unpublish
-    await this.authorize("contentEntries.unpublish", args.updatedBy, args.id);
+    // Fetch entry for ownership-based authorization
+    const entry = await ctx.runQuery(this.api.contentEntries.get, { id: args.id });
+    if (!entry) {
+      throw new Error(`Content entry not found: ${args.id}`);
+    }
+
+    // Authorization check - contentEntries.unpublish (with ownership info)
+    await this.authorize(
+      "contentEntries.unpublish",
+      args.updatedBy,
+      args.id,
+      entry.createdBy,
+      entry.contentTypeId
+    );
     // Rate limit check - contentEntries.unpublish
-    await this.rateLimit("contentEntries.unpublish", args.updatedBy);
+    await this.rateLimit("contentEntries.unpublish", args.updatedBy, entry.contentTypeId);
     return ctx.runMutation(this.api.contentEntryMutations.unpublishEntry, args);
   }
 
@@ -1813,10 +1924,23 @@ export class ContentEntriesApi {
     if (!this.config.features.scheduling) {
       throw new Error("Scheduling feature is not enabled");
     }
-    // Authorization check - contentEntries.schedule
-    await this.authorize("contentEntries.schedule", args.updatedBy, args.id);
+
+    // Fetch entry for ownership-based authorization
+    const entry = await ctx.runQuery(this.api.contentEntries.get, { id: args.id });
+    if (!entry) {
+      throw new Error(`Content entry not found: ${args.id}`);
+    }
+
+    // Authorization check - contentEntries.schedule (with ownership info)
+    await this.authorize(
+      "contentEntries.schedule",
+      args.updatedBy,
+      args.id,
+      entry.createdBy,
+      entry.contentTypeId
+    );
     // Rate limit check - contentEntries.schedule
-    await this.rateLimit("contentEntries.schedule", args.updatedBy);
+    await this.rateLimit("contentEntries.schedule", args.updatedBy, entry.contentTypeId);
     return ctx.runMutation(this.api.scheduledPublish.scheduleEntry, args);
   }
 
@@ -1848,10 +1972,23 @@ export class ContentEntriesApi {
     if (!this.config.features.softDelete) {
       throw new Error("Soft delete feature is not enabled");
     }
-    // Authorization check - contentEntries.restore
-    await this.authorize("contentEntries.restore", args.restoredBy, args.id);
+
+    // Fetch entry for ownership-based authorization
+    const entry = await ctx.runQuery(this.api.contentEntries.get, { id: args.id });
+    if (!entry) {
+      throw new Error(`Content entry not found: ${args.id}`);
+    }
+
+    // Authorization check - contentEntries.restore (with ownership info)
+    await this.authorize(
+      "contentEntries.restore",
+      args.restoredBy,
+      args.id,
+      entry.createdBy,
+      entry.contentTypeId
+    );
     // Rate limit check - contentEntries.restore
-    await this.rateLimit("contentEntries.restore", args.restoredBy);
+    await this.rateLimit("contentEntries.restore", args.restoredBy, entry.contentTypeId);
     return ctx.runMutation(this.api.contentEntryMutations.restoreEntry, args);
   }
 
@@ -2432,20 +2569,38 @@ export class VersionsApi {
    * @param operation - The CMS operation being performed
    * @param userId - The user performing the operation
    * @param resourceId - Optional resource ID (entry ID for version operations)
+   * @throws AuthorizationNotConfiguredError if authorization is not configured and permissiveMode is false
    */
   private async authorize(
     operation: CmsOperation,
     userId: string | undefined,
     resourceId?: string
   ): Promise<void> {
-    // Skip if no auth helper configured or skipRbac is enabled
-    if (!this.authHelper || this.authHelper.skipRbac) {
+    if (!this.authHelper) {
+      if (this.config.permissiveMode) {
+        console.warn(
+          `[ConvexCMS] Authorization not configured for "${operation}". ` +
+            "Operations are allowed in permissiveMode, but this should NOT be used in production."
+        );
+        return;
+      }
+      throw new AuthorizationNotConfiguredError(operation);
+    }
+
+    if (this.authHelper.skipRbac) {
       return;
     }
 
-    // Skip if no userId provided (anonymous operations not supported for mutations)
     if (!userId) {
-      return;
+      if (this.config.permissiveMode) {
+        console.warn(
+          `[ConvexCMS] Anonymous operation attempted for "${operation}".`
+        );
+        return;
+      }
+      throw new AuthorizationNotConfiguredError(
+        `${operation} (no userId provided - anonymous operations require permissiveMode)`
+      );
     }
 
     const role = await this.authHelper.getUserRole(userId);
@@ -3057,6 +3212,7 @@ export class MediaAssetsApi {
    * @param userId - The user performing the operation
    * @param resourceId - Optional resource ID (for update/delete operations)
    * @param resourceOwnerId - Optional owner ID for ownership-based permissions
+   * @throws AuthorizationNotConfiguredError if authorization is not configured and permissiveMode is false
    */
   private async authorize(
     operation: CmsOperation,
@@ -3064,14 +3220,31 @@ export class MediaAssetsApi {
     resourceId?: string,
     resourceOwnerId?: string
   ): Promise<void> {
-    // Skip if no auth helper configured or skipRbac is enabled
-    if (!this.authHelper || this.authHelper.skipRbac) {
+    if (!this.authHelper) {
+      if (this.config.permissiveMode) {
+        console.warn(
+          `[ConvexCMS] Authorization not configured for "${operation}". ` +
+            "Operations are allowed in permissiveMode, but this should NOT be used in production."
+        );
+        return;
+      }
+      throw new AuthorizationNotConfiguredError(operation);
+    }
+
+    if (this.authHelper.skipRbac) {
       return;
     }
 
-    // Skip if no userId provided (anonymous operations not supported for mutations)
     if (!userId) {
-      return;
+      if (this.config.permissiveMode) {
+        console.warn(
+          `[ConvexCMS] Anonymous operation attempted for "${operation}".`
+        );
+        return;
+      }
+      throw new AuthorizationNotConfiguredError(
+        `${operation} (no userId provided - anonymous operations require permissiveMode)`
+      );
     }
 
     const role = await this.authHelper.getUserRole(userId);
@@ -3162,8 +3335,15 @@ export class MediaAssetsApi {
     if (!this.config.features.mediaManagement) {
       throw new Error("Media management feature is not enabled");
     }
-    // Authorization check - mediaAssets.update
-    await this.authorize("mediaAssets.update", args.updatedBy, args.id);
+
+    // Fetch asset for ownership-based authorization
+    const asset = await ctx.runQuery(this.api.mediaAssets.get, { id: args.id });
+    if (!asset) {
+      throw new Error(`Media asset not found: ${args.id}`);
+    }
+
+    // Authorization check - mediaAssets.update (with ownership info)
+    await this.authorize("mediaAssets.update", args.updatedBy, args.id, asset.createdBy);
     // Rate limit check - mediaAssets.update
     await this.rateLimit("mediaAssets.update", args.updatedBy);
     return ctx.runMutation(this.api.mediaAssetMutations.updateMediaAsset, args);
@@ -3183,8 +3363,15 @@ export class MediaAssetsApi {
     if (!this.config.features.mediaManagement) {
       throw new Error("Media management feature is not enabled");
     }
-    // Authorization check - mediaAssets.delete
-    await this.authorize("mediaAssets.delete", args.deletedBy, args.id);
+
+    // Fetch asset for ownership-based authorization
+    const asset = await ctx.runQuery(this.api.mediaAssets.get, { id: args.id });
+    if (!asset) {
+      throw new Error(`Media asset not found: ${args.id}`);
+    }
+
+    // Authorization check - mediaAssets.delete (with ownership info)
+    await this.authorize("mediaAssets.delete", args.deletedBy, args.id, asset.createdBy);
     // Rate limit check - mediaAssets.delete
     await this.rateLimit("mediaAssets.delete", args.deletedBy);
     return ctx.runMutation(this.api.mediaAssetMutations.deleteMediaAsset, args);
@@ -3370,20 +3557,39 @@ export class MediaFoldersApi {
    * @param operation - The CMS operation being performed
    * @param userId - The user performing the operation
    * @param resourceId - Optional resource ID (for update/delete operations)
+   * @param resourceOwnerId - Optional owner ID for ownership-based permissions
    */
   private async authorize(
     operation: CmsOperation,
     userId: string | undefined,
-    resourceId?: string
+    resourceId?: string,
+    resourceOwnerId?: string
   ): Promise<void> {
-    // Skip if no auth helper configured or skipRbac is enabled
-    if (!this.authHelper || this.authHelper.skipRbac) {
+    if (!this.authHelper) {
+      if (this.config.permissiveMode) {
+        console.warn(
+          `[ConvexCMS] Authorization not configured for "${operation}". ` +
+            "Operations are allowed in permissiveMode, but this should NOT be used in production."
+        );
+        return;
+      }
+      throw new AuthorizationNotConfiguredError(operation);
+    }
+
+    if (this.authHelper.skipRbac) {
       return;
     }
 
-    // Skip if no userId provided (anonymous operations not supported for mutations)
     if (!userId) {
-      return;
+      if (this.config.permissiveMode) {
+        console.warn(
+          `[ConvexCMS] Anonymous operation attempted for "${operation}".`
+        );
+        return;
+      }
+      throw new AuthorizationNotConfiguredError(
+        `${operation} (no userId provided - anonymous operations require permissiveMode)`
+      );
     }
 
     const role = await this.authHelper.getUserRole(userId);
@@ -3393,6 +3599,7 @@ export class MediaFoldersApi {
       userId,
       role,
       resourceId,
+      resourceOwnerId,
     });
   }
 
@@ -3453,8 +3660,15 @@ export class MediaFoldersApi {
     if (!this.config.features.mediaManagement) {
       throw new Error("Media management feature is not enabled");
     }
-    // Authorization check - mediaFolders.update
-    await this.authorize("mediaFolders.update", args.updatedBy, args.id);
+
+    // Fetch folder for ownership-based authorization
+    const folder = await ctx.runQuery(this.api.mediaFolderMutations.getMediaFolder, { id: args.id });
+    if (!folder) {
+      throw new Error(`Media folder not found: ${args.id}`);
+    }
+
+    // Authorization check - mediaFolders.update (with ownership info)
+    await this.authorize("mediaFolders.update", args.updatedBy, args.id, folder.createdBy);
     // Rate limit check - mediaFolders.update
     await this.rateLimit("mediaFolders.update", args.updatedBy);
     return ctx.runMutation(this.api.mediaFolderMutations.updateMediaFolder, args);
@@ -3474,8 +3688,15 @@ export class MediaFoldersApi {
     if (!this.config.features.mediaManagement) {
       throw new Error("Media management feature is not enabled");
     }
-    // Authorization check - mediaFolders.delete
-    await this.authorize("mediaFolders.delete", args.deletedBy, args.id);
+
+    // Fetch folder for ownership-based authorization
+    const folder = await ctx.runQuery(this.api.mediaFolderMutations.getMediaFolder, { id: args.id });
+    if (!folder) {
+      throw new Error(`Media folder not found: ${args.id}`);
+    }
+
+    // Authorization check - mediaFolders.delete (with ownership info)
+    await this.authorize("mediaFolders.delete", args.deletedBy, args.id, folder.createdBy);
     // Rate limit check - mediaFolders.delete
     await this.rateLimit("mediaFolders.delete", args.deletedBy);
     return ctx.runMutation(this.api.mediaFolderMutations.deleteMediaFolder, args);
@@ -3529,8 +3750,15 @@ export class MediaFoldersApi {
     if (!this.config.features.mediaManagement) {
       throw new Error("Media management feature is not enabled");
     }
-    // Authorization check - mediaFolders.move
-    await this.authorize("mediaFolders.move", args.updatedBy, args.id);
+
+    // Fetch folder for ownership-based authorization
+    const folder = await ctx.runQuery(this.api.mediaFolderMutations.getMediaFolder, { id: args.id });
+    if (!folder) {
+      throw new Error(`Media folder not found: ${args.id}`);
+    }
+
+    // Authorization check - mediaFolders.move (with ownership info)
+    await this.authorize("mediaFolders.move", args.updatedBy, args.id, folder.createdBy);
     // Rate limit check - mediaFolders.move
     await this.rateLimit("mediaFolders.move", args.updatedBy);
     return ctx.runMutation(this.api.mediaFolderMutations.moveMediaFolder, args);

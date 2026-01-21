@@ -131,7 +131,7 @@ describe("CMS Client Wrapper", () => {
 
   describe("createCmsClient", () => {
     it("creates a client with default configuration", () => {
-      const cms = createCmsClient(mockApi);
+      const cms = createCmsClient(mockApi, { permissiveMode: true });
 
       expect(cms).toBeDefined();
       expect(cms.config).toBeDefined();
@@ -156,7 +156,7 @@ describe("CMS Client Wrapper", () => {
     });
 
     it("exposes all API groups", () => {
-      const cms = createCmsClient(mockApi);
+      const cms = createCmsClient(mockApi, { permissiveMode: true });
 
       expect(cms.contentTypes).toBeInstanceOf(ContentTypesApi);
       expect(cms.contentEntries).toBeInstanceOf(ContentEntriesApi);
@@ -190,7 +190,7 @@ describe("CMS Client Wrapper", () => {
 
   describe("ContentTypesApi", () => {
     it("calls create mutation", async () => {
-      const cms = createCmsClient(mockApi);
+      const cms = createCmsClient(mockApi, { permissiveMode: true });
 
       await cms.contentTypes.create(mockCtx, {
         name: "blog_post",
@@ -202,7 +202,7 @@ describe("CMS Client Wrapper", () => {
     });
 
     it("calls update mutation", async () => {
-      const cms = createCmsClient(mockApi);
+      const cms = createCmsClient(mockApi, { permissiveMode: true });
 
       await cms.contentTypes.update(mockCtx, {
         id: "type-id",
@@ -213,7 +213,7 @@ describe("CMS Client Wrapper", () => {
     });
 
     it("calls update mutation with force flag for breaking changes", async () => {
-      const cms = createCmsClient(mockApi);
+      const cms = createCmsClient(mockApi, { permissiveMode: true });
 
       await cms.contentTypes.update(mockCtx, {
         id: "type-id",
@@ -228,7 +228,7 @@ describe("CMS Client Wrapper", () => {
     });
 
     it("calls delete mutation", async () => {
-      const cms = createCmsClient(mockApi);
+      const cms = createCmsClient(mockApi, { permissiveMode: true });
 
       await cms.contentTypes.delete(mockCtx, { id: "type-id" });
 
@@ -236,7 +236,7 @@ describe("CMS Client Wrapper", () => {
     });
 
     it("calls delete mutation with cascade option", async () => {
-      const cms = createCmsClient(mockApi);
+      const cms = createCmsClient(mockApi, { permissiveMode: true });
 
       await cms.contentTypes.delete(mockCtx, {
         id: "type-id",
@@ -251,7 +251,7 @@ describe("CMS Client Wrapper", () => {
     });
 
     it("calls delete mutation with hardDelete option", async () => {
-      const cms = createCmsClient(mockApi);
+      const cms = createCmsClient(mockApi, { permissiveMode: true });
 
       await cms.contentTypes.delete(mockCtx, {
         id: "type-id",
@@ -266,7 +266,7 @@ describe("CMS Client Wrapper", () => {
     });
 
     it("calls get query", async () => {
-      const cms = createCmsClient(mockApi);
+      const cms = createCmsClient(mockApi, { permissiveMode: true });
 
       await cms.contentTypes.get(mockCtx, { name: "blog_post" });
 
@@ -274,7 +274,7 @@ describe("CMS Client Wrapper", () => {
     });
 
     it("calls get query with includeDeleted option", async () => {
-      const cms = createCmsClient(mockApi);
+      const cms = createCmsClient(mockApi, { permissiveMode: true });
 
       await cms.contentTypes.get(mockCtx, { name: "blog_post", includeDeleted: true });
 
@@ -285,7 +285,7 @@ describe("CMS Client Wrapper", () => {
     });
 
     it("calls list query", async () => {
-      const cms = createCmsClient(mockApi);
+      const cms = createCmsClient(mockApi, { permissiveMode: true });
 
       await cms.contentTypes.list(mockCtx);
 
@@ -293,7 +293,7 @@ describe("CMS Client Wrapper", () => {
     });
 
     it("calls list query with filtering options", async () => {
-      const cms = createCmsClient(mockApi);
+      const cms = createCmsClient(mockApi, { permissiveMode: true });
 
       await cms.contentTypes.list(mockCtx, {
         isActive: true,
@@ -313,7 +313,7 @@ describe("CMS Client Wrapper", () => {
 
     describe("convenience methods", () => {
       it("getByName calls get with name parameter", async () => {
-        const cms = createCmsClient(mockApi);
+        const cms = createCmsClient(mockApi, { permissiveMode: true });
 
         await cms.contentTypes.getByName(mockCtx, "blog_post");
 
@@ -324,7 +324,7 @@ describe("CMS Client Wrapper", () => {
       });
 
       it("getById calls get with id parameter", async () => {
-        const cms = createCmsClient(mockApi);
+        const cms = createCmsClient(mockApi, { permissiveMode: true });
 
         await cms.contentTypes.getById(mockCtx, "type-id-123");
 
@@ -340,7 +340,7 @@ describe("CMS Client Wrapper", () => {
           runQuery: vi.fn().mockResolvedValue({ _id: "type-id", name: "blog_post" }),
         };
 
-        const cms = createCmsClient(mockApi);
+        const cms = createCmsClient(mockApi, { permissiveMode: true });
         const exists = await cms.contentTypes.exists(mockCtxWithResult, "blog_post");
 
         expect(exists).toBe(true);
@@ -352,14 +352,14 @@ describe("CMS Client Wrapper", () => {
           runQuery: vi.fn().mockResolvedValue(null),
         };
 
-        const cms = createCmsClient(mockApi);
+        const cms = createCmsClient(mockApi, { permissiveMode: true });
         const exists = await cms.contentTypes.exists(mockCtxWithNull, "nonexistent");
 
         expect(exists).toBe(false);
       });
 
       it("listActive calls list with isActive: true", async () => {
-        const cms = createCmsClient(mockApi);
+        const cms = createCmsClient(mockApi, { permissiveMode: true });
 
         await cms.contentTypes.listActive(mockCtx);
 
@@ -379,7 +379,7 @@ describe("CMS Client Wrapper", () => {
           runQuery: vi.fn().mockResolvedValue({ page: mockTypes, continueCursor: null, isDone: true }),
         };
 
-        const cms = createCmsClient(mockApi);
+        const cms = createCmsClient(mockApi, { permissiveMode: true });
         const all = await cms.contentTypes.getAll(mockCtxWithList);
 
         expect(all).toEqual(mockTypes);
@@ -396,14 +396,14 @@ describe("CMS Client Wrapper", () => {
           runQuery: vi.fn().mockResolvedValue({ page: mockTypes, continueCursor: null, isDone: true }),
         };
 
-        const cms = createCmsClient(mockApi);
+        const cms = createCmsClient(mockApi, { permissiveMode: true });
         const count = await cms.contentTypes.count(mockCtxWithList);
 
         expect(count).toBe(3);
       });
 
       it("deactivate calls update with isActive: false", async () => {
-        const cms = createCmsClient(mockApi);
+        const cms = createCmsClient(mockApi, { permissiveMode: true });
 
         await cms.contentTypes.deactivate(mockCtx, "type-id", "user-123");
 
@@ -414,7 +414,7 @@ describe("CMS Client Wrapper", () => {
       });
 
       it("reactivate calls update with isActive: true", async () => {
-        const cms = createCmsClient(mockApi);
+        const cms = createCmsClient(mockApi, { permissiveMode: true });
 
         await cms.contentTypes.reactivate(mockCtx, "type-id", "user-123");
 
@@ -428,7 +428,7 @@ describe("CMS Client Wrapper", () => {
 
   describe("ContentEntriesApi", () => {
     it("calls create mutation with default locale", async () => {
-      const cms = createCmsClient(mockApi, { defaultLocale: "en-US" });
+      const cms = createCmsClient(mockApi, { defaultLocale: "en-US", permissiveMode: true });
 
       await cms.contentEntries.create(mockCtx, {
         contentTypeId: "type-id",
@@ -442,7 +442,7 @@ describe("CMS Client Wrapper", () => {
     });
 
     it("calls publish mutation", async () => {
-      const cms = createCmsClient(mockApi);
+      const cms = createCmsClient(mockApi, { permissiveMode: true });
 
       await cms.contentEntries.publish(mockCtx, {
         id: "entry-id",
@@ -455,6 +455,7 @@ describe("CMS Client Wrapper", () => {
     it("calls schedule mutation", async () => {
       const cms = createCmsClient(mockApi, {
         features: { scheduling: true },
+        permissiveMode: true,
       });
 
       await cms.contentEntries.schedule(mockCtx, {
@@ -479,7 +480,7 @@ describe("CMS Client Wrapper", () => {
     });
 
     it("calls getBySlug query", async () => {
-      const cms = createCmsClient(mockApi);
+      const cms = createCmsClient(mockApi, { permissiveMode: true });
 
       await cms.contentEntries.getBySlug(mockCtx, {
         contentTypeName: "blog_post",
@@ -492,6 +493,7 @@ describe("CMS Client Wrapper", () => {
     it("calls restore mutation when soft delete enabled", async () => {
       const cms = createCmsClient(mockApi, {
         features: { softDelete: true },
+        permissiveMode: true,
       });
 
       await cms.contentEntries.restore(mockCtx, {
@@ -516,7 +518,7 @@ describe("CMS Client Wrapper", () => {
     });
 
     it("calls update mutation", async () => {
-      const cms = createCmsClient(mockApi);
+      const cms = createCmsClient(mockApi, { permissiveMode: true });
 
       await cms.contentEntries.update(mockCtx, {
         id: "entry-id",
@@ -527,7 +529,7 @@ describe("CMS Client Wrapper", () => {
     });
 
     it("calls delete mutation", async () => {
-      const cms = createCmsClient(mockApi);
+      const cms = createCmsClient(mockApi, { permissiveMode: true });
 
       await cms.contentEntries.delete(mockCtx, {
         id: "entry-id",
@@ -538,7 +540,7 @@ describe("CMS Client Wrapper", () => {
     });
 
     it("calls get query", async () => {
-      const cms = createCmsClient(mockApi);
+      const cms = createCmsClient(mockApi, { permissiveMode: true });
 
       await cms.contentEntries.get(mockCtx, { id: "entry-id" });
 
@@ -546,7 +548,7 @@ describe("CMS Client Wrapper", () => {
     });
 
     it("calls list query", async () => {
-      const cms = createCmsClient(mockApi);
+      const cms = createCmsClient(mockApi, { permissiveMode: true });
 
       await cms.contentEntries.list(mockCtx, {
         contentTypeName: "blog_post",
@@ -558,7 +560,7 @@ describe("CMS Client Wrapper", () => {
     });
 
     it("calls unpublish mutation", async () => {
-      const cms = createCmsClient(mockApi);
+      const cms = createCmsClient(mockApi, { permissiveMode: true });
 
       await cms.contentEntries.unpublish(mockCtx, {
         id: "entry-id",
@@ -593,6 +595,7 @@ describe("CMS Client Wrapper", () => {
     it("calls rollback mutation", async () => {
       const cms = createCmsClient(mockApi, {
         features: { versioning: true },
+        permissiveMode: true,
       });
 
       await cms.versions.rollback(mockCtx, {
@@ -608,6 +611,7 @@ describe("CMS Client Wrapper", () => {
     it("calls create mutation when media enabled", async () => {
       const cms = createCmsClient(mockApi, {
         features: { mediaManagement: true },
+        permissiveMode: true,
       });
 
       await cms.mediaAssets.create(mockCtx, {
@@ -641,6 +645,7 @@ describe("CMS Client Wrapper", () => {
       const cms = createCmsClient(mockApi, {
         features: { mediaManagement: true },
         maxMediaFileSize: 1000,
+        permissiveMode: true,
       });
 
       await expect(
@@ -659,6 +664,7 @@ describe("CMS Client Wrapper", () => {
     it("calls create mutation", async () => {
       const cms = createCmsClient(mockApi, {
         features: { mediaManagement: true },
+        permissiveMode: true,
       });
 
       await cms.mediaFolders.create(mockCtx, { name: "Images" });
@@ -669,6 +675,7 @@ describe("CMS Client Wrapper", () => {
     it("calls move mutation", async () => {
       const cms = createCmsClient(mockApi, {
         features: { mediaManagement: true },
+        permissiveMode: true,
       });
 
       await cms.mediaFolders.move(mockCtx, {
@@ -714,7 +721,7 @@ describe("getUserRole Hook", () => {
 
   describe("hasUserRoleHook", () => {
     it("returns false when no hook is configured", () => {
-      const cms = createCmsClient(mockApi);
+      const cms = createCmsClient(mockApi, { permissiveMode: true });
       expect(cms.hasUserRoleHook()).toBe(false);
     });
 
@@ -728,7 +735,7 @@ describe("getUserRole Hook", () => {
 
   describe("getUserRole", () => {
     it("throws error when no hook is configured", async () => {
-      const cms = createCmsClient(mockApi);
+      const cms = createCmsClient(mockApi, { permissiveMode: true });
 
       await expect(cms.getUserRole("user-123")).rejects.toThrow(
         "No getUserRole hook configured"
@@ -788,7 +795,7 @@ describe("getUserRole Hook", () => {
 
   describe("hasPermissionForUser", () => {
     it("throws error when no hook is configured", async () => {
-      const cms = createCmsClient(mockApi);
+      const cms = createCmsClient(mockApi, { permissiveMode: true });
 
       await expect(
         cms.hasPermissionForUser("user-123", {
@@ -1480,6 +1487,166 @@ describe("Required Hooks Validation", () => {
 
       expect(cms).toBeDefined();
       expect(cms.hasUserRoleHook()).toBe(true);
+    });
+  });
+});
+
+// =============================================================================
+// Authorization Enforcement Tests
+// =============================================================================
+
+describe("Authorization Enforcement", () => {
+  let mockApi: TypedComponentApi;
+  let mockCtx: ConvexContext;
+
+  beforeEach(() => {
+    mockApi = createMockComponentApi();
+    mockCtx = createMockContext();
+  });
+
+  describe("without getUserRole configured (fail-closed by default)", () => {
+    it("throws AuthorizationNotConfiguredError on content entry create", async () => {
+      // NOTE: No permissiveMode - this tests the secure default behavior
+      const cms = createCmsClient(mockApi);
+
+      await expect(
+        cms.contentEntries.create(mockCtx, {
+          contentTypeId: "type-id",
+          data: { title: "Test" },
+          createdBy: "user-123",
+        })
+      ).rejects.toThrow("Authorization not configured");
+    });
+
+    it("throws AuthorizationNotConfiguredError on content entry update", async () => {
+      // NOTE: No permissiveMode - this tests the secure default behavior
+      const cms = createCmsClient(mockApi);
+
+      await expect(
+        cms.contentEntries.update(mockCtx, {
+          id: "entry-id",
+          data: { title: "Updated" },
+          updatedBy: "user-123",
+        })
+      ).rejects.toThrow("Authorization not configured");
+    });
+
+    it("throws AuthorizationNotConfiguredError on content entry delete", async () => {
+      // NOTE: No permissiveMode - this tests the secure default behavior
+      const cms = createCmsClient(mockApi);
+
+      await expect(
+        cms.contentEntries.delete(mockCtx, {
+          id: "entry-id",
+          deletedBy: "user-123",
+        })
+      ).rejects.toThrow("Authorization not configured");
+    });
+
+    it("throws AuthorizationNotConfiguredError on content type create", async () => {
+      // NOTE: No permissiveMode - this tests the secure default behavior
+      const cms = createCmsClient(mockApi);
+
+      await expect(
+        cms.contentTypes.create(mockCtx, {
+          name: "test_type",
+          displayName: "Test Type",
+          fields: [],
+          createdBy: "user-123",
+        })
+      ).rejects.toThrow("Authorization not configured");
+    });
+  });
+
+  describe("with permissiveMode enabled (fail-open for development)", () => {
+    it("allows content entry create without getUserRole configured", async () => {
+      const cms = createCmsClient(mockApi, { permissiveMode: true });
+
+      // Should not throw - permissive mode allows operations
+      await expect(
+        cms.contentEntries.create(mockCtx, {
+          contentTypeId: "type-id",
+          data: { title: "Test" },
+          createdBy: "user-123",
+        })
+      ).resolves.toBeDefined();
+    });
+
+    it("allows anonymous operations in permissive mode", async () => {
+      const cms = createCmsClient(mockApi, { permissiveMode: true });
+
+      // Should not throw even without userId
+      await expect(
+        cms.contentEntries.create(mockCtx, {
+          contentTypeId: "type-id",
+          data: { title: "Test" },
+          // createdBy intentionally omitted
+        })
+      ).resolves.toBeDefined();
+    });
+
+    it("logs warning in permissive mode", async () => {
+      const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const cms = createCmsClient(mockApi, { permissiveMode: true });
+
+      await cms.contentEntries.create(mockCtx, {
+        contentTypeId: "type-id",
+        data: { title: "Test" },
+        createdBy: "user-123",
+      });
+
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining("permissiveMode")
+      );
+      consoleSpy.mockRestore();
+    });
+  });
+
+  describe("with getUserRole configured (proper authorization)", () => {
+    it("allows operations when user has proper role", async () => {
+      const cms = createCmsClient(mockApi, {
+        getUserRole: async () => "admin",
+      });
+
+      // Should not throw - admin role has all permissions
+      await expect(
+        cms.contentEntries.create(mockCtx, {
+          contentTypeId: "type-id",
+          data: { title: "Test" },
+          createdBy: "user-123",
+        })
+      ).resolves.toBeDefined();
+    });
+
+    it("throws UnauthorizedError when user has no role", async () => {
+      const cms = createCmsClient(mockApi, {
+        getUserRole: async () => null,
+      });
+
+      await expect(
+        cms.contentEntries.create(mockCtx, {
+          contentTypeId: "type-id",
+          data: { title: "Test" },
+          createdBy: "user-123",
+        })
+      ).rejects.toThrow();
+    });
+  });
+
+  describe("anonymous operations without permissiveMode", () => {
+    it("throws when no userId provided and permissiveMode is false", async () => {
+      const cms = createCmsClient(mockApi, {
+        getUserRole: async () => "admin",
+      });
+
+      // Even with getUserRole configured, no userId should fail
+      await expect(
+        cms.contentEntries.create(mockCtx, {
+          contentTypeId: "type-id",
+          data: { title: "Test" },
+          // createdBy intentionally omitted
+        })
+      ).rejects.toThrow("anonymous operations require permissiveMode");
     });
   });
 });

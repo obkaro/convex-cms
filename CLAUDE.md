@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is `@convex-cms/core` - a headless CMS built as a Convex Component. It provides content management with typed fields, versioning, publishing workflows, media management, RBAC, and AI-agent integration.
+This is `@convex-cms/core` - a headless CMS built as a Convex Component. It provides content management with typed fields, versioning, publishing workflows, media management, RBAC, and AI-agent integration. Always use context7 mcp to get up to date docs on convex component authoring, convex patterns, tanstack start, react, and any other library in use.
 
 **Key architectural concept**: This is a Convex Component, meaning it runs in an isolated sandbox with its own database tables. The component cannot access `ctx.auth` or the parent app's tables directly - all user context must be passed explicitly to component functions.
 
@@ -76,21 +76,7 @@ admin/                   # React Admin UI (TanStack Router + Vite)
 │   └── contexts/        # Auth context for pluggable authentication
 ```
 
-### Component Tables (in `schema.ts`)
-
-| Table | Purpose |
-|-------|---------|
-| `content_types` | Content schema definitions (fields, validation rules) |
-| `content_entries` | Actual content instances |
-| `content_versions` | Version history snapshots |
-| `media_assets` | File metadata (linked to Convex storage) |
-| `media_variants` | Optimized image variants (thumbnails, responsive) |
-| `media_folders` | Folder hierarchy for media organization |
-| `cms_events` | Event stream for webhooks/integrations |
-| `audit_logs` | Compliance audit trail |
-| `webhook_configs` | Webhook endpoint configurations |
-| `webhook_deliveries` | Webhook delivery tracking with retries |
-| `trash_config` | Soft-delete retention settings |
+### Find Component Tables (in `schema.ts`)
 
 ### Client Wrapper Pattern
 
@@ -118,7 +104,7 @@ Since components can't access `ctx.auth`, authorization works via hooks:
 3. **RBAC check**: Built-in roles (admin/editor/author/viewer) with permissions
 4. **Rate limiting hooks**: Optional rate limiting via parent app
 
-**Important**: The authorization system is implemented but not yet integrated into mutations (see Known Issues).
+**Important**: Authorization is enforced by default - operations fail without `getUserRole` configured. Use `permissiveMode: true` for development without authorization.
 
 ### Package Exports
 
@@ -172,13 +158,6 @@ test("example", async () => {
 
 Component provides test helpers via `/test` export for registration.
 
-## Known Issues / TODOs
-
-1. **CRITICAL**: Authorization hooks are implemented but NOT called from mutations - RBAC is currently bypassed
-2. Several Admin UI features are placeholders (settings form, media field renderer, reference field renderer)
-3. Agent tools reference API paths that don't match the wrapper structure
-4. Bulk operation methods missing from client wrapper
-
 ## Convex Component Constraints
 
 - Cannot access `ctx.auth` - user context must be passed as function arguments
@@ -189,29 +168,13 @@ Component provides test helpers via `/test` export for registration.
 
 ## Convex Function Guidelines
 
-**Always use the new function syntax:**
-```typescript
-import { query } from "./_generated/server";
-import { v } from "convex/values";
-
-export const myQuery = query({
-  args: { id: v.id("content_entries") },
-  returns: v.union(v.object({...}), v.null()),
-  handler: async (ctx, args) => {
-    // Function body
-  },
-});
-```
-
 **Key rules:**
 - ALWAYS include `args` and `returns` validators for all functions
-- Use `v.null()` when a function returns null or void
 - Use `internalQuery`/`internalMutation`/`internalAction` for private functions
-- Use `ctx.runQuery`/`ctx.runMutation` to call other functions (NOT direct imports)
 - Do NOT use `.filter()` in queries - use `.withIndex()` instead
 - Index fields must be queried in the same order they are defined
 
-See `.automaker/context/convex_rules.mdc` for comprehensive Convex guidelines.
+See `.claude/skills` and `.automaker/context/convex_rules.mdc` for comprehensive Convex guidelines.
 
 ## Key Project Documentation
 
@@ -223,7 +186,7 @@ See `.automaker/context/convex_rules.mdc` for comprehensive Convex guidelines.
 
 ## Claude Code Configuration
 
-This project includes Claude Code skills and commands in `.claude/`:
+IMPORTANT - Use claude skills whenever possible. This project includes Claude Code skills and commands in `.claude/`:
 
 ### Skills
 

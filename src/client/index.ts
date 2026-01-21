@@ -204,10 +204,17 @@ import {
   executeAuthorizationHooks as executeAuthHooks,
   operationToRbac as opToRbac,
   contextToRbacOptions as ctxToRbacOpts,
+  type AuthorizationResult,
 } from "../component/authorizationHooks.js";
 
 // Import UnauthorizedError for internal use (already re-exported above)
 import { UnauthorizedError as UnauthorizedErrorInternal } from "../component/authorization.js";
+
+// Import internal types from wrapper.ts for authHelper creation
+import type { AuthorizationHelper, AuthorizationHookContext as InternalAuthHookContext } from "./wrapper.js";
+
+// Import error class from types (also re-exported via export * from "./types.js")
+import { AuthorizationNotConfiguredError } from "./types.js";
 
 import {
   hasPermission,
@@ -330,14 +337,56 @@ export function createCmsClient(
   // Store authorization hooks from config
   const authHooks = config?.authorizationHooks;
 
+  // Create authorization helper for API classes (only if getUserRole is configured)
+  const authHelper: AuthorizationHelper | undefined = getUserRoleHook
+    ? {
+        async getUserRole(userId: string): Promise<string | null> {
+          return getUserRoleHook({ userId });
+        },
+        async requireAuthorization(
+          context: InternalAuthHookContext
+        ): Promise<AuthorizationResult> {
+          const rbacOptions = ctxToRbacOpts(context);
+
+          const result = await executeAuthHooks({
+            hooks: authHooks,
+            context,
+            rbacOptions: rbacOptions ?? undefined,
+            skipRbac: resolvedConfig.skipRbac,
+          });
+
+          if (!result.allowed) {
+            const rbacMapping = opToRbac(context.operation);
+
+            throw new UnauthorizedErrorInternal(
+              result.reason ?? "Operation not allowed",
+              {
+                code:
+                  result.rbacResult?.allowed === false
+                    ? result.rbacResult.code
+                    : "PERMISSION_DENIED",
+                resource: rbacMapping?.resource,
+                action: rbacMapping?.action,
+                role: context.role ?? undefined,
+                userId: context.userId,
+              }
+            );
+          }
+
+          return result;
+        },
+        skipRbac: resolvedConfig.skipRbac ?? false,
+      }
+    : undefined;
+
   return {
     config: resolvedConfig,
     api: componentApi,
-    contentTypes: new ContentTypesApi(componentApi, resolvedConfig),
-    contentEntries: new ContentEntriesApi(componentApi, resolvedConfig),
-    versions: new VersionsApi(componentApi, resolvedConfig),
-    mediaAssets: new MediaAssetsApi(componentApi, resolvedConfig),
-    mediaFolders: new MediaFoldersApi(componentApi, resolvedConfig),
+    contentTypes: new ContentTypesApi(componentApi, resolvedConfig, authHelper),
+    contentEntries: new ContentEntriesApi(componentApi, resolvedConfig, authHelper),
+    versions: new VersionsApi(componentApi, resolvedConfig, authHelper),
+    mediaAssets: new MediaAssetsApi(componentApi, resolvedConfig, authHelper),
+    mediaFolders: new MediaFoldersApi(componentApi, resolvedConfig, authHelper),
     mediaVariants: new MediaVariantsApi(componentApi, resolvedConfig),
 
     isFeatureEnabled(feature: keyof FeatureFlags): boolean {

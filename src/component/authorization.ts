@@ -349,15 +349,14 @@ export function checkPermission(
 
   // Check 4: Check if role has permission with "own" scope
   if (hasPermission(role, { resource, action, scope: "own" }, customRoles)) {
-    // If no resourceOwnerId provided, we can't verify ownership
-    // but we can still grant the permission for the user's own resources
+    // If no resourceOwnerId provided, we cannot verify ownership - deny access
+    // for defense-in-depth (callers must always provide resourceOwnerId for
+    // ownership-scoped operations)
     if (resourceOwnerId === undefined) {
-      // Permission exists with "own" scope, but ownership cannot be verified
-      // This is allowed - the caller should ensure they only pass owned resources
       return {
-        allowed: true,
-        grantedScope: "own",
-        ownershipVerified: false,
+        allowed: false,
+        reason: "Ownership cannot be verified: resourceOwnerId not provided",
+        code: "OWNERSHIP_REQUIRED",
       };
     }
 
