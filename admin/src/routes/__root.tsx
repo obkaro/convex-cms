@@ -3,18 +3,18 @@ import {
   createRootRoute,
   HeadContent,
   Scripts,
-} from '@tanstack/react-router'
-import { ConvexProvider, ConvexReactClient } from 'convex/react'
-import type { ReactNode } from 'react'
-import appCss from '~/styles/app.css?url'
-import { AdminLayout, RouteGuard } from '~/components'
-import { AuthProvider, type GetUserHook, type GetUserRoleHook, type LogoutHook } from '~/contexts'
-
-// Initialize Convex client
-// In production, this URL should come from environment variables
-const convexUrl = import.meta.env.VITE_CONVEX_URL as string
-
-const convex = convexUrl ? new ConvexReactClient(convexUrl) : null
+} from "@tanstack/react-router";
+import { ConvexProvider, ConvexReactClient } from "convex/react";
+import { useMemo, type ReactNode } from "react";
+import appCss from "~/styles/app.css?url";
+import { AdminLayout, RouteGuard } from "~/components";
+import {
+  AuthProvider,
+  type GetUserHook,
+  type GetUserRoleHook,
+  type LogoutHook,
+} from "~/contexts";
+import { getServerConfig, type ServerConfig } from "~/lib/config.server";
 
 /**
  * Auth Configuration
@@ -27,70 +27,67 @@ const convex = convexUrl ? new ConvexReactClient(convexUrl) : null
  * Replace these with actual auth integration in production.
  */
 
-// Check for auth configuration in environment
-const authMode = import.meta.env.VITE_AUTH_MODE as string | undefined
-
 /**
  * Mock user for development.
- * Set VITE_AUTH_MODE=mock to use this, or customize for your auth provider.
+ * Set AUTH_MODE=demo to use this, or customize for your auth provider.
  */
 const mockGetUser: GetUserHook = () => {
   // In development/demo mode, return a mock admin user
   return {
-    id: 'mock_user_123',
-    name: 'Demo Admin',
-    email: 'admin@example.com',
-  }
-}
+    id: "mock_user_123",
+    name: "Demo Admin",
+    email: "admin@example.com",
+  };
+};
 
 /**
  * Mock role resolver for development.
  * Returns 'admin' for the mock user.
  */
-const mockGetUserRole: GetUserRoleHook = ({ userId }) => {
+const mockGetUserRole: GetUserRoleHook = () => {
   // In development/demo mode, return admin role
-  return 'admin'
-}
+  return "admin";
+};
 
 /**
  * Mock logout handler.
  */
 const mockLogout: LogoutHook = () => {
-  console.log('Logout called (mock mode)')
-}
+  console.log("Logout called (mock mode)");
+};
 
 /**
  * No-auth mode - for when auth is not configured.
  * Returns null to indicate unauthenticated state.
  */
-const noAuthGetUser: GetUserHook = () => null
-const noAuthGetUserRole: GetUserRoleHook = () => null
-const noAuthLogout: LogoutHook = () => {}
+const noAuthGetUser: GetUserHook = () => null;
+const noAuthGetUserRole: GetUserRoleHook = () => null;
+const noAuthLogout: LogoutHook = () => {};
 
 /**
  * Get auth hooks based on configuration.
  * Extend this to support different auth providers.
  */
-function getAuthConfig(): {
-  getUser: GetUserHook
-  getUserRole: GetUserRoleHook
-  onLogout: LogoutHook
+function getAuthConfig(authMode: string): {
+  getUser: GetUserHook;
+  getUserRole: GetUserRoleHook;
+  onLogout: LogoutHook;
 } {
   switch (authMode) {
-    case 'mock':
-    case 'demo':
+    case "mock":
+    case "demo":
       return {
         getUser: mockGetUser,
         getUserRole: mockGetUserRole,
         onLogout: mockLogout,
-      }
-    case 'none':
-    case 'disabled':
+      };
+    case "none":
+    case "disabled":
       return {
         getUser: noAuthGetUser,
         getUserRole: noAuthGetUserRole,
         onLogout: noAuthLogout,
-      }
+      };
     default:
       // Default to mock mode for development convenience
       // In production, you should configure your actual auth provider
@@ -98,42 +95,52 @@ function getAuthConfig(): {
         getUser: mockGetUser,
         getUserRole: mockGetUserRole,
         onLogout: mockLogout,
-      }
+      };
   }
 }
-
-const authConfig = getAuthConfig()
 
 export const Route = createRootRoute({
   head: () => ({
     meta: [
       {
-        charSet: 'utf-8',
+        charSet: "utf-8",
       },
       {
-        name: 'viewport',
-        content: 'width=device-width, initial-scale=1',
+        name: "viewport",
+        content: "width=device-width, initial-scale=1",
       },
       {
-        title: 'Convex CMS Admin',
+        title: "Convex CMS Admin",
       },
       {
-        name: 'description',
-        content: 'Admin interface for Convex CMS - manage content, media, and publishing workflows',
+        name: "description",
+        content:
+          "Admin interface for Convex CMS - manage content, media, and publishing workflows",
       },
     ],
     links: [
-      { rel: 'stylesheet', href: appCss },
-      { rel: 'icon', href: '/favicon.ico' },
+      { rel: "stylesheet", href: appCss },
+      { rel: "icon", href: "/favicon.ico" },
     ],
   }),
+  // Load server config at route initialization
+  loader: async () => {
+    const config = await getServerConfig();
+    return { config };
+  },
   component: RootComponent,
-})
+});
 
 function RootComponent() {
+  // Get the server config from the loader
+  const { config } = Route.useLoaderData();
+
+  // Get auth config based on the auth mode from server
+  const authConfig = useMemo(() => getAuthConfig(config.authMode), [config.authMode]);
+
   return (
     <RootDocument>
-      <ConvexProviderWrapper>
+      <ConvexProviderWrapper config={config}>
         <AuthProvider
           getUser={authConfig.getUser}
           getUserRole={authConfig.getUserRole}
@@ -147,25 +154,50 @@ function RootComponent() {
         </AuthProvider>
       </ConvexProviderWrapper>
     </RootDocument>
-  )
+  );
 }
 
-function ConvexProviderWrapper({ children }: { children: ReactNode }) {
+function ConvexProviderWrapper({
+  children,
+  config,
+}: {
+  children: ReactNode;
+  config: ServerConfig;
+}) {
+  // Create Convex client from runtime config
+  // useMemo ensures we only create one client per URL
+  const convex = useMemo(() => {
+    if (!config.convexUrl) return null;
+    return new ConvexReactClient(config.convexUrl);
+  }, [config.convexUrl]);
+
   if (!convex) {
     return (
       <div className="convex-error">
         <h2>Convex Configuration Required</h2>
         <p>
-          Please set the <code>VITE_CONVEX_URL</code> environment variable to connect to your Convex deployment.
+          Please provide a Convex deployment URL to connect to your backend.
         </p>
+        <p>Options:</p>
+        <ul>
+          <li>
+            Run with URL: <code>npx convex-cms admin --url YOUR_URL</code>
+          </li>
+          <li>
+            Set environment variable: <code>CONVEX_URL=YOUR_URL</code>
+          </li>
+          <li>
+            Add to <code>.env.local</code>: <code>CONVEX_URL=YOUR_URL</code>
+          </li>
+        </ul>
         <p>
-          Run <code>npx convex dev</code> to start the Convex development server and generate the URL.
+          Run <code>npx convex dev</code> to start Convex and get your URL.
         </p>
       </div>
-    )
+    );
   }
 
-  return <ConvexProvider client={convex}>{children}</ConvexProvider>
+  return <ConvexProvider client={convex}>{children}</ConvexProvider>;
 }
 
 function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
@@ -179,5 +211,5 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
         <Scripts />
       </body>
     </html>
-  )
+  );
 }
