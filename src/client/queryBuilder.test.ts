@@ -320,7 +320,7 @@ describe("ContentQueryBuilder", () => {
     });
 
     it("whereGreaterThan converts Date to timestamp", () => {
-      const date = new Date("2024-01-01");
+      const date = new Date("2026-01-01");
       const builder = new ContentQueryBuilder(mockApi).whereGreaterThan(
         "publishedAt",
         date
@@ -383,8 +383,8 @@ describe("ContentQueryBuilder", () => {
     });
 
     it("whereBetween works with Date values", () => {
-      const start = new Date("2024-01-01");
-      const end = new Date("2024-12-31");
+      const start = new Date("2026-01-01");
+      const end = new Date("2026-12-31");
       const builder = new ContentQueryBuilder(mockApi).whereBetween(
         "publishedAt",
         start,
@@ -437,12 +437,12 @@ describe("ContentQueryBuilder", () => {
     it("whereStartsWith is shorthand for startsWith operator", () => {
       const builder = new ContentQueryBuilder(mockApi).whereStartsWith(
         "slug",
-        "2024-"
+        "2026-"
       );
       const options = builder.toOptions();
 
       expect(options.fieldFilters).toEqual([
-        { field: "slug", operator: "startsWith", value: "2024-" },
+        { field: "slug", operator: "startsWith", value: "2026-" },
       ]);
     });
 

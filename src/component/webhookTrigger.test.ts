@@ -76,7 +76,7 @@ describe("WebhookPayload Type", () => {
         contentTypeName: "blog_post",
         status: "published",
       },
-      timestamp: "2024-01-15T10:30:00.000Z",
+      timestamp: "2026-01-15T10:30:00.000Z",
       userId: "user-789",
     };
 
@@ -90,7 +90,7 @@ describe("WebhookPayload Type", () => {
       contentTypeName: "blog_post",
       status: "published",
     });
-    expect(payload.timestamp).toBe("2024-01-15T10:30:00.000Z");
+    expect(payload.timestamp).toBe("2026-01-15T10:30:00.000Z");
     expect(payload.userId).toBe("user-789");
   });
 
@@ -102,7 +102,7 @@ describe("WebhookPayload Type", () => {
       resourceId: "entry-456",
       action: "created",
       data: { slug: "new-post" },
-      timestamp: "2024-01-15T10:30:00.000Z",
+      timestamp: "2026-01-15T10:30:00.000Z",
     };
 
     expect(payload.userId).toBeUndefined();
@@ -518,7 +518,7 @@ describe("Webhook Payload Serialization", () => {
         nested: { key: "value" },
         array: [1, 2, 3],
       },
-      timestamp: "2024-01-15T10:30:00.000Z",
+      timestamp: "2026-01-15T10:30:00.000Z",
     };
 
     const json = JSON.stringify(payload);
@@ -541,7 +541,7 @@ describe("Webhook Payload Serialization", () => {
         content: "Content with\nnewlines\tand\ttabs",
         unicode: "Unicode: 你好世界 🎉",
       },
-      timestamp: "2024-01-15T10:30:00.000Z",
+      timestamp: "2026-01-15T10:30:00.000Z",
     };
 
     const json = JSON.stringify(payload);

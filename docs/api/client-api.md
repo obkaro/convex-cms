@@ -520,7 +520,7 @@ const folders = await cms.mediaFolders.list(ctx, {
 
 ```typescript
 const folder = await cms.mediaFolders.getByPath(ctx, {
-  path: string;  // e.g., "/Blog/2024"
+  path: string;  // e.g., "/Blog/2026"
 });
 ```
 

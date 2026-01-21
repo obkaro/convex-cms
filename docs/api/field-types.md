@@ -308,7 +308,7 @@ interface DateOptions {
   type: "date",
   required: true,
   options: {
-    minDate: "2024-01-01",
+    minDate: "2026-01-01",
     maxDate: "2025-12-31",
   },
 }

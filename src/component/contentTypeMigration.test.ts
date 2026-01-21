@@ -339,18 +339,18 @@ describe("contentTypeMigration", () => {
 
       describe("TEXT_TO_DATE", () => {
         it("should convert ISO date strings to timestamps", () => {
-          const data = { createdAt: "2024-01-15T10:30:00.000Z" };
+          const data = { createdAt: "2026-01-15T10:30:00.000Z" };
           const operations: MigrationOperation[] = [
             { type: "TRANSFORM_FIELD", fieldName: "createdAt", transformation: "TEXT_TO_DATE" },
           ];
 
           const { migratedData } = applyMigrations(data, operations);
 
-          expect(migratedData.createdAt).toBe(Date.parse("2024-01-15T10:30:00.000Z"));
+          expect(migratedData.createdAt).toBe(Date.parse("2026-01-15T10:30:00.000Z"));
         });
 
         it("should handle simple date strings", () => {
-          const data = { date: "2024-01-15" };
+          const data = { date: "2026-01-15" };
           const operations: MigrationOperation[] = [
             { type: "TRANSFORM_FIELD", fieldName: "date", transformation: "TEXT_TO_DATE" },
           ];
@@ -374,7 +374,7 @@ describe("contentTypeMigration", () => {
 
       describe("DATE_TO_TEXT", () => {
         it("should convert timestamps to ISO strings", () => {
-          const timestamp = 1705315800000; // 2024-01-15T10:30:00.000Z
+          const timestamp = 1705315800000; // 2026-01-15T10:30:00.000Z
           const data = { createdAt: timestamp };
           const operations: MigrationOperation[] = [
             { type: "TRANSFORM_FIELD", fieldName: "createdAt", transformation: "DATE_TO_TEXT" },
@@ -830,8 +830,8 @@ describe("Migration Scenarios", () => {
     // Scenario: Converting date strings to timestamps
     const data = {
       title: "Event",
-      eventDate: "2024-06-15",
-      createdAt: "2024-01-01T00:00:00.000Z",
+      eventDate: "2026-06-15",
+      createdAt: "2026-01-01T00:00:00.000Z",
     };
 
     const operations: MigrationOperation[] = [
@@ -843,6 +843,6 @@ describe("Migration Scenarios", () => {
 
     expect(typeof migratedData.eventDate).toBe("number");
     expect(typeof migratedData.createdAt).toBe("number");
-    expect(migratedData.createdAt).toBe(Date.parse("2024-01-01T00:00:00.000Z"));
+    expect(migratedData.createdAt).toBe(Date.parse("2026-01-01T00:00:00.000Z"));
   });
 });
