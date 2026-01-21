@@ -211,7 +211,9 @@ import {
 import { UnauthorizedError as UnauthorizedErrorInternal } from "../component/authorization.js";
 
 // Import internal types from wrapper.ts for authHelper creation
-import type { AuthorizationHelper, AuthorizationHookContext as InternalAuthHookContext } from "./wrapper.js";
+import type { AuthorizationHelper } from "./wrapper.js";
+// Import AuthorizationHookContext from types for internal use
+import type { AuthorizationHookContext as InternalAuthHookContext } from "./types.js";
 
 // Import error class from types (also re-exported via export * from "./types.js")
 import { AuthorizationNotConfiguredError } from "./types.js";
@@ -340,23 +342,31 @@ export function createCmsClient(
   // Create authorization helper for API classes (only if getUserRole is configured)
   const authHelper: AuthorizationHelper | undefined = getUserRoleHook
     ? {
-        async getUserRole(userId: string): Promise<string | null> {
-          return getUserRoleHook({ userId });
+        async getUserRole(ctx: ConvexContext, userId: string): Promise<string | null> {
+          // Pass ctx to the hook so it can access parent app's database and auth
+          return getUserRoleHook(ctx as unknown as import("./types.js").CmsHookContext, { userId });
         },
         async requireAuthorization(
-          context: InternalAuthHookContext
+          ctx: ConvexContext,
+          context: Omit<InternalAuthHookContext, 'ctx'>
         ): Promise<AuthorizationResult> {
-          const rbacOptions = ctxToRbacOpts(context);
+          // Augment the context with ctx for hooks to access
+          const fullContext: InternalAuthHookContext = {
+            ...context,
+            ctx: ctx as unknown as import("./types.js").CmsHookContext,
+          };
+
+          const rbacOptions = ctxToRbacOpts(fullContext);
 
           const result = await executeAuthHooks({
             hooks: authHooks,
-            context,
+            context: fullContext,
             rbacOptions: rbacOptions ?? undefined,
             skipRbac: resolvedConfig.skipRbac,
           });
 
           if (!result.allowed) {
-            const rbacMapping = opToRbac(context.operation);
+            const rbacMapping = opToRbac(fullContext.operation);
 
             throw new UnauthorizedErrorInternal(
               result.reason ?? "Operation not allowed",
@@ -367,8 +377,8 @@ export function createCmsClient(
                     : "PERMISSION_DENIED",
                 resource: rbacMapping?.resource,
                 action: rbacMapping?.action,
-                role: context.role ?? undefined,
-                userId: context.userId,
+                role: fullContext.role ?? undefined,
+                userId: fullContext.userId,
               }
             );
           }
@@ -412,17 +422,18 @@ export function createCmsClient(
       );
     },
 
-    async getUserRole(userId: string): Promise<GetUserRoleResult> {
+    async getUserRole(ctx: ConvexContext, userId: string): Promise<GetUserRoleResult> {
       if (!getUserRoleHook) {
         throw new Error(
           "No getUserRole hook configured. " +
             "Configure a getUserRole function in createCmsClient options to map user IDs to CMS roles."
         );
       }
-      return await getUserRoleHook({ userId });
+      return await getUserRoleHook(ctx as unknown as import("./types.js").CmsHookContext, { userId });
     },
 
     async hasPermissionForUser(
+      ctx: ConvexContext,
       userId: string,
       permission: { resource: Resource; action: Action; scope?: OwnershipScope },
       options?: PermissionCheckOptions
@@ -434,7 +445,7 @@ export function createCmsClient(
         );
       }
 
-      const role = await getUserRoleHook({ userId });
+      const role = await getUserRoleHook(ctx as unknown as import("./types.js").CmsHookContext, { userId });
 
       // If user has no role, they have no permissions
       if (role === null) {
@@ -497,9 +508,97 @@ export function createCmsClient(
     },
 
     // ==========================================================================
-    // Locale Fallback Chain Methods
+    // ==========================================================================
+    // Consolidated Locale API (Simplified)
     // ==========================================================================
 
+    /**
+     * Consolidated locale API with 3 core methods.
+     *
+     * Prefer using this namespace over the individual methods below.
+     *
+     * @example
+     * ```typescript
+     * // Get locale configuration
+     * const config = cms.locale.getConfig();
+     * console.log(config.defaultLocale); // "en"
+     *
+     * // Get fallback chain for a locale
+     * const chain = cms.locale.getFallbackChain("es-MX");
+     * // ["es-ES", "en-US", "en"]
+     *
+     * // Resolve locale with full metadata
+     * const resolved = cms.locale.resolve("es-MX");
+     * // { requestedLocale: "es-MX", fallbackChain: [...], ... }
+     * ```
+     */
+    locale: {
+      /**
+       * Get the full locale configuration.
+       *
+       * @returns The configured locale settings including default locale,
+       * supported locales, and fallback chains.
+       */
+      getConfig(): LocaleFallbackConfig {
+        return {
+          defaultLocale: resolvedConfig.defaultLocale,
+          fallbackChains: resolvedConfig.localeFallbackChains,
+          autoGenerateFallbacks: resolvedConfig.autoGenerateLocaleFallbacks,
+          supportedLocales: resolvedConfig.supportedLocales,
+        };
+      },
+
+      /**
+       * Get the fallback chain for a locale.
+       *
+       * Returns an array of locale codes to try in order when content
+       * is not available in the requested locale.
+       *
+       * @param locale - The locale code (e.g., "es-MX")
+       * @returns Array of fallback locale codes
+       *
+       * @example
+       * ```typescript
+       * cms.locale.getFallbackChain("es-MX");
+       * // Returns: ["es-ES", "es", "en"]
+       * ```
+       */
+      getFallbackChain(locale: LocaleCode): LocaleCode[] {
+        const fallbackConfig = this.getConfig();
+        return getFallbackChain(locale, fallbackConfig);
+      },
+
+      /**
+       * Resolve a locale with full metadata.
+       *
+       * Returns detailed information about the locale resolution including
+       * the fallback chain, whether it's supported, and parsing info.
+       *
+       * @param locale - The locale code to resolve
+       * @returns Resolved fallback chain with metadata
+       *
+       * @example
+       * ```typescript
+       * const resolved = cms.locale.resolve("es-MX");
+       * // Returns: {
+       * //   requestedLocale: "es-MX",
+       * //   fallbackChain: ["es-MX", "es-ES", "es", "en"],
+       * //   isSupported: true,
+       * //   ...
+       * // }
+       * ```
+       */
+      resolve(locale: LocaleCode): ResolvedFallbackChain {
+        const fallbackConfig = this.getConfig();
+        return resolveFallbackChain(locale, fallbackConfig);
+      },
+    },
+
+    // ==========================================================================
+    // Legacy Locale Methods (Deprecated - Use cms.locale.* instead)
+    // ==========================================================================
+
+    /** @deprecated Use cms.locale.getConfig() instead */
     getLocaleFallbackConfig(): LocaleFallbackConfig {
       return {
         defaultLocale: resolvedConfig.defaultLocale,
@@ -509,25 +608,30 @@ export function createCmsClient(
       };
     },
 
+    /** @deprecated Use cms.locale.getFallbackChain() instead */
     getLocaleFallbackChain(locale: LocaleCode): LocaleCode[] {
       const fallbackConfig = this.getLocaleFallbackConfig();
       return getFallbackChain(locale, fallbackConfig);
     },
 
+    /** @deprecated Use cms.locale.resolve() instead */
     resolveLocaleFallbackChain(locale: LocaleCode): ResolvedFallbackChain {
       const fallbackConfig = this.getLocaleFallbackConfig();
       return resolveFallbackChain(locale, fallbackConfig);
     },
 
+    /** @deprecated Internal method - consider using cms.locale.resolve() */
     buildLocaleResolutionOptions(locale: LocaleCode): LocaleResolutionOptions {
       const fallbackConfig = this.getLocaleFallbackConfig();
       return buildLocaleResolutionOptions(locale, fallbackConfig);
     },
 
+    /** @deprecated Use standard locale parsing libraries instead */
     parseLocale(locale: LocaleCode): ParsedLocale | null {
       return parseLocale(locale);
     },
 
+    /** @deprecated Use cms.locale.getFallbackChain() for fallback resolution */
     getLocaleHierarchy(locale: LocaleCode): LocaleCode[] {
       return getLocaleHierarchy(locale);
     },
@@ -549,6 +653,7 @@ export function createCmsClient(
     },
 
     async hasContentTypePermissionForUser(
+      ctx: ConvexContext,
       userId: string,
       permission: { resource: Resource; action: Action; scope?: OwnershipScope },
       contentTypeName: string
@@ -560,7 +665,7 @@ export function createCmsClient(
         );
       }
 
-      const role = await getUserRoleHook({ userId });
+      const role = await getUserRoleHook(ctx as unknown as import("./types.js").CmsHookContext, { userId });
 
       if (role === null) {
         return {
@@ -583,7 +688,7 @@ export function createCmsClient(
       };
     },
 
-    async getPermittedContentTypesForUser(userId: string, action: Action) {
+    async getPermittedContentTypesForUser(ctx: ConvexContext, userId: string, action: Action) {
       if (!getUserRoleHook) {
         throw new Error(
           "No getUserRole hook configured. " +
@@ -591,7 +696,7 @@ export function createCmsClient(
         );
       }
 
-      const role = await getUserRoleHook({ userId });
+      const role = await getUserRoleHook(ctx as unknown as import("./types.js").CmsHookContext, { userId });
 
       if (role === null) {
         return [];
@@ -614,6 +719,7 @@ export function createCmsClient(
     // ==========================================================================
 
     async canUserPerformOnResource(
+      ctx: ConvexContext,
       userId: string,
       resource: Resource,
       action: Action,
@@ -626,7 +732,7 @@ export function createCmsClient(
         );
       }
 
-      const role = await getUserRoleHook({ userId });
+      const role = await getUserRoleHook(ctx as unknown as import("./types.js").CmsHookContext, { userId });
 
       // If user has no role, they have no permissions
       if (role === null) {
@@ -669,12 +775,14 @@ export function createCmsClient(
     },
 
     async requireUserCanPerformOnResource(
+      ctx: ConvexContext,
       userId: string,
       resource: Resource,
       action: Action,
       resourceOwnerId?: string
     ): Promise<import("./wrapper.js").ResourcePermissionGranted> {
       const result = await this.canUserPerformOnResource(
+        ctx,
         userId,
         resource,
         action,
@@ -1059,3 +1167,87 @@ export {
   // Search schema
   searchContentArgsSchema,
 } from "./agentTools.js";
+
+// =============================================================================
+// Code-Only Schema System
+// =============================================================================
+
+// Re-export schema definition functions and types
+export {
+  // Core functions
+  defineContentType,
+  createContentSchema,
+  toFieldDefinitions,
+
+  // Runtime utilities
+  isContentTypeDefinition,
+
+  // Typed client factory
+  createTypedCmsClient,
+  TypedContentEntriesApiImpl,
+
+  // Schema drift detection
+  detectSchemaDrift,
+  formatDriftReport,
+  hasErrors as hasDriftErrors,
+  filterReportByContentTypes,
+
+  // Type code generation
+  generateTypesFromDatabase,
+  generateTypesFromDefinitions,
+  validateGeneratedCode,
+} from "./schema/index.js";
+
+// Re-export schema types
+export type {
+  // Core definition types
+  ContentTypeConfig,
+  ContentTypeDefinition,
+  ContentTypeMeta,
+  FieldMeta,
+  FieldRenderAs,
+
+  // Type inference utilities
+  InferContentType,
+  InferSchema,
+  ContentSchema,
+  SchemaContentTypeNames,
+  SchemaContentType,
+  ContentTypeFieldNames,
+
+  // Schema instance type
+  ContentSchemaInstance,
+  DatabaseFieldDefinition,
+} from "./schema/index.js";
+
+// Re-export schema config types from types.ts
+export type {
+  ContentSchemaConfig,
+  ContentTypeDefinitionBase,
+} from "./types.js";
+
+// Re-export typed client types for schema-aware access
+export type {
+  TypedContentEntry,
+  TypedPaginationResult,
+  TypedContentEntriesApi,
+  TypedCreateEntryOptions,
+  TypedUpdateEntryOptions,
+  TypedListEntriesOptions,
+  SchemaDataType,
+  ValidContentTypeName,
+  HasContentType,
+  GetContentTypeDefinition,
+  TypedCmsClientConfig,
+  TypedCmsClient,
+  // Schema drift detection types
+  DriftSeverity,
+  DriftType,
+  DriftIssue,
+  DriftSummary,
+  SchemaDriftReport,
+  DetectDriftOptions,
+  // Type code generation types
+  CodegenOptions,
+  CodegenResult,
+} from "./schema/index.js";

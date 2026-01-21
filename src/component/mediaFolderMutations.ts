@@ -18,6 +18,7 @@ import {
   updateMediaFolderArgs,
   moveFolderArgs,
   mediaFolderDoc,
+  mutationAuthContext,
 } from "./validators.js";
 import {
   mediaFolderNotFound,
@@ -33,6 +34,7 @@ import {
   mediaFolderCreateFailed,
   internalError,
 } from "./lib/errors.js";
+import { requireMutationAuth } from "./lib/mutationAuth.js";
 
 // =============================================================================
 // Constants
@@ -170,10 +172,17 @@ function getPathDepth(path: string): number {
  * ```
  */
 export const createMediaFolder = mutation({
-  args: createMediaFolderArgs.fields,
+  args: {
+    ...createMediaFolderArgs.fields,
+    /** Optional auth context for mutation-level authorization */
+    _auth: v.optional(mutationAuthContext),
+  },
   returns: mediaFolderDoc,
   handler: async (ctx, args) => {
-    const { name, parentId, description, sortOrder, createdBy } = args;
+    const { name, parentId, description, sortOrder, createdBy, _auth } = args;
+
+    // Authorization check - mediaFolders.create permission
+    requireMutationAuth(_auth, "mediaFolders", "create");
 
     // Validate folder name
     validateFolderName(name);
@@ -273,10 +282,17 @@ export const createMediaFolder = mutation({
  * ```
  */
 export const updateMediaFolder = mutation({
-  args: updateMediaFolderArgs.fields,
+  args: {
+    ...updateMediaFolderArgs.fields,
+    /** Optional auth context for mutation-level authorization */
+    _auth: v.optional(mutationAuthContext),
+  },
   returns: mediaFolderDoc,
   handler: async (ctx, args) => {
-    const { id, name, description, sortOrder } = args;
+    const { id, name, description, sortOrder, _auth } = args;
+
+    // Authorization check - mediaFolders.update permission
+    requireMutationAuth(_auth, "mediaFolders", "update");
 
     // Retrieve the folder
     const folder = await ctx.db.get(id);
@@ -421,10 +437,17 @@ async function updateDescendantPaths(
  * ```
  */
 export const moveMediaFolder = mutation({
-  args: moveFolderArgs.fields,
+  args: {
+    ...moveFolderArgs.fields,
+    /** Optional auth context for mutation-level authorization */
+    _auth: v.optional(mutationAuthContext),
+  },
   returns: mediaFolderDoc,
   handler: async (ctx, args) => {
-    const { id, newParentId } = args;
+    const { id, newParentId, _auth } = args;
+
+    // Authorization check - mediaFolders.update permission (move is a form of update)
+    requireMutationAuth(_auth, "mediaFolders", "update");
 
     // Retrieve the folder
     const folder = await ctx.db.get(id);
@@ -591,10 +614,17 @@ export const deleteMediaFolderArgs = {
  * ```
  */
 export const deleteMediaFolder = mutation({
-  args: deleteMediaFolderArgs,
+  args: {
+    ...deleteMediaFolderArgs,
+    /** Optional auth context for mutation-level authorization */
+    _auth: v.optional(mutationAuthContext),
+  },
   returns: mediaFolderDoc,
   handler: async (ctx, args) => {
-    const { id, deletedBy, hardDelete = false, recursive = false } = args;
+    const { id, deletedBy, hardDelete = false, recursive = false, _auth } = args;
+
+    // Authorization check - mediaFolders.delete permission
+    requireMutationAuth(_auth, "mediaFolders", "delete");
 
     // Retrieve the folder
     const folder = await ctx.db.get(id);
@@ -749,10 +779,17 @@ export const restoreMediaFolderArgs = {
  * ```
  */
 export const restoreMediaFolder = mutation({
-  args: restoreMediaFolderArgs,
+  args: {
+    ...restoreMediaFolderArgs,
+    /** Optional auth context for mutation-level authorization */
+    _auth: v.optional(mutationAuthContext),
+  },
   returns: mediaFolderDoc,
   handler: async (ctx, args) => {
-    const { id, restoredBy, recursive = false } = args;
+    const { id, restoredBy, recursive = false, _auth } = args;
+
+    // Authorization check - use update permission for restore
+    requireMutationAuth(_auth, "mediaFolders", "update");
 
     // Retrieve the folder
     const folder = await ctx.db.get(id);

@@ -25,6 +25,7 @@ import {
   moveMediaAssetsArgs,
   moveMediaAssetsResult,
   BULK_OPERATION_BATCH_SIZE,
+  mutationAuthContext,
 } from "./validators.js";
 import {
   emitEvent,
@@ -43,6 +44,7 @@ import {
   batchSizeExceeded,
   internalError,
 } from "./lib/errors.js";
+import { requireMutationAuth, withResourceOwner } from "./lib/mutationAuth.js";
 
 // =============================================================================
 // Create Media Asset Mutation
@@ -111,7 +113,11 @@ import {
  * ```
  */
 export const createMediaAsset = mutation({
-  args: createMediaAssetArgs.fields,
+  args: {
+    ...createMediaAssetArgs.fields,
+    /** Optional auth context for mutation-level authorization */
+    _auth: v.optional(mutationAuthContext),
+  },
   returns: mediaAssetDoc,
   handler: async (ctx, args) => {
     const {
@@ -130,7 +136,11 @@ export const createMediaAsset = mutation({
       metadata,
       tags,
       createdBy,
+      _auth,
     } = args;
+
+    // Authorization check - mediaAssets.create permission
+    requireMutationAuth(_auth, "mediaAssets", "create");
 
     // Validate folder exists if provided
     if (folderId !== undefined) {
@@ -272,10 +282,14 @@ export const createMediaAsset = mutation({
  * ```
  */
 export const updateMediaAsset = mutation({
-  args: updateMediaAssetArgs.fields,
+  args: {
+    ...updateMediaAssetArgs.fields,
+    /** Optional auth context for mutation-level authorization */
+    _auth: v.optional(mutationAuthContext),
+  },
   returns: mediaAssetDoc,
   handler: async (ctx, args) => {
-    const { id, filename, title, description, altText, folderId, tags, updatedBy } = args;
+    const { id, filename, title, description, altText, folderId, tags, updatedBy, _auth } = args;
 
     // Retrieve the media asset by ID
     const asset = await ctx.db.get(id);
@@ -289,6 +303,13 @@ export const updateMediaAsset = mutation({
     if (asset.deletedAt !== undefined) {
       throw mediaAssetDeleted(id as unknown as string);
     }
+
+    // Authorization check - mediaAssets.update permission (with ownership check)
+    requireMutationAuth(
+      withResourceOwner(_auth, asset.createdBy),
+      "mediaAssets",
+      "update"
+    );
 
     // Validate folder exists if provided and is different from current
     if (folderId !== undefined && folderId !== asset.folderId) {
@@ -527,10 +548,14 @@ export const findMediaAssetReferences = query({
  * ```
  */
 export const deleteMediaAsset = mutation({
-  args: deleteMediaAssetArgs.fields,
+  args: {
+    ...deleteMediaAssetArgs.fields,
+    /** Optional auth context for mutation-level authorization */
+    _auth: v.optional(mutationAuthContext),
+  },
   returns: deleteMediaAssetResult,
   handler: async (ctx, args) => {
-    const { id, deletedBy, hardDelete = false, forceDelete = false } = args;
+    const { id, deletedBy, hardDelete = false, forceDelete = false, _auth } = args;
 
     // Retrieve the media asset by ID
     const asset = await ctx.db.get(id);
@@ -539,6 +564,13 @@ export const deleteMediaAsset = mutation({
     if (!asset) {
       throw mediaAssetNotFound(id as unknown as string);
     }
+
+    // Authorization check - mediaAssets.delete permission (with ownership check)
+    requireMutationAuth(
+      withResourceOwner(_auth, asset.createdBy),
+      "mediaAssets",
+      "delete"
+    );
 
     // For soft delete, check if already deleted
     if (!hardDelete && asset.deletedAt !== undefined) {
@@ -761,10 +793,14 @@ async function findReferencesInternal(
  * ```
  */
 export const restoreMediaAsset = mutation({
-  args: restoreMediaAssetArgs.fields,
+  args: {
+    ...restoreMediaAssetArgs.fields,
+    /** Optional auth context for mutation-level authorization */
+    _auth: v.optional(mutationAuthContext),
+  },
   returns: mediaAssetDoc,
   handler: async (ctx, args) => {
-    const { id, restoredBy } = args;
+    const { id, restoredBy, _auth } = args;
 
     // Retrieve the media asset by ID
     const asset = await ctx.db.get(id);
@@ -773,6 +809,13 @@ export const restoreMediaAsset = mutation({
     if (!asset) {
       throw mediaAssetNotFound(id as unknown as string);
     }
+
+    // Authorization check - use update permission for restore (with ownership check)
+    requireMutationAuth(
+      withResourceOwner(_auth, asset.createdBy),
+      "mediaAssets",
+      "update"
+    );
 
     // Check that the asset is actually soft-deleted
     if (asset.deletedAt === undefined) {
@@ -893,10 +936,18 @@ interface MoveMediaAssetsResult {
  * ```
  */
 export const moveMediaAssets = mutation({
-  args: moveMediaAssetsArgs.fields,
+  args: {
+    ...moveMediaAssetsArgs.fields,
+    /** Optional auth context for mutation-level authorization */
+    _auth: v.optional(mutationAuthContext),
+  },
   returns: moveMediaAssetsResult,
   handler: async (ctx, args): Promise<MoveMediaAssetsResult> => {
-    const { assetIds, targetFolderId, movedBy } = args;
+    const { assetIds, targetFolderId, movedBy, _auth } = args;
+
+    // Authorization check - mediaAssets.update permission (bulk move is a form of update)
+    // Note: Individual asset ownership is checked per-asset during processing
+    requireMutationAuth(_auth, "mediaAssets", "update");
 
     // Validate batch size
     if (assetIds.length > BULK_OPERATION_BATCH_SIZE) {

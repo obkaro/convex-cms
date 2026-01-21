@@ -109,7 +109,7 @@ import type {
   MediaVariantWithUrl,
 } from "./types.js";
 
-import { resolveConfig, AuthorizationNotConfiguredError } from "./types.js";
+import { resolveConfig, AuthorizationNotConfiguredError, type CmsHookContext } from "./types.js";
 
 // Import query builder
 import { ContentQueryBuilder, createQueryBuilder } from "./queryBuilder.js";
@@ -186,17 +186,19 @@ export type ResolveLocaleContentOptions = ResolveLocaleOptions;
 export interface AuthorizationHelper {
   /**
    * Get the user's CMS role.
+   * @param ctx - The Convex context (provides database and auth access to hooks)
    * @param userId - The user ID to look up
    * @returns The role name or null if user has no role
    */
-  getUserRole(userId: string): Promise<string | null>;
+  getUserRole(ctx: ConvexContext, userId: string): Promise<string | null>;
 
   /**
    * Perform authorization check and throw if denied.
+   * @param ctx - The Convex context (provides database and auth access to hooks)
    * @param context - The authorization context
    * @throws UnauthorizedError if the operation is not allowed
    */
-  requireAuthorization(context: AuthorizationHookContext): Promise<AuthorizationResult>;
+  requireAuthorization(ctx: ConvexContext, context: Omit<AuthorizationHookContext, 'ctx'>): Promise<AuthorizationResult>;
 
   /**
    * Whether RBAC should be skipped (from config.skipRbac).
@@ -218,10 +220,11 @@ export interface AuthorizationHelper {
 export interface RateLimitHelper {
   /**
    * Get the user's CMS role for rate limit context.
+   * @param ctx - The Convex context (for database access)
    * @param userId - The user ID to look up
    * @returns The role name or null if user has no role
    */
-  getUserRole(userId: string): Promise<string | null>;
+  getUserRole(ctx: ConvexContext, userId: string): Promise<string | null>;
 
   /**
    * Enforce rate limit for an operation. Throws RateLimitedError if rate limited.
@@ -1076,12 +1079,14 @@ export class ContentTypesApi {
    * - If `skipRbac` is enabled: skips RBAC checks but still validates auth is configured
    * - If no `userId` is provided: same rules apply based on permissiveMode
    *
+   * @param ctx - The Convex context (passed to authorization hooks for database access)
    * @param operation - The CMS operation being performed
    * @param userId - The user performing the operation
    * @param resourceId - Optional resource ID (for update/delete operations)
    * @throws AuthorizationNotConfiguredError if authorization is not configured and permissiveMode is false
    */
   private async authorize(
+    ctx: ConvexContext,
     operation: CmsOperation,
     userId: string | undefined,
     resourceId?: string
@@ -1118,9 +1123,9 @@ export class ContentTypesApi {
       );
     }
 
-    const role = await this.authHelper.getUserRole(userId);
+    const role = await this.authHelper.getUserRole(ctx, userId);
 
-    await this.authHelper.requireAuthorization({
+    await this.authHelper.requireAuthorization(ctx, {
       operation,
       userId,
       role,
@@ -1130,10 +1135,12 @@ export class ContentTypesApi {
 
   /**
    * Enforce rate limit for content type operations.
+   * @param ctx - The Convex context (for database access)
    * @param operation - The CMS operation being performed
    * @param userId - The user performing the operation
    */
   private async rateLimit(
+    ctx: ConvexContext,
     operation: CmsOperation,
     userId: string | undefined
   ): Promise<void> {
@@ -1142,7 +1149,7 @@ export class ContentTypesApi {
       return;
     }
 
-    const role = userId ? await this.rateLimitHelper.getUserRole(userId) : null;
+    const role = userId ? await this.rateLimitHelper.getUserRole(ctx, userId) : null;
 
     await this.rateLimitHelper.requireRateLimit(operation, {
       userId,
@@ -1185,9 +1192,9 @@ export class ContentTypesApi {
     args: CreateContentTypeArgs
   ): Promise<ContentType> {
     // Authorization check - contentTypes.create
-    await this.authorize("contentTypes.create", args.createdBy);
+    await this.authorize(ctx, "contentTypes.create", args.createdBy);
     // Rate limit check - contentTypes.create
-    await this.rateLimit("contentTypes.create", args.createdBy);
+    await this.rateLimit(ctx, "contentTypes.create", args.createdBy);
     return ctx.runMutation(this.api.contentTypeMutations.createContentType, args);
   }
 
@@ -1239,9 +1246,9 @@ export class ContentTypesApi {
     args: UpdateContentTypeArgs
   ): Promise<UpdateContentTypeResult> {
     // Authorization check - contentTypes.update
-    await this.authorize("contentTypes.update", args.updatedBy, args.id);
+    await this.authorize(ctx, "contentTypes.update", args.updatedBy, args.id);
     // Rate limit check - contentTypes.update
-    await this.rateLimit("contentTypes.update", args.updatedBy);
+    await this.rateLimit(ctx, "contentTypes.update", args.updatedBy);
     return ctx.runMutation(this.api.contentTypeMutations.updateContentType, args);
   }
 
@@ -1293,9 +1300,9 @@ export class ContentTypesApi {
     args: DeleteContentTypeArgs
   ): Promise<DeleteContentTypeResult> {
     // Authorization check - contentTypes.delete
-    await this.authorize("contentTypes.delete", args.deletedBy, args.id);
+    await this.authorize(ctx, "contentTypes.delete", args.deletedBy, args.id);
     // Rate limit check - contentTypes.delete
-    await this.rateLimit("contentTypes.delete", args.deletedBy);
+    await this.rateLimit(ctx, "contentTypes.delete", args.deletedBy);
     return ctx.runMutation(this.api.contentTypeMutations.deleteContentType, args);
   }
 
@@ -1584,6 +1591,7 @@ export class ContentEntriesApi {
    * - If `skipRbac` is enabled: skips RBAC checks but still validates auth is configured
    * - If no `userId` is provided: same rules apply based on permissiveMode
    *
+   * @param ctx - The Convex context (passed to authorization hooks for database access)
    * @param operation - The CMS operation being performed
    * @param userId - The user performing the operation
    * @param resourceId - Optional resource ID (for update/delete operations)
@@ -1592,6 +1600,7 @@ export class ContentEntriesApi {
    * @throws AuthorizationNotConfiguredError if authorization is not configured and permissiveMode is false
    */
   private async authorize(
+    ctx: ConvexContext,
     operation: CmsOperation,
     userId: string | undefined,
     resourceId?: string,
@@ -1635,9 +1644,9 @@ export class ContentEntriesApi {
       );
     }
 
-    const role = await this.authHelper.getUserRole(userId);
+    const role = await this.authHelper.getUserRole(ctx, userId);
 
-    await this.authHelper.requireAuthorization({
+    await this.authHelper.requireAuthorization(ctx, {
       operation,
       userId,
       role,
@@ -1649,11 +1658,13 @@ export class ContentEntriesApi {
 
   /**
    * Enforce rate limit for content entry operations.
+   * @param ctx - The Convex context (for database access)
    * @param operation - The CMS operation being performed
    * @param userId - The user performing the operation
    * @param contentTypeId - Optional content type ID for more granular rate limiting
    */
   private async rateLimit(
+    ctx: ConvexContext,
     operation: CmsOperation,
     userId: string | undefined,
     contentTypeId?: string
@@ -1663,7 +1674,7 @@ export class ContentEntriesApi {
       return;
     }
 
-    const role = userId ? await this.rateLimitHelper.getUserRole(userId) : null;
+    const role = userId ? await this.rateLimitHelper.getUserRole(ctx, userId) : null;
 
     await this.rateLimitHelper.requireRateLimit(operation, {
       userId,
@@ -1696,6 +1707,7 @@ export class ContentEntriesApi {
   ): Promise<ContentEntry> {
     // Authorization check - contentEntries.create
     await this.authorize(
+      ctx,
       "contentEntries.create",
       args.createdBy,
       undefined,
@@ -1703,7 +1715,7 @@ export class ContentEntriesApi {
       args.contentTypeId
     );
     // Rate limit check - contentEntries.create
-    await this.rateLimit("contentEntries.create", args.createdBy, args.contentTypeId);
+    await this.rateLimit(ctx, "contentEntries.create", args.createdBy, args.contentTypeId);
 
     // Apply default locale if not specified and localization is enabled
     const argsWithDefaults = {
@@ -1732,6 +1744,7 @@ export class ContentEntriesApi {
 
     // Authorization check - contentEntries.update (with ownership info)
     await this.authorize(
+      ctx,
       "contentEntries.update",
       args.updatedBy,
       args.id,
@@ -1739,7 +1752,7 @@ export class ContentEntriesApi {
       entry.contentTypeId
     );
     // Rate limit check - contentEntries.update
-    await this.rateLimit("contentEntries.update", args.updatedBy, entry.contentTypeId);
+    await this.rateLimit(ctx, "contentEntries.update", args.updatedBy, entry.contentTypeId);
     return ctx.runMutation(this.api.contentEntryMutations.updateEntry, args);
   }
 
@@ -1762,6 +1775,7 @@ export class ContentEntriesApi {
 
     // Authorization check - contentEntries.delete (with ownership info)
     await this.authorize(
+      ctx,
       "contentEntries.delete",
       args.deletedBy,
       args.id,
@@ -1769,7 +1783,7 @@ export class ContentEntriesApi {
       entry.contentTypeId
     );
     // Rate limit check - contentEntries.delete
-    await this.rateLimit("contentEntries.delete", args.deletedBy, entry.contentTypeId);
+    await this.rateLimit(ctx, "contentEntries.delete", args.deletedBy, entry.contentTypeId);
     return ctx.runMutation(this.api.contentEntryMutations.deleteEntry, args);
   }
 
@@ -1861,6 +1875,7 @@ export class ContentEntriesApi {
 
     // Authorization check - contentEntries.publish (with ownership info)
     await this.authorize(
+      ctx,
       "contentEntries.publish",
       args.updatedBy,
       args.id,
@@ -1868,7 +1883,7 @@ export class ContentEntriesApi {
       entry.contentTypeId
     );
     // Rate limit check - contentEntries.publish
-    await this.rateLimit("contentEntries.publish", args.updatedBy, entry.contentTypeId);
+    await this.rateLimit(ctx, "contentEntries.publish", args.updatedBy, entry.contentTypeId);
     return ctx.runMutation(this.api.contentEntryMutations.publishEntry, args);
   }
 
@@ -1891,6 +1906,7 @@ export class ContentEntriesApi {
 
     // Authorization check - contentEntries.unpublish (with ownership info)
     await this.authorize(
+      ctx,
       "contentEntries.unpublish",
       args.updatedBy,
       args.id,
@@ -1898,7 +1914,7 @@ export class ContentEntriesApi {
       entry.contentTypeId
     );
     // Rate limit check - contentEntries.unpublish
-    await this.rateLimit("contentEntries.unpublish", args.updatedBy, entry.contentTypeId);
+    await this.rateLimit(ctx, "contentEntries.unpublish", args.updatedBy, entry.contentTypeId);
     return ctx.runMutation(this.api.contentEntryMutations.unpublishEntry, args);
   }
 
@@ -1933,6 +1949,7 @@ export class ContentEntriesApi {
 
     // Authorization check - contentEntries.schedule (with ownership info)
     await this.authorize(
+      ctx,
       "contentEntries.schedule",
       args.updatedBy,
       args.id,
@@ -1940,7 +1957,7 @@ export class ContentEntriesApi {
       entry.contentTypeId
     );
     // Rate limit check - contentEntries.schedule
-    await this.rateLimit("contentEntries.schedule", args.updatedBy, entry.contentTypeId);
+    await this.rateLimit(ctx, "contentEntries.schedule", args.updatedBy, entry.contentTypeId);
     return ctx.runMutation(this.api.scheduledPublish.scheduleEntry, args);
   }
 
@@ -1981,6 +1998,7 @@ export class ContentEntriesApi {
 
     // Authorization check - contentEntries.restore (with ownership info)
     await this.authorize(
+      ctx,
       "contentEntries.restore",
       args.restoredBy,
       args.id,
@@ -1988,7 +2006,7 @@ export class ContentEntriesApi {
       entry.contentTypeId
     );
     // Rate limit check - contentEntries.restore
-    await this.rateLimit("contentEntries.restore", args.restoredBy, entry.contentTypeId);
+    await this.rateLimit(ctx, "contentEntries.restore", args.restoredBy, entry.contentTypeId);
     return ctx.runMutation(this.api.contentEntryMutations.restoreEntry, args);
   }
 
@@ -2324,9 +2342,9 @@ export class ContentEntriesApi {
     args: DuplicateEntryArgs
   ): Promise<ContentEntry> {
     // Authorization check - duplicating is similar to create
-    await this.authorize("contentEntries.create", args.createdBy);
+    await this.authorize(ctx, "contentEntries.create", args.createdBy);
     // Rate limit check
-    await this.rateLimit("contentEntries.create", args.createdBy);
+    await this.rateLimit(ctx, "contentEntries.create", args.createdBy);
     return ctx.runMutation(this.api.contentEntryMutations.duplicateEntry, args);
   }
 
@@ -2365,9 +2383,9 @@ export class ContentEntriesApi {
     args: BulkPublishArgs
   ): Promise<BulkOperationResult> {
     // Authorization check for each entry (bulk check)
-    await this.authorize("contentEntries.publish", args.updatedBy);
+    await this.authorize(ctx, "contentEntries.publish", args.updatedBy);
     // Rate limit check
-    await this.rateLimit("contentEntries.publish", args.updatedBy);
+    await this.rateLimit(ctx, "contentEntries.publish", args.updatedBy);
     return ctx.runMutation(this.api.bulkOperations.bulkPublish, args);
   }
 
@@ -2394,9 +2412,9 @@ export class ContentEntriesApi {
     args: BulkUnpublishArgs
   ): Promise<BulkOperationResult> {
     // Authorization check
-    await this.authorize("contentEntries.unpublish", args.updatedBy);
+    await this.authorize(ctx, "contentEntries.unpublish", args.updatedBy);
     // Rate limit check
-    await this.rateLimit("contentEntries.unpublish", args.updatedBy);
+    await this.rateLimit(ctx, "contentEntries.unpublish", args.updatedBy);
     return ctx.runMutation(this.api.bulkOperations.bulkUnpublish, args);
   }
 
@@ -2431,9 +2449,9 @@ export class ContentEntriesApi {
     args: BulkDeleteArgs
   ): Promise<BulkOperationResult> {
     // Authorization check
-    await this.authorize("contentEntries.delete", args.deletedBy);
+    await this.authorize(ctx, "contentEntries.delete", args.deletedBy);
     // Rate limit check
-    await this.rateLimit("contentEntries.delete", args.deletedBy);
+    await this.rateLimit(ctx, "contentEntries.delete", args.deletedBy);
     return ctx.runMutation(this.api.bulkOperations.bulkDelete, args);
   }
 
@@ -2470,9 +2488,9 @@ export class ContentEntriesApi {
     args: BulkUpdateArgs
   ): Promise<BulkOperationResult> {
     // Authorization check
-    await this.authorize("contentEntries.update", args.updatedBy);
+    await this.authorize(ctx, "contentEntries.update", args.updatedBy);
     // Rate limit check
-    await this.rateLimit("contentEntries.update", args.updatedBy);
+    await this.rateLimit(ctx, "contentEntries.update", args.updatedBy);
     return ctx.runMutation(this.api.bulkOperations.bulkUpdate, args);
   }
 
@@ -2503,9 +2521,9 @@ export class ContentEntriesApi {
       throw new Error("Soft delete feature is not enabled");
     }
     // Authorization check
-    await this.authorize("contentEntries.restore", args.restoredBy);
+    await this.authorize(ctx, "contentEntries.restore", args.restoredBy);
     // Rate limit check
-    await this.rateLimit("contentEntries.restore", args.restoredBy);
+    await this.rateLimit(ctx, "contentEntries.restore", args.restoredBy);
     return ctx.runMutation(this.api.bulkOperations.bulkRestore, args);
   }
 }
@@ -2566,12 +2584,14 @@ export class VersionsApi {
 
   /**
    * Perform authorization check for version operations.
+   * @param ctx - The Convex context (passed to authorization hooks for database access)
    * @param operation - The CMS operation being performed
    * @param userId - The user performing the operation
    * @param resourceId - Optional resource ID (entry ID for version operations)
    * @throws AuthorizationNotConfiguredError if authorization is not configured and permissiveMode is false
    */
   private async authorize(
+    ctx: ConvexContext,
     operation: CmsOperation,
     userId: string | undefined,
     resourceId?: string
@@ -2603,9 +2623,9 @@ export class VersionsApi {
       );
     }
 
-    const role = await this.authHelper.getUserRole(userId);
+    const role = await this.authHelper.getUserRole(ctx, userId);
 
-    await this.authHelper.requireAuthorization({
+    await this.authHelper.requireAuthorization(ctx, {
       operation,
       userId,
       role,
@@ -2615,10 +2635,12 @@ export class VersionsApi {
 
   /**
    * Enforce rate limit for version operations.
+   * @param ctx - The Convex context (for database access)
    * @param operation - The CMS operation being performed
    * @param userId - The user performing the operation
    */
   private async rateLimit(
+    ctx: ConvexContext,
     operation: CmsOperation,
     userId: string | undefined
   ): Promise<void> {
@@ -2627,7 +2649,7 @@ export class VersionsApi {
       return;
     }
 
-    const role = userId ? await this.rateLimitHelper.getUserRole(userId) : null;
+    const role = userId ? await this.rateLimitHelper.getUserRole(ctx, userId) : null;
 
     await this.rateLimitHelper.requireRateLimit(operation, {
       userId,
@@ -3070,9 +3092,9 @@ export class VersionsApi {
   ): Promise<ContentEntry> {
     this.ensureVersioningEnabled();
     // Authorization check - versions.rollback
-    await this.authorize("versions.rollback", args.updatedBy, args.entryId);
+    await this.authorize(ctx, "versions.rollback", args.updatedBy, args.entryId);
     // Rate limit check - versions.rollback
-    await this.rateLimit("versions.rollback", args.updatedBy);
+    await this.rateLimit(ctx, "versions.rollback", args.updatedBy);
     return ctx.runMutation(this.api.versionMutations.rollbackVersion, args);
   }
 
@@ -3208,6 +3230,7 @@ export class MediaAssetsApi {
 
   /**
    * Perform authorization check for media asset operations.
+   * @param ctx - The Convex context (passed to authorization hooks for database access)
    * @param operation - The CMS operation being performed
    * @param userId - The user performing the operation
    * @param resourceId - Optional resource ID (for update/delete operations)
@@ -3215,6 +3238,7 @@ export class MediaAssetsApi {
    * @throws AuthorizationNotConfiguredError if authorization is not configured and permissiveMode is false
    */
   private async authorize(
+    ctx: ConvexContext,
     operation: CmsOperation,
     userId: string | undefined,
     resourceId?: string,
@@ -3247,9 +3271,9 @@ export class MediaAssetsApi {
       );
     }
 
-    const role = await this.authHelper.getUserRole(userId);
+    const role = await this.authHelper.getUserRole(ctx, userId);
 
-    await this.authHelper.requireAuthorization({
+    await this.authHelper.requireAuthorization(ctx, {
       operation,
       userId,
       role,
@@ -3260,10 +3284,12 @@ export class MediaAssetsApi {
 
   /**
    * Enforce rate limit for media asset operations.
+   * @param ctx - The Convex context (for database access)
    * @param operation - The CMS operation being performed
    * @param userId - The user performing the operation
    */
   private async rateLimit(
+    ctx: ConvexContext,
     operation: CmsOperation,
     userId: string | undefined
   ): Promise<void> {
@@ -3272,7 +3298,7 @@ export class MediaAssetsApi {
       return;
     }
 
-    const role = userId ? await this.rateLimitHelper.getUserRole(userId) : null;
+    const role = userId ? await this.rateLimitHelper.getUserRole(ctx, userId) : null;
 
     await this.rateLimitHelper.requireRateLimit(operation, {
       userId,
@@ -3309,9 +3335,9 @@ export class MediaAssetsApi {
       throw new Error("Media management feature is not enabled");
     }
     // Authorization check - mediaAssets.create
-    await this.authorize("mediaAssets.create", args.createdBy);
+    await this.authorize(ctx, "mediaAssets.create", args.createdBy);
     // Rate limit check - mediaAssets.create (media uploads are high-frequency operations)
-    await this.rateLimit("mediaAssets.create", args.createdBy);
+    await this.rateLimit(ctx, "mediaAssets.create", args.createdBy);
     // Validate file size
     if (args.size > this.config.maxMediaFileSize) {
       throw new Error(
@@ -3343,9 +3369,9 @@ export class MediaAssetsApi {
     }
 
     // Authorization check - mediaAssets.update (with ownership info)
-    await this.authorize("mediaAssets.update", args.updatedBy, args.id, asset.createdBy);
+    await this.authorize(ctx, "mediaAssets.update", args.updatedBy, args.id, asset.createdBy);
     // Rate limit check - mediaAssets.update
-    await this.rateLimit("mediaAssets.update", args.updatedBy);
+    await this.rateLimit(ctx, "mediaAssets.update", args.updatedBy);
     return ctx.runMutation(this.api.mediaAssetMutations.updateMediaAsset, args);
   }
 
@@ -3371,9 +3397,9 @@ export class MediaAssetsApi {
     }
 
     // Authorization check - mediaAssets.delete (with ownership info)
-    await this.authorize("mediaAssets.delete", args.deletedBy, args.id, asset.createdBy);
+    await this.authorize(ctx, "mediaAssets.delete", args.deletedBy, args.id, asset.createdBy);
     // Rate limit check - mediaAssets.delete
-    await this.rateLimit("mediaAssets.delete", args.deletedBy);
+    await this.rateLimit(ctx, "mediaAssets.delete", args.deletedBy);
     return ctx.runMutation(this.api.mediaAssetMutations.deleteMediaAsset, args);
   }
 
@@ -3464,7 +3490,7 @@ export class MediaAssetsApi {
       throw new Error("Media management feature is not enabled");
     }
     // Rate limit check - mediaAssets.create (upload URL generation precedes asset creation)
-    await this.rateLimit("mediaAssets.create", args.requestedBy);
+    await this.rateLimit(ctx, "mediaAssets.create", args.requestedBy);
     return ctx.runMutation(
       this.api.mediaUploadMutations.generateUploadUrl,
       args
@@ -3554,12 +3580,14 @@ export class MediaFoldersApi {
 
   /**
    * Perform authorization check for media folder operations.
+   * @param ctx - The Convex context (passed to authorization hooks for database access)
    * @param operation - The CMS operation being performed
    * @param userId - The user performing the operation
    * @param resourceId - Optional resource ID (for update/delete operations)
    * @param resourceOwnerId - Optional owner ID for ownership-based permissions
    */
   private async authorize(
+    ctx: ConvexContext,
     operation: CmsOperation,
     userId: string | undefined,
     resourceId?: string,
@@ -3592,9 +3620,9 @@ export class MediaFoldersApi {
       );
     }
 
-    const role = await this.authHelper.getUserRole(userId);
+    const role = await this.authHelper.getUserRole(ctx, userId);
 
-    await this.authHelper.requireAuthorization({
+    await this.authHelper.requireAuthorization(ctx, {
       operation,
       userId,
       role,
@@ -3605,10 +3633,12 @@ export class MediaFoldersApi {
 
   /**
    * Enforce rate limit for media folder operations.
+   * @param ctx - The Convex context (for database access)
    * @param operation - The CMS operation being performed
    * @param userId - The user performing the operation
    */
   private async rateLimit(
+    ctx: ConvexContext,
     operation: CmsOperation,
     userId: string | undefined
   ): Promise<void> {
@@ -3617,7 +3647,7 @@ export class MediaFoldersApi {
       return;
     }
 
-    const role = userId ? await this.rateLimitHelper.getUserRole(userId) : null;
+    const role = userId ? await this.rateLimitHelper.getUserRole(ctx, userId) : null;
 
     await this.rateLimitHelper.requireRateLimit(operation, {
       userId,
@@ -3640,9 +3670,9 @@ export class MediaFoldersApi {
       throw new Error("Media management feature is not enabled");
     }
     // Authorization check - mediaFolders.create
-    await this.authorize("mediaFolders.create", args.createdBy);
+    await this.authorize(ctx, "mediaFolders.create", args.createdBy);
     // Rate limit check - mediaFolders.create
-    await this.rateLimit("mediaFolders.create", args.createdBy);
+    await this.rateLimit(ctx, "mediaFolders.create", args.createdBy);
     return ctx.runMutation(this.api.mediaFolderMutations.createMediaFolder, args);
   }
 
@@ -3668,9 +3698,9 @@ export class MediaFoldersApi {
     }
 
     // Authorization check - mediaFolders.update (with ownership info)
-    await this.authorize("mediaFolders.update", args.updatedBy, args.id, folder.createdBy);
+    await this.authorize(ctx, "mediaFolders.update", args.updatedBy, args.id, folder.createdBy);
     // Rate limit check - mediaFolders.update
-    await this.rateLimit("mediaFolders.update", args.updatedBy);
+    await this.rateLimit(ctx, "mediaFolders.update", args.updatedBy);
     return ctx.runMutation(this.api.mediaFolderMutations.updateMediaFolder, args);
   }
 
@@ -3696,9 +3726,9 @@ export class MediaFoldersApi {
     }
 
     // Authorization check - mediaFolders.delete (with ownership info)
-    await this.authorize("mediaFolders.delete", args.deletedBy, args.id, folder.createdBy);
+    await this.authorize(ctx, "mediaFolders.delete", args.deletedBy, args.id, folder.createdBy);
     // Rate limit check - mediaFolders.delete
-    await this.rateLimit("mediaFolders.delete", args.deletedBy);
+    await this.rateLimit(ctx, "mediaFolders.delete", args.deletedBy);
     return ctx.runMutation(this.api.mediaFolderMutations.deleteMediaFolder, args);
   }
 
@@ -3758,9 +3788,9 @@ export class MediaFoldersApi {
     }
 
     // Authorization check - mediaFolders.move (with ownership info)
-    await this.authorize("mediaFolders.move", args.updatedBy, args.id, folder.createdBy);
+    await this.authorize(ctx, "mediaFolders.move", args.updatedBy, args.id, folder.createdBy);
     // Rate limit check - mediaFolders.move
-    await this.rateLimit("mediaFolders.move", args.updatedBy);
+    await this.rateLimit(ctx, "mediaFolders.move", args.updatedBy);
     return ctx.runMutation(this.api.mediaFolderMutations.moveMediaFolder, args);
   }
 
@@ -4323,19 +4353,20 @@ export interface EnhancedCmsClient {
    * Uses the getUserRole hook configured in ComponentConfig to map
    * user IDs from your auth system to CMS roles.
    *
+   * @param ctx - Convex context (passed to getUserRole hook for database access)
    * @param userId - The user ID to look up
    * @returns The role name or null if the user has no CMS role
    * @throws Error if no getUserRole hook is configured
    *
    * @example
    * ```typescript
-   * const role = await cms.getUserRole("user_123");
+   * const role = await cms.getUserRole(ctx, "user_123");
    * if (role === "admin") {
    *   // Allow admin-only operations
    * }
    * ```
    */
-  getUserRole(userId: string): Promise<GetUserRoleResult>;
+  getUserRole(ctx: ConvexContext, userId: string): Promise<GetUserRoleResult>;
 
   /**
    * Check if a user has a specific permission.
@@ -4345,6 +4376,7 @@ export interface EnhancedCmsClient {
    * configured getUserRole hook, then checks if that role has the
    * requested permission.
    *
+   * @param ctx - Convex context (passed to getUserRole hook for database access)
    * @param userId - The user ID to check
    * @param permission - The permission to check (resource + action + optional scope)
    * @param options - Optional configuration like custom roles
@@ -4354,7 +4386,7 @@ export interface EnhancedCmsClient {
    * @example
    * ```typescript
    * // Check if user can create content entries
-   * const result = await cms.hasPermissionForUser("user_123", {
+   * const result = await cms.hasPermissionForUser(ctx, "user_123", {
    *   resource: "contentEntries",
    *   action: "create",
    * });
@@ -4367,7 +4399,7 @@ export interface EnhancedCmsClient {
    * @example
    * ```typescript
    * // Check with ownership scope
-   * const canUpdateOwn = await cms.hasPermissionForUser("user_123", {
+   * const canUpdateOwn = await cms.hasPermissionForUser(ctx, "user_123", {
    *   resource: "contentEntries",
    *   action: "update",
    *   scope: "own",
@@ -4375,6 +4407,7 @@ export interface EnhancedCmsClient {
    * ```
    */
   hasPermissionForUser(
+    ctx: ConvexContext,
     userId: string,
     permission: { resource: Resource; action: Action; scope?: OwnershipScope },
     options?: PermissionCheckOptions
@@ -4487,7 +4520,43 @@ export interface EnhancedCmsClient {
   requireAuthorization(context: AuthorizationHookContext): Promise<AuthorizationResult>;
 
   // =============================================================================
-  // Locale Fallback Chain Methods
+  // Consolidated Locale API
+  // =============================================================================
+
+  /**
+   * Consolidated locale API with simplified methods.
+   *
+   * @example
+   * ```typescript
+   * // Get locale configuration
+   * const config = cms.locale.getConfig();
+   *
+   * // Get fallback chain for a locale
+   * const chain = cms.locale.getFallbackChain("es-MX");
+   *
+   * // Resolve locale with full metadata
+   * const resolved = cms.locale.resolve("es-MX");
+   * ```
+   */
+  readonly locale: {
+    /**
+     * Get the full locale configuration.
+     */
+    getConfig(): LocaleFallbackConfig;
+
+    /**
+     * Get the fallback chain for a locale.
+     */
+    getFallbackChain(locale: LocaleCode): LocaleCode[];
+
+    /**
+     * Resolve a locale with full metadata.
+     */
+    resolve(locale: LocaleCode): ResolvedFallbackChain;
+  };
+
+  // =============================================================================
+  // Locale Fallback Chain Methods (Legacy)
   // =============================================================================
 
   /**
@@ -4698,6 +4767,7 @@ export interface EnhancedCmsClient {
    * ```typescript
    * // Check if user can create blog posts (may be restricted by custom role)
    * const result = await cms.hasContentTypePermissionForUser(
+   *   ctx,
    *   "user_123",
    *   { resource: "contentEntries", action: "create" },
    *   "blog_post"
@@ -4709,6 +4779,7 @@ export interface EnhancedCmsClient {
    * ```
    */
   hasContentTypePermissionForUser(
+    ctx: ConvexContext,
     userId: string,
     permission: { resource: Resource; action: Action; scope?: OwnershipScope },
     contentTypeName: string
@@ -4727,7 +4798,7 @@ export interface EnhancedCmsClient {
    * @example
    * ```typescript
    * // Get content types the user can create
-   * const types = await cms.getPermittedContentTypesForUser("user_123", "create");
+   * const types = await cms.getPermittedContentTypesForUser(ctx, "user_123", "create");
    *
    * if (types.includes("*")) {
    *   // User can create any content type
@@ -4737,6 +4808,7 @@ export interface EnhancedCmsClient {
    * ```
    */
   getPermittedContentTypesForUser(
+    ctx: ConvexContext,
     userId: string,
     action: Action
   ): Promise<string[]>;
@@ -4789,6 +4861,7 @@ export interface EnhancedCmsClient {
    * // Check if an author can update a specific content entry
    * const entry = await ctx.db.get(entryId);
    * const result = await cms.canUserPerformOnResource(
+   *   ctx,
    *   currentUserId,
    *   "contentEntries",
    *   "update",
@@ -4810,6 +4883,7 @@ export interface EnhancedCmsClient {
    * // Check if user can delete a media asset they uploaded
    * const asset = await ctx.db.get(assetId);
    * const result = await cms.canUserPerformOnResource(
+   *   ctx,
    *   userId,
    *   "mediaAssets",
    *   "delete",
@@ -4822,6 +4896,7 @@ export interface EnhancedCmsClient {
    * ```
    */
   canUserPerformOnResource(
+    ctx: ConvexContext,
     userId: string,
     resource: Resource,
     action: Action,
@@ -4854,6 +4929,7 @@ export interface EnhancedCmsClient {
    *
    *     // Throws UnauthorizedError if user can't delete this entry
    *     await cms.requireUserCanPerformOnResource(
+   *       ctx,
    *       args.userId,
    *       "contentEntries",
    *       "delete",
@@ -4867,6 +4943,7 @@ export interface EnhancedCmsClient {
    * ```
    */
   requireUserCanPerformOnResource(
+    ctx: ConvexContext,
     userId: string,
     resource: Resource,
     action: Action,
@@ -5008,9 +5085,9 @@ export function createEnhancedCmsClient(
   // Create rate limit helper for API classes (only if rateLimitHooks are configured)
   const rateLimitHelper: RateLimitHelper | undefined = rateLimitHooks
     ? {
-        async getUserRole(userId: string): Promise<string | null> {
+        async getUserRole(ctx: ConvexContext, userId: string): Promise<string | null> {
           if (!getUserRoleHook) return null;
-          return getUserRoleHook({ userId });
+          return getUserRoleHook(ctx as unknown as CmsHookContext, { userId });
         },
         async requireRateLimit(
           operation: CmsOperation,
@@ -5034,21 +5111,25 @@ export function createEnhancedCmsClient(
   // Create authorization helper for API classes (only if getUserRole is configured)
   const authHelper: AuthorizationHelper | undefined = getUserRoleHook
     ? {
-        async getUserRole(userId: string): Promise<string | null> {
-          return getUserRoleHook({ userId });
+        async getUserRole(ctx: ConvexContext, userId: string): Promise<string | null> {
+          return getUserRoleHook(ctx as unknown as CmsHookContext, { userId });
         },
-        async requireAuthorization(context: AuthorizationHookContext): Promise<AuthorizationResult> {
-          const rbacOptions = contextToRbacOptions(context);
+        async requireAuthorization(ctx: ConvexContext, context: Omit<AuthorizationHookContext, 'ctx'>): Promise<AuthorizationResult> {
+          const fullContext: AuthorizationHookContext = {
+            ...context,
+            ctx: ctx as unknown as CmsHookContext,
+          };
+          const rbacOptions = contextToRbacOptions(fullContext);
 
           const result = await executeAuthorizationHooks({
             hooks: authHooks,
-            context,
+            context: fullContext,
             rbacOptions: rbacOptions ?? undefined,
             skipRbac: resolvedConfig.skipRbac,
           });
 
           if (!result.allowed) {
-            const rbacMapping = operationToRbac(context.operation);
+            const rbacMapping = operationToRbac(fullContext.operation);
 
             // Import UnauthorizedError dynamically to avoid circular dependency
             const { UnauthorizedError } = await import("../component/authorization.js");
@@ -5061,8 +5142,8 @@ export function createEnhancedCmsClient(
                   : "PERMISSION_DENIED",
                 resource: rbacMapping?.resource,
                 action: rbacMapping?.action,
-                role: context.role ?? undefined,
-                userId: context.userId,
+                role: fullContext.role ?? undefined,
+                userId: fullContext.userId,
               }
             );
           }
@@ -5082,6 +5163,26 @@ export function createEnhancedCmsClient(
     mediaAssets: new MediaAssetsApi(componentApi, resolvedConfig, authHelper, rateLimitHelper),
     mediaFolders: new MediaFoldersApi(componentApi, resolvedConfig, authHelper, rateLimitHelper),
     mediaVariants: new MediaVariantsApi(componentApi, resolvedConfig),
+
+    // Locale fallback chain helpers
+    locale: {
+      getConfig(): LocaleFallbackConfig {
+        return {
+          defaultLocale: resolvedConfig.defaultLocale,
+          fallbackChains: resolvedConfig.localeFallbackChains,
+          autoGenerateFallbacks: resolvedConfig.autoGenerateLocaleFallbacks,
+          supportedLocales: resolvedConfig.supportedLocales,
+        };
+      },
+      getFallbackChain(locale: LocaleCode): LocaleCode[] {
+        const fallbackConfig = this.getConfig();
+        return getFallbackChain(locale, fallbackConfig);
+      },
+      resolve(locale: LocaleCode): ResolvedFallbackChain {
+        const fallbackConfig = this.getConfig();
+        return resolveFallbackChain(locale, fallbackConfig);
+      },
+    },
 
     isFeatureEnabled(feature: keyof FeatureFlags): boolean {
       return resolvedConfig.features[feature] ?? false;
@@ -5105,17 +5206,18 @@ export function createEnhancedCmsClient(
       );
     },
 
-    async getUserRole(userId: string): Promise<GetUserRoleResult> {
+    async getUserRole(ctx: ConvexContext, userId: string): Promise<GetUserRoleResult> {
       if (!getUserRoleHook) {
         throw new Error(
           "No getUserRole hook configured. " +
             "Configure a getUserRole function in createCmsClient options to map user IDs to CMS roles."
         );
       }
-      return await getUserRoleHook({ userId });
+      return await getUserRoleHook(ctx as unknown as CmsHookContext, { userId });
     },
 
     async hasPermissionForUser(
+      ctx: ConvexContext,
       userId: string,
       permission: { resource: Resource; action: Action; scope?: OwnershipScope },
       options?: PermissionCheckOptions
@@ -5127,7 +5229,7 @@ export function createEnhancedCmsClient(
         );
       }
 
-      const role = await getUserRoleHook({ userId });
+      const role = await getUserRoleHook(ctx as unknown as CmsHookContext, { userId });
 
       // If user has no role, they have no permissions
       if (role === null) {
@@ -5239,6 +5341,7 @@ export function createEnhancedCmsClient(
     },
 
     async hasContentTypePermissionForUser(
+      ctx: ConvexContext,
       userId: string,
       permission: { resource: Resource; action: Action; scope?: OwnershipScope },
       contentTypeName: string
@@ -5250,7 +5353,7 @@ export function createEnhancedCmsClient(
         );
       }
 
-      const role = await getUserRoleHook({ userId });
+      const role = await getUserRoleHook(ctx as unknown as CmsHookContext, { userId });
 
       if (role === null) {
         return {
@@ -5274,6 +5377,7 @@ export function createEnhancedCmsClient(
     },
 
     async getPermittedContentTypesForUser(
+      ctx: ConvexContext,
       userId: string,
       action: Action
     ): Promise<string[]> {
@@ -5284,7 +5388,7 @@ export function createEnhancedCmsClient(
         );
       }
 
-      const role = await getUserRoleHook({ userId });
+      const role = await getUserRoleHook(ctx as unknown as CmsHookContext, { userId });
 
       if (role === null) {
         return [];
@@ -5307,6 +5411,7 @@ export function createEnhancedCmsClient(
     // ==========================================================================
 
     async canUserPerformOnResource(
+      ctx: ConvexContext,
       userId: string,
       resource: Resource,
       action: Action,
@@ -5319,7 +5424,7 @@ export function createEnhancedCmsClient(
         );
       }
 
-      const role = await getUserRoleHook({ userId });
+      const role = await getUserRoleHook(ctx as unknown as CmsHookContext, { userId });
 
       // If user has no role, they have no permissions
       if (role === null) {
@@ -5364,12 +5469,14 @@ export function createEnhancedCmsClient(
     },
 
     async requireUserCanPerformOnResource(
+      ctx: ConvexContext,
       userId: string,
       resource: Resource,
       action: Action,
       resourceOwnerId?: string
     ): Promise<ResourcePermissionGranted> {
       const result = await this.canUserPerformOnResource(
+        ctx,
         userId,
         resource,
         action,

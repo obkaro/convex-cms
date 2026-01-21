@@ -1689,5 +1689,62 @@ export const auditLogDiffResult = v.object({
   ),
 });
 
+// =============================================================================
+// Mutation Authorization Context
+// =============================================================================
+
+/**
+ * Validator for mutation-level authorization context.
+ *
+ * This enables defense-in-depth authorization: the client wrapper performs
+ * authorization checks, AND mutations can validate auth when context is provided.
+ *
+ * When `_auth` is provided to a mutation:
+ * - The mutation verifies the role has permission for the operation
+ * - Operations fail with PERMISSION_DENIED if the role lacks permission
+ *
+ * When `_auth` is NOT provided:
+ * - The mutation executes without authorization checks (backwards compatible)
+ * - Security relies entirely on the client wrapper's authorization
+ *
+ * @example
+ * ```typescript
+ * // Mutation with optional auth context
+ * export const createEntry = mutation({
+ *   args: {
+ *     ...createContentEntryArgs.fields,
+ *     _auth: v.optional(mutationAuthContext),
+ *   },
+ *   handler: async (ctx, args) => {
+ *     // Check auth if provided
+ *     if (args._auth) {
+ *       requireMutationAuth(args._auth, "contentEntries", "create");
+ *     }
+ *     // ... mutation logic
+ *   },
+ * });
+ * ```
+ */
+export const mutationAuthContext = v.object({
+  /** The user ID performing the operation */
+  userId: v.string(),
+  /** The user's resolved CMS role (e.g., "admin", "editor", "author", "viewer") */
+  role: v.union(v.string(), v.null()),
+  /**
+   * Optional resource owner ID for ownership-based permission checks.
+   * Required for "own" scope permissions (e.g., author editing their own content).
+   */
+  resourceOwnerId: v.optional(v.string()),
+});
+
+/**
+ * Type for the mutation auth context.
+ */
+export type MutationAuthContext = {
+  userId: string;
+  role: string | null;
+  resourceOwnerId?: string;
+};
+
 // Export the schema for reference
 export { schema };

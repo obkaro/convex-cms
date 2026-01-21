@@ -14,6 +14,7 @@ import {
   contentTypeDoc,
   fieldTypes,
   type FieldType,
+  mutationAuthContext,
 } from "./validators.js";
 import type { FieldDefinition } from "./validation.js";
 import {
@@ -34,6 +35,7 @@ import {
   batchSizeExceeded,
   internalError,
 } from "./lib/errors.js";
+import { requireMutationAuth } from "./lib/mutationAuth.js";
 
 // =============================================================================
 // Breaking Change Detection Types
@@ -420,7 +422,11 @@ function validateFieldDefinitions(
  * ```
  */
 export const createContentType = mutation({
-  args: createContentTypeArgs.fields,
+  args: {
+    ...createContentTypeArgs.fields,
+    /** Optional auth context for mutation-level authorization */
+    _auth: v.optional(mutationAuthContext),
+  },
   returns: contentTypeDoc,
   handler: async (ctx, args) => {
     const {
@@ -434,7 +440,11 @@ export const createContentType = mutation({
       titleField,
       sortOrder,
       createdBy,
+      _auth,
     } = args;
+
+    // Authorization check - contentTypes.create permission
+    requireMutationAuth(_auth, "contentTypes", "create");
 
     // Validate content type name format
     if (!isValidName(name)) {
@@ -613,6 +623,8 @@ export const updateContentType = mutation({
     ...updateContentTypeArgs.fields,
     /** If true, allow breaking changes that may affect existing content entries */
     force: v.optional(v.boolean()),
+    /** Optional auth context for mutation-level authorization */
+    _auth: v.optional(mutationAuthContext),
   },
   returns: updateContentTypeResult,
   handler: async (ctx, args) => {
@@ -629,7 +641,11 @@ export const updateContentType = mutation({
       isActive,
       updatedBy,
       force = false,
+      _auth,
     } = args;
+
+    // Authorization check - contentTypes.update permission
+    requireMutationAuth(_auth, "contentTypes", "update");
 
     // Retrieve the existing content type
     const existingType = await ctx.db.get(id);
@@ -836,10 +852,17 @@ const deleteContentTypeResult = v.object({
  * ```
  */
 export const deleteContentType = mutation({
-  args: deleteContentTypeArgs.fields,
+  args: {
+    ...deleteContentTypeArgs.fields,
+    /** Optional auth context for mutation-level authorization */
+    _auth: v.optional(mutationAuthContext),
+  },
   returns: deleteContentTypeResult,
   handler: async (ctx, args) => {
-    const { id, cascade = false, hardDelete = false, deletedBy } = args;
+    const { id, cascade = false, hardDelete = false, deletedBy, _auth } = args;
+
+    // Authorization check - contentTypes.delete permission
+    requireMutationAuth(_auth, "contentTypes", "delete");
 
     // Retrieve the content type
     const contentType = await ctx.db.get(id);
