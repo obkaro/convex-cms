@@ -2,6 +2,8 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   test: {
+    // Test files are in the tests/ directory
+    include: ["tests/**/*.test.ts"],
     // Exclude Playwright tests (they use @playwright/test, not vitest)
     exclude: [
       "**/node_modules/**",
