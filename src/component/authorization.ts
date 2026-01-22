@@ -35,7 +35,6 @@ import {
   type Action,
   type OwnershipScope,
   type RoleDefinition,
-  type RoleName,
 } from "./roles.js";
 
 // =============================================================================
@@ -243,7 +242,7 @@ function generateDenialMessage(options: {
   action: Action;
   requiredScope?: OwnershipScope;
 }): string {
-  const { code, role, resource, action, requiredScope } = options;
+  const { code, role, resource, action, requiredScope: _requiredScope } = options;
   const resourceLabel = getResourceLabel(resource);
   const actionLabel = getActionLabel(action);
 
@@ -401,7 +400,7 @@ export function checkPermission(
  * ```typescript
  * // In a content entry update mutation:
  * export const updateEntry = mutation({
- *   args: { id: v.id("content_entries"), data: v.any() },
+ *   args: { id: v.id("contentEntries"), data: v.any() },
  *   handler: async (ctx, { id, data }) => {
  *     const entry = await ctx.db.get(id);
  *     if (!entry) throw new Error("Entry not found");

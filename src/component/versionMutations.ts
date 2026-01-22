@@ -15,18 +15,18 @@
 import { v } from "convex/values";
 import { mutation, internalMutation } from "./_generated/server.js";
 import {
-  createVersionSnapshotArgs,
-  contentVersionDoc,
-  contentEntryDoc,
-  rollbackVersionArgs,
+	createVersionSnapshotArgs,
+	contentVersionDoc,
+	contentEntryDoc,
+	rollbackVersionArgs,
 } from "./validators.js";
 import {
-  versionEntryNotFound,
-  versionEntryDeleted,
-  versionNotFound,
-  versionMismatch,
-  versionRollbackFailed,
-  internalError,
+	versionEntryNotFound,
+	versionEntryDeleted,
+	versionNotFound,
+	versionMismatch,
+	versionRollbackFailed,
+	internalError,
 } from "./lib/errors.js";
 
 // =============================================================================
@@ -37,7 +37,7 @@ import {
  * Internal mutation to create a version snapshot of a content entry.
  *
  * This function captures the complete state of a content entry at a specific
- * point in time, storing it in the content_versions table. Snapshots are used
+ * point in time, storing it in the contentVersions table. Snapshots are used
  * for:
  *
  * - **Version History**: Track changes over time for audit and review
@@ -84,47 +84,52 @@ import {
  * ```
  */
 export const createVersionSnapshot = internalMutation({
-  args: createVersionSnapshotArgs.fields,
-  returns: contentVersionDoc,
-  handler: async (ctx, args) => {
-    const { entryId, changeDescription, createdBy, wasPublished = false } = args;
+	args: createVersionSnapshotArgs.fields,
+	returns: contentVersionDoc,
+	handler: async (ctx, args) => {
+		const {
+			entryId,
+			changeDescription,
+			createdBy,
+			wasPublished = false,
+		} = args;
 
-    // Retrieve the content entry to snapshot
-    const entry = await ctx.db.get(entryId);
+		// Retrieve the content entry to snapshot
+		const entry = await ctx.db.get(entryId);
 
-    if (!entry) {
-      throw versionEntryNotFound(entryId as unknown as string);
-    }
+		if (!entry) {
+			throw versionEntryNotFound((entryId as unknown) as string);
+		}
 
-    // Do not allow snapshots of deleted entries
-    if (entry.deletedAt !== undefined) {
-      throw versionEntryDeleted(entryId as unknown as string);
-    }
+		// Do not allow snapshots of deleted entries
+		if (entry.deletedAt !== undefined) {
+			throw versionEntryDeleted((entryId as unknown) as string);
+		}
 
-    const now = Date.now();
+		const now = Date.now();
 
-    // Create the version snapshot with complete entry state
-    const versionId = await ctx.db.insert("content_versions", {
-      entryId,
-      versionNumber: entry.version,
-      data: entry.data,
-      slug: entry.slug,
-      status: entry.status,
-      changeDescription,
-      createdBy,
-      wasPublished,
-      publishedAt: wasPublished ? now : undefined,
-    });
+		// Create the version snapshot with complete entry state
+		const versionId = await ctx.db.insert("contentVersions", {
+			entryId,
+			versionNumber: entry.version,
+			data: entry.data,
+			slug: entry.slug,
+			status: entry.status,
+			changeDescription,
+			createdBy,
+			wasPublished,
+			publishedAt: wasPublished ? now : undefined,
+		});
 
-    // Retrieve and return the created version
-    const version = await ctx.db.get(versionId);
+		// Retrieve and return the created version
+		const version = await ctx.db.get(versionId);
 
-    if (!version) {
-      throw internalError("Failed to create version snapshot");
-    }
+		if (!version) {
+			throw internalError("Failed to create version snapshot");
+		}
 
-    return version;
-  },
+		return version;
+	},
 });
 
 // =============================================================================
@@ -144,23 +149,23 @@ export const createVersionSnapshot = internalMutation({
  * @returns true if a version with this number exists, false otherwise
  */
 export const versionExists = internalMutation({
-  args: {
-    entryId: v.id("content_entries"),
-    versionNumber: v.number(),
-  },
-  returns: v.boolean(),
-  handler: async (ctx, args) => {
-    const { entryId, versionNumber } = args;
+	args: {
+		entryId: v.id("contentEntries"),
+		versionNumber: v.number(),
+	},
+	returns: v.boolean(),
+	handler: async (ctx, args) => {
+		const { entryId, versionNumber } = args;
 
-    const existing = await ctx.db
-      .query("content_versions")
-      .withIndex("by_entry_and_version", (q) =>
-        q.eq("entryId", entryId).eq("versionNumber", versionNumber)
-      )
-      .first();
+		const existing = await ctx.db
+			.query("contentVersions")
+			.withIndex("by_entry_and_version", (q) =>
+				q.eq("entryId", entryId).eq("versionNumber", versionNumber),
+			)
+			.first();
 
-    return existing !== null;
-  },
+		return existing !== null;
+	},
 });
 
 // =============================================================================
@@ -183,55 +188,60 @@ export const versionExists = internalMutation({
  * @returns The version snapshot (new or existing), or null if entry not found
  */
 export const createVersionSnapshotIfNotExists = internalMutation({
-  args: createVersionSnapshotArgs.fields,
-  returns: v.union(contentVersionDoc, v.null()),
-  handler: async (ctx, args) => {
-    const { entryId, changeDescription, createdBy, wasPublished = false } = args;
+	args: createVersionSnapshotArgs.fields,
+	returns: v.union(contentVersionDoc, v.null()),
+	handler: async (ctx, args) => {
+		const {
+			entryId,
+			changeDescription,
+			createdBy,
+			wasPublished = false,
+		} = args;
 
-    // Retrieve the content entry
-    const entry = await ctx.db.get(entryId);
+		// Retrieve the content entry
+		const entry = await ctx.db.get(entryId);
 
-    if (!entry) {
-      return null;
-    }
+		if (!entry) {
+			return null;
+		}
 
-    // Do not process deleted entries
-    if (entry.deletedAt !== undefined) {
-      return null;
-    }
+		// Do not process deleted entries
+		if (entry.deletedAt !== undefined) {
+			return null;
+		}
 
-    // Check if this version already has a snapshot
-    const existing = await ctx.db
-      .query("content_versions")
-      .withIndex("by_entry_and_version", (q) =>
-        q.eq("entryId", entryId).eq("versionNumber", entry.version)
-      )
-      .first();
+		// Check if this version already has a snapshot
+		const existing = await ctx.db
+			.query("contentVersions")
+			.withIndex("by_entry_and_version", (q) =>
+				q.eq("entryId", entryId).eq("versionNumber", entry.version),
+			)
+			.first();
 
-    // Return existing if found
-    if (existing) {
-      return existing;
-    }
+		// Return existing if found
+		if (existing) {
+			return existing;
+		}
 
-    const now = Date.now();
+		const now = Date.now();
 
-    // Create new snapshot
-    const versionId = await ctx.db.insert("content_versions", {
-      entryId,
-      versionNumber: entry.version,
-      data: entry.data,
-      slug: entry.slug,
-      status: entry.status,
-      changeDescription,
-      createdBy,
-      wasPublished,
-      publishedAt: wasPublished ? now : undefined,
-    });
+		// Create new snapshot
+		const versionId = await ctx.db.insert("contentVersions", {
+			entryId,
+			versionNumber: entry.version,
+			data: entry.data,
+			slug: entry.slug,
+			status: entry.status,
+			changeDescription,
+			createdBy,
+			wasPublished,
+			publishedAt: wasPublished ? now : undefined,
+		});
 
-    const version = await ctx.db.get(versionId);
+		const version = await ctx.db.get(versionId);
 
-    return version ?? null;
-  },
+		return version ?? null;
+	},
 });
 
 // =============================================================================
@@ -300,82 +310,85 @@ export const createVersionSnapshotIfNotExists = internalMutation({
  * ```
  */
 export const rollbackVersion = mutation({
-  args: rollbackVersionArgs.fields,
-  returns: contentEntryDoc,
-  handler: async (ctx, args) => {
-    const { entryId, versionNumber, updatedBy } = args;
+	args: rollbackVersionArgs.fields,
+	returns: contentEntryDoc,
+	handler: async (ctx, args) => {
+		const { entryId, versionNumber, updatedBy } = args;
 
-    // Step 1: Validate the entry exists and is not deleted
-    const entry = await ctx.db.get(entryId);
+		// Step 1: Validate the entry exists and is not deleted
+		const entry = await ctx.db.get(entryId);
 
-    if (!entry) {
-      throw versionEntryNotFound(entryId as unknown as string);
-    }
+		if (!entry) {
+			throw versionEntryNotFound((entryId as unknown) as string);
+		}
 
-    if (entry.deletedAt !== undefined) {
-      throw versionEntryDeleted(entryId as unknown as string);
-    }
+		if (entry.deletedAt !== undefined) {
+			throw versionEntryDeleted((entryId as unknown) as string);
+		}
 
-    // Step 2: Retrieve the target version to restore
-    const targetVersion = await ctx.db
-      .query("content_versions")
-      .withIndex("by_entry_and_version", (q) =>
-        q.eq("entryId", entryId).eq("versionNumber", versionNumber)
-      )
-      .first();
+		// Step 2: Retrieve the target version to restore
+		const targetVersion = await ctx.db
+			.query("contentVersions")
+			.withIndex("by_entry_and_version", (q) =>
+				q.eq("entryId", entryId).eq("versionNumber", versionNumber),
+			)
+			.first();
 
-    if (!targetVersion) {
-      throw versionNotFound(entryId as unknown as string, versionNumber);
-    }
+		if (!targetVersion) {
+			throw versionNotFound((entryId as unknown) as string, versionNumber);
+		}
 
-    // Security: Verify the version belongs to this entry (defensive check)
-    if (targetVersion.entryId !== entryId) {
-      throw versionMismatch(entryId as unknown as string, targetVersion._id as unknown as string);
-    }
+		// Security: Verify the version belongs to this entry (defensive check)
+		if (targetVersion.entryId !== entryId) {
+			throw versionMismatch(
+				(entryId as unknown) as string,
+				(targetVersion._id as unknown) as string,
+			);
+		}
 
-    // Step 3: Snapshot the current state before rollback (for undo capability)
-    // This allows users to "undo" a rollback by rolling back to this snapshot
-    const preRollbackSnapshot = await ctx.db.insert("content_versions", {
-      entryId,
-      versionNumber: entry.version,
-      data: entry.data,
-      slug: entry.slug,
-      status: entry.status,
-      changeDescription: `Pre-rollback snapshot (before restoring to version ${versionNumber})`,
-      createdBy: updatedBy,
-      wasPublished: false,
-    });
+		// Step 3: Snapshot the current state before rollback (for undo capability)
+		// This allows users to "undo" a rollback by rolling back to this snapshot
+		await ctx.db.insert("contentVersions", {
+			entryId,
+			versionNumber: entry.version,
+			data: entry.data,
+			slug: entry.slug,
+			status: entry.status,
+			changeDescription: `Pre-rollback snapshot (before restoring to version ${versionNumber})`,
+			createdBy: updatedBy,
+			wasPublished: false,
+		});
 
-    // Step 4: Update the entry with restored content
-    // Note: We restore data and slug, but preserve the current status
-    const newVersionNumber = entry.version + 1;
+		// Step 4: Update the entry with restored content
+		// Note: We restore data and slug, but preserve the current status
+		const newVersionNumber = entry.version + 1;
 
-    await ctx.db.patch(entryId, {
-      data: targetVersion.data,
-      slug: targetVersion.slug,
-      version: newVersionNumber,
-      updatedBy,
-    });
+		await ctx.db.patch(entryId, {
+			data: targetVersion.data,
+			slug: targetVersion.slug,
+			version: newVersionNumber,
+			updatedBy,
+		});
 
-    // Step 5: Create a snapshot documenting the rollback
-    await ctx.db.insert("content_versions", {
-      entryId,
-      versionNumber: newVersionNumber,
-      data: targetVersion.data,
-      slug: targetVersion.slug,
-      status: entry.status, // Preserve current status
-      changeDescription: `Rolled back to version ${versionNumber}`,
-      createdBy: updatedBy,
-      wasPublished: false,
-    });
+		// Step 5: Create a snapshot documenting the rollback
+		await ctx.db.insert("contentVersions", {
+			entryId,
+			versionNumber: newVersionNumber,
+			data: targetVersion.data,
+			slug: targetVersion.slug,
+			status: entry.status, // Preserve current status
+			changeDescription: `Rolled back to version ${versionNumber}`,
+			createdBy: updatedBy,
+			wasPublished: false,
+		});
 
-    // Return the updated entry
-    const updatedEntry = await ctx.db.get(entryId);
+		// Return the updated entry
+		const updatedEntry = await ctx.db.get(entryId);
 
-    if (!updatedEntry) {
-      throw versionRollbackFailed(entryId as unknown as string);
-    }
+		if (!updatedEntry) {
+			throw versionRollbackFailed((entryId as unknown) as string);
+		}
 
-    return updatedEntry;
-  },
+		return updatedEntry;
+	},
 });

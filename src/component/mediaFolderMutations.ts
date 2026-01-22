@@ -11,7 +11,8 @@
  * - Moving folders updates paths for the folder and all descendants
  */
 
-import { mutation, query } from "./_generated/server.js";
+import { mutation, query, type MutationCtx } from "./_generated/server.js";
+import type { Id } from "./_generated/dataModel.js";
 import { v } from "convex/values";
 import {
 	createMediaFolderArgs,
@@ -221,7 +222,7 @@ export const createMediaFolder = mutation({
 
 		// Check for duplicate folder name in the same parent
 		const existingFolder = await ctx.db
-			.query("media_folders")
+			.query("mediaFolders")
 			.withIndex("by_path", (q) => q.eq("path", path))
 			.filter((q) => q.eq(q.field("deletedAt"), undefined))
 			.first();
@@ -231,7 +232,7 @@ export const createMediaFolder = mutation({
 		}
 
 		// Create the folder
-		const folderId = await ctx.db.insert("media_folders", {
+		const folderId = await ctx.db.insert("mediaFolders", {
 			name: name.trim(),
 			parentId,
 			path,
@@ -331,7 +332,7 @@ export const updateMediaFolder = mutation({
 
 			// Check for duplicate name in same parent
 			const existingFolder = await ctx.db
-				.query("media_folders")
+				.query("mediaFolders")
 				.withIndex("by_path", (q) => q.eq("path", newPath))
 				.filter((q) => q.eq(q.field("deletedAt"), undefined))
 				.first();
@@ -375,14 +376,14 @@ export const updateMediaFolder = mutation({
  * Updates paths for all descendant folders when a parent folder is renamed.
  */
 async function updateDescendantPaths(
-	ctx: any,
+	ctx: MutationCtx,
 	oldParentPath: string,
 	newParentPath: string,
 ): Promise<void> {
 	// Find all folders whose path starts with the old path
 	const descendants = await ctx.db
-		.query("media_folders")
-		.filter((q: any) => q.eq(q.field("deletedAt"), undefined))
+		.query("mediaFolders")
+		.filter((q) => q.eq(q.field("deletedAt"), undefined))
 		.collect();
 
 	for (const descendant of descendants) {
@@ -512,7 +513,7 @@ export const moveMediaFolder = mutation({
 
 		// Check for duplicate name in new parent
 		const existingFolder = await ctx.db
-			.query("media_folders")
+			.query("mediaFolders")
 			.withIndex("by_path", (q) => q.eq("path", newPath))
 			.filter((q) => q.eq(q.field("deletedAt"), undefined))
 			.first();
@@ -544,12 +545,12 @@ export const moveMediaFolder = mutation({
  * Gets the maximum depth of descendants under a folder path.
  */
 async function getMaxSubtreeDepth(
-	ctx: any,
+	ctx: MutationCtx,
 	folderPath: string,
 ): Promise<number> {
 	const descendants = await ctx.db
-		.query("media_folders")
-		.filter((q: any) => q.eq(q.field("deletedAt"), undefined))
+		.query("mediaFolders")
+		.filter((q) => q.eq(q.field("deletedAt"), undefined))
 		.collect();
 
 	let maxDepth = 0;
@@ -576,7 +577,7 @@ async function getMaxSubtreeDepth(
  * Validator for delete folder arguments.
  */
 export const deleteMediaFolderArgs = {
-	id: v.id("media_folders"),
+	id: v.id("mediaFolders"),
 	deletedBy: v.optional(v.string()),
 	hardDelete: v.optional(v.boolean()),
 	recursive: v.optional(v.boolean()),
@@ -652,13 +653,13 @@ export const deleteMediaFolder = mutation({
 
 		// Check for contents (subfolders and assets)
 		const subfolders = await ctx.db
-			.query("media_folders")
+			.query("mediaFolders")
 			.withIndex("by_parent", (q) => q.eq("parentId", id))
 			.filter((q) => q.eq(q.field("deletedAt"), undefined))
 			.take(1);
 
 		const assets = await ctx.db
-			.query("media_assets")
+			.query("mediaAssets")
 			.withIndex("by_folder", (q) => q.eq("folderId", id))
 			.filter((q) => q.eq(q.field("deletedAt"), undefined))
 			.take(1);
@@ -705,15 +706,15 @@ export const deleteMediaFolder = mutation({
  * Recursively deletes all contents of a folder.
  */
 async function deleteContentsRecursively(
-	ctx: any,
-	folderId: any,
+	ctx: MutationCtx,
+	folderId: Id<"mediaFolders">,
 	hardDelete: boolean,
 ): Promise<void> {
 	// Get all subfolders
 	const subfolders = await ctx.db
-		.query("media_folders")
-		.withIndex("by_parent", (q: any) => q.eq("parentId", folderId))
-		.filter((q: any) => q.eq(q.field("deletedAt"), undefined))
+		.query("mediaFolders")
+		.withIndex("by_parent", (q) => q.eq("parentId", folderId))
+		.filter((q) => q.eq(q.field("deletedAt"), undefined))
 		.collect();
 
 	// Recursively delete subfolders first
@@ -729,9 +730,9 @@ async function deleteContentsRecursively(
 
 	// Delete/soft-delete all assets in this folder
 	const assets = await ctx.db
-		.query("media_assets")
-		.withIndex("by_folder", (q: any) => q.eq("folderId", folderId))
-		.filter((q: any) => q.eq(q.field("deletedAt"), undefined))
+		.query("mediaAssets")
+		.withIndex("by_folder", (q) => q.eq("folderId", folderId))
+		.filter((q) => q.eq(q.field("deletedAt"), undefined))
 		.collect();
 
 	for (const asset of assets) {
@@ -760,7 +761,7 @@ async function deleteContentsRecursively(
  * Validator for restore folder arguments.
  */
 export const restoreMediaFolderArgs = {
-	id: v.id("media_folders"),
+	id: v.id("mediaFolders"),
 	restoredBy: v.optional(v.string()),
 	recursive: v.optional(v.boolean()),
 };
@@ -849,14 +850,14 @@ export const restoreMediaFolder = mutation({
  * Recursively restores all contents of a folder.
  */
 async function restoreContentsRecursively(
-	ctx: any,
-	folderId: any,
+	ctx: MutationCtx,
+	folderId: Id<"mediaFolders">,
 ): Promise<void> {
 	// Get all soft-deleted subfolders
 	const subfolders = await ctx.db
-		.query("media_folders")
-		.withIndex("by_parent", (q: any) => q.eq("parentId", folderId))
-		.filter((q: any) => q.neq(q.field("deletedAt"), undefined))
+		.query("mediaFolders")
+		.withIndex("by_parent", (q) => q.eq("parentId", folderId))
+		.filter((q) => q.neq(q.field("deletedAt"), undefined))
 		.collect();
 
 	for (const subfolder of subfolders) {
@@ -866,9 +867,9 @@ async function restoreContentsRecursively(
 
 	// Restore all soft-deleted assets in this folder
 	const assets = await ctx.db
-		.query("media_assets")
-		.withIndex("by_folder", (q: any) => q.eq("folderId", folderId))
-		.filter((q: any) => q.neq(q.field("deletedAt"), undefined))
+		.query("mediaAssets")
+		.withIndex("by_folder", (q) => q.eq("folderId", folderId))
+		.filter((q) => q.neq(q.field("deletedAt"), undefined))
 		.collect();
 
 	for (const asset of assets) {
@@ -890,7 +891,7 @@ async function restoreContentsRecursively(
  */
 export const getMediaFolder = query({
 	args: {
-		id: v.id("media_folders"),
+		id: v.id("mediaFolders"),
 		includeDeleted: v.optional(v.boolean()),
 	},
 	returns: v.union(mediaFolderDoc, v.null()),
@@ -921,7 +922,7 @@ export const getMediaFolder = query({
  */
 export const listMediaFolders = query({
 	args: {
-		parentId: v.optional(v.id("media_folders")),
+		parentId: v.optional(v.id("mediaFolders")),
 		includeDeleted: v.optional(v.boolean()),
 	},
 	returns: v.array(mediaFolderDoc),
@@ -929,7 +930,7 @@ export const listMediaFolders = query({
 		const { parentId, includeDeleted = false } = args;
 
 		let query = ctx.db
-			.query("media_folders")
+			.query("mediaFolders")
 			.withIndex("by_parent", (q) => q.eq("parentId", parentId));
 
 		if (!includeDeleted) {
@@ -970,7 +971,7 @@ export const getMediaFolderByPath = query({
 		const { path, includeDeleted = false } = args;
 
 		let query = ctx.db
-			.query("media_folders")
+			.query("mediaFolders")
 			.withIndex("by_path", (q) => q.eq("path", path));
 
 		if (!includeDeleted) {
@@ -996,7 +997,7 @@ export const getFolderTree = query({
 	handler: async (ctx, args) => {
 		const { includeDeleted = false } = args;
 
-		let query = ctx.db.query("media_folders");
+		let query = ctx.db.query("mediaFolders");
 
 		if (!includeDeleted) {
 			query = query.filter((q) => q.eq(q.field("deletedAt"), undefined));

@@ -14,42 +14,41 @@
 import { v } from "convex/values";
 import { mutation } from "./_generated/server.js";
 import {
-  contentEntryDoc,
-  contentStatusValidator,
-  createContentEntryArgs,
-  updateContentEntryArgs,
-  publishEntryArgs,
-  deleteContentEntryArgs,
-  duplicateContentEntryArgs,
-  mutationAuthContext,
+	contentEntryDoc,
+	createContentEntryArgs,
+	updateContentEntryArgs,
+	publishEntryArgs,
+	deleteContentEntryArgs,
+	duplicateContentEntryArgs,
+	mutationAuthContext,
 } from "./validators.js";
 import { generateSlug } from "./lib/slugGenerator.js";
 import { ensureUniqueSlug } from "./lib/slugUniqueness.js";
 import {
-  validateContentData,
-  ContentTypeSchema,
-  FieldDefinition,
+	validateContentData,
+	ContentTypeSchema,
+	FieldDefinition,
 } from "./validation.js";
 import { validateLockForUpdate } from "./contentLock.js";
 import {
-  emitEvent,
-  contentEntryEventType,
-  ContentEntryEventPayload,
+	emitEvent,
+	contentEntryEventType,
+	ContentEntryEventPayload,
 } from "./eventEmitter.js";
 import {
-  contentTypeNotFound,
-  contentTypeDeleted,
-  contentTypeInactive,
-  contentEntryNotFound,
-  contentEntryDeleted,
-  contentEntryNotDeleted,
-  contentEntryAlreadyPublished,
-  contentEntryNotPublished,
-  contentEntryArchived,
-  contentEntryValidationFailed,
-  contentEntryLocked,
-  contentEntryCreateFailed,
-  contentEntryUpdateFailed,
+	contentTypeNotFound,
+	contentTypeDeleted,
+	contentTypeInactive,
+	contentEntryNotFound,
+	contentEntryDeleted,
+	contentEntryNotDeleted,
+	contentEntryAlreadyPublished,
+	contentEntryNotPublished,
+	contentEntryArchived,
+	contentEntryValidationFailed,
+	contentEntryLocked,
+	contentEntryCreateFailed,
+	contentEntryUpdateFailed,
 } from "./lib/errors.js";
 import { requireMutationAuth, withResourceOwner } from "./lib/mutationAuth.js";
 
@@ -104,132 +103,145 @@ import { requireMutationAuth, withResourceOwner } from "./lib/mutationAuth.js";
  * ```
  */
 export const createEntry = mutation({
-  args: {
-    ...createContentEntryArgs.fields,
-    /** Optional auth context for mutation-level authorization */
-    _auth: v.optional(mutationAuthContext),
-  },
-  returns: contentEntryDoc,
-  handler: async (ctx, args) => {
-    const { contentTypeId, data, locale, primaryEntryId, createdBy, _auth } = args;
+	args: {
+		...createContentEntryArgs.fields,
+		/** Optional auth context for mutation-level authorization */
+		_auth: v.optional(mutationAuthContext),
+	},
+	returns: contentEntryDoc,
+	handler: async (ctx, args) => {
+		const {
+			contentTypeId,
+			data,
+			locale,
+			primaryEntryId,
+			createdBy,
+			_auth,
+		} = args;
 
-    // Authorization check - contentEntries.create permission
-    requireMutationAuth(_auth, "contentEntries", "create");
+		// Authorization check - contentEntries.create permission
+		requireMutationAuth(_auth, "contentEntries", "create");
 
-    // Validate content type exists and is active
-    const contentType = await ctx.db.get(contentTypeId);
-    if (!contentType) {
-      throw contentTypeNotFound(contentTypeId as unknown as string);
-    }
-    if (!contentType.isActive) {
-      throw contentTypeInactive(contentTypeId as unknown as string, contentType.name);
-    }
-    if (contentType.deletedAt !== undefined) {
-      throw contentTypeDeleted(contentTypeId as unknown as string, contentType.name);
-    }
+		// Validate content type exists and is active
+		const contentType = await ctx.db.get(contentTypeId);
+		if (!contentType) {
+			throw contentTypeNotFound((contentTypeId as unknown) as string);
+		}
+		if (!contentType.isActive) {
+			throw contentTypeInactive(
+				(contentTypeId as unknown) as string,
+				contentType.name,
+			);
+		}
+		if (contentType.deletedAt !== undefined) {
+			throw contentTypeDeleted(
+				(contentTypeId as unknown) as string,
+				contentType.name,
+			);
+		}
 
-    // Determine which field to use for slug generation
-    const slugField = contentType.slugField ?? "title";
-    const contentData = data as Record<string, unknown>;
+		// Determine which field to use for slug generation
+		const slugField = contentType.slugField ?? "title";
+		const contentData = data as Record<string, unknown>;
 
-    // Build the schema for validation
-    const schema: ContentTypeSchema = {
-      name: contentType.name,
-      displayName: contentType.displayName,
-      description: contentType.description,
-      fields: contentType.fields as FieldDefinition[],
-      titleField: contentType.titleField,
-      slugField: contentType.slugField,
-      singleton: contentType.singleton,
-    };
+		// Build the schema for validation
+		const schema: ContentTypeSchema = {
+			name: contentType.name,
+			displayName: contentType.displayName,
+			description: contentType.description,
+			fields: contentType.fields as FieldDefinition[],
+			titleField: contentType.titleField,
+			slugField: contentType.slugField,
+			singleton: contentType.singleton,
+		};
 
-    // Validate content data against the content type schema
-    const validationResult = validateContentData(contentData, schema);
-    if (!validationResult.valid) {
-      throw contentEntryValidationFailed(validationResult.errors);
-    }
+		// Validate content data against the content type schema
+		const validationResult = validateContentData(contentData, schema);
+		if (!validationResult.valid) {
+			throw contentEntryValidationFailed(validationResult.errors);
+		}
 
-    // Generate or validate slug
-    let slug = args.slug;
-    if (!slug) {
-      // Generate slug from the slug field value
-      const slugSource = contentData[slugField];
-      if (typeof slugSource === "string" && slugSource.trim()) {
-        slug = generateSlug(slugSource);
-      } else {
-        // Fallback to "untitled" if no suitable field value
-        slug = "untitled";
-      }
-    }
+		// Generate or validate slug
+		let slug = args.slug;
+		if (!slug) {
+			// Generate slug from the slug field value
+			const slugSource = contentData[slugField];
+			if (typeof slugSource === "string" && slugSource.trim()) {
+				slug = generateSlug(slugSource);
+			} else {
+				// Fallback to "untitled" if no suitable field value
+				slug = "untitled";
+			}
+		}
 
-    // Ensure slug is unique within this content type
-    const queryFn = async (candidateSlug: string) => {
-      return await ctx.db
-        .query("content_entries")
-        .withIndex("by_content_type_and_slug", (q) =>
-          q.eq("contentTypeId", contentTypeId).eq("slug", candidateSlug)
-        )
-        .filter((q) => q.eq(q.field("deletedAt"), undefined))
-        .first();
-    };
+		// Ensure slug is unique within this content type
+		const queryFn = async (candidateSlug: string) => {
+			return await ctx.db
+				.query("contentEntries")
+				.withIndex("by_content_type_and_slug", (q) =>
+					q.eq("contentTypeId", contentTypeId).eq("slug", candidateSlug),
+				)
+				.filter((q) => q.eq(q.field("deletedAt"), undefined))
+				.first();
+		};
 
-    const uniqueSlug = await ensureUniqueSlug(slug, queryFn);
+		const uniqueSlug = await ensureUniqueSlug(slug, queryFn);
 
-    // Default to draft status - content should start unpublished
-    const status = args.status ?? "draft";
+		// Default to draft status - content should start unpublished
+		const status = args.status ?? "draft";
 
-    // Generate searchable text from text fields
-    let searchText: string | undefined = "";
-    for (const field of contentType.fields) {
-      if (field.searchable && contentData[field.name]) {
-        const value = contentData[field.name];
-        if (typeof value === "string") {
-          searchText += ` ${value}`;
-        }
-      }
-    }
-    searchText = searchText.trim() || undefined;
+		// Generate searchable text from text fields
+		let searchText: string | undefined = "";
+		for (const field of contentType.fields) {
+			if (field.searchable && contentData[field.name]) {
+				const value = contentData[field.name];
+				if (typeof value === "string") {
+					searchText += ` ${value}`;
+				}
+			}
+		}
+		searchText = searchText.trim() || undefined;
 
-    // Create the entry
-    const now = Date.now();
-    const entryId = await ctx.db.insert("content_entries", {
-      contentTypeId,
-      slug: uniqueSlug,
-      status,
-      data,
-      locale,
-      primaryEntryId,
-      version: 1,
-      createdBy,
-      updatedBy: createdBy,
-      searchText,
-    });
+		// Create the entry
+		const _now = Date.now();
+		const entryId = await ctx.db.insert("contentEntries", {
+			contentTypeId,
+			slug: uniqueSlug,
+			status,
+			data,
+			locale,
+			primaryEntryId,
+			version: 1,
+			createdBy,
+			updatedBy: createdBy,
+			searchText,
+		});
 
-    // Retrieve and return the created entry
-    const entry = await ctx.db.get(entryId);
-    if (!entry) {
-      throw contentEntryCreateFailed(contentTypeId as unknown as string);
-    }
+		// Retrieve and return the created entry
+		const entry = await ctx.db.get(entryId);
+		if (!entry) {
+			throw contentEntryCreateFailed((contentTypeId as unknown) as string);
+		}
 
-    // Emit content entry created event
-    await emitEvent(ctx, {
-      eventType: contentEntryEventType("created"),
-      resourceType: "contentEntry",
-      resourceId: entryId as unknown as string,
-      action: "created",
-      payload: {
-        slug: uniqueSlug,
-        contentTypeName: contentType.name,
-        contentTypeId: contentTypeId as unknown as string,
-        status,
-        version: 1,
-        locale,
-      } as ContentEntryEventPayload,
-      userId: createdBy,
-    });
+		// Emit content entry created event
+		await emitEvent(ctx, {
+			eventType: contentEntryEventType("created"),
+			resourceType: "contentEntry",
+			resourceId: (entryId as unknown) as string,
+			action: "created",
+			payload: {
+				slug: uniqueSlug,
+				contentTypeName: contentType.name,
+				contentTypeId: (contentTypeId as unknown) as string,
+				status,
+				version: 1,
+				locale,
+			} as ContentEntryEventPayload,
+			userId: createdBy,
+		});
 
-    return entry;
-  },
+		return entry;
+	},
 });
 
 // =============================================================================
@@ -295,188 +307,200 @@ export const createEntry = mutation({
  * ```
  */
 export const updateEntry = mutation({
-  args: {
-    ...updateContentEntryArgs.fields,
-    /** Optional auth context for mutation-level authorization */
-    _auth: v.optional(mutationAuthContext),
-  },
-  returns: contentEntryDoc,
-  handler: async (ctx, args) => {
-    const { id, slug, data, status, scheduledPublishAt, updatedBy, regenerateSlug, _auth } = args;
+	args: {
+		...updateContentEntryArgs.fields,
+		/** Optional auth context for mutation-level authorization */
+		_auth: v.optional(mutationAuthContext),
+	},
+	returns: contentEntryDoc,
+	handler: async (ctx, args) => {
+		const {
+			id,
+			slug,
+			data,
+			status,
+			scheduledPublishAt,
+			updatedBy,
+			regenerateSlug,
+			_auth,
+		} = args;
 
-    // Retrieve the existing entry
-    const entry = await ctx.db.get(id);
-    if (!entry) {
-      throw contentEntryNotFound(id as unknown as string);
-    }
-    if (entry.deletedAt !== undefined) {
-      throw contentEntryDeleted(id as unknown as string);
-    }
+		// Retrieve the existing entry
+		const entry = await ctx.db.get(id);
+		if (!entry) {
+			throw contentEntryNotFound((id as unknown) as string);
+		}
+		if (entry.deletedAt !== undefined) {
+			throw contentEntryDeleted((id as unknown) as string);
+		}
 
-    // Authorization check - contentEntries.update permission (with ownership check)
-    requireMutationAuth(
-      withResourceOwner(_auth, entry.createdBy),
-      "contentEntries",
-      "update"
-    );
+		// Authorization check - contentEntries.update permission (with ownership check)
+		requireMutationAuth(
+			withResourceOwner(_auth, entry.createdBy),
+			"contentEntries",
+			"update",
+		);
 
-    // Check lock status - only the lock holder can update a locked entry
-    const lockValidation = validateLockForUpdate(entry, updatedBy);
-    if (!lockValidation.isAllowed) {
-      // Extract lock info from entry for detailed error
-      if (entry.lockedBy && entry.lockExpiresAt) {
-        throw contentEntryLocked(
-          id as unknown as string,
-          entry.lockedBy,
-          entry.lockExpiresAt,
-          updatedBy
-        );
-      }
-      throw contentEntryLocked(
-        id as unknown as string,
-        "unknown",
-        Date.now(),
-        updatedBy
-      );
-    }
+		// Check lock status - only the lock holder can update a locked entry
+		const lockValidation = validateLockForUpdate(entry, updatedBy);
+		if (!lockValidation.isAllowed) {
+			// Extract lock info from entry for detailed error
+			if (entry.lockedBy && entry.lockExpiresAt) {
+				throw contentEntryLocked(
+					(id as unknown) as string,
+					entry.lockedBy,
+					entry.lockExpiresAt,
+					updatedBy,
+				);
+			}
+			throw contentEntryLocked(
+				(id as unknown) as string,
+				"unknown",
+				Date.now(),
+				updatedBy,
+			);
+		}
 
-    // Retrieve the content type for validation and schema info
-    const contentType = await ctx.db.get(entry.contentTypeId);
-    if (!contentType) {
-      throw contentTypeNotFound(entry.contentTypeId as unknown as string);
-    }
-    if (contentType.deletedAt !== undefined) {
-      throw contentTypeDeleted(entry.contentTypeId as unknown as string, contentType.name);
-    }
+		// Retrieve the content type for validation and schema info
+		const contentType = await ctx.db.get(entry.contentTypeId);
+		if (!contentType) {
+			throw contentTypeNotFound((entry.contentTypeId as unknown) as string);
+		}
+		if (contentType.deletedAt !== undefined) {
+			throw contentTypeDeleted(
+				(entry.contentTypeId as unknown) as string,
+				contentType.name,
+			);
+		}
 
-    // Build the update object
-    const updates: Record<string, unknown> = {
-      updatedBy,
-    };
+		// Build the update object
+		const updates: Record<string, unknown> = {
+			updatedBy,
+		};
 
-    // Merge data if provided, otherwise use existing data
-    let mergedData: Record<string, unknown>;
-    if (data !== undefined) {
-      mergedData = { ...(entry.data as Record<string, unknown>), ...data };
-    } else {
-      mergedData = entry.data as Record<string, unknown>;
-    }
+		// Merge data if provided, otherwise use existing data
+		let mergedData: Record<string, unknown>;
+		if (data !== undefined) {
+			mergedData = { ...(entry.data as Record<string, unknown>), ...data };
+		} else {
+			mergedData = entry.data as Record<string, unknown>;
+		}
 
-    // Validate content data against the content type schema
-    if (data !== undefined) {
-      const schema: ContentTypeSchema = {
-        name: contentType.name,
-        displayName: contentType.displayName,
-        description: contentType.description,
-        fields: contentType.fields as FieldDefinition[],
-        titleField: contentType.titleField,
-        slugField: contentType.slugField,
-        singleton: contentType.singleton,
-      };
+		// Validate content data against the content type schema
+		if (data !== undefined) {
+			const schema: ContentTypeSchema = {
+				name: contentType.name,
+				displayName: contentType.displayName,
+				description: contentType.description,
+				fields: contentType.fields as FieldDefinition[],
+				titleField: contentType.titleField,
+				slugField: contentType.slugField,
+				singleton: contentType.singleton,
+			};
 
-      const validationResult = validateContentData(mergedData, schema);
-      if (!validationResult.valid) {
-        throw contentEntryValidationFailed(validationResult.errors);
-      }
+			const validationResult = validateContentData(mergedData, schema);
+			if (!validationResult.valid) {
+				throw contentEntryValidationFailed(validationResult.errors);
+			}
 
-      updates.data = mergedData;
-    }
+			updates.data = mergedData;
+		}
 
-    // Helper function for slug uniqueness queries
-    const slugQueryFn = async (candidateSlug: string) => {
-      const existing = await ctx.db
-        .query("content_entries")
-        .withIndex("by_content_type_and_slug", (q) =>
-          q.eq("contentTypeId", entry.contentTypeId).eq("slug", candidateSlug)
-        )
-        .filter((q) => q.eq(q.field("deletedAt"), undefined))
-        .first();
-      // Exclude current entry from uniqueness check
-      if (existing && existing._id !== id) {
-        return existing;
-      }
-      return null;
-    };
+		// Helper function for slug uniqueness queries
+		const slugQueryFn = async (candidateSlug: string) => {
+			const existing = await ctx.db
+				.query("contentEntries")
+				.withIndex("by_content_type_and_slug", (q) =>
+					q.eq("contentTypeId", entry.contentTypeId).eq("slug", candidateSlug),
+				)
+				.filter((q) => q.eq(q.field("deletedAt"), undefined))
+				.first();
+			// Exclude current entry from uniqueness check
+			if (existing && existing._id !== id) {
+				return existing;
+			}
+			return null;
+		};
 
-    // Handle slug: explicit slug takes precedence, then regeneration if requested
-    if (slug !== undefined && slug !== entry.slug) {
-      // Explicit slug provided - validate and ensure uniqueness
-      const uniqueSlug = await ensureUniqueSlug(slug, slugQueryFn, {
-        excludeEntryId: id as unknown as string,
-      });
-      updates.slug = uniqueSlug;
-    } else if (regenerateSlug && data !== undefined) {
-      // Regenerate slug from the slug field value
-      const slugField = contentType.slugField ?? "title";
-      const slugSource = mergedData[slugField];
+		// Handle slug: explicit slug takes precedence, then regeneration if requested
+		if (slug !== undefined && slug !== entry.slug) {
+			// Explicit slug provided - validate and ensure uniqueness
+			const uniqueSlug = await ensureUniqueSlug(slug, slugQueryFn, {
+				excludeEntryId: (id as unknown) as string,
+			});
+			updates.slug = uniqueSlug;
+		} else if (regenerateSlug && data !== undefined) {
+			// Regenerate slug from the slug field value
+			const slugField = contentType.slugField ?? "title";
+			const slugSource = mergedData[slugField];
 
-      if (typeof slugSource === "string" && slugSource.trim()) {
-        const newSlug = generateSlug(slugSource);
-        // Only update if the regenerated slug is different from current
-        if (newSlug !== entry.slug) {
-          const uniqueSlug = await ensureUniqueSlug(newSlug, slugQueryFn, {
-            excludeEntryId: id as unknown as string,
-          });
-          updates.slug = uniqueSlug;
-        }
-      }
-    }
+			if (typeof slugSource === "string" && slugSource.trim()) {
+				const newSlug = generateSlug(slugSource);
+				// Only update if the regenerated slug is different from current
+				if (newSlug !== entry.slug) {
+					const uniqueSlug = await ensureUniqueSlug(newSlug, slugQueryFn, {
+						excludeEntryId: (id as unknown) as string,
+					});
+					updates.slug = uniqueSlug;
+				}
+			}
+		}
 
-    // Update search text if data changed
-    if (data !== undefined) {
-      let searchText = "";
-      for (const field of contentType.fields) {
-        if (field.searchable && mergedData[field.name]) {
-          const value = mergedData[field.name];
-          if (typeof value === "string") {
-            searchText += ` ${value}`;
-          }
-        }
-      }
-      updates.searchText = searchText.trim() || undefined;
-    }
+		// Update search text if data changed
+		if (data !== undefined) {
+			let searchText = "";
+			for (const field of contentType.fields) {
+				if (field.searchable && mergedData[field.name]) {
+					const value = mergedData[field.name];
+					if (typeof value === "string") {
+						searchText += ` ${value}`;
+					}
+				}
+			}
+			updates.searchText = searchText.trim() || undefined;
+		}
 
-    // Handle status update
-    if (status !== undefined) {
-      updates.status = status;
-    }
+		// Handle status update
+		if (status !== undefined) {
+			updates.status = status;
+		}
 
-    // Handle scheduled publish time
-    if (scheduledPublishAt !== undefined) {
-      updates.scheduledPublishAt = scheduledPublishAt;
-    }
+		// Handle scheduled publish time
+		if (scheduledPublishAt !== undefined) {
+			updates.scheduledPublishAt = scheduledPublishAt;
+		}
 
-    // Increment version number
-    updates.version = entry.version + 1;
+		// Increment version number
+		updates.version = entry.version + 1;
 
-    // Apply updates
-    await ctx.db.patch(id, updates);
+		// Apply updates
+		await ctx.db.patch(id, updates);
 
-    // Return the updated entry
-    const updatedEntry = await ctx.db.get(id);
-    if (!updatedEntry) {
-      throw contentEntryUpdateFailed(id as unknown as string);
-    }
+		// Return the updated entry
+		const updatedEntry = await ctx.db.get(id);
+		if (!updatedEntry) {
+			throw contentEntryUpdateFailed((id as unknown) as string);
+		}
 
-    // Emit content entry updated event
-    await emitEvent(ctx, {
-      eventType: contentEntryEventType("updated"),
-      resourceType: "contentEntry",
-      resourceId: id as unknown as string,
-      action: "updated",
-      payload: {
-        slug: updatedEntry.slug,
-        contentTypeName: contentType.name,
-        contentTypeId: entry.contentTypeId as unknown as string,
-        status: updatedEntry.status,
-        version: updatedEntry.version,
-        locale: updatedEntry.locale,
-      } as ContentEntryEventPayload,
-      userId: updatedBy,
-    });
+		// Emit content entry updated event
+		await emitEvent(ctx, {
+			eventType: contentEntryEventType("updated"),
+			resourceType: "contentEntry",
+			resourceId: (id as unknown) as string,
+			action: "updated",
+			payload: {
+				slug: updatedEntry.slug,
+				contentTypeName: contentType.name,
+				contentTypeId: (entry.contentTypeId as unknown) as string,
+				status: updatedEntry.status,
+				version: updatedEntry.version,
+				locale: updatedEntry.locale,
+			} as ContentEntryEventPayload,
+			userId: updatedBy,
+		});
 
-    return updatedEntry;
-  },
+		return updatedEntry;
+	},
 });
 
 // =============================================================================
@@ -516,99 +540,99 @@ export const updateEntry = mutation({
  * ```
  */
 export const publishEntry = mutation({
-  args: {
-    ...publishEntryArgs.fields,
-    /** Optional auth context for mutation-level authorization */
-    _auth: v.optional(mutationAuthContext),
-  },
-  returns: contentEntryDoc,
-  handler: async (ctx, args) => {
-    const { id, changeDescription, updatedBy, _auth } = args;
+	args: {
+		...publishEntryArgs.fields,
+		/** Optional auth context for mutation-level authorization */
+		_auth: v.optional(mutationAuthContext),
+	},
+	returns: contentEntryDoc,
+	handler: async (ctx, args) => {
+		const { id, changeDescription, updatedBy, _auth } = args;
 
-    // Retrieve the existing entry
-    const entry = await ctx.db.get(id);
-    if (!entry) {
-      throw contentEntryNotFound(id as unknown as string);
-    }
-    if (entry.deletedAt !== undefined) {
-      throw contentEntryDeleted(id as unknown as string);
-    }
+		// Retrieve the existing entry
+		const entry = await ctx.db.get(id);
+		if (!entry) {
+			throw contentEntryNotFound((id as unknown) as string);
+		}
+		if (entry.deletedAt !== undefined) {
+			throw contentEntryDeleted((id as unknown) as string);
+		}
 
-    // Authorization check - contentEntries.publish permission (with ownership check)
-    requireMutationAuth(
-      withResourceOwner(_auth, entry.createdBy),
-      "contentEntries",
-      "publish"
-    );
+		// Authorization check - contentEntries.publish permission (with ownership check)
+		requireMutationAuth(
+			withResourceOwner(_auth, entry.createdBy),
+			"contentEntries",
+			"publish",
+		);
 
-    if (entry.status === "published") {
-      throw contentEntryAlreadyPublished(id as unknown as string);
-    }
-    if (entry.status === "archived") {
-      throw contentEntryArchived(id as unknown as string);
-    }
+		if (entry.status === "published") {
+			throw contentEntryAlreadyPublished((id as unknown) as string);
+		}
+		if (entry.status === "archived") {
+			throw contentEntryArchived((id as unknown) as string);
+		}
 
-    const now = Date.now();
+		const now = Date.now();
 
-    // Create a version snapshot before publishing
-    await ctx.db.insert("content_versions", {
-      entryId: id,
-      versionNumber: entry.version,
-      data: entry.data,
-      slug: entry.slug,
-      status: entry.status,
-      changeDescription,
-      createdBy: updatedBy,
-      wasPublished: true,
-      publishedAt: now,
-    });
+		// Create a version snapshot before publishing
+		await ctx.db.insert("contentVersions", {
+			entryId: id,
+			versionNumber: entry.version,
+			data: entry.data,
+			slug: entry.slug,
+			status: entry.status,
+			changeDescription,
+			createdBy: updatedBy,
+			wasPublished: true,
+			publishedAt: now,
+		});
 
-    // Update the entry to published status
-    const updates: Record<string, unknown> = {
-      status: "published",
-      lastPublishedAt: now,
-      version: entry.version + 1,
-      updatedBy,
-      // Clear scheduled publish time if it was set
-      scheduledPublishAt: undefined,
-    };
+		// Update the entry to published status
+		const updates: Record<string, unknown> = {
+			status: "published",
+			lastPublishedAt: now,
+			version: entry.version + 1,
+			updatedBy,
+			// Clear scheduled publish time if it was set
+			scheduledPublishAt: undefined,
+		};
 
-    // Set firstPublishedAt only on first publication
-    if (entry.firstPublishedAt === undefined) {
-      updates.firstPublishedAt = now;
-    }
+		// Set firstPublishedAt only on first publication
+		if (entry.firstPublishedAt === undefined) {
+			updates.firstPublishedAt = now;
+		}
 
-    await ctx.db.patch(id, updates);
+		await ctx.db.patch(id, updates);
 
-    // Return the published entry
-    const publishedEntry = await ctx.db.get(id);
-    if (!publishedEntry) {
-      throw contentEntryUpdateFailed(id as unknown as string);
-    }
+		// Return the published entry
+		const publishedEntry = await ctx.db.get(id);
+		if (!publishedEntry) {
+			throw contentEntryUpdateFailed((id as unknown) as string);
+		}
 
-    // Get content type for event payload
-    const contentType = await ctx.db.get(entry.contentTypeId);
+		// Get content type for event payload
+		const contentType = await ctx.db.get(entry.contentTypeId);
 
-    // Emit content entry published event
-    await emitEvent(ctx, {
-      eventType: contentEntryEventType("published"),
-      resourceType: "contentEntry",
-      resourceId: id as unknown as string,
-      action: "published",
-      payload: {
-        slug: publishedEntry.slug,
-        contentTypeName: contentType?.name ?? "unknown",
-        contentTypeId: entry.contentTypeId as unknown as string,
-        status: "published",
-        version: publishedEntry.version,
-        locale: publishedEntry.locale,
-        changeDescription,
-      } as ContentEntryEventPayload,
-      userId: updatedBy,
-    });
+		// Emit content entry published event
+		await emitEvent(ctx, {
+			eventType: contentEntryEventType("published"),
+			resourceType: "contentEntry",
+			resourceId: (id as unknown) as string,
+			action: "published",
+			payload: {
+				slug: publishedEntry.slug,
+				contentTypeName: contentType?.name ?? "unknown",
+				contentTypeId: (entry.contentTypeId as unknown) as string,
+				status: "published",
+				version: publishedEntry.version,
+				locale: publishedEntry.locale,
+				changeDescription,
+			} as ContentEntryEventPayload,
+			userId: updatedBy,
+		});
 
-    return publishedEntry;
-  },
+		return publishedEntry;
+	},
 });
 
 // =============================================================================
@@ -645,73 +669,73 @@ export const publishEntry = mutation({
  * ```
  */
 export const unpublishEntry = mutation({
-  args: {
-    /** The ID of the content entry to unpublish */
-    id: v.id("content_entries"),
-    /** User ID performing the unpublish (for audit trail) */
-    updatedBy: v.optional(v.string()),
-    /** Optional auth context for mutation-level authorization */
-    _auth: v.optional(mutationAuthContext),
-  },
-  returns: contentEntryDoc,
-  handler: async (ctx, args) => {
-    const { id, updatedBy, _auth } = args;
+	args: {
+		/** The ID of the content entry to unpublish */
+		id: v.id("contentEntries"),
+		/** User ID performing the unpublish (for audit trail) */
+		updatedBy: v.optional(v.string()),
+		/** Optional auth context for mutation-level authorization */
+		_auth: v.optional(mutationAuthContext),
+	},
+	returns: contentEntryDoc,
+	handler: async (ctx, args) => {
+		const { id, updatedBy, _auth } = args;
 
-    // Retrieve the existing entry
-    const entry = await ctx.db.get(id);
-    if (!entry) {
-      throw contentEntryNotFound(id as unknown as string);
-    }
-    if (entry.deletedAt !== undefined) {
-      throw contentEntryDeleted(id as unknown as string);
-    }
+		// Retrieve the existing entry
+		const entry = await ctx.db.get(id);
+		if (!entry) {
+			throw contentEntryNotFound((id as unknown) as string);
+		}
+		if (entry.deletedAt !== undefined) {
+			throw contentEntryDeleted((id as unknown) as string);
+		}
 
-    // Authorization check - contentEntries.unpublish permission (with ownership check)
-    requireMutationAuth(
-      withResourceOwner(_auth, entry.createdBy),
-      "contentEntries",
-      "unpublish"
-    );
+		// Authorization check - contentEntries.unpublish permission (with ownership check)
+		requireMutationAuth(
+			withResourceOwner(_auth, entry.createdBy),
+			"contentEntries",
+			"unpublish",
+		);
 
-    if (entry.status !== "published") {
-      throw contentEntryNotPublished(id as unknown as string, entry.status);
-    }
+		if (entry.status !== "published") {
+			throw contentEntryNotPublished((id as unknown) as string, entry.status);
+		}
 
-    // Update status to draft
-    await ctx.db.patch(id, {
-      status: "draft",
-      version: entry.version + 1,
-      updatedBy,
-    });
+		// Update status to draft
+		await ctx.db.patch(id, {
+			status: "draft",
+			version: entry.version + 1,
+			updatedBy,
+		});
 
-    // Return the unpublished entry
-    const unpublishedEntry = await ctx.db.get(id);
-    if (!unpublishedEntry) {
-      throw contentEntryUpdateFailed(id as unknown as string);
-    }
+		// Return the unpublished entry
+		const unpublishedEntry = await ctx.db.get(id);
+		if (!unpublishedEntry) {
+			throw contentEntryUpdateFailed((id as unknown) as string);
+		}
 
-    // Get content type for event payload
-    const contentType = await ctx.db.get(entry.contentTypeId);
+		// Get content type for event payload
+		const contentType = await ctx.db.get(entry.contentTypeId);
 
-    // Emit content entry unpublished event
-    await emitEvent(ctx, {
-      eventType: contentEntryEventType("unpublished"),
-      resourceType: "contentEntry",
-      resourceId: id as unknown as string,
-      action: "unpublished",
-      payload: {
-        slug: unpublishedEntry.slug,
-        contentTypeName: contentType?.name ?? "unknown",
-        contentTypeId: entry.contentTypeId as unknown as string,
-        status: "draft",
-        version: unpublishedEntry.version,
-        locale: unpublishedEntry.locale,
-      } as ContentEntryEventPayload,
-      userId: updatedBy,
-    });
+		// Emit content entry unpublished event
+		await emitEvent(ctx, {
+			eventType: contentEntryEventType("unpublished"),
+			resourceType: "contentEntry",
+			resourceId: (id as unknown) as string,
+			action: "unpublished",
+			payload: {
+				slug: unpublishedEntry.slug,
+				contentTypeName: contentType?.name ?? "unknown",
+				contentTypeId: (entry.contentTypeId as unknown) as string,
+				status: "draft",
+				version: unpublishedEntry.version,
+				locale: unpublishedEntry.locale,
+			} as ContentEntryEventPayload,
+			userId: updatedBy,
+		});
 
-    return unpublishedEntry;
-  },
+		return unpublishedEntry;
+	},
 });
 
 // =============================================================================
@@ -723,9 +747,9 @@ export const unpublishEntry = mutation({
  * Returns the deleted entry with updated deletedAt timestamp.
  */
 const deleteResultDoc = v.object({
-  ...contentEntryDoc.fields,
-  /** Number of associated versions that were cleaned up */
-  deletedVersionsCount: v.optional(v.number()),
+	...contentEntryDoc.fields,
+	/** Number of associated versions that were cleaned up */
+	deletedVersionsCount: v.optional(v.number()),
 });
 
 /**
@@ -763,116 +787,116 @@ const deleteResultDoc = v.object({
  * ```
  */
 export const deleteEntry = mutation({
-  args: {
-    ...deleteContentEntryArgs.fields,
-    /** Optional auth context for mutation-level authorization */
-    _auth: v.optional(mutationAuthContext),
-  },
-  returns: deleteResultDoc,
-  handler: async (ctx, args) => {
-    const { id, deletedBy, hardDelete = false, _auth } = args;
+	args: {
+		...deleteContentEntryArgs.fields,
+		/** Optional auth context for mutation-level authorization */
+		_auth: v.optional(mutationAuthContext),
+	},
+	returns: deleteResultDoc,
+	handler: async (ctx, args) => {
+		const { id, deletedBy, hardDelete = false, _auth } = args;
 
-    // Retrieve the content entry by ID
-    const entry = await ctx.db.get(id);
+		// Retrieve the content entry by ID
+		const entry = await ctx.db.get(id);
 
-    // Validate entry exists
-    if (!entry) {
-      throw contentEntryNotFound(id as unknown as string);
-    }
+		// Validate entry exists
+		if (!entry) {
+			throw contentEntryNotFound((id as unknown) as string);
+		}
 
-    // Authorization check - contentEntries.delete permission (with ownership check)
-    requireMutationAuth(
-      withResourceOwner(_auth, entry.createdBy),
-      "contentEntries",
-      "delete"
-    );
+		// Authorization check - contentEntries.delete permission (with ownership check)
+		requireMutationAuth(
+			withResourceOwner(_auth, entry.createdBy),
+			"contentEntries",
+			"delete",
+		);
 
-    // For soft delete, check if already deleted
-    if (!hardDelete && entry.deletedAt !== undefined) {
-      throw contentEntryDeleted(id as unknown as string);
-    }
+		// For soft delete, check if already deleted
+		if (!hardDelete && entry.deletedAt !== undefined) {
+			throw contentEntryDeleted((id as unknown) as string);
+		}
 
-    // Get all associated versions for this entry
-    const versions = await ctx.db
-      .query("content_versions")
-      .withIndex("by_entry", (q) => q.eq("entryId", id))
-      .collect();
+		// Get all associated versions for this entry
+		const versions = await ctx.db
+			.query("contentVersions")
+			.withIndex("by_entry", (q) => q.eq("entryId", id))
+			.collect();
 
-    const deletedVersionsCount = versions.length;
+		const deletedVersionsCount = versions.length;
 
-    // Get content type for event payload
-    const contentType = await ctx.db.get(entry.contentTypeId);
+		// Get content type for event payload
+		const contentType = await ctx.db.get(entry.contentTypeId);
 
-    if (hardDelete) {
-      // Hard delete: permanently remove all versions
-      for (const version of versions) {
-        await ctx.db.delete(version._id);
-      }
+		if (hardDelete) {
+			// Hard delete: permanently remove all versions
+			for (const version of versions) {
+				await ctx.db.delete(version._id);
+			}
 
-      // Permanently delete the entry itself
-      await ctx.db.delete(id);
+			// Permanently delete the entry itself
+			await ctx.db.delete(id);
 
-      // Emit content entry deleted event (for hard delete)
-      await emitEvent(ctx, {
-        eventType: contentEntryEventType("deleted"),
-        resourceType: "contentEntry",
-        resourceId: id as unknown as string,
-        action: "deleted",
-        payload: {
-          slug: entry.slug,
-          contentTypeName: contentType?.name ?? "unknown",
-          contentTypeId: entry.contentTypeId as unknown as string,
-          status: entry.status,
-          version: entry.version,
-          locale: entry.locale,
-        } as ContentEntryEventPayload,
-        userId: deletedBy,
-        metadata: { hardDelete: true },
-      });
+			// Emit content entry deleted event (for hard delete)
+			await emitEvent(ctx, {
+				eventType: contentEntryEventType("deleted"),
+				resourceType: "contentEntry",
+				resourceId: (id as unknown) as string,
+				action: "deleted",
+				payload: {
+					slug: entry.slug,
+					contentTypeName: contentType?.name ?? "unknown",
+					contentTypeId: (entry.contentTypeId as unknown) as string,
+					status: entry.status,
+					version: entry.version,
+					locale: entry.locale,
+				} as ContentEntryEventPayload,
+				userId: deletedBy,
+				metadata: { hardDelete: true },
+			});
 
-      // Return the entry as it was before deletion
-      return {
-        ...entry,
-        deletedAt: Date.now(),
-        updatedBy: deletedBy,
-        deletedVersionsCount,
-      };
-    } else {
-      // Soft delete: set deletedAt timestamp
-      const now = Date.now();
+			// Return the entry as it was before deletion
+			return {
+				...entry,
+				deletedAt: Date.now(),
+				updatedBy: deletedBy,
+				deletedVersionsCount,
+			};
+		} else {
+			// Soft delete: set deletedAt timestamp
+			const now = Date.now();
 
-      await ctx.db.patch(id, {
-        deletedAt: now,
-        updatedBy: deletedBy,
-      });
+			await ctx.db.patch(id, {
+				deletedAt: now,
+				updatedBy: deletedBy,
+			});
 
-      // Emit content entry deleted event (for soft delete)
-      await emitEvent(ctx, {
-        eventType: contentEntryEventType("deleted"),
-        resourceType: "contentEntry",
-        resourceId: id as unknown as string,
-        action: "deleted",
-        payload: {
-          slug: entry.slug,
-          contentTypeName: contentType?.name ?? "unknown",
-          contentTypeId: entry.contentTypeId as unknown as string,
-          status: entry.status,
-          version: entry.version,
-          locale: entry.locale,
-        } as ContentEntryEventPayload,
-        userId: deletedBy,
-        metadata: { hardDelete: false },
-      });
+			// Emit content entry deleted event (for soft delete)
+			await emitEvent(ctx, {
+				eventType: contentEntryEventType("deleted"),
+				resourceType: "contentEntry",
+				resourceId: (id as unknown) as string,
+				action: "deleted",
+				payload: {
+					slug: entry.slug,
+					contentTypeName: contentType?.name ?? "unknown",
+					contentTypeId: (entry.contentTypeId as unknown) as string,
+					status: entry.status,
+					version: entry.version,
+					locale: entry.locale,
+				} as ContentEntryEventPayload,
+				userId: deletedBy,
+				metadata: { hardDelete: false },
+			});
 
-      // Return the updated entry
-      return {
-        ...entry,
-        deletedAt: now,
-        updatedBy: deletedBy ?? entry.updatedBy,
-        deletedVersionsCount,
-      };
-    }
-  },
+			// Return the updated entry
+			return {
+				...entry,
+				deletedAt: now,
+				updatedBy: deletedBy ?? entry.updatedBy,
+				deletedVersionsCount,
+			};
+		}
+	},
 });
 
 /**
@@ -898,71 +922,71 @@ export const deleteEntry = mutation({
  * ```
  */
 export const restoreEntry = mutation({
-  args: {
-    /** The ID of the content entry to restore */
-    id: v.id("content_entries"),
-    /** User ID performing the restoration (for audit trail) */
-    restoredBy: v.optional(v.string()),
-    /** Optional auth context for mutation-level authorization */
-    _auth: v.optional(mutationAuthContext),
-  },
-  returns: contentEntryDoc,
-  handler: async (ctx, args) => {
-    const { id, restoredBy, _auth } = args;
+	args: {
+		/** The ID of the content entry to restore */
+		id: v.id("contentEntries"),
+		/** User ID performing the restoration (for audit trail) */
+		restoredBy: v.optional(v.string()),
+		/** Optional auth context for mutation-level authorization */
+		_auth: v.optional(mutationAuthContext),
+	},
+	returns: contentEntryDoc,
+	handler: async (ctx, args) => {
+		const { id, restoredBy, _auth } = args;
 
-    // Retrieve the content entry by ID
-    const entry = await ctx.db.get(id);
+		// Retrieve the content entry by ID
+		const entry = await ctx.db.get(id);
 
-    // Validate entry exists
-    if (!entry) {
-      throw contentEntryNotFound(id as unknown as string);
-    }
+		// Validate entry exists
+		if (!entry) {
+			throw contentEntryNotFound((id as unknown) as string);
+		}
 
-    // Authorization check - contentEntries.restore permission (with ownership check)
-    requireMutationAuth(
-      withResourceOwner(_auth, entry.createdBy),
-      "contentEntries",
-      "restore"
-    );
+		// Authorization check - contentEntries.restore permission (with ownership check)
+		requireMutationAuth(
+			withResourceOwner(_auth, entry.createdBy),
+			"contentEntries",
+			"restore",
+		);
 
-    // Validate entry is soft-deleted
-    if (entry.deletedAt === undefined) {
-      throw contentEntryNotDeleted(id as unknown as string);
-    }
+		// Validate entry is soft-deleted
+		if (entry.deletedAt === undefined) {
+			throw contentEntryNotDeleted((id as unknown) as string);
+		}
 
-    // Remove the deletedAt marker to restore the entry
-    await ctx.db.patch(id, {
-      deletedAt: undefined,
-      updatedBy: restoredBy,
-    });
+		// Remove the deletedAt marker to restore the entry
+		await ctx.db.patch(id, {
+			deletedAt: undefined,
+			updatedBy: restoredBy,
+		});
 
-    // Get content type for event payload
-    const contentType = await ctx.db.get(entry.contentTypeId);
+		// Get content type for event payload
+		const contentType = await ctx.db.get(entry.contentTypeId);
 
-    // Emit content entry restored event
-    await emitEvent(ctx, {
-      eventType: contentEntryEventType("restored"),
-      resourceType: "contentEntry",
-      resourceId: id as unknown as string,
-      action: "restored",
-      payload: {
-        slug: entry.slug,
-        contentTypeName: contentType?.name ?? "unknown",
-        contentTypeId: entry.contentTypeId as unknown as string,
-        status: entry.status,
-        version: entry.version,
-        locale: entry.locale,
-      } as ContentEntryEventPayload,
-      userId: restoredBy,
-    });
+		// Emit content entry restored event
+		await emitEvent(ctx, {
+			eventType: contentEntryEventType("restored"),
+			resourceType: "contentEntry",
+			resourceId: (id as unknown) as string,
+			action: "restored",
+			payload: {
+				slug: entry.slug,
+				contentTypeName: contentType?.name ?? "unknown",
+				contentTypeId: (entry.contentTypeId as unknown) as string,
+				status: entry.status,
+				version: entry.version,
+				locale: entry.locale,
+			} as ContentEntryEventPayload,
+			userId: restoredBy,
+		});
 
-    // Return the restored entry
-    return {
-      ...entry,
-      deletedAt: undefined,
-      updatedBy: restoredBy ?? entry.updatedBy,
-    };
-  },
+		// Return the restored entry
+		return {
+			...entry,
+			deletedAt: undefined,
+			updatedBy: restoredBy ?? entry.updatedBy,
+		};
+	},
 });
 
 // =============================================================================
@@ -1028,152 +1052,171 @@ export const restoreEntry = mutation({
  * ```
  */
 export const duplicateEntry = mutation({
-  args: {
-    ...duplicateContentEntryArgs.fields,
-    /** Optional auth context for mutation-level authorization */
-    _auth: v.optional(mutationAuthContext),
-  },
-  returns: contentEntryDoc,
-  handler: async (ctx, args) => {
-    const { sourceEntryId, slug, copyMediaReferences = true, locale, createdBy, _auth } = args;
+	args: {
+		...duplicateContentEntryArgs.fields,
+		/** Optional auth context for mutation-level authorization */
+		_auth: v.optional(mutationAuthContext),
+	},
+	returns: contentEntryDoc,
+	handler: async (ctx, args) => {
+		const {
+			sourceEntryId,
+			slug,
+			copyMediaReferences = true,
+			locale,
+			createdBy,
+			_auth,
+		} = args;
 
-    // Authorization check - contentEntries.create permission (duplicate creates a new entry)
-    requireMutationAuth(_auth, "contentEntries", "create");
+		// Authorization check - contentEntries.create permission (duplicate creates a new entry)
+		requireMutationAuth(_auth, "contentEntries", "create");
 
-    // Retrieve the source entry
-    const sourceEntry = await ctx.db.get(sourceEntryId);
-    if (!sourceEntry) {
-      throw contentEntryNotFound(sourceEntryId as unknown as string);
-    }
-    if (sourceEntry.deletedAt !== undefined) {
-      throw contentEntryDeleted(sourceEntryId as unknown as string);
-    }
+		// Retrieve the source entry
+		const sourceEntry = await ctx.db.get(sourceEntryId);
+		if (!sourceEntry) {
+			throw contentEntryNotFound((sourceEntryId as unknown) as string);
+		}
+		if (sourceEntry.deletedAt !== undefined) {
+			throw contentEntryDeleted((sourceEntryId as unknown) as string);
+		}
 
-    // Retrieve and validate the content type
-    const contentType = await ctx.db.get(sourceEntry.contentTypeId);
-    if (!contentType) {
-      throw contentTypeNotFound(sourceEntry.contentTypeId as unknown as string);
-    }
-    if (!contentType.isActive) {
-      throw contentTypeInactive(sourceEntry.contentTypeId as unknown as string, contentType.name);
-    }
-    if (contentType.deletedAt !== undefined) {
-      throw contentTypeDeleted(sourceEntry.contentTypeId as unknown as string, contentType.name);
-    }
+		// Retrieve and validate the content type
+		const contentType = await ctx.db.get(sourceEntry.contentTypeId);
+		if (!contentType) {
+			throw contentTypeNotFound(
+				(sourceEntry.contentTypeId as unknown) as string,
+			);
+		}
+		if (!contentType.isActive) {
+			throw contentTypeInactive(
+				(sourceEntry.contentTypeId as unknown) as string,
+				contentType.name,
+			);
+		}
+		if (contentType.deletedAt !== undefined) {
+			throw contentTypeDeleted(
+				(sourceEntry.contentTypeId as unknown) as string,
+				contentType.name,
+			);
+		}
 
-    // Deep copy the content data
-    let newData: Record<string, unknown> = JSON.parse(
-      JSON.stringify(sourceEntry.data)
-    );
+		// Deep copy the content data
+		const newData: Record<string, unknown> = JSON.parse(
+			JSON.stringify(sourceEntry.data),
+		);
 
-    // Optionally clear media references
-    if (!copyMediaReferences) {
-      const fields = contentType.fields as FieldDefinition[];
-      for (const field of fields) {
-        if (field.type === "media" && newData[field.name] !== undefined) {
-          // Clear media field - set to null for single, empty array for multiple
-          const isMultiple = field.options?.multiple;
-          newData[field.name] = isMultiple ? [] : null;
-        }
-      }
-    }
+		// Optionally clear media references
+		if (!copyMediaReferences) {
+			const fields = contentType.fields as FieldDefinition[];
+			for (const field of fields) {
+				if (field.type === "media" && newData[field.name] !== undefined) {
+					// Clear media field - set to null for single, empty array for multiple
+					const isMultiple = field.options?.multiple;
+					newData[field.name] = isMultiple ? [] : null;
+				}
+			}
+		}
 
-    // Build the schema for validation
-    const schema: ContentTypeSchema = {
-      name: contentType.name,
-      displayName: contentType.displayName,
-      description: contentType.description,
-      fields: contentType.fields as FieldDefinition[],
-      titleField: contentType.titleField,
-      slugField: contentType.slugField,
-      singleton: contentType.singleton,
-    };
+		// Build the schema for validation
+		const schema: ContentTypeSchema = {
+			name: contentType.name,
+			displayName: contentType.displayName,
+			description: contentType.description,
+			fields: contentType.fields as FieldDefinition[],
+			titleField: contentType.titleField,
+			slugField: contentType.slugField,
+			singleton: contentType.singleton,
+		};
 
-    // Validate the cloned data against the content type schema
-    const validationResult = validateContentData(newData, schema);
-    if (!validationResult.valid) {
-      throw contentEntryValidationFailed(validationResult.errors);
-    }
+		// Validate the cloned data against the content type schema
+		const validationResult = validateContentData(newData, schema);
+		if (!validationResult.valid) {
+			throw contentEntryValidationFailed(validationResult.errors);
+		}
 
-    // Generate or validate slug
-    let targetSlug = slug;
-    if (!targetSlug) {
-      // Generate a slug based on the source entry's slug
-      // This will result in something like "original-slug-1" if "original-slug" exists
-      targetSlug = sourceEntry.slug;
-    }
+		// Generate or validate slug
+		let targetSlug = slug;
+		if (!targetSlug) {
+			// Generate a slug based on the source entry's slug
+			// This will result in something like "original-slug-1" if "original-slug" exists
+			targetSlug = sourceEntry.slug;
+		}
 
-    // Ensure slug is unique within this content type
-    const queryFn = async (candidateSlug: string) => {
-      return await ctx.db
-        .query("content_entries")
-        .withIndex("by_content_type_and_slug", (q) =>
-          q.eq("contentTypeId", sourceEntry.contentTypeId).eq("slug", candidateSlug)
-        )
-        .filter((q) => q.eq(q.field("deletedAt"), undefined))
-        .first();
-    };
+		// Ensure slug is unique within this content type
+		const queryFn = async (candidateSlug: string) => {
+			return await ctx.db
+				.query("contentEntries")
+				.withIndex("by_content_type_and_slug", (q) =>
+					q
+						.eq("contentTypeId", sourceEntry.contentTypeId)
+						.eq("slug", candidateSlug),
+				)
+				.filter((q) => q.eq(q.field("deletedAt"), undefined))
+				.first();
+		};
 
-    const uniqueSlug = await ensureUniqueSlug(targetSlug, queryFn);
+		const uniqueSlug = await ensureUniqueSlug(targetSlug, queryFn);
 
-    // Generate searchable text from text fields
-    let searchText: string | undefined = "";
-    for (const field of contentType.fields) {
-      if (field.searchable && newData[field.name]) {
-        const value = newData[field.name];
-        if (typeof value === "string") {
-          searchText += ` ${value}`;
-        }
-      }
-    }
-    searchText = searchText.trim() || undefined;
+		// Generate searchable text from text fields
+		let searchText: string | undefined = "";
+		for (const field of contentType.fields) {
+			if (field.searchable && newData[field.name]) {
+				const value = newData[field.name];
+				if (typeof value === "string") {
+					searchText += ` ${value}`;
+				}
+			}
+		}
+		searchText = searchText.trim() || undefined;
 
-    // Create the duplicate entry (always as draft with version 1)
-    const entryId = await ctx.db.insert("content_entries", {
-      contentTypeId: sourceEntry.contentTypeId,
-      slug: uniqueSlug,
-      status: "draft",
-      data: newData,
-      locale: locale ?? sourceEntry.locale,
-      // Don't copy primaryEntryId - this is a new independent entry
-      version: 1,
-      // Reset publishing timestamps - this is a new entry
-      firstPublishedAt: undefined,
-      lastPublishedAt: undefined,
-      scheduledPublishAt: undefined,
-      // Don't copy locks
-      lockedBy: undefined,
-      lockExpiresAt: undefined,
-      // Set new audit trail
-      createdBy,
-      updatedBy: createdBy,
-      searchText,
-    });
+		// Create the duplicate entry (always as draft with version 1)
+		const entryId = await ctx.db.insert("contentEntries", {
+			contentTypeId: sourceEntry.contentTypeId,
+			slug: uniqueSlug,
+			status: "draft",
+			data: newData,
+			locale: locale ?? sourceEntry.locale,
+			// Don't copy primaryEntryId - this is a new independent entry
+			version: 1,
+			// Reset publishing timestamps - this is a new entry
+			firstPublishedAt: undefined,
+			lastPublishedAt: undefined,
+			scheduledPublishAt: undefined,
+			// Don't copy locks
+			lockedBy: undefined,
+			lockExpiresAt: undefined,
+			// Set new audit trail
+			createdBy,
+			updatedBy: createdBy,
+			searchText,
+		});
 
-    // Retrieve and return the created entry
-    const entry = await ctx.db.get(entryId);
-    if (!entry) {
-      throw contentEntryCreateFailed(sourceEntry.contentTypeId as unknown as string);
-    }
+		// Retrieve and return the created entry
+		const entry = await ctx.db.get(entryId);
+		if (!entry) {
+			throw contentEntryCreateFailed(
+				(sourceEntry.contentTypeId as unknown) as string,
+			);
+		}
 
-    // Emit content entry duplicated event
-    await emitEvent(ctx, {
-      eventType: contentEntryEventType("duplicated"),
-      resourceType: "contentEntry",
-      resourceId: entryId as unknown as string,
-      action: "duplicated",
-      payload: {
-        slug: uniqueSlug,
-        contentTypeName: contentType.name,
-        contentTypeId: sourceEntry.contentTypeId as unknown as string,
-        status: "draft",
-        version: 1,
-        locale: locale ?? sourceEntry.locale,
-        sourceEntryId: sourceEntryId as unknown as string,
-      } as ContentEntryEventPayload,
-      userId: createdBy,
-    });
+		// Emit content entry duplicated event
+		await emitEvent(ctx, {
+			eventType: contentEntryEventType("duplicated"),
+			resourceType: "contentEntry",
+			resourceId: (entryId as unknown) as string,
+			action: "duplicated",
+			payload: {
+				slug: uniqueSlug,
+				contentTypeName: contentType.name,
+				contentTypeId: (sourceEntry.contentTypeId as unknown) as string,
+				status: "draft",
+				version: 1,
+				locale: locale ?? sourceEntry.locale,
+				sourceEntryId: (sourceEntryId as unknown) as string,
+			} as ContentEntryEventPayload,
+			userId: createdBy,
+		});
 
-    return entry;
-  },
+		return entry;
+	},
 });

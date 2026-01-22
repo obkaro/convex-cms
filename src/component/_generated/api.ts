@@ -27,6 +27,7 @@ import type * as lib_errors from "../lib/errors.js";
 import type * as lib_index from "../lib/index.js";
 import type * as lib_mediaReferenceResolver from "../lib/mediaReferenceResolver.js";
 import type * as lib_metadataExtractor from "../lib/metadataExtractor.js";
+import type * as lib_mutationAuth from "../lib/mutationAuth.js";
 import type * as lib_ragContentChunker from "../lib/ragContentChunker.js";
 import type * as lib_referenceResolver from "../lib/referenceResolver.js";
 import type * as lib_slugGenerator from "../lib/slugGenerator.js";
@@ -79,6 +80,7 @@ const fullApi: ApiFromModules<{
   "lib/index": typeof lib_index;
   "lib/mediaReferenceResolver": typeof lib_mediaReferenceResolver;
   "lib/metadataExtractor": typeof lib_metadataExtractor;
+  "lib/mutationAuth": typeof lib_mutationAuth;
   "lib/ragContentChunker": typeof lib_ragContentChunker;
   "lib/referenceResolver": typeof lib_referenceResolver;
   "lib/slugGenerator": typeof lib_slugGenerator;

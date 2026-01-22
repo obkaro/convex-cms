@@ -18,17 +18,17 @@
 import { v } from "convex/values";
 import { mutation } from "./_generated/server.js";
 import {
-  bulkPublishArgs,
-  bulkUnpublishArgs,
-  bulkDeleteArgs,
-  bulkUpdateArgs,
-  bulkOperationResult,
-  BULK_OPERATION_BATCH_SIZE,
+	bulkPublishArgs,
+	bulkUnpublishArgs,
+	bulkDeleteArgs,
+	bulkUpdateArgs,
+	bulkOperationResult,
+	BULK_OPERATION_BATCH_SIZE,
 } from "./validators.js";
 import {
-  validateContentData,
-  ContentTypeSchema,
-  FieldDefinition,
+	validateContentData,
+	ContentTypeSchema,
+	FieldDefinition,
 } from "./validation.js";
 import { Id } from "./_generated/dataModel.js";
 
@@ -37,16 +37,16 @@ import { Id } from "./_generated/dataModel.js";
 // =============================================================================
 
 interface BulkOperationItemResult {
-  id: Id<"content_entries">;
-  success: boolean;
-  error?: string;
+	id: Id<"contentEntries">;
+	success: boolean;
+	error?: string;
 }
 
 interface BulkOperationResult {
-  total: number;
-  succeeded: number;
-  failed: number;
-  results: BulkOperationItemResult[];
+	total: number;
+	succeeded: number;
+	failed: number;
+	results: BulkOperationItemResult[];
 }
 
 // =============================================================================
@@ -84,100 +84,100 @@ interface BulkOperationResult {
  * ```
  */
 export const bulkPublish = mutation({
-  args: bulkPublishArgs.fields,
-  returns: bulkOperationResult,
-  handler: async (ctx, args): Promise<BulkOperationResult> => {
-    const { ids, changeDescription, updatedBy } = args;
+	args: bulkPublishArgs.fields,
+	returns: bulkOperationResult,
+	handler: async (ctx, args): Promise<BulkOperationResult> => {
+		const { ids, changeDescription, updatedBy } = args;
 
-    // Validate batch size
-    if (ids.length > BULK_OPERATION_BATCH_SIZE) {
-      throw new Error(
-        `Batch size exceeds limit. Maximum ${BULK_OPERATION_BATCH_SIZE} entries per operation, got ${ids.length}.`
-      );
-    }
+		// Validate batch size
+		if (ids.length > BULK_OPERATION_BATCH_SIZE) {
+			throw new Error(
+				`Batch size exceeds limit. Maximum ${BULK_OPERATION_BATCH_SIZE} entries per operation, got ${ids.length}.`,
+			);
+		}
 
-    if (ids.length === 0) {
-      return { total: 0, succeeded: 0, failed: 0, results: [] };
-    }
+		if (ids.length === 0) {
+			return { total: 0, succeeded: 0, failed: 0, results: [] };
+		}
 
-    const results: BulkOperationItemResult[] = [];
-    const now = Date.now();
+		const results: BulkOperationItemResult[] = [];
+		const now = Date.now();
 
-    for (const id of ids) {
-      try {
-        const entry = await ctx.db.get(id);
+		for (const id of ids) {
+			try {
+				const entry = await ctx.db.get(id);
 
-        if (!entry) {
-          results.push({ id, success: false, error: "Entry not found" });
-          continue;
-        }
+				if (!entry) {
+					results.push({ id, success: false, error: "Entry not found" });
+					continue;
+				}
 
-        if (entry.deletedAt !== undefined) {
-          results.push({ id, success: false, error: "Entry has been deleted" });
-          continue;
-        }
+				if (entry.deletedAt !== undefined) {
+					results.push({ id, success: false, error: "Entry has been deleted" });
+					continue;
+				}
 
-        if (entry.status === "published") {
-          // Already published - treat as success (idempotent)
-          results.push({ id, success: true });
-          continue;
-        }
+				if (entry.status === "published") {
+					// Already published - treat as success (idempotent)
+					results.push({ id, success: true });
+					continue;
+				}
 
-        if (entry.status === "archived") {
-          results.push({
-            id,
-            success: false,
-            error: "Cannot publish archived content. Restore it first.",
-          });
-          continue;
-        }
+				if (entry.status === "archived") {
+					results.push({
+						id,
+						success: false,
+						error: "Cannot publish archived content. Restore it first.",
+					});
+					continue;
+				}
 
-        // Create version snapshot before publishing
-        await ctx.db.insert("content_versions", {
-          entryId: id,
-          versionNumber: entry.version,
-          data: entry.data,
-          slug: entry.slug,
-          status: entry.status,
-          changeDescription,
-          createdBy: updatedBy,
-          wasPublished: true,
-          publishedAt: now,
-        });
+				// Create version snapshot before publishing
+				await ctx.db.insert("contentVersions", {
+					entryId: id,
+					versionNumber: entry.version,
+					data: entry.data,
+					slug: entry.slug,
+					status: entry.status,
+					changeDescription,
+					createdBy: updatedBy,
+					wasPublished: true,
+					publishedAt: now,
+				});
 
-        // Build the update object
-        const updates: Record<string, unknown> = {
-          status: "published",
-          lastPublishedAt: now,
-          version: entry.version + 1,
-          updatedBy,
-          scheduledPublishAt: undefined,
-        };
+				// Build the update object
+				const updates: Record<string, unknown> = {
+					status: "published",
+					lastPublishedAt: now,
+					version: entry.version + 1,
+					updatedBy,
+					scheduledPublishAt: undefined,
+				};
 
-        // Set firstPublishedAt only on first publication
-        if (entry.firstPublishedAt === undefined) {
-          updates.firstPublishedAt = now;
-        }
+				// Set firstPublishedAt only on first publication
+				if (entry.firstPublishedAt === undefined) {
+					updates.firstPublishedAt = now;
+				}
 
-        await ctx.db.patch(id, updates);
-        results.push({ id, success: true });
-      } catch (error) {
-        results.push({
-          id,
-          success: false,
-          error: error instanceof Error ? error.message : "Unknown error",
-        });
-      }
-    }
+				await ctx.db.patch(id, updates);
+				results.push({ id, success: true });
+			} catch (error) {
+				results.push({
+					id,
+					success: false,
+					error: error instanceof Error ? error.message : "Unknown error",
+				});
+			}
+		}
 
-    const succeeded = results.filter((r) => r.success).length;
-    return {
-      total: ids.length,
-      succeeded,
-      failed: ids.length - succeeded,
-      results,
-    };
-  },
+		const succeeded = results.filter((r) => r.success).length;
+		return {
+			total: ids.length,
+			succeeded,
+			failed: ids.length - succeeded,
+			results,
+		};
+	},
 });
 
 // =============================================================================
@@ -210,69 +210,69 @@ export const bulkPublish = mutation({
  * ```
  */
 export const bulkUnpublish = mutation({
-  args: bulkUnpublishArgs.fields,
-  returns: bulkOperationResult,
-  handler: async (ctx, args): Promise<BulkOperationResult> => {
-    const { ids, updatedBy } = args;
+	args: bulkUnpublishArgs.fields,
+	returns: bulkOperationResult,
+	handler: async (ctx, args): Promise<BulkOperationResult> => {
+		const { ids, updatedBy } = args;
 
-    // Validate batch size
-    if (ids.length > BULK_OPERATION_BATCH_SIZE) {
-      throw new Error(
-        `Batch size exceeds limit. Maximum ${BULK_OPERATION_BATCH_SIZE} entries per operation, got ${ids.length}.`
-      );
-    }
+		// Validate batch size
+		if (ids.length > BULK_OPERATION_BATCH_SIZE) {
+			throw new Error(
+				`Batch size exceeds limit. Maximum ${BULK_OPERATION_BATCH_SIZE} entries per operation, got ${ids.length}.`,
+			);
+		}
 
-    if (ids.length === 0) {
-      return { total: 0, succeeded: 0, failed: 0, results: [] };
-    }
+		if (ids.length === 0) {
+			return { total: 0, succeeded: 0, failed: 0, results: [] };
+		}
 
-    const results: BulkOperationItemResult[] = [];
+		const results: BulkOperationItemResult[] = [];
 
-    for (const id of ids) {
-      try {
-        const entry = await ctx.db.get(id);
+		for (const id of ids) {
+			try {
+				const entry = await ctx.db.get(id);
 
-        if (!entry) {
-          results.push({ id, success: false, error: "Entry not found" });
-          continue;
-        }
+				if (!entry) {
+					results.push({ id, success: false, error: "Entry not found" });
+					continue;
+				}
 
-        if (entry.deletedAt !== undefined) {
-          results.push({ id, success: false, error: "Entry has been deleted" });
-          continue;
-        }
+				if (entry.deletedAt !== undefined) {
+					results.push({ id, success: false, error: "Entry has been deleted" });
+					continue;
+				}
 
-        if (entry.status !== "published") {
-          // Not published - treat as success (idempotent)
-          results.push({ id, success: true });
-          continue;
-        }
+				if (entry.status !== "published") {
+					// Not published - treat as success (idempotent)
+					results.push({ id, success: true });
+					continue;
+				}
 
-        // Update status to draft
-        await ctx.db.patch(id, {
-          status: "draft",
-          version: entry.version + 1,
-          updatedBy,
-        });
+				// Update status to draft
+				await ctx.db.patch(id, {
+					status: "draft",
+					version: entry.version + 1,
+					updatedBy,
+				});
 
-        results.push({ id, success: true });
-      } catch (error) {
-        results.push({
-          id,
-          success: false,
-          error: error instanceof Error ? error.message : "Unknown error",
-        });
-      }
-    }
+				results.push({ id, success: true });
+			} catch (error) {
+				results.push({
+					id,
+					success: false,
+					error: error instanceof Error ? error.message : "Unknown error",
+				});
+			}
+		}
 
-    const succeeded = results.filter((r) => r.success).length;
-    return {
-      total: ids.length,
-      succeeded,
-      failed: ids.length - succeeded,
-      results,
-    };
-  },
+		const succeeded = results.filter((r) => r.success).length;
+		return {
+			total: ids.length,
+			succeeded,
+			failed: ids.length - succeeded,
+			results,
+		};
+	},
 });
 
 // =============================================================================
@@ -318,80 +318,80 @@ export const bulkUnpublish = mutation({
  * ```
  */
 export const bulkDelete = mutation({
-  args: bulkDeleteArgs.fields,
-  returns: bulkOperationResult,
-  handler: async (ctx, args): Promise<BulkOperationResult> => {
-    const { ids, deletedBy, hardDelete = false } = args;
+	args: bulkDeleteArgs.fields,
+	returns: bulkOperationResult,
+	handler: async (ctx, args): Promise<BulkOperationResult> => {
+		const { ids, deletedBy, hardDelete = false } = args;
 
-    // Validate batch size
-    if (ids.length > BULK_OPERATION_BATCH_SIZE) {
-      throw new Error(
-        `Batch size exceeds limit. Maximum ${BULK_OPERATION_BATCH_SIZE} entries per operation, got ${ids.length}.`
-      );
-    }
+		// Validate batch size
+		if (ids.length > BULK_OPERATION_BATCH_SIZE) {
+			throw new Error(
+				`Batch size exceeds limit. Maximum ${BULK_OPERATION_BATCH_SIZE} entries per operation, got ${ids.length}.`,
+			);
+		}
 
-    if (ids.length === 0) {
-      return { total: 0, succeeded: 0, failed: 0, results: [] };
-    }
+		if (ids.length === 0) {
+			return { total: 0, succeeded: 0, failed: 0, results: [] };
+		}
 
-    const results: BulkOperationItemResult[] = [];
-    const now = Date.now();
+		const results: BulkOperationItemResult[] = [];
+		const now = Date.now();
 
-    for (const id of ids) {
-      try {
-        const entry = await ctx.db.get(id);
+		for (const id of ids) {
+			try {
+				const entry = await ctx.db.get(id);
 
-        if (!entry) {
-          results.push({ id, success: false, error: "Entry not found" });
-          continue;
-        }
+				if (!entry) {
+					results.push({ id, success: false, error: "Entry not found" });
+					continue;
+				}
 
-        // For soft delete, skip already deleted entries
-        if (!hardDelete && entry.deletedAt !== undefined) {
-          // Already deleted - treat as success (idempotent)
-          results.push({ id, success: true });
-          continue;
-        }
+				// For soft delete, skip already deleted entries
+				if (!hardDelete && entry.deletedAt !== undefined) {
+					// Already deleted - treat as success (idempotent)
+					results.push({ id, success: true });
+					continue;
+				}
 
-        if (hardDelete) {
-          // Hard delete: remove all versions first
-          const versions = await ctx.db
-            .query("content_versions")
-            .withIndex("by_entry", (q) => q.eq("entryId", id))
-            .collect();
+				if (hardDelete) {
+					// Hard delete: remove all versions first
+					const versions = await ctx.db
+						.query("contentVersions")
+						.withIndex("by_entry", (q) => q.eq("entryId", id))
+						.collect();
 
-          for (const version of versions) {
-            await ctx.db.delete(version._id);
-          }
+					for (const version of versions) {
+						await ctx.db.delete(version._id);
+					}
 
-          // Delete the entry itself
-          await ctx.db.delete(id);
-        } else {
-          // Soft delete: set deletedAt timestamp
-          await ctx.db.patch(id, {
-            deletedAt: now,
-            updatedBy: deletedBy,
-          });
-        }
+					// Delete the entry itself
+					await ctx.db.delete(id);
+				} else {
+					// Soft delete: set deletedAt timestamp
+					await ctx.db.patch(id, {
+						deletedAt: now,
+						updatedBy: deletedBy,
+					});
+				}
 
-        results.push({ id, success: true });
-      } catch (error) {
-        results.push({
-          id,
-          success: false,
-          error: error instanceof Error ? error.message : "Unknown error",
-        });
-      }
-    }
+				results.push({ id, success: true });
+			} catch (error) {
+				results.push({
+					id,
+					success: false,
+					error: error instanceof Error ? error.message : "Unknown error",
+				});
+			}
+		}
 
-    const succeeded = results.filter((r) => r.success).length;
-    return {
-      total: ids.length,
-      succeeded,
-      failed: ids.length - succeeded,
-      results,
-    };
-  },
+		const succeeded = results.filter((r) => r.success).length;
+		return {
+			total: ids.length,
+			succeeded,
+			failed: ids.length - succeeded,
+			results,
+		};
+	},
 });
 
 // =============================================================================
@@ -432,169 +432,171 @@ export const bulkDelete = mutation({
  * ```
  */
 export const bulkUpdate = mutation({
-  args: bulkUpdateArgs.fields,
-  returns: bulkOperationResult,
-  handler: async (ctx, args): Promise<BulkOperationResult> => {
-    const { ids, data, status, updatedBy } = args;
+	args: bulkUpdateArgs.fields,
+	returns: bulkOperationResult,
+	handler: async (ctx, args): Promise<BulkOperationResult> => {
+		const { ids, data, status, updatedBy } = args;
 
-    // Validate batch size
-    if (ids.length > BULK_OPERATION_BATCH_SIZE) {
-      throw new Error(
-        `Batch size exceeds limit. Maximum ${BULK_OPERATION_BATCH_SIZE} entries per operation, got ${ids.length}.`
-      );
-    }
+		// Validate batch size
+		if (ids.length > BULK_OPERATION_BATCH_SIZE) {
+			throw new Error(
+				`Batch size exceeds limit. Maximum ${BULK_OPERATION_BATCH_SIZE} entries per operation, got ${ids.length}.`,
+			);
+		}
 
-    if (ids.length === 0) {
-      return { total: 0, succeeded: 0, failed: 0, results: [] };
-    }
+		if (ids.length === 0) {
+			return { total: 0, succeeded: 0, failed: 0, results: [] };
+		}
 
-    // Check that at least one update field is provided
-    if (data === undefined && status === undefined) {
-      throw new Error("At least one of 'data' or 'status' must be provided for bulk update");
-    }
+		// Check that at least one update field is provided
+		if (data === undefined && status === undefined) {
+			throw new Error(
+				"At least one of 'data' or 'status' must be provided for bulk update",
+			);
+		}
 
-    const results: BulkOperationItemResult[] = [];
+		const results: BulkOperationItemResult[] = [];
 
-    // Cache content types to avoid repeated lookups
-    const contentTypeCache = new Map<
-      string,
-      {
-        name: string;
-        displayName: string;
-        description?: string;
-        fields: FieldDefinition[];
-        titleField?: string;
-        slugField?: string;
-        singleton?: boolean;
-      }
-    >();
+		// Cache content types to avoid repeated lookups
+		const contentTypeCache = new Map<
+			string,
+			{
+				name: string;
+				displayName: string;
+				description?: string;
+				fields: FieldDefinition[];
+				titleField?: string;
+				slugField?: string;
+				singleton?: boolean;
+			}
+		>();
 
-    for (const id of ids) {
-      try {
-        const entry = await ctx.db.get(id);
+		for (const id of ids) {
+			try {
+				const entry = await ctx.db.get(id);
 
-        if (!entry) {
-          results.push({ id, success: false, error: "Entry not found" });
-          continue;
-        }
+				if (!entry) {
+					results.push({ id, success: false, error: "Entry not found" });
+					continue;
+				}
 
-        if (entry.deletedAt !== undefined) {
-          results.push({ id, success: false, error: "Entry has been deleted" });
-          continue;
-        }
+				if (entry.deletedAt !== undefined) {
+					results.push({ id, success: false, error: "Entry has been deleted" });
+					continue;
+				}
 
-        // Build updates object
-        const updates: Record<string, unknown> = {
-          updatedBy,
-          version: entry.version + 1,
-        };
+				// Build updates object
+				const updates: Record<string, unknown> = {
+					updatedBy,
+					version: entry.version + 1,
+				};
 
-        // Handle data update with validation
-        if (data !== undefined) {
-          // Get content type (from cache or database)
-          const contentTypeId = entry.contentTypeId.toString();
-          let contentType = contentTypeCache.get(contentTypeId);
+				// Handle data update with validation
+				if (data !== undefined) {
+					// Get content type (from cache or database)
+					const contentTypeId = entry.contentTypeId.toString();
+					let contentType = contentTypeCache.get(contentTypeId);
 
-          if (!contentType) {
-            const dbContentType = await ctx.db.get(entry.contentTypeId);
-            if (!dbContentType) {
-              results.push({
-                id,
-                success: false,
-                error: "Content type not found",
-              });
-              continue;
-            }
-            if (dbContentType.deletedAt !== undefined) {
-              results.push({
-                id,
-                success: false,
-                error: "Content type has been deleted",
-              });
-              continue;
-            }
+					if (!contentType) {
+						const dbContentType = await ctx.db.get(entry.contentTypeId);
+						if (!dbContentType) {
+							results.push({
+								id,
+								success: false,
+								error: "Content type not found",
+							});
+							continue;
+						}
+						if (dbContentType.deletedAt !== undefined) {
+							results.push({
+								id,
+								success: false,
+								error: "Content type has been deleted",
+							});
+							continue;
+						}
 
-            contentType = {
-              name: dbContentType.name,
-              displayName: dbContentType.displayName,
-              description: dbContentType.description,
-              fields: dbContentType.fields as FieldDefinition[],
-              titleField: dbContentType.titleField,
-              slugField: dbContentType.slugField,
-              singleton: dbContentType.singleton,
-            };
-            contentTypeCache.set(contentTypeId, contentType);
-          }
+						contentType = {
+							name: dbContentType.name,
+							displayName: dbContentType.displayName,
+							description: dbContentType.description,
+							fields: dbContentType.fields as FieldDefinition[],
+							titleField: dbContentType.titleField,
+							slugField: dbContentType.slugField,
+							singleton: dbContentType.singleton,
+						};
+						contentTypeCache.set(contentTypeId, contentType);
+					}
 
-          // Merge data with existing
-          const mergedData = {
-            ...(entry.data as Record<string, unknown>),
-            ...(data as Record<string, unknown>),
-          };
+					// Merge data with existing
+					const mergedData = {
+						...(entry.data as Record<string, unknown>),
+						...(data as Record<string, unknown>),
+					};
 
-          // Validate merged data against schema
-          const schema: ContentTypeSchema = {
-            name: contentType.name,
-            displayName: contentType.displayName,
-            description: contentType.description,
-            fields: contentType.fields,
-            titleField: contentType.titleField,
-            slugField: contentType.slugField,
-            singleton: contentType.singleton,
-          };
+					// Validate merged data against schema
+					const schema: ContentTypeSchema = {
+						name: contentType.name,
+						displayName: contentType.displayName,
+						description: contentType.description,
+						fields: contentType.fields,
+						titleField: contentType.titleField,
+						slugField: contentType.slugField,
+						singleton: contentType.singleton,
+					};
 
-          const validationResult = validateContentData(mergedData, schema);
-          if (!validationResult.valid) {
-            const errorMessages = validationResult.errors
-              .map((e) => `${e.field}: ${e.message}`)
-              .join("; ");
-            results.push({
-              id,
-              success: false,
-              error: `Validation failed: ${errorMessages}`,
-            });
-            continue;
-          }
+					const validationResult = validateContentData(mergedData, schema);
+					if (!validationResult.valid) {
+						const errorMessages = validationResult.errors
+							.map((e) => `${e.field}: ${e.message}`)
+							.join("; ");
+						results.push({
+							id,
+							success: false,
+							error: `Validation failed: ${errorMessages}`,
+						});
+						continue;
+					}
 
-          updates.data = mergedData;
+					updates.data = mergedData;
 
-          // Regenerate searchText from searchable fields
-          let searchText = "";
-          for (const field of contentType.fields) {
-            if (field.searchable && mergedData[field.name]) {
-              const value = mergedData[field.name];
-              if (typeof value === "string") {
-                searchText += ` ${value}`;
-              }
-            }
-          }
-          updates.searchText = searchText.trim() || undefined;
-        }
+					// Regenerate searchText from searchable fields
+					let searchText = "";
+					for (const field of contentType.fields) {
+						if (field.searchable && mergedData[field.name]) {
+							const value = mergedData[field.name];
+							if (typeof value === "string") {
+								searchText += ` ${value}`;
+							}
+						}
+					}
+					updates.searchText = searchText.trim() || undefined;
+				}
 
-        // Handle status update
-        if (status !== undefined) {
-          updates.status = status;
-        }
+				// Handle status update
+				if (status !== undefined) {
+					updates.status = status;
+				}
 
-        await ctx.db.patch(id, updates);
-        results.push({ id, success: true });
-      } catch (error) {
-        results.push({
-          id,
-          success: false,
-          error: error instanceof Error ? error.message : "Unknown error",
-        });
-      }
-    }
+				await ctx.db.patch(id, updates);
+				results.push({ id, success: true });
+			} catch (error) {
+				results.push({
+					id,
+					success: false,
+					error: error instanceof Error ? error.message : "Unknown error",
+				});
+			}
+		}
 
-    const succeeded = results.filter((r) => r.success).length;
-    return {
-      total: ids.length,
-      succeeded,
-      failed: ids.length - succeeded,
-      results,
-    };
-  },
+		const succeeded = results.filter((r) => r.success).length;
+		return {
+			total: ids.length,
+			succeeded,
+			failed: ids.length - succeeded,
+			results,
+		};
+	},
 });
 
 // =============================================================================
@@ -622,64 +624,64 @@ export const bulkUpdate = mutation({
  * ```
  */
 export const bulkRestore = mutation({
-  args: {
-    ids: v.array(v.id("content_entries")),
-    restoredBy: v.optional(v.string()),
-  },
-  returns: bulkOperationResult,
-  handler: async (ctx, args): Promise<BulkOperationResult> => {
-    const { ids, restoredBy } = args;
+	args: {
+		ids: v.array(v.id("contentEntries")),
+		restoredBy: v.optional(v.string()),
+	},
+	returns: bulkOperationResult,
+	handler: async (ctx, args): Promise<BulkOperationResult> => {
+		const { ids, restoredBy } = args;
 
-    // Validate batch size
-    if (ids.length > BULK_OPERATION_BATCH_SIZE) {
-      throw new Error(
-        `Batch size exceeds limit. Maximum ${BULK_OPERATION_BATCH_SIZE} entries per operation, got ${ids.length}.`
-      );
-    }
+		// Validate batch size
+		if (ids.length > BULK_OPERATION_BATCH_SIZE) {
+			throw new Error(
+				`Batch size exceeds limit. Maximum ${BULK_OPERATION_BATCH_SIZE} entries per operation, got ${ids.length}.`,
+			);
+		}
 
-    if (ids.length === 0) {
-      return { total: 0, succeeded: 0, failed: 0, results: [] };
-    }
+		if (ids.length === 0) {
+			return { total: 0, succeeded: 0, failed: 0, results: [] };
+		}
 
-    const results: BulkOperationItemResult[] = [];
+		const results: BulkOperationItemResult[] = [];
 
-    for (const id of ids) {
-      try {
-        const entry = await ctx.db.get(id);
+		for (const id of ids) {
+			try {
+				const entry = await ctx.db.get(id);
 
-        if (!entry) {
-          results.push({ id, success: false, error: "Entry not found" });
-          continue;
-        }
+				if (!entry) {
+					results.push({ id, success: false, error: "Entry not found" });
+					continue;
+				}
 
-        if (entry.deletedAt === undefined) {
-          // Not deleted - treat as success (idempotent)
-          results.push({ id, success: true });
-          continue;
-        }
+				if (entry.deletedAt === undefined) {
+					// Not deleted - treat as success (idempotent)
+					results.push({ id, success: true });
+					continue;
+				}
 
-        // Restore the entry
-        await ctx.db.patch(id, {
-          deletedAt: undefined,
-          updatedBy: restoredBy,
-        });
+				// Restore the entry
+				await ctx.db.patch(id, {
+					deletedAt: undefined,
+					updatedBy: restoredBy,
+				});
 
-        results.push({ id, success: true });
-      } catch (error) {
-        results.push({
-          id,
-          success: false,
-          error: error instanceof Error ? error.message : "Unknown error",
-        });
-      }
-    }
+				results.push({ id, success: true });
+			} catch (error) {
+				results.push({
+					id,
+					success: false,
+					error: error instanceof Error ? error.message : "Unknown error",
+				});
+			}
+		}
 
-    const succeeded = results.filter((r) => r.success).length;
-    return {
-      total: ids.length,
-      succeeded,
-      failed: ids.length - succeeded,
-      results,
-    };
-  },
+		const succeeded = results.filter((r) => r.success).length;
+		return {
+			total: ids.length,
+			succeeded,
+			failed: ids.length - succeeded,
+			results,
+		};
+	},
 });

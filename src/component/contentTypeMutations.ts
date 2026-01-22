@@ -453,7 +453,7 @@ export const createContentType = mutation({
 
     // Check if name is already taken (must be unique)
     const existingType = await ctx.db
-      .query("content_types")
+      .query("contentTypes")
       .withIndex("by_name", (q) => q.eq("name", name))
       .first();
 
@@ -485,7 +485,7 @@ export const createContentType = mutation({
     }
 
     // Insert the new content type
-    const id = await ctx.db.insert("content_types", {
+    const id = await ctx.db.insert("contentTypes", {
       name,
       displayName,
       description,
@@ -694,7 +694,7 @@ export const updateContentType = mutation({
 
       // Get all existing content entries for this content type
       const existingEntries = await ctx.db
-        .query("content_entries")
+        .query("contentEntries")
         .withIndex("by_content_type", (q) => q.eq("contentTypeId", id))
         .filter((q) => q.eq(q.field("deletedAt"), undefined))
         .collect();
@@ -794,7 +794,7 @@ const deleteContentTypeResult = v.object({
   /** Whether the deletion was successful */
   success: v.boolean(),
   /** The ID of the deleted content type */
-  deletedId: v.id("content_types"),
+  deletedId: v.id("contentTypes"),
   /** Number of content entries that were deleted (when cascade=true) */
   deletedEntriesCount: v.number(),
   /** Number of content versions that were deleted (when cascade=true and hardDelete=true) */
@@ -877,7 +877,7 @@ export const deleteContentType = mutation({
 
     // Get all content entries for this type (excluding already soft-deleted ones)
     const existingEntries = await ctx.db
-      .query("content_entries")
+      .query("contentEntries")
       .withIndex("by_content_type", (q) => q.eq("contentTypeId", id))
       .filter((q) => q.eq(q.field("deletedAt"), undefined))
       .collect();
@@ -900,7 +900,7 @@ export const deleteContentType = mutation({
         for (const entry of existingEntries) {
           // Delete all versions for this entry
           const versions = await ctx.db
-            .query("content_versions")
+            .query("contentVersions")
             .withIndex("by_entry", (q) => q.eq("entryId", entry._id))
             .collect();
 

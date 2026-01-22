@@ -615,6 +615,11 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         "mutation",
         "internal",
         {
+          _auth?: {
+            resourceOwnerId?: string;
+            role: string | null;
+            userId: string;
+          };
           contentTypeId: string;
           createdBy?: string;
           data: any;
@@ -648,7 +653,16 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
       deleteEntry: FunctionReference<
         "mutation",
         "internal",
-        { deletedBy?: string; hardDelete?: boolean; id: string },
+        {
+          _auth?: {
+            resourceOwnerId?: string;
+            role: string | null;
+            userId: string;
+          };
+          deletedBy?: string;
+          hardDelete?: boolean;
+          id: string;
+        },
         {
           _creationTime: number;
           _id: string;
@@ -676,6 +690,11 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         "mutation",
         "internal",
         {
+          _auth?: {
+            resourceOwnerId?: string;
+            role: string | null;
+            userId: string;
+          };
           copyMediaReferences?: boolean;
           createdBy?: string;
           locale?: string;
@@ -707,7 +726,16 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
       publishEntry: FunctionReference<
         "mutation",
         "internal",
-        { changeDescription?: string; id: string; updatedBy?: string },
+        {
+          _auth?: {
+            resourceOwnerId?: string;
+            role: string | null;
+            userId: string;
+          };
+          changeDescription?: string;
+          id: string;
+          updatedBy?: string;
+        },
         {
           _creationTime: number;
           _id: string;
@@ -733,7 +761,15 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
       restoreEntry: FunctionReference<
         "mutation",
         "internal",
-        { id: string; restoredBy?: string },
+        {
+          _auth?: {
+            resourceOwnerId?: string;
+            role: string | null;
+            userId: string;
+          };
+          id: string;
+          restoredBy?: string;
+        },
         {
           _creationTime: number;
           _id: string;
@@ -759,7 +795,15 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
       unpublishEntry: FunctionReference<
         "mutation",
         "internal",
-        { id: string; updatedBy?: string },
+        {
+          _auth?: {
+            resourceOwnerId?: string;
+            role: string | null;
+            userId: string;
+          };
+          id: string;
+          updatedBy?: string;
+        },
         {
           _creationTime: number;
           _id: string;
@@ -786,6 +830,11 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         "mutation",
         "internal",
         {
+          _auth?: {
+            resourceOwnerId?: string;
+            role: string | null;
+            userId: string;
+          };
           data?: any;
           id: string;
           regenerateSlug?: boolean;
@@ -1156,6 +1205,11 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         "mutation",
         "internal",
         {
+          _auth?: {
+            resourceOwnerId?: string;
+            role: string | null;
+            userId: string;
+          };
           createdBy?: string;
           description?: string;
           displayName: string;
@@ -1278,6 +1332,11 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         "mutation",
         "internal",
         {
+          _auth?: {
+            resourceOwnerId?: string;
+            role: string | null;
+            userId: string;
+          };
           cascade?: boolean;
           deletedBy?: string;
           hardDelete?: boolean;
@@ -1296,6 +1355,11 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         "mutation",
         "internal",
         {
+          _auth?: {
+            resourceOwnerId?: string;
+            role: string | null;
+            userId: string;
+          };
           description?: string;
           displayName?: string;
           fields?: Array<{
@@ -2050,6 +2114,11 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         "mutation",
         "internal",
         {
+          _auth?: {
+            resourceOwnerId?: string;
+            role: string | null;
+            userId: string;
+          };
           altText?: string;
           createdBy?: string;
           description?: string;
@@ -2093,6 +2162,11 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         "mutation",
         "internal",
         {
+          _auth?: {
+            resourceOwnerId?: string;
+            role: string | null;
+            userId: string;
+          };
           deletedBy?: string;
           forceDelete?: boolean;
           hardDelete?: boolean;
@@ -2137,7 +2211,16 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
       moveMediaAssets: FunctionReference<
         "mutation",
         "internal",
-        { assetIds: Array<string>; movedBy?: string; targetFolderId?: string },
+        {
+          _auth?: {
+            resourceOwnerId?: string;
+            role: string | null;
+            userId: string;
+          };
+          assetIds: Array<string>;
+          movedBy?: string;
+          targetFolderId?: string;
+        },
         {
           failed: number;
           results: Array<{
@@ -2156,7 +2239,15 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
       restoreMediaAsset: FunctionReference<
         "mutation",
         "internal",
-        { id: string; restoredBy?: string },
+        {
+          _auth?: {
+            resourceOwnerId?: string;
+            role: string | null;
+            userId: string;
+          };
+          id: string;
+          restoredBy?: string;
+        },
         {
           _creationTime: number;
           _id: string;
@@ -2184,6 +2275,11 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         "mutation",
         "internal",
         {
+          _auth?: {
+            resourceOwnerId?: string;
+            role: string | null;
+            userId: string;
+          };
           altText?: string;
           description?: string;
           filename?: string;
@@ -2324,6 +2420,11 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         "mutation",
         "internal",
         {
+          _auth?: {
+            resourceOwnerId?: string;
+            role: string | null;
+            userId: string;
+          };
           createdBy?: string;
           description?: string;
           name: string;
@@ -2347,6 +2448,11 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         "mutation",
         "internal",
         {
+          _auth?: {
+            resourceOwnerId?: string;
+            role: string | null;
+            userId: string;
+          };
           deletedBy?: string;
           hardDelete?: boolean;
           id: string;
@@ -2436,7 +2542,15 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
       moveMediaFolder: FunctionReference<
         "mutation",
         "internal",
-        { id: string; newParentId?: string },
+        {
+          _auth?: {
+            resourceOwnerId?: string;
+            role: string | null;
+            userId: string;
+          };
+          id: string;
+          newParentId?: string;
+        },
         {
           _creationTime: number;
           _id: string;
@@ -2453,7 +2567,16 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
       restoreMediaFolder: FunctionReference<
         "mutation",
         "internal",
-        { id: string; recursive?: boolean; restoredBy?: string },
+        {
+          _auth?: {
+            resourceOwnerId?: string;
+            role: string | null;
+            userId: string;
+          };
+          id: string;
+          recursive?: boolean;
+          restoredBy?: string;
+        },
         {
           _creationTime: number;
           _id: string;
@@ -2470,7 +2593,17 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
       updateMediaFolder: FunctionReference<
         "mutation",
         "internal",
-        { description?: string; id: string; name?: string; sortOrder?: number },
+        {
+          _auth?: {
+            resourceOwnerId?: string;
+            role: string | null;
+            userId: string;
+          };
+          description?: string;
+          id: string;
+          name?: string;
+          sortOrder?: number;
+        },
         {
           _creationTime: number;
           _id: string;

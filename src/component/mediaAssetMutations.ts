@@ -12,7 +12,8 @@
  * 4. Client calls createMediaAsset to save the metadata with the storageId
  */
 
-import { mutation, query } from "./_generated/server.js";
+import { mutation, query, type MutationCtx } from "./_generated/server.js";
+import type { Id } from "./_generated/dataModel.js";
 import { v } from "convex/values";
 import {
 	createMediaAssetArgs,
@@ -169,7 +170,7 @@ export const createMediaAsset = mutation({
 		const searchText = searchParts.join(" ").trim() || undefined;
 
 		// Create the media asset record
-		const assetId = await ctx.db.insert("media_assets", {
+		const assetId = await ctx.db.insert("mediaAssets", {
 			storageId,
 			filename,
 			mimeType,
@@ -439,7 +440,7 @@ export const updateMediaAsset = mutation({
  */
 export const findMediaAssetReferences = query({
 	args: {
-		mediaAssetId: v.id("media_assets"),
+		mediaAssetId: v.id("mediaAssets"),
 		/** Maximum number of references to return (for performance) */
 		limit: v.optional(v.number()),
 	},
@@ -455,7 +456,7 @@ export const findMediaAssetReferences = query({
 		}> = [];
 
 		// Get all content types to check field definitions
-		const contentTypes = await ctx.db.query("content_types").collect();
+		const contentTypes = await ctx.db.query("contentTypes").collect();
 		const contentTypeMap = new Map(
 			contentTypes.map((ct) => [ct._id.toString(), ct]),
 		);
@@ -463,7 +464,7 @@ export const findMediaAssetReferences = query({
 		// Scan content entries (this could be optimized with a search index)
 		// In a production system with many entries, you might want to limit this
 		const entries = await ctx.db
-			.query("content_entries")
+			.query("contentEntries")
 			.filter((q) => q.eq(q.field("deletedAt"), undefined))
 			.take(10000); // Safety limit
 
@@ -712,11 +713,11 @@ interface ContentTypeForReferences {
  * Used within the same mutation context.
  */
 async function findReferencesInternal(
-	ctx: any,
-	mediaAssetId: any,
+	ctx: MutationCtx,
+	mediaAssetId: Id<"mediaAssets">,
 ): Promise<
 	Array<{
-		entryId: any;
+		entryId: Id<"contentEntries">;
 		slug: string;
 		contentTypeName: string;
 		fields: string[];
@@ -724,7 +725,7 @@ async function findReferencesInternal(
 > {
 	const mediaIdStr = mediaAssetId.toString();
 	const references: Array<{
-		entryId: any;
+		entryId: Id<"contentEntries">;
 		slug: string;
 		contentTypeName: string;
 		fields: string[];
@@ -732,7 +733,7 @@ async function findReferencesInternal(
 
 	// Get all content types to check field definitions
 	const contentTypes: ContentTypeForReferences[] = await ctx.db
-		.query("content_types")
+		.query("contentTypes")
 		.collect();
 	const contentTypeMap = new Map<string, ContentTypeForReferences>(
 		contentTypes.map((ct) => [ct._id.toString(), ct]),
@@ -740,8 +741,8 @@ async function findReferencesInternal(
 
 	// Scan content entries
 	const entries = await ctx.db
-		.query("content_entries")
-		.filter((q: any) => q.eq(q.field("deletedAt"), undefined))
+		.query("contentEntries")
+		.filter((q) => q.eq(q.field("deletedAt"), undefined))
 		.take(10000);
 
 	for (const entry of entries) {

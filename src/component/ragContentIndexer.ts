@@ -5,7 +5,7 @@
  * Triggers on content publish events and maintains sync between CMS content and vector indexes.
  *
  * Architecture:
- * 1. Content publish events are captured via the event emitter system (cms_events table)
+ * 1. Content publish events are captured via the event emitter system (cmsEvents table)
  * 2. A background processor polls for unprocessed "contentEntry.published" events
  * 3. For each event, content is extracted and chunked using ragContentChunker
  * 4. Chunks are passed to a user-provided indexing callback (e.g., @convex-dev/rag)
@@ -49,6 +49,7 @@
 import { v } from "convex/values";
 import { mutation, query, internalMutation, internalQuery } from "./_generated/server.js";
 import { internal } from "./_generated/api.js";
+import type { Doc } from "./_generated/dataModel.js";
 import {
   chunkContentEntry,
   chunkMultipleEntries,
@@ -211,7 +212,7 @@ export const getUnprocessedIndexingEvents = internalQuery({
 
     // Get unprocessed events
     const events = await ctx.db
-      .query("cms_events")
+      .query("cmsEvents")
       .withIndex("by_processed", (q) => q.eq("processed", false))
       .order("asc")
       .take(limit * 2); // Over-fetch to account for filtering
@@ -251,7 +252,7 @@ export const getUnprocessedIndexingEvents = internalQuery({
  */
 export const getEntryForIndexing = internalQuery({
   args: {
-    entryId: v.id("content_entries"),
+    entryId: v.id("contentEntries"),
   },
   handler: async (ctx, args) => {
     const entry = await ctx.db.get(args.entryId);
@@ -273,16 +274,16 @@ export const getEntryForIndexing = internalQuery({
  */
 export const getEntriesForIndexing = internalQuery({
   args: {
-    entryIds: v.array(v.id("content_entries")),
+    entryIds: v.array(v.id("contentEntries")),
   },
   handler: async (ctx, args) => {
     const results: Array<{
-      entry: typeof entry;
-      contentType: typeof contentType;
+      entry: Doc<"contentEntries">;
+      contentType: Doc<"contentTypes">;
     } | null> = [];
 
     // Fetch all entries and their content types
-    const contentTypeCache = new Map<string, typeof contentType>();
+    const contentTypeCache = new Map<string, Doc<"contentTypes">>();
 
     for (const entryId of args.entryIds) {
       const entry = await ctx.db.get(entryId);
@@ -293,9 +294,10 @@ export const getEntriesForIndexing = internalQuery({
 
       let contentType = contentTypeCache.get(entry.contentTypeId);
       if (!contentType) {
-        contentType = await ctx.db.get(entry.contentTypeId);
-        if (contentType) {
-          contentTypeCache.set(entry.contentTypeId, contentType);
+        const fetchedContentType = await ctx.db.get(entry.contentTypeId);
+        if (fetchedContentType) {
+          contentType = fetchedContentType;
+          contentTypeCache.set(entry.contentTypeId, fetchedContentType);
         }
       }
 
@@ -332,14 +334,14 @@ export const getIndexingStats = query({
   handler: async (ctx) => {
     // Count published entries
     const publishedEntries = await ctx.db
-      .query("content_entries")
+      .query("contentEntries")
       .withIndex("by_status", (q) => q.eq("status", "published"))
       .filter((q) => q.eq(q.field("deletedAt"), undefined))
       .collect();
 
     // Count unprocessed publish events
     const unprocessedEvents = await ctx.db
-      .query("cms_events")
+      .query("cmsEvents")
       .withIndex("by_processed", (q) => q.eq("processed", false))
       .filter((q) => q.eq(q.field("resourceType"), "contentEntry"))
       .collect();
@@ -350,7 +352,7 @@ export const getIndexingStats = query({
     ).length;
 
     // Get content types for breakdown
-    const contentTypes = await ctx.db.query("content_types").collect();
+    const contentTypes = await ctx.db.query("contentTypes").collect();
     const contentTypeMap = new Map(contentTypes.map((ct) => [ct._id, ct.name]));
 
     // Build breakdown by content type
@@ -391,13 +393,13 @@ export const getIndexingStats = query({
  */
 export const needsReindexing = query({
   args: {
-    entryId: v.id("content_entries"),
+    entryId: v.id("contentEntries"),
   },
   returns: v.boolean(),
   handler: async (ctx, args) => {
     // Check for any unprocessed events for this entry
     const events = await ctx.db
-      .query("cms_events")
+      .query("cmsEvents")
       .withIndex("by_resource", (q) =>
         q.eq("resourceType", "contentEntry").eq("resourceId", args.entryId)
       )
@@ -425,7 +427,7 @@ export const needsReindexing = query({
  */
 export const prepareEntryForIndexing = query({
   args: {
-    entryId: v.id("content_entries"),
+    entryId: v.id("contentEntries"),
     options: v.optional(
       v.object({
         includeFields: v.optional(v.array(v.string())),
@@ -546,7 +548,7 @@ export const prepareEntryForIndexing = query({
  */
 export const markIndexingEventsProcessed = mutation({
   args: {
-    eventIds: v.array(v.id("cms_events")),
+    eventIds: v.array(v.id("cmsEvents")),
   },
   returns: v.object({
     processedCount: v.number(),
@@ -578,7 +580,7 @@ export const markIndexingEventsProcessed = mutation({
  */
 export const requestReindex = internalMutation({
   args: {
-    entryId: v.id("content_entries"),
+    entryId: v.id("contentEntries"),
     userId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -601,7 +603,7 @@ export const requestReindex = internalMutation({
     }
 
     // Create a reindex event
-    await ctx.db.insert("cms_events", {
+    await ctx.db.insert("cmsEvents", {
       eventType: "contentEntry.published",
       resourceType: "contentEntry",
       resourceId: entryId,
@@ -629,7 +631,7 @@ export const requestReindex = internalMutation({
  */
 export const requestEntryReindex = mutation({
   args: {
-    entryId: v.id("content_entries"),
+    entryId: v.id("contentEntries"),
     userId: v.optional(v.string()),
   },
   returns: v.object({
@@ -656,7 +658,7 @@ export const requestEntryReindex = mutation({
     }
 
     // Create a reindex event
-    await ctx.db.insert("cms_events", {
+    await ctx.db.insert("cmsEvents", {
       eventType: "contentEntry.published",
       resourceType: "contentEntry",
       resourceId: entryId,
@@ -691,7 +693,7 @@ export const requestEntryReindex = mutation({
  */
 export const requestBulkReindex = mutation({
   args: {
-    contentTypeId: v.optional(v.id("content_types")),
+    contentTypeId: v.optional(v.id("contentTypes")),
     batchSize: v.optional(v.number()),
     cursor: v.optional(v.string()),
     userId: v.optional(v.string()),
@@ -706,7 +708,7 @@ export const requestBulkReindex = mutation({
 
     // Build query for published entries
     let entriesQuery = ctx.db
-      .query("content_entries")
+      .query("contentEntries")
       .withIndex("by_status", (q) => q.eq("status", "published"))
       .filter((q) => q.eq(q.field("deletedAt"), undefined));
 
@@ -733,7 +735,7 @@ export const requestBulkReindex = mutation({
       const contentType = contentTypeMap.get(entry.contentTypeId);
       if (!contentType) continue;
 
-      await ctx.db.insert("cms_events", {
+      await ctx.db.insert("cmsEvents", {
         eventType: "contentEntry.published",
         resourceType: "contentEntry",
         resourceId: entry._id,
@@ -791,7 +793,7 @@ export const getIndexingBatch = internalQuery({
 
     // Get unprocessed events
     const events = await ctx.db
-      .query("cms_events")
+      .query("cmsEvents")
       .withIndex("by_processed", (q) => q.eq("processed", false))
       .order("asc")
       .take(config.batchSize * 2);
@@ -880,7 +882,7 @@ export const triggerIndexingCheck = internalMutation({
   handler: async (ctx) => {
     // Check if there are any unprocessed indexing events
     const pendingEvent = await ctx.db
-      .query("cms_events")
+      .query("cmsEvents")
       .withIndex("by_processed", (q) => q.eq("processed", false))
       .filter((q) =>
         q.and(
@@ -916,7 +918,7 @@ export const triggerIndexingCheck = internalMutation({
  */
 export const prepareEntriesForIndexing = query({
   args: {
-    entryIds: v.array(v.id("content_entries")),
+    entryIds: v.array(v.id("contentEntries")),
     options: v.optional(
       v.object({
         includeFields: v.optional(v.array(v.string())),
@@ -953,10 +955,26 @@ export const prepareEntriesForIndexing = query({
   ),
   handler: async (ctx, args) => {
     const { entryIds, options = {} } = args;
-    const results: Array<Awaited<ReturnType<typeof prepareEntryForIndexing.handler>> | null> = [];
+    // Use explicit type for results to avoid typeof issues with registered queries
+    type PrepareResult = {
+      entryId: string;
+      chunks: Array<{ text: string; metadata: unknown }>;
+      metadata: {
+        entryId: string;
+        contentType: string;
+        contentTypeDisplayName: string;
+        slug: string;
+        locale?: string;
+        version: number;
+        title?: string;
+        publishedAt?: number;
+        namespace: string;
+      };
+    } | null;
+    const results: PrepareResult[] = [];
 
     // Cache content types to avoid repeated lookups
-    const contentTypeCache = new Map<string, typeof contentType>();
+    const contentTypeCache = new Map<string, Doc<"contentTypes">>();
 
     for (const entryId of entryIds) {
       const entry = await ctx.db.get(entryId);
@@ -967,9 +985,10 @@ export const prepareEntriesForIndexing = query({
 
       let contentType = contentTypeCache.get(entry.contentTypeId);
       if (!contentType) {
-        contentType = await ctx.db.get(entry.contentTypeId);
-        if (contentType) {
-          contentTypeCache.set(entry.contentTypeId, contentType);
+        const fetchedContentType = await ctx.db.get(entry.contentTypeId);
+        if (fetchedContentType) {
+          contentType = fetchedContentType;
+          contentTypeCache.set(entry.contentTypeId, fetchedContentType);
         }
       }
 

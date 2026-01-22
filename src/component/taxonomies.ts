@@ -34,50 +34,50 @@ const MAX_NUM_ITEMS = 250;
  * Taxonomy document validator for return types.
  */
 const taxonomyDoc = v.object({
-  _id: v.id("taxonomies"),
-  _creationTime: v.number(),
-  name: v.string(),
-  displayName: v.string(),
-  description: v.optional(v.string()),
-  isHierarchical: v.boolean(),
-  allowInlineCreation: v.boolean(),
-  icon: v.optional(v.string()),
-  sortOrder: v.optional(v.number()),
-  isActive: v.boolean(),
-  deletedAt: v.optional(v.number()),
-  createdBy: v.optional(v.string()),
-  updatedBy: v.optional(v.string()),
+	_id: v.id("taxonomies"),
+	_creationTime: v.number(),
+	name: v.string(),
+	displayName: v.string(),
+	description: v.optional(v.string()),
+	isHierarchical: v.boolean(),
+	allowInlineCreation: v.boolean(),
+	icon: v.optional(v.string()),
+	sortOrder: v.optional(v.number()),
+	isActive: v.boolean(),
+	deletedAt: v.optional(v.number()),
+	createdBy: v.optional(v.string()),
+	updatedBy: v.optional(v.string()),
 });
 
 /**
  * Taxonomy term document validator for return types.
  */
 const taxonomyTermDoc = v.object({
-  _id: v.id("taxonomy_terms"),
-  _creationTime: v.number(),
-  taxonomyId: v.id("taxonomies"),
-  slug: v.string(),
-  name: v.string(),
-  description: v.optional(v.string()),
-  parentId: v.optional(v.id("taxonomy_terms")),
-  path: v.optional(v.string()),
-  depth: v.number(),
-  color: v.optional(v.string()),
-  icon: v.optional(v.string()),
-  sortOrder: v.optional(v.number()),
-  usageCount: v.number(),
-  deletedAt: v.optional(v.number()),
-  createdBy: v.optional(v.string()),
-  updatedBy: v.optional(v.string()),
-  searchText: v.optional(v.string()),
+	_id: v.id("taxonomyTerms"),
+	_creationTime: v.number(),
+	taxonomyId: v.id("taxonomies"),
+	slug: v.string(),
+	name: v.string(),
+	description: v.optional(v.string()),
+	parentId: v.optional(v.id("taxonomyTerms")),
+	path: v.optional(v.string()),
+	depth: v.number(),
+	color: v.optional(v.string()),
+	icon: v.optional(v.string()),
+	sortOrder: v.optional(v.number()),
+	usageCount: v.number(),
+	deletedAt: v.optional(v.number()),
+	createdBy: v.optional(v.string()),
+	updatedBy: v.optional(v.string()),
+	searchText: v.optional(v.string()),
 });
 
 /**
  * Term with children for hierarchical display.
  */
 const taxonomyTermWithChildren: any = v.object({
-  ...taxonomyTermDoc.fields,
-  children: v.array(v.any()), // Recursive type - will contain taxonomyTermWithChildren
+	...taxonomyTermDoc.fields,
+	children: v.array(v.any()), // Recursive type - will contain taxonomyTermWithChildren
 });
 
 // =============================================================================
@@ -103,40 +103,40 @@ const taxonomyTermWithChildren: any = v.object({
  * ```
  */
 export const get = query({
-  args: {
-    id: v.optional(v.id("taxonomies")),
-    name: v.optional(v.string()),
-    includeDeleted: v.optional(v.boolean()),
-  },
-  returns: v.union(taxonomyDoc, v.null()),
-  handler: async (ctx, args) => {
-    const { id, name, includeDeleted = false } = args;
+	args: {
+		id: v.optional(v.id("taxonomies")),
+		name: v.optional(v.string()),
+		includeDeleted: v.optional(v.boolean()),
+	},
+	returns: v.union(taxonomyDoc, v.null()),
+	handler: async (ctx, args) => {
+		const { id, name, includeDeleted = false } = args;
 
-    if (!id && !name) {
-      return null;
-    }
+		if (!id && !name) {
+			return null;
+		}
 
-    let taxonomy;
+		let taxonomy;
 
-    if (id) {
-      taxonomy = await ctx.db.get(id);
-    } else if (name) {
-      taxonomy = await ctx.db
-        .query("taxonomies")
-        .withIndex("by_name", (q) => q.eq("name", name))
-        .first();
-    }
+		if (id) {
+			taxonomy = await ctx.db.get(id);
+		} else if (name) {
+			taxonomy = await ctx.db
+				.query("taxonomies")
+				.withIndex("by_name", (q) => q.eq("name", name))
+				.first();
+		}
 
-    if (!taxonomy) {
-      return null;
-    }
+		if (!taxonomy) {
+			return null;
+		}
 
-    if (!includeDeleted && taxonomy.deletedAt !== undefined) {
-      return null;
-    }
+		if (!includeDeleted && taxonomy.deletedAt !== undefined) {
+			return null;
+		}
 
-    return taxonomy;
-  },
+		return taxonomy;
+	},
 });
 
 // =============================================================================
@@ -169,68 +169,79 @@ export const get = query({
  * ```
  */
 export const list = query({
-  args: {
-    isActive: v.optional(v.boolean()),
-    isHierarchical: v.optional(v.boolean()),
-    includeDeleted: v.optional(v.boolean()),
-    paginationOpts: v.optional(paginationOptsValidator),
-  },
-  returns: v.object({
-    page: v.array(taxonomyDoc),
-    continueCursor: v.union(v.string(), v.null()),
-    isDone: v.boolean(),
-  }),
-  handler: async (ctx, args) => {
-    const { isActive, isHierarchical, includeDeleted = false, paginationOpts } = args;
+	args: {
+		isActive: v.optional(v.boolean()),
+		isHierarchical: v.optional(v.boolean()),
+		includeDeleted: v.optional(v.boolean()),
+		paginationOpts: v.optional(paginationOptsValidator),
+	},
+	returns: v.object({
+		page: v.array(taxonomyDoc),
+		continueCursor: v.union(v.string(), v.null()),
+		isDone: v.boolean(),
+	}),
+	handler: async (ctx, args) => {
+		const {
+			isActive,
+			isHierarchical,
+			includeDeleted = false,
+			paginationOpts,
+		} = args;
 
-    const numItems = paginationOpts
-      ? Math.min(Math.max(1, paginationOpts.numItems ?? DEFAULT_NUM_ITEMS), MAX_NUM_ITEMS)
-      : MAX_NUM_ITEMS;
+		const numItems = paginationOpts
+			? Math.min(
+					Math.max(1, paginationOpts.numItems ?? DEFAULT_NUM_ITEMS),
+					MAX_NUM_ITEMS,
+			  )
+			: MAX_NUM_ITEMS;
 
-    let results;
+		let results;
 
-    if (isActive !== undefined) {
-      results = await ctx.db
-        .query("taxonomies")
-        .withIndex("by_active", (q) => q.eq("isActive", isActive))
-        .collect();
-    } else {
-      results = await ctx.db.query("taxonomies").collect();
-    }
+		if (isActive !== undefined) {
+			results = await ctx.db
+				.query("taxonomies")
+				.withIndex("by_active", (q) => q.eq("isActive", isActive))
+				.collect();
+		} else {
+			results = await ctx.db.query("taxonomies").collect();
+		}
 
-    // Apply post-filters
-    if (!includeDeleted) {
-      results = results.filter((t) => t.deletedAt === undefined);
-    }
+		// Apply post-filters
+		if (!includeDeleted) {
+			results = results.filter((t) => t.deletedAt === undefined);
+		}
 
-    if (isHierarchical !== undefined) {
-      results = results.filter((t) => t.isHierarchical === isHierarchical);
-    }
+		if (isHierarchical !== undefined) {
+			results = results.filter((t) => t.isHierarchical === isHierarchical);
+		}
 
-    // Sort by sortOrder, then name
-    results.sort((a, b) => {
-      const orderA = a.sortOrder ?? 999;
-      const orderB = b.sortOrder ?? 999;
-      if (orderA !== orderB) return orderA - orderB;
-      return a.name.localeCompare(b.name);
-    });
+		// Sort by sortOrder, then name
+		results.sort((a, b) => {
+			const orderA = a.sortOrder ?? 999;
+			const orderB = b.sortOrder ?? 999;
+			if (orderA !== orderB) return orderA - orderB;
+			return a.name.localeCompare(b.name);
+		});
 
-    // Handle pagination
-    let startIndex = 0;
-    if (paginationOpts?.cursor) {
-      const cursorIndex = results.findIndex((t) => t._id === paginationOpts.cursor);
-      if (cursorIndex !== -1) {
-        startIndex = cursorIndex + 1;
-      }
-    }
+		// Handle pagination
+		let startIndex = 0;
+		if (paginationOpts?.cursor) {
+			const cursorIndex = results.findIndex(
+				(t) => t._id === paginationOpts.cursor,
+			);
+			if (cursorIndex !== -1) {
+				startIndex = cursorIndex + 1;
+			}
+		}
 
-    const pageResults = results.slice(startIndex, startIndex + numItems + 1);
-    const isDone = pageResults.length <= numItems;
-    const page = isDone ? pageResults : pageResults.slice(0, numItems);
-    const continueCursor = !isDone && page.length > 0 ? page[page.length - 1]._id : null;
+		const pageResults = results.slice(startIndex, startIndex + numItems + 1);
+		const isDone = pageResults.length <= numItems;
+		const page = isDone ? pageResults : pageResults.slice(0, numItems);
+		const continueCursor =
+			!isDone && page.length > 0 ? page[page.length - 1]._id : null;
 
-    return { page, continueCursor, isDone };
-  },
+		return { page, continueCursor, isDone };
+	},
 });
 
 // =============================================================================
@@ -248,43 +259,43 @@ export const list = query({
  * @returns The term document, or null if not found
  */
 export const getTerm = query({
-  args: {
-    id: v.optional(v.id("taxonomy_terms")),
-    taxonomyId: v.optional(v.id("taxonomies")),
-    slug: v.optional(v.string()),
-    includeDeleted: v.optional(v.boolean()),
-  },
-  returns: v.union(taxonomyTermDoc, v.null()),
-  handler: async (ctx, args) => {
-    const { id, taxonomyId, slug, includeDeleted = false } = args;
+	args: {
+		id: v.optional(v.id("taxonomyTerms")),
+		taxonomyId: v.optional(v.id("taxonomies")),
+		slug: v.optional(v.string()),
+		includeDeleted: v.optional(v.boolean()),
+	},
+	returns: v.union(taxonomyTermDoc, v.null()),
+	handler: async (ctx, args) => {
+		const { id, taxonomyId, slug, includeDeleted = false } = args;
 
-    if (!id && (!taxonomyId || !slug)) {
-      return null;
-    }
+		if (!id && (!taxonomyId || !slug)) {
+			return null;
+		}
 
-    let term;
+		let term;
 
-    if (id) {
-      term = await ctx.db.get(id);
-    } else if (taxonomyId && slug) {
-      term = await ctx.db
-        .query("taxonomy_terms")
-        .withIndex("by_taxonomy_and_slug", (q) =>
-          q.eq("taxonomyId", taxonomyId).eq("slug", slug)
-        )
-        .first();
-    }
+		if (id) {
+			term = await ctx.db.get(id);
+		} else if (taxonomyId && slug) {
+			term = await ctx.db
+				.query("taxonomyTerms")
+				.withIndex("by_taxonomy_and_slug", (q) =>
+					q.eq("taxonomyId", taxonomyId).eq("slug", slug),
+				)
+				.first();
+		}
 
-    if (!term) {
-      return null;
-    }
+		if (!term) {
+			return null;
+		}
 
-    if (!includeDeleted && term.deletedAt !== undefined) {
-      return null;
-    }
+		if (!includeDeleted && term.deletedAt !== undefined) {
+			return null;
+		}
 
-    return term;
-  },
+		return term;
+	},
 });
 
 // =============================================================================
@@ -337,106 +348,118 @@ export const getTerm = query({
  * ```
  */
 export const listTerms = query({
-  args: {
-    taxonomyId: v.id("taxonomies"),
-    parentId: v.optional(v.id("taxonomy_terms")),
-    rootOnly: v.optional(v.boolean()),
-    search: v.optional(v.string()),
-    includeDeleted: v.optional(v.boolean()),
-    sortBy: v.optional(v.union(v.literal("name"), v.literal("usageCount"), v.literal("sortOrder"))),
-    sortDirection: v.optional(v.union(v.literal("asc"), v.literal("desc"))),
-    paginationOpts: v.optional(paginationOptsValidator),
-  },
-  returns: v.object({
-    page: v.array(taxonomyTermDoc),
-    continueCursor: v.union(v.string(), v.null()),
-    isDone: v.boolean(),
-  }),
-  handler: async (ctx, args) => {
-    const {
-      taxonomyId,
-      parentId,
-      rootOnly,
-      search,
-      includeDeleted = false,
-      sortBy = "name",
-      sortDirection = "asc",
-      paginationOpts,
-    } = args;
+	args: {
+		taxonomyId: v.id("taxonomies"),
+		parentId: v.optional(v.id("taxonomyTerms")),
+		rootOnly: v.optional(v.boolean()),
+		search: v.optional(v.string()),
+		includeDeleted: v.optional(v.boolean()),
+		sortBy: v.optional(
+			v.union(
+				v.literal("name"),
+				v.literal("usageCount"),
+				v.literal("sortOrder"),
+			),
+		),
+		sortDirection: v.optional(v.union(v.literal("asc"), v.literal("desc"))),
+		paginationOpts: v.optional(paginationOptsValidator),
+	},
+	returns: v.object({
+		page: v.array(taxonomyTermDoc),
+		continueCursor: v.union(v.string(), v.null()),
+		isDone: v.boolean(),
+	}),
+	handler: async (ctx, args) => {
+		const {
+			taxonomyId,
+			parentId,
+			rootOnly,
+			search,
+			includeDeleted = false,
+			sortBy = "name",
+			sortDirection = "asc",
+			paginationOpts,
+		} = args;
 
-    const numItems = paginationOpts
-      ? Math.min(Math.max(1, paginationOpts.numItems ?? DEFAULT_NUM_ITEMS), MAX_NUM_ITEMS)
-      : MAX_NUM_ITEMS;
+		const numItems = paginationOpts
+			? Math.min(
+					Math.max(1, paginationOpts.numItems ?? DEFAULT_NUM_ITEMS),
+					MAX_NUM_ITEMS,
+			  )
+			: MAX_NUM_ITEMS;
 
-    let results;
+		let results;
 
-    // Use search index if searching
-    if (search && search.trim().length > 0) {
-      results = await ctx.db
-        .query("taxonomy_terms")
-        .withSearchIndex("search_terms", (q) =>
-          q.search("searchText", search.trim()).eq("taxonomyId", taxonomyId)
-        )
-        .take(numItems * 4); // Fetch extra for post-filtering
-    } else if (parentId !== undefined) {
-      // Filter by parent
-      results = await ctx.db
-        .query("taxonomy_terms")
-        .withIndex("by_parent", (q) => q.eq("parentId", parentId))
-        .collect();
-      // Additional filter for taxonomy (parent could be cross-taxonomy in theory)
-      results = results.filter((t) => t.taxonomyId === taxonomyId);
-    } else {
-      // Get all terms in taxonomy
-      results = await ctx.db
-        .query("taxonomy_terms")
-        .withIndex("by_taxonomy", (q) => q.eq("taxonomyId", taxonomyId))
-        .collect();
-    }
+		// Use search index if searching
+		if (search && search.trim().length > 0) {
+			results = await ctx.db
+				.query("taxonomyTerms")
+				.withSearchIndex("search_terms", (q) =>
+					q.search("searchText", search.trim()).eq("taxonomyId", taxonomyId),
+				)
+				.take(numItems * 4); // Fetch extra for post-filtering
+		} else if (parentId !== undefined) {
+			// Filter by parent
+			results = await ctx.db
+				.query("taxonomyTerms")
+				.withIndex("by_parent", (q) => q.eq("parentId", parentId))
+				.collect();
+			// Additional filter for taxonomy (parent could be cross-taxonomy in theory)
+			results = results.filter((t) => t.taxonomyId === taxonomyId);
+		} else {
+			// Get all terms in taxonomy
+			results = await ctx.db
+				.query("taxonomyTerms")
+				.withIndex("by_taxonomy", (q) => q.eq("taxonomyId", taxonomyId))
+				.collect();
+		}
 
-    // Apply post-filters
-    if (!includeDeleted) {
-      results = results.filter((t) => t.deletedAt === undefined);
-    }
+		// Apply post-filters
+		if (!includeDeleted) {
+			results = results.filter((t) => t.deletedAt === undefined);
+		}
 
-    if (rootOnly) {
-      results = results.filter((t) => t.depth === 0);
-    }
+		if (rootOnly) {
+			results = results.filter((t) => t.depth === 0);
+		}
 
-    // Sort results
-    results.sort((a, b) => {
-      let comparison = 0;
-      switch (sortBy) {
-        case "usageCount":
-          comparison = a.usageCount - b.usageCount;
-          break;
-        case "sortOrder":
-          comparison = (a.sortOrder ?? 999) - (b.sortOrder ?? 999);
-          break;
-        case "name":
-        default:
-          comparison = a.name.toLowerCase().localeCompare(b.name.toLowerCase());
-          break;
-      }
-      return sortDirection === "asc" ? comparison : -comparison;
-    });
+		// Sort results
+		results.sort((a, b) => {
+			let comparison = 0;
+			switch (sortBy) {
+				case "usageCount":
+					comparison = a.usageCount - b.usageCount;
+					break;
+				case "sortOrder":
+					comparison = (a.sortOrder ?? 999) - (b.sortOrder ?? 999);
+					break;
+				case "name":
+				default:
+					comparison = a.name.toLowerCase().localeCompare(b.name.toLowerCase());
+					break;
+			}
+			return sortDirection === "asc" ? comparison : -comparison;
+		});
 
-    // Handle pagination
-    let startIndex = 0;
-    if (paginationOpts?.cursor) {
-      const cursorIndex = results.findIndex((t) => t._id === paginationOpts.cursor);
-      if (cursorIndex !== -1) {
-        startIndex = cursorIndex + 1;
-      }
-    }
+		// Handle pagination
+		let startIndex = 0;
+		if (paginationOpts?.cursor) {
+			const cursorIndex = results.findIndex(
+				(t) => t._id === paginationOpts.cursor,
+			);
+			if (cursorIndex !== -1) {
+				startIndex = cursorIndex + 1;
+			}
+		}
 
-    const pageResults = results.slice(startIndex, startIndex + numItems + 1);
-    const isDone = pageResults.length <= numItems;
-    const page = isDone ? pageResults : pageResults.slice(0, numItems);
-    const continueCursor = !isDone && page.length > 0 ? page[page.length - 1]._id : null;
+		const pageResults = results.slice(startIndex, startIndex + numItems + 1);
+		const isDone = pageResults.length <= numItems;
+		const page = isDone ? pageResults : pageResults.slice(0, numItems);
+		const continueCursor =
+			!isDone && page.length > 0 ? page[page.length - 1]._id : null;
 
-    return { page, continueCursor, isDone };
-  },
+		return { page, continueCursor, isDone };
+	},
 });
 
 // =============================================================================
@@ -466,55 +489,55 @@ export const listTerms = query({
  * ```
  */
 export const getTermsHierarchy = query({
-  args: {
-    taxonomyId: v.id("taxonomies"),
-    includeDeleted: v.optional(v.boolean()),
-  },
-  returns: v.array(taxonomyTermWithChildren),
-  handler: async (ctx, args) => {
-    const { taxonomyId, includeDeleted = false } = args;
+	args: {
+		taxonomyId: v.id("taxonomies"),
+		includeDeleted: v.optional(v.boolean()),
+	},
+	returns: v.array(taxonomyTermWithChildren),
+	handler: async (ctx, args) => {
+		const { taxonomyId, includeDeleted = false } = args;
 
-    // Get all terms in the taxonomy
-    let terms = await ctx.db
-      .query("taxonomy_terms")
-      .withIndex("by_taxonomy", (q) => q.eq("taxonomyId", taxonomyId))
-      .collect();
+		// Get all terms in the taxonomy
+		let terms = await ctx.db
+			.query("taxonomyTerms")
+			.withIndex("by_taxonomy", (q) => q.eq("taxonomyId", taxonomyId))
+			.collect();
 
-    // Filter deleted if needed
-    if (!includeDeleted) {
-      terms = terms.filter((t) => t.deletedAt === undefined);
-    }
+		// Filter deleted if needed
+		if (!includeDeleted) {
+			terms = terms.filter((t) => t.deletedAt === undefined);
+		}
 
-    // Sort by sortOrder, then name
-    terms.sort((a, b) => {
-      const orderA = a.sortOrder ?? 999;
-      const orderB = b.sortOrder ?? 999;
-      if (orderA !== orderB) return orderA - orderB;
-      return a.name.localeCompare(b.name);
-    });
+		// Sort by sortOrder, then name
+		terms.sort((a, b) => {
+			const orderA = a.sortOrder ?? 999;
+			const orderB = b.sortOrder ?? 999;
+			if (orderA !== orderB) return orderA - orderB;
+			return a.name.localeCompare(b.name);
+		});
 
-    // Build tree structure
-    const termMap = new Map<string, any>();
-    const rootTerms: any[] = [];
+		// Build tree structure
+		const termMap = new Map<string, any>();
+		const rootTerms: any[] = [];
 
-    // First pass: create term objects with empty children
-    for (const term of terms) {
-      termMap.set(term._id, { ...term, children: [] });
-    }
+		// First pass: create term objects with empty children
+		for (const term of terms) {
+			termMap.set(term._id, { ...term, children: [] });
+		}
 
-    // Second pass: link parents to children
-    for (const term of terms) {
-      const termWithChildren = termMap.get(term._id);
-      if (term.parentId && termMap.has(term.parentId)) {
-        const parent = termMap.get(term.parentId);
-        parent.children.push(termWithChildren);
-      } else {
-        rootTerms.push(termWithChildren);
-      }
-    }
+		// Second pass: link parents to children
+		for (const term of terms) {
+			const termWithChildren = termMap.get(term._id);
+			if (term.parentId && termMap.has(term.parentId)) {
+				const parent = termMap.get(term.parentId);
+				parent.children.push(termWithChildren);
+			} else {
+				rootTerms.push(termWithChildren);
+			}
+		}
 
-    return rootTerms;
-  },
+		return rootTerms;
+	},
 });
 
 // =============================================================================
@@ -546,54 +569,62 @@ export const getTermsHierarchy = query({
  * ```
  */
 export const suggestTerms = query({
-  args: {
-    taxonomyId: v.id("taxonomies"),
-    query: v.string(),
-    limit: v.optional(v.number()),
-    excludeIds: v.optional(v.array(v.id("taxonomy_terms"))),
-  },
-  returns: v.array(taxonomyTermDoc),
-  handler: async (ctx, args) => {
-    const { taxonomyId, query: searchQuery, limit = 10, excludeIds = [] } = args;
+	args: {
+		taxonomyId: v.id("taxonomies"),
+		query: v.string(),
+		limit: v.optional(v.number()),
+		excludeIds: v.optional(v.array(v.id("taxonomyTerms"))),
+	},
+	returns: v.array(taxonomyTermDoc),
+	handler: async (ctx, args) => {
+		const {
+			taxonomyId,
+			query: searchQuery,
+			limit = 10,
+			excludeIds = [],
+		} = args;
 
-    const excludeSet = new Set(excludeIds);
+		const excludeSet = new Set(excludeIds);
 
-    if (!searchQuery || searchQuery.trim().length === 0) {
-      // Return popular terms if no query
-      const terms = await ctx.db
-        .query("taxonomy_terms")
-        .withIndex("by_taxonomy_and_usage", (q) => q.eq("taxonomyId", taxonomyId))
-        .order("desc")
-        .take(limit * 2);
+		if (!searchQuery || searchQuery.trim().length === 0) {
+			// Return popular terms if no query
+			const terms = await ctx.db
+				.query("taxonomyTerms")
+				.withIndex("by_taxonomy_and_usage", (q) =>
+					q.eq("taxonomyId", taxonomyId),
+				)
+				.order("desc")
+				.take(limit * 2);
 
-      return terms
-        .filter((t) => t.deletedAt === undefined && !excludeSet.has(t._id))
-        .slice(0, limit);
-    }
+			return terms
+				.filter((t) => t.deletedAt === undefined && !excludeSet.has(t._id))
+				.slice(0, limit);
+		}
 
-    // Search for matching terms
-    const terms = await ctx.db
-      .query("taxonomy_terms")
-      .withSearchIndex("search_terms", (q) =>
-        q.search("searchText", searchQuery.trim()).eq("taxonomyId", taxonomyId)
-      )
-      .take(limit * 2);
+		// Search for matching terms
+		const terms = await ctx.db
+			.query("taxonomyTerms")
+			.withSearchIndex("search_terms", (q) =>
+				q.search("searchText", searchQuery.trim()).eq("taxonomyId", taxonomyId),
+			)
+			.take(limit * 2);
 
-    // Filter and limit
-    const filtered = terms
-      .filter((t) => t.deletedAt === undefined && !excludeSet.has(t._id));
+		// Filter and limit
+		const filtered = terms.filter(
+			(t) => t.deletedAt === undefined && !excludeSet.has(t._id),
+		);
 
-    // Sort by: exact prefix match first, then usage count
-    const query = searchQuery.toLowerCase();
-    filtered.sort((a, b) => {
-      const aExact = a.name.toLowerCase().startsWith(query) ? 0 : 1;
-      const bExact = b.name.toLowerCase().startsWith(query) ? 0 : 1;
-      if (aExact !== bExact) return aExact - bExact;
-      return b.usageCount - a.usageCount;
-    });
+		// Sort by: exact prefix match first, then usage count
+		const query = searchQuery.toLowerCase();
+		filtered.sort((a, b) => {
+			const aExact = a.name.toLowerCase().startsWith(query) ? 0 : 1;
+			const bExact = b.name.toLowerCase().startsWith(query) ? 0 : 1;
+			if (aExact !== bExact) return aExact - bExact;
+			return b.usageCount - a.usageCount;
+		});
 
-    return filtered.slice(0, limit);
-  },
+		return filtered.slice(0, limit);
+	},
 });
 
 // =============================================================================
@@ -624,55 +655,55 @@ export const suggestTerms = query({
  * ```
  */
 export const getTermsByEntry = query({
-  args: {
-    entryId: v.id("content_entries"),
-    taxonomyId: v.optional(v.id("taxonomies")),
-    fieldName: v.optional(v.string()),
-  },
-  returns: v.array(
-    v.object({
-      ...taxonomyTermDoc.fields,
-      fieldName: v.string(),
-      sortOrder: v.optional(v.number()),
-    })
-  ),
-  handler: async (ctx, args) => {
-    const { entryId, taxonomyId, fieldName } = args;
+	args: {
+		entryId: v.id("contentEntries"),
+		taxonomyId: v.optional(v.id("taxonomies")),
+		fieldName: v.optional(v.string()),
+	},
+	returns: v.array(
+		v.object({
+			...taxonomyTermDoc.fields,
+			fieldName: v.string(),
+			sortOrder: v.optional(v.number()),
+		}),
+	),
+	handler: async (ctx, args) => {
+		const { entryId, taxonomyId, fieldName } = args;
 
-    // Get the junction table entries
-    let junctionQuery = ctx.db
-      .query("content_entry_tags")
-      .withIndex("by_entry", (q) => q.eq("entryId", entryId));
+		// Get the junction table entries
+		let junctionQuery = ctx.db
+			.query("contentEntryTags")
+			.withIndex("by_entry", (q) => q.eq("entryId", entryId));
 
-    const junctionEntries = await junctionQuery.collect();
+		const junctionEntries = await junctionQuery.collect();
 
-    // Filter by taxonomy or field if specified
-    let filtered = junctionEntries;
-    if (taxonomyId) {
-      filtered = filtered.filter((j) => j.taxonomyId === taxonomyId);
-    }
-    if (fieldName) {
-      filtered = filtered.filter((j) => j.fieldName === fieldName);
-    }
+		// Filter by taxonomy or field if specified
+		let filtered = junctionEntries;
+		if (taxonomyId) {
+			filtered = filtered.filter((j) => j.taxonomyId === taxonomyId);
+		}
+		if (fieldName) {
+			filtered = filtered.filter((j) => j.fieldName === fieldName);
+		}
 
-    // Sort by sortOrder
-    filtered.sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+		// Sort by sortOrder
+		filtered.sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
 
-    // Fetch the actual terms
-    const results = [];
-    for (const junction of filtered) {
-      const term = await ctx.db.get(junction.termId);
-      if (term && term.deletedAt === undefined) {
-        results.push({
-          ...term,
-          fieldName: junction.fieldName,
-          sortOrder: junction.sortOrder,
-        });
-      }
-    }
+		// Fetch the actual terms
+		const results = [];
+		for (const junction of filtered) {
+			const term = await ctx.db.get(junction.termId);
+			if (term && term.deletedAt === undefined) {
+				results.push({
+					...term,
+					fieldName: junction.fieldName,
+					sortOrder: junction.sortOrder,
+				});
+			}
+		}
 
-    return results;
-  },
+		return results;
+	},
 });
 
 // =============================================================================
@@ -699,66 +730,77 @@ export const getTermsByEntry = query({
  * ```
  */
 export const getEntriesByTerm = query({
-  args: {
-    termId: v.id("taxonomy_terms"),
-    status: v.optional(v.union(
-      v.literal("draft"),
-      v.literal("published"),
-      v.literal("archived"),
-      v.literal("scheduled")
-    )),
-    paginationOpts: v.optional(paginationOptsValidator),
-  },
-  returns: v.object({
-    page: v.array(v.id("content_entries")),
-    continueCursor: v.union(v.string(), v.null()),
-    isDone: v.boolean(),
-  }),
-  handler: async (ctx, args) => {
-    const { termId, status, paginationOpts } = args;
+	args: {
+		termId: v.id("taxonomyTerms"),
+		status: v.optional(
+			v.union(
+				v.literal("draft"),
+				v.literal("published"),
+				v.literal("archived"),
+				v.literal("scheduled"),
+			),
+		),
+		paginationOpts: v.optional(paginationOptsValidator),
+	},
+	returns: v.object({
+		page: v.array(v.id("contentEntries")),
+		continueCursor: v.union(v.string(), v.null()),
+		isDone: v.boolean(),
+	}),
+	handler: async (ctx, args) => {
+		const { termId, status, paginationOpts } = args;
 
-    const numItems = paginationOpts
-      ? Math.min(Math.max(1, paginationOpts.numItems ?? DEFAULT_NUM_ITEMS), MAX_NUM_ITEMS)
-      : DEFAULT_NUM_ITEMS;
+		const numItems = paginationOpts
+			? Math.min(
+					Math.max(1, paginationOpts.numItems ?? DEFAULT_NUM_ITEMS),
+					MAX_NUM_ITEMS,
+			  )
+			: DEFAULT_NUM_ITEMS;
 
-    // Get junction entries for this term
-    const junctionEntries = await ctx.db
-      .query("content_entry_tags")
-      .withIndex("by_term", (q) => q.eq("termId", termId))
-      .collect();
+		// Get junction entries for this term
+		const junctionEntries = await ctx.db
+			.query("contentEntryTags")
+			.withIndex("by_term", (q) => q.eq("termId", termId))
+			.collect();
 
-    // Get unique entry IDs
-    const entryIds = [...new Set(junctionEntries.map((j) => j.entryId))];
+		// Get unique entry IDs
+		const entryIds = [...new Set(junctionEntries.map((j) => j.entryId))];
 
-    // Filter by status if needed
-    let filteredEntryIds = entryIds;
-    if (status) {
-      const validEntryIds: typeof entryIds = [];
-      for (const entryId of entryIds) {
-        const entry = await ctx.db.get(entryId);
-        if (entry && entry.status === status && entry.deletedAt === undefined) {
-          validEntryIds.push(entryId);
-        }
-      }
-      filteredEntryIds = validEntryIds;
-    }
+		// Filter by status if needed
+		let filteredEntryIds = entryIds;
+		if (status) {
+			const validEntryIds: typeof entryIds = [];
+			for (const entryId of entryIds) {
+				const entry = await ctx.db.get(entryId);
+				if (entry && entry.status === status && entry.deletedAt === undefined) {
+					validEntryIds.push(entryId);
+				}
+			}
+			filteredEntryIds = validEntryIds;
+		}
 
-    // Handle pagination
-    let startIndex = 0;
-    if (paginationOpts?.cursor) {
-      const cursorIndex = filteredEntryIds.findIndex((id) => id === paginationOpts.cursor);
-      if (cursorIndex !== -1) {
-        startIndex = cursorIndex + 1;
-      }
-    }
+		// Handle pagination
+		let startIndex = 0;
+		if (paginationOpts?.cursor) {
+			const cursorIndex = filteredEntryIds.findIndex(
+				(id) => id === paginationOpts.cursor,
+			);
+			if (cursorIndex !== -1) {
+				startIndex = cursorIndex + 1;
+			}
+		}
 
-    const pageResults = filteredEntryIds.slice(startIndex, startIndex + numItems + 1);
-    const isDone = pageResults.length <= numItems;
-    const page = isDone ? pageResults : pageResults.slice(0, numItems);
-    const continueCursor = !isDone && page.length > 0 ? page[page.length - 1] : null;
+		const pageResults = filteredEntryIds.slice(
+			startIndex,
+			startIndex + numItems + 1,
+		);
+		const isDone = pageResults.length <= numItems;
+		const page = isDone ? pageResults : pageResults.slice(0, numItems);
+		const continueCursor =
+			!isDone && page.length > 0 ? page[page.length - 1] : null;
 
-    return { page, continueCursor, isDone };
-  },
+		return { page, continueCursor, isDone };
+	},
 });
 
 // =============================================================================
@@ -774,25 +816,25 @@ export const getEntriesByTerm = query({
  * @returns Object containing the count
  */
 export const countTerms = query({
-  args: {
-    taxonomyId: v.id("taxonomies"),
-    includeDeleted: v.optional(v.boolean()),
-  },
-  returns: v.object({
-    count: v.number(),
-  }),
-  handler: async (ctx, args) => {
-    const { taxonomyId, includeDeleted = false } = args;
+	args: {
+		taxonomyId: v.id("taxonomies"),
+		includeDeleted: v.optional(v.boolean()),
+	},
+	returns: v.object({
+		count: v.number(),
+	}),
+	handler: async (ctx, args) => {
+		const { taxonomyId, includeDeleted = false } = args;
 
-    const terms = await ctx.db
-      .query("taxonomy_terms")
-      .withIndex("by_taxonomy", (q) => q.eq("taxonomyId", taxonomyId))
-      .collect();
+		const terms = await ctx.db
+			.query("taxonomyTerms")
+			.withIndex("by_taxonomy", (q) => q.eq("taxonomyId", taxonomyId))
+			.collect();
 
-    const filteredTerms = includeDeleted
-      ? terms
-      : terms.filter((t) => t.deletedAt === undefined);
+		const filteredTerms = includeDeleted
+			? terms
+			: terms.filter((t) => t.deletedAt === undefined);
 
-    return { count: filteredTerms.length };
-  },
+		return { count: filteredTerms.length };
+	},
 });

@@ -17,13 +17,11 @@ import { v } from "convex/values";
 import { internalQuery, query } from "./_generated/server.js";
 import { Id } from "./_generated/dataModel.js";
 import {
-  validateContentData,
-  validateReferenceContentType,
-  ContentData,
-  ContentTypeSchema,
-  FieldDefinition,
-  ValidationError,
-  ValidationResult,
+	validateContentData,
+	ContentData,
+	ContentTypeSchema,
+	FieldDefinition,
+	ValidationError,
 } from "./validation.js";
 
 // =============================================================================
@@ -34,34 +32,34 @@ import {
  * Extended validation result that includes reference validation errors
  */
 export type ContentEntryValidationResult = {
-  /** Whether the validation passed */
-  valid: boolean;
-  /** Array of validation errors (empty if valid) */
-  errors: ValidationError[];
-  /** Content type name (if found) */
-  contentTypeName?: string;
-  /** Content type display name (if found) */
-  contentTypeDisplayName?: string;
-  /** Whether reference validation was performed */
-  referencesValidated: boolean;
+	/** Whether the validation passed */
+	valid: boolean;
+	/** Array of validation errors (empty if valid) */
+	errors: ValidationError[];
+	/** Content type name (if found) */
+	contentTypeName?: string;
+	/** Content type display name (if found) */
+	contentTypeDisplayName?: string;
+	/** Whether reference validation was performed */
+	referencesValidated: boolean;
 };
 
 /**
  * Options for content entry validation
  */
 export interface ValidateContentEntryOptions {
-  /**
-   * If true, validates that referenced entries exist and belong to allowed content types.
-   * This requires additional database queries but provides complete validation.
-   * Default: true
-   */
-  validateReferences?: boolean;
+	/**
+	 * If true, validates that referenced entries exist and belong to allowed content types.
+	 * This requires additional database queries but provides complete validation.
+	 * Default: true
+	 */
+	validateReferences?: boolean;
 
-  /**
-   * If true, reports unknown fields (fields not defined in the content type) as errors.
-   * Default: false
-   */
-  strictFields?: boolean;
+	/**
+	 * If true, reports unknown fields (fields not defined in the content type) as errors.
+	 * Default: false
+	 */
+	strictFields?: boolean;
 }
 
 // =============================================================================
@@ -72,51 +70,51 @@ export interface ValidateContentEntryOptions {
  * Argument validator for validateContentEntry
  */
 const validateContentEntryArgs = v.object({
-  /** The content type ID to validate against */
-  contentTypeId: v.id("content_types"),
-  /** The content data to validate */
-  data: v.any(),
-  /** Validation options */
-  options: v.optional(
-    v.object({
-      validateReferences: v.optional(v.boolean()),
-      strictFields: v.optional(v.boolean()),
-    })
-  ),
+	/** The content type ID to validate against */
+	contentTypeId: v.id("contentTypes"),
+	/** The content data to validate */
+	data: v.any(),
+	/** Validation options */
+	options: v.optional(
+		v.object({
+			validateReferences: v.optional(v.boolean()),
+			strictFields: v.optional(v.boolean()),
+		}),
+	),
 });
 
 /**
  * Argument validator for validateContentEntryByTypeName
  */
 const validateContentEntryByTypeNameArgs = v.object({
-  /** The content type name to validate against */
-  contentTypeName: v.string(),
-  /** The content data to validate */
-  data: v.any(),
-  /** Validation options */
-  options: v.optional(
-    v.object({
-      validateReferences: v.optional(v.boolean()),
-      strictFields: v.optional(v.boolean()),
-    })
-  ),
+	/** The content type name to validate against */
+	contentTypeName: v.string(),
+	/** The content data to validate */
+	data: v.any(),
+	/** Validation options */
+	options: v.optional(
+		v.object({
+			validateReferences: v.optional(v.boolean()),
+			strictFields: v.optional(v.boolean()),
+		}),
+	),
 });
 
 /**
  * Return validator for validation results
  */
 const validationResultValidator = v.object({
-  valid: v.boolean(),
-  errors: v.array(
-    v.object({
-      field: v.string(),
-      message: v.string(),
-      code: v.string(),
-    })
-  ),
-  contentTypeName: v.optional(v.string()),
-  contentTypeDisplayName: v.optional(v.string()),
-  referencesValidated: v.boolean(),
+	valid: v.boolean(),
+	errors: v.array(
+		v.object({
+			field: v.string(),
+			message: v.string(),
+			code: v.string(),
+		}),
+	),
+	contentTypeName: v.optional(v.string()),
+	contentTypeDisplayName: v.optional(v.string()),
+	referencesValidated: v.boolean(),
 });
 
 // =============================================================================
@@ -156,99 +154,101 @@ const validationResultValidator = v.object({
  * ```
  */
 export const validateContentEntry = internalQuery({
-  args: validateContentEntryArgs.fields,
-  returns: validationResultValidator,
-  handler: async (ctx, args): Promise<ContentEntryValidationResult> => {
-    const { contentTypeId, data, options } = args;
-    const validateReferences = options?.validateReferences ?? true;
-    const strictFields = options?.strictFields ?? false;
+	args: validateContentEntryArgs.fields,
+	returns: validationResultValidator,
+	handler: async (ctx, args): Promise<ContentEntryValidationResult> => {
+		const { contentTypeId, data, options } = args;
+		const validateReferences = options?.validateReferences ?? true;
+		const strictFields = options?.strictFields ?? false;
 
-    // Fetch the content type
-    const contentType = await ctx.db.get(contentTypeId);
-    if (!contentType) {
-      return {
-        valid: false,
-        errors: [
-          {
-            field: "_contentType",
-            message: `Content type not found: ${contentTypeId}`,
-            code: "INVALID_CONTENT_TYPE",
-          },
-        ],
-        referencesValidated: false,
-      };
-    }
+		// Fetch the content type
+		const contentType = await ctx.db.get(contentTypeId);
+		if (!contentType) {
+			return {
+				valid: false,
+				errors: [
+					{
+						field: "_contentType",
+						message: `Content type not found: ${contentTypeId}`,
+						code: "INVALID_CONTENT_TYPE",
+					},
+				],
+				referencesValidated: false,
+			};
+		}
 
-    if (contentType.deletedAt !== undefined) {
-      return {
-        valid: false,
-        errors: [
-          {
-            field: "_contentType",
-            message: `Content type has been deleted: ${contentType.name}`,
-            code: "INVALID_CONTENT_TYPE",
-          },
-        ],
-        contentTypeName: contentType.name,
-        contentTypeDisplayName: contentType.displayName,
-        referencesValidated: false,
-      };
-    }
+		if (contentType.deletedAt !== undefined) {
+			return {
+				valid: false,
+				errors: [
+					{
+						field: "_contentType",
+						message: `Content type has been deleted: ${contentType.name}`,
+						code: "INVALID_CONTENT_TYPE",
+					},
+				],
+				contentTypeName: contentType.name,
+				contentTypeDisplayName: contentType.displayName,
+				referencesValidated: false,
+			};
+		}
 
-    if (!contentType.isActive) {
-      return {
-        valid: false,
-        errors: [
-          {
-            field: "_contentType",
-            message: `Content type is not active: ${contentType.name}`,
-            code: "INVALID_CONTENT_TYPE",
-          },
-        ],
-        contentTypeName: contentType.name,
-        contentTypeDisplayName: contentType.displayName,
-        referencesValidated: false,
-      };
-    }
+		if (!contentType.isActive) {
+			return {
+				valid: false,
+				errors: [
+					{
+						field: "_contentType",
+						message: `Content type is not active: ${contentType.name}`,
+						code: "INVALID_CONTENT_TYPE",
+					},
+				],
+				contentTypeName: contentType.name,
+				contentTypeDisplayName: contentType.displayName,
+				referencesValidated: false,
+			};
+		}
 
-    // Build the schema for validation
-    const schema: ContentTypeSchema = {
-      name: contentType.name,
-      displayName: contentType.displayName,
-      description: contentType.description,
-      fields: contentType.fields as FieldDefinition[],
-      titleField: contentType.titleField,
-      slugField: contentType.slugField,
-      singleton: contentType.singleton,
-    };
+		// Build the schema for validation
+		const schema: ContentTypeSchema = {
+			name: contentType.name,
+			displayName: contentType.displayName,
+			description: contentType.description,
+			fields: contentType.fields as FieldDefinition[],
+			titleField: contentType.titleField,
+			slugField: contentType.slugField,
+			singleton: contentType.singleton,
+		};
 
-    // Perform basic validation
-    const contentData = data as ContentData;
-    const basicResult = validateContentData(contentData, schema, { strictFields });
+		// Perform basic validation
+		const contentData = data as ContentData;
+		const basicResult = validateContentData(contentData, schema, {
+			strictFields,
+		});
 
-    // Collect all errors
-    const errors: ValidationError[] = [...basicResult.errors];
+		// Collect all errors
+		const errors: ValidationError[] = [...basicResult.errors];
 
-    // Perform reference validation if enabled
-    let referencesValidated = false;
-    if (validateReferences) {
-      const referenceErrors = await validateReferences_internal(
-        ctx,
-        contentData,
-        schema.fields
-      );
-      errors.push(...referenceErrors);
-      referencesValidated = true;
-    }
+		// Perform reference validation if enabled
+		let referencesValidated = false;
+		if (validateReferences) {
+			const referenceErrors = await validateReferences_internal(
+				ctx,
+				contentData,
+				schema.fields,
+			);
+			errors.push(...referenceErrors);
+			referencesValidated = true;
+		}
 
-    return {
-      valid: errors.length === 0,
-      errors,
-      contentTypeName: contentType.name,
-      contentTypeDisplayName: contentType.displayName,
-      referencesValidated,
-    };
-  },
+		return {
+			valid: errors.length === 0,
+			errors,
+			contentTypeName: contentType.name,
+			contentTypeDisplayName: contentType.displayName,
+			referencesValidated,
+		};
+	},
 });
 
 /**
@@ -258,99 +258,101 @@ export const validateContentEntry = internalQuery({
  * from the client (e.g., for form validation before submission).
  */
 export const validateEntry = query({
-  args: validateContentEntryArgs.fields,
-  returns: validationResultValidator,
-  handler: async (ctx, args): Promise<ContentEntryValidationResult> => {
-    const { contentTypeId, data, options } = args;
-    const validateReferencesOption = options?.validateReferences ?? true;
-    const strictFields = options?.strictFields ?? false;
+	args: validateContentEntryArgs.fields,
+	returns: validationResultValidator,
+	handler: async (ctx, args): Promise<ContentEntryValidationResult> => {
+		const { contentTypeId, data, options } = args;
+		const validateReferencesOption = options?.validateReferences ?? true;
+		const strictFields = options?.strictFields ?? false;
 
-    // Fetch the content type
-    const contentType = await ctx.db.get(contentTypeId);
-    if (!contentType) {
-      return {
-        valid: false,
-        errors: [
-          {
-            field: "_contentType",
-            message: `Content type not found: ${contentTypeId}`,
-            code: "INVALID_CONTENT_TYPE",
-          },
-        ],
-        referencesValidated: false,
-      };
-    }
+		// Fetch the content type
+		const contentType = await ctx.db.get(contentTypeId);
+		if (!contentType) {
+			return {
+				valid: false,
+				errors: [
+					{
+						field: "_contentType",
+						message: `Content type not found: ${contentTypeId}`,
+						code: "INVALID_CONTENT_TYPE",
+					},
+				],
+				referencesValidated: false,
+			};
+		}
 
-    if (contentType.deletedAt !== undefined) {
-      return {
-        valid: false,
-        errors: [
-          {
-            field: "_contentType",
-            message: `Content type has been deleted: ${contentType.name}`,
-            code: "INVALID_CONTENT_TYPE",
-          },
-        ],
-        contentTypeName: contentType.name,
-        contentTypeDisplayName: contentType.displayName,
-        referencesValidated: false,
-      };
-    }
+		if (contentType.deletedAt !== undefined) {
+			return {
+				valid: false,
+				errors: [
+					{
+						field: "_contentType",
+						message: `Content type has been deleted: ${contentType.name}`,
+						code: "INVALID_CONTENT_TYPE",
+					},
+				],
+				contentTypeName: contentType.name,
+				contentTypeDisplayName: contentType.displayName,
+				referencesValidated: false,
+			};
+		}
 
-    if (!contentType.isActive) {
-      return {
-        valid: false,
-        errors: [
-          {
-            field: "_contentType",
-            message: `Content type is not active: ${contentType.name}`,
-            code: "INVALID_CONTENT_TYPE",
-          },
-        ],
-        contentTypeName: contentType.name,
-        contentTypeDisplayName: contentType.displayName,
-        referencesValidated: false,
-      };
-    }
+		if (!contentType.isActive) {
+			return {
+				valid: false,
+				errors: [
+					{
+						field: "_contentType",
+						message: `Content type is not active: ${contentType.name}`,
+						code: "INVALID_CONTENT_TYPE",
+					},
+				],
+				contentTypeName: contentType.name,
+				contentTypeDisplayName: contentType.displayName,
+				referencesValidated: false,
+			};
+		}
 
-    // Build the schema for validation
-    const schema: ContentTypeSchema = {
-      name: contentType.name,
-      displayName: contentType.displayName,
-      description: contentType.description,
-      fields: contentType.fields as FieldDefinition[],
-      titleField: contentType.titleField,
-      slugField: contentType.slugField,
-      singleton: contentType.singleton,
-    };
+		// Build the schema for validation
+		const schema: ContentTypeSchema = {
+			name: contentType.name,
+			displayName: contentType.displayName,
+			description: contentType.description,
+			fields: contentType.fields as FieldDefinition[],
+			titleField: contentType.titleField,
+			slugField: contentType.slugField,
+			singleton: contentType.singleton,
+		};
 
-    // Perform basic validation
-    const contentData = data as ContentData;
-    const basicResult = validateContentData(contentData, schema, { strictFields });
+		// Perform basic validation
+		const contentData = data as ContentData;
+		const basicResult = validateContentData(contentData, schema, {
+			strictFields,
+		});
 
-    // Collect all errors
-    const errors: ValidationError[] = [...basicResult.errors];
+		// Collect all errors
+		const errors: ValidationError[] = [...basicResult.errors];
 
-    // Perform reference validation if enabled
-    let referencesValidated = false;
-    if (validateReferencesOption) {
-      const referenceErrors = await validateReferences_internal(
-        ctx,
-        contentData,
-        schema.fields
-      );
-      errors.push(...referenceErrors);
-      referencesValidated = true;
-    }
+		// Perform reference validation if enabled
+		let referencesValidated = false;
+		if (validateReferencesOption) {
+			const referenceErrors = await validateReferences_internal(
+				ctx,
+				contentData,
+				schema.fields,
+			);
+			errors.push(...referenceErrors);
+			referencesValidated = true;
+		}
 
-    return {
-      valid: errors.length === 0,
-      errors,
-      contentTypeName: contentType.name,
-      contentTypeDisplayName: contentType.displayName,
-      referencesValidated,
-    };
-  },
+		return {
+			valid: errors.length === 0,
+			errors,
+			contentTypeName: contentType.name,
+			contentTypeDisplayName: contentType.displayName,
+			referencesValidated,
+		};
+	},
 });
 
 /**
@@ -360,105 +362,107 @@ export const validateEntry = query({
  * Useful when you know the type name but not the ID.
  */
 export const validateContentEntryByTypeName = internalQuery({
-  args: validateContentEntryByTypeNameArgs.fields,
-  returns: validationResultValidator,
-  handler: async (ctx, args): Promise<ContentEntryValidationResult> => {
-    const { contentTypeName, data, options } = args;
+	args: validateContentEntryByTypeNameArgs.fields,
+	returns: validationResultValidator,
+	handler: async (ctx, args): Promise<ContentEntryValidationResult> => {
+		const { contentTypeName, data, options } = args;
 
-    // Find the content type by name
-    const contentType = await ctx.db
-      .query("content_types")
-      .withIndex("by_name", (q) => q.eq("name", contentTypeName))
-      .first();
+		// Find the content type by name
+		const contentType = await ctx.db
+			.query("contentTypes")
+			.withIndex("by_name", (q) => q.eq("name", contentTypeName))
+			.first();
 
-    if (!contentType) {
-      return {
-        valid: false,
-        errors: [
-          {
-            field: "_contentType",
-            message: `Content type not found: ${contentTypeName}`,
-            code: "INVALID_CONTENT_TYPE",
-          },
-        ],
-        referencesValidated: false,
-      };
-    }
+		if (!contentType) {
+			return {
+				valid: false,
+				errors: [
+					{
+						field: "_contentType",
+						message: `Content type not found: ${contentTypeName}`,
+						code: "INVALID_CONTENT_TYPE",
+					},
+				],
+				referencesValidated: false,
+			};
+		}
 
-    // Delegate to the ID-based validation
-    const validateReferencesOption = options?.validateReferences ?? true;
-    const strictFields = options?.strictFields ?? false;
+		// Delegate to the ID-based validation
+		const validateReferencesOption = options?.validateReferences ?? true;
+		const strictFields = options?.strictFields ?? false;
 
-    if (contentType.deletedAt !== undefined) {
-      return {
-        valid: false,
-        errors: [
-          {
-            field: "_contentType",
-            message: `Content type has been deleted: ${contentType.name}`,
-            code: "INVALID_CONTENT_TYPE",
-          },
-        ],
-        contentTypeName: contentType.name,
-        contentTypeDisplayName: contentType.displayName,
-        referencesValidated: false,
-      };
-    }
+		if (contentType.deletedAt !== undefined) {
+			return {
+				valid: false,
+				errors: [
+					{
+						field: "_contentType",
+						message: `Content type has been deleted: ${contentType.name}`,
+						code: "INVALID_CONTENT_TYPE",
+					},
+				],
+				contentTypeName: contentType.name,
+				contentTypeDisplayName: contentType.displayName,
+				referencesValidated: false,
+			};
+		}
 
-    if (!contentType.isActive) {
-      return {
-        valid: false,
-        errors: [
-          {
-            field: "_contentType",
-            message: `Content type is not active: ${contentType.name}`,
-            code: "INVALID_CONTENT_TYPE",
-          },
-        ],
-        contentTypeName: contentType.name,
-        contentTypeDisplayName: contentType.displayName,
-        referencesValidated: false,
-      };
-    }
+		if (!contentType.isActive) {
+			return {
+				valid: false,
+				errors: [
+					{
+						field: "_contentType",
+						message: `Content type is not active: ${contentType.name}`,
+						code: "INVALID_CONTENT_TYPE",
+					},
+				],
+				contentTypeName: contentType.name,
+				contentTypeDisplayName: contentType.displayName,
+				referencesValidated: false,
+			};
+		}
 
-    // Build the schema for validation
-    const schema: ContentTypeSchema = {
-      name: contentType.name,
-      displayName: contentType.displayName,
-      description: contentType.description,
-      fields: contentType.fields as FieldDefinition[],
-      titleField: contentType.titleField,
-      slugField: contentType.slugField,
-      singleton: contentType.singleton,
-    };
+		// Build the schema for validation
+		const schema: ContentTypeSchema = {
+			name: contentType.name,
+			displayName: contentType.displayName,
+			description: contentType.description,
+			fields: contentType.fields as FieldDefinition[],
+			titleField: contentType.titleField,
+			slugField: contentType.slugField,
+			singleton: contentType.singleton,
+		};
 
-    // Perform basic validation
-    const contentData = data as ContentData;
-    const basicResult = validateContentData(contentData, schema, { strictFields });
+		// Perform basic validation
+		const contentData = data as ContentData;
+		const basicResult = validateContentData(contentData, schema, {
+			strictFields,
+		});
 
-    // Collect all errors
-    const errors: ValidationError[] = [...basicResult.errors];
+		// Collect all errors
+		const errors: ValidationError[] = [...basicResult.errors];
 
-    // Perform reference validation if enabled
-    let referencesValidated = false;
-    if (validateReferencesOption) {
-      const referenceErrors = await validateReferences_internal(
-        ctx,
-        contentData,
-        schema.fields
-      );
-      errors.push(...referenceErrors);
-      referencesValidated = true;
-    }
+		// Perform reference validation if enabled
+		let referencesValidated = false;
+		if (validateReferencesOption) {
+			const referenceErrors = await validateReferences_internal(
+				ctx,
+				contentData,
+				schema.fields,
+			);
+			errors.push(...referenceErrors);
+			referencesValidated = true;
+		}
 
-    return {
-      valid: errors.length === 0,
-      errors,
-      contentTypeName: contentType.name,
-      contentTypeDisplayName: contentType.displayName,
-      referencesValidated,
-    };
-  },
+		return {
+			valid: errors.length === 0,
+			errors,
+			contentTypeName: contentType.name,
+			contentTypeDisplayName: contentType.displayName,
+			referencesValidated,
+		};
+	},
 });
 
 // =============================================================================
@@ -475,214 +479,218 @@ export const validateContentEntryByTypeName = internalQuery({
  * @returns Array of validation errors for invalid references
  */
 async function validateReferences_internal(
-  ctx: { db: { get: (id: Id<any>) => Promise<any> } },
-  data: ContentData,
-  fields: FieldDefinition[]
+	ctx: { db: { get: (id: Id<any>) => Promise<any> } },
+	data: ContentData,
+	fields: FieldDefinition[],
 ): Promise<ValidationError[]> {
-  const errors: ValidationError[] = [];
+	const errors: ValidationError[] = [];
 
-  for (const field of fields) {
-    const value = data[field.name];
+	for (const field of fields) {
+		const value = data[field.name];
 
-    // Skip if no value
-    if (value === null || value === undefined) {
-      continue;
-    }
+		// Skip if no value
+		if (value === null || value === undefined) {
+			continue;
+		}
 
-    if (field.type === "reference") {
-      const multiple = field.options?.multiple ?? false;
-      const allowedContentTypes = field.options?.allowedContentTypes;
+		if (field.type === "reference") {
+			const multiple = field.options?.multiple ?? false;
+			const allowedContentTypes = field.options?.allowedContentTypes;
 
-      if (multiple && Array.isArray(value)) {
-        // Multiple references
-        for (let i = 0; i < value.length; i++) {
-          const refId = value[i];
-          if (typeof refId === "string") {
-            const refErrors = await validateSingleReference(
-              ctx,
-              refId,
-              field.name,
-              allowedContentTypes,
-              i
-            );
-            errors.push(...refErrors);
-          }
-        }
-      } else if (!multiple && typeof value === "string") {
-        // Single reference
-        const refErrors = await validateSingleReference(
-          ctx,
-          value,
-          field.name,
-          allowedContentTypes
-        );
-        errors.push(...refErrors);
-      }
-    }
+			if (multiple && Array.isArray(value)) {
+				// Multiple references
+				for (let i = 0; i < value.length; i++) {
+					const refId = value[i];
+					if (typeof refId === "string") {
+						const refErrors = await validateSingleReference(
+							ctx,
+							refId,
+							field.name,
+							allowedContentTypes,
+							i,
+						);
+						errors.push(...refErrors);
+					}
+				}
+			} else if (!multiple && typeof value === "string") {
+				// Single reference
+				const refErrors = await validateSingleReference(
+					ctx,
+					value,
+					field.name,
+					allowedContentTypes,
+				);
+				errors.push(...refErrors);
+			}
+		}
 
-    if (field.type === "media") {
-      const multiple = field.options?.multiple ?? false;
+		if (field.type === "media") {
+			const multiple = field.options?.multiple ?? false;
 
-      if (multiple && Array.isArray(value)) {
-        // Multiple media assets
-        for (let i = 0; i < value.length; i++) {
-          const assetId = value[i];
-          if (typeof assetId === "string") {
-            const mediaErrors = await validateSingleMediaAsset(
-              ctx,
-              assetId,
-              field.name,
-              field.options?.allowedMimeTypes,
-              field.options?.maxFileSize,
-              i
-            );
-            errors.push(...mediaErrors);
-          }
-        }
-      } else if (!multiple && typeof value === "string") {
-        // Single media asset
-        const mediaErrors = await validateSingleMediaAsset(
-          ctx,
-          value,
-          field.name,
-          field.options?.allowedMimeTypes,
-          field.options?.maxFileSize
-        );
-        errors.push(...mediaErrors);
-      }
-    }
-  }
+			if (multiple && Array.isArray(value)) {
+				// Multiple media assets
+				for (let i = 0; i < value.length; i++) {
+					const assetId = value[i];
+					if (typeof assetId === "string") {
+						const mediaErrors = await validateSingleMediaAsset(
+							ctx,
+							assetId,
+							field.name,
+							field.options?.allowedMimeTypes,
+							field.options?.maxFileSize,
+							i,
+						);
+						errors.push(...mediaErrors);
+					}
+				}
+			} else if (!multiple && typeof value === "string") {
+				// Single media asset
+				const mediaErrors = await validateSingleMediaAsset(
+					ctx,
+					value,
+					field.name,
+					field.options?.allowedMimeTypes,
+					field.options?.maxFileSize,
+				);
+				errors.push(...mediaErrors);
+			}
+		}
+	}
 
-  return errors;
+	return errors;
 }
 
 /**
  * Validates a single reference to a content entry.
  */
 async function validateSingleReference(
-  ctx: { db: { get: (id: Id<any>) => Promise<any> } },
-  referenceId: string,
-  fieldName: string,
-  allowedContentTypes?: string[],
-  index?: number
+	ctx: { db: { get: (id: Id<any>) => Promise<any> } },
+	referenceId: string,
+	fieldName: string,
+	allowedContentTypes?: string[],
+	index?: number,
 ): Promise<ValidationError[]> {
-  const errors: ValidationError[] = [];
-  const fieldLabel = index !== undefined ? `${fieldName}[${index}]` : fieldName;
+	const errors: ValidationError[] = [];
+	const fieldLabel = index !== undefined ? `${fieldName}[${index}]` : fieldName;
 
-  try {
-    // Try to get the referenced entry
-    const entry = await ctx.db.get(referenceId as Id<"content_entries">);
+	try {
+		// Try to get the referenced entry
+		const entry = await ctx.db.get(referenceId as Id<"contentEntries">);
 
-    if (!entry) {
-      errors.push({
-        field: fieldLabel,
-        message: `Referenced entry not found: ${referenceId}`,
-        code: "INVALID_CONTENT_TYPE",
-      });
-      return errors;
-    }
+		if (!entry) {
+			errors.push({
+				field: fieldLabel,
+				message: `Referenced entry not found: ${referenceId}`,
+				code: "INVALID_CONTENT_TYPE",
+			});
+			return errors;
+		}
 
-    // Check if entry is deleted
-    if (entry.deletedAt !== undefined) {
-      errors.push({
-        field: fieldLabel,
-        message: `Referenced entry has been deleted: ${referenceId}`,
-        code: "INVALID_CONTENT_TYPE",
-      });
-      return errors;
-    }
+		// Check if entry is deleted
+		if (entry.deletedAt !== undefined) {
+			errors.push({
+				field: fieldLabel,
+				message: `Referenced entry has been deleted: ${referenceId}`,
+				code: "INVALID_CONTENT_TYPE",
+			});
+			return errors;
+		}
 
-    // Validate content type constraint
-    if (allowedContentTypes && allowedContentTypes.length > 0) {
-      const contentType = await ctx.db.get(entry.contentTypeId);
-      if (contentType) {
-        if (!allowedContentTypes.includes(contentType.name)) {
-          errors.push({
-            field: fieldLabel,
-            message: `Reference must be of type: ${allowedContentTypes.join(", ")}. Got: ${contentType.name}`,
-            code: "INVALID_CONTENT_TYPE",
-          });
-        }
-      }
-    }
-  } catch {
-    // Invalid ID format
-    errors.push({
-      field: fieldLabel,
-      message: `Invalid reference ID format: ${referenceId}`,
-      code: "INVALID_TYPE",
-    });
-  }
+		// Validate content type constraint
+		if (allowedContentTypes && allowedContentTypes.length > 0) {
+			const contentType = await ctx.db.get(entry.contentTypeId);
+			if (contentType) {
+				if (!allowedContentTypes.includes(contentType.name)) {
+					errors.push({
+						field: fieldLabel,
+						message: `Reference must be of type: ${allowedContentTypes.join(
+							", ",
+						)}. Got: ${contentType.name}`,
+						code: "INVALID_CONTENT_TYPE",
+					});
+				}
+			}
+		}
+	} catch {
+		// Invalid ID format
+		errors.push({
+			field: fieldLabel,
+			message: `Invalid reference ID format: ${referenceId}`,
+			code: "INVALID_TYPE",
+		});
+	}
 
-  return errors;
+	return errors;
 }
 
 /**
  * Validates a single media asset reference.
  */
 async function validateSingleMediaAsset(
-  ctx: { db: { get: (id: Id<any>) => Promise<any> } },
-  assetId: string,
-  fieldName: string,
-  allowedMimeTypes?: string[],
-  maxFileSize?: number,
-  index?: number
+	ctx: { db: { get: (id: Id<any>) => Promise<any> } },
+	assetId: string,
+	fieldName: string,
+	allowedMimeTypes?: string[],
+	maxFileSize?: number,
+	index?: number,
 ): Promise<ValidationError[]> {
-  const errors: ValidationError[] = [];
-  const fieldLabel = index !== undefined ? `${fieldName}[${index}]` : fieldName;
+	const errors: ValidationError[] = [];
+	const fieldLabel = index !== undefined ? `${fieldName}[${index}]` : fieldName;
 
-  try {
-    // Try to get the media asset
-    const asset = await ctx.db.get(assetId as Id<"media_assets">);
+	try {
+		// Try to get the media asset
+		const asset = await ctx.db.get(assetId as Id<"mediaAssets">);
 
-    if (!asset) {
-      errors.push({
-        field: fieldLabel,
-        message: `Media asset not found: ${assetId}`,
-        code: "INVALID_TYPE",
-      });
-      return errors;
-    }
+		if (!asset) {
+			errors.push({
+				field: fieldLabel,
+				message: `Media asset not found: ${assetId}`,
+				code: "INVALID_TYPE",
+			});
+			return errors;
+		}
 
-    // Check if asset is deleted
-    if (asset.deletedAt !== undefined) {
-      errors.push({
-        field: fieldLabel,
-        message: `Media asset has been deleted: ${assetId}`,
-        code: "INVALID_TYPE",
-      });
-      return errors;
-    }
+		// Check if asset is deleted
+		if (asset.deletedAt !== undefined) {
+			errors.push({
+				field: fieldLabel,
+				message: `Media asset has been deleted: ${assetId}`,
+				code: "INVALID_TYPE",
+			});
+			return errors;
+		}
 
-    // Validate MIME type constraint
-    if (allowedMimeTypes && allowedMimeTypes.length > 0) {
-      if (!allowedMimeTypes.includes(asset.mimeType)) {
-        errors.push({
-          field: fieldLabel,
-          message: `Media type not allowed. Expected: ${allowedMimeTypes.join(", ")}. Got: ${asset.mimeType}`,
-          code: "INVALID_MIME_TYPE",
-        });
-      }
-    }
+		// Validate MIME type constraint
+		if (allowedMimeTypes && allowedMimeTypes.length > 0) {
+			if (!allowedMimeTypes.includes(asset.mimeType)) {
+				errors.push({
+					field: fieldLabel,
+					message: `Media type not allowed. Expected: ${allowedMimeTypes.join(
+						", ",
+					)}. Got: ${asset.mimeType}`,
+					code: "INVALID_MIME_TYPE",
+				});
+			}
+		}
 
-    // Validate file size constraint
-    if (maxFileSize !== undefined && asset.size > maxFileSize) {
-      const maxSizeKB = Math.round(maxFileSize / 1024);
-      const actualSizeKB = Math.round(asset.size / 1024);
-      errors.push({
-        field: fieldLabel,
-        message: `File too large. Maximum: ${maxSizeKB}KB. Actual: ${actualSizeKB}KB`,
-        code: "FILE_TOO_LARGE",
-      });
-    }
-  } catch {
-    // Invalid ID format
-    errors.push({
-      field: fieldLabel,
-      message: `Invalid media asset ID format: ${assetId}`,
-      code: "INVALID_TYPE",
-    });
-  }
+		// Validate file size constraint
+		if (maxFileSize !== undefined && asset.size > maxFileSize) {
+			const maxSizeKB = Math.round(maxFileSize / 1024);
+			const actualSizeKB = Math.round(asset.size / 1024);
+			errors.push({
+				field: fieldLabel,
+				message: `File too large. Maximum: ${maxSizeKB}KB. Actual: ${actualSizeKB}KB`,
+				code: "FILE_TOO_LARGE",
+			});
+		}
+	} catch {
+		// Invalid ID format
+		errors.push({
+			field: fieldLabel,
+			message: `Invalid media asset ID format: ${assetId}`,
+			code: "INVALID_TYPE",
+		});
+	}
 
-  return errors;
+	return errors;
 }

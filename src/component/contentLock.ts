@@ -21,17 +21,17 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server.js";
 import {
-  acquireLockArgs,
-  releaseLockArgs,
-  forceReleaseLockArgs,
-  renewLockArgs,
-  checkLockArgs,
-  listLockedEntriesArgs,
-  lockStatusDoc,
-  lockAcquisitionResult,
-  contentEntryDoc,
-  DEFAULT_LOCK_DURATION_MS,
-  MAX_LOCK_DURATION_MS,
+	acquireLockArgs,
+	releaseLockArgs,
+	forceReleaseLockArgs,
+	renewLockArgs,
+	checkLockArgs,
+	listLockedEntriesArgs,
+	lockStatusDoc,
+	lockAcquisitionResult,
+	contentEntryDoc,
+	DEFAULT_LOCK_DURATION_MS,
+	MAX_LOCK_DURATION_MS,
 } from "./validators.js";
 
 // =============================================================================
@@ -44,10 +44,10 @@ import {
  * @returns true if lock is active, false if expired or not set
  */
 function isLockActive(lockExpiresAt: number | undefined): boolean {
-  if (lockExpiresAt === undefined) {
-    return false;
-  }
-  return Date.now() < lockExpiresAt;
+	if (lockExpiresAt === undefined) {
+		return false;
+	}
+	return Date.now() < lockExpiresAt;
 }
 
 /**
@@ -56,11 +56,11 @@ function isLockActive(lockExpiresAt: number | undefined): boolean {
  * @returns Time remaining in milliseconds, or 0 if expired
  */
 function getTimeRemaining(lockExpiresAt: number | undefined): number {
-  if (lockExpiresAt === undefined) {
-    return 0;
-  }
-  const remaining = lockExpiresAt - Date.now();
-  return remaining > 0 ? remaining : 0;
+	if (lockExpiresAt === undefined) {
+		return 0;
+	}
+	const remaining = lockExpiresAt - Date.now();
+	return remaining > 0 ? remaining : 0;
 }
 
 /**
@@ -69,13 +69,13 @@ function getTimeRemaining(lockExpiresAt: number | undefined): number {
  * @returns Clamped duration within allowed range
  */
 function validateLockDuration(requestedDuration: number | undefined): number {
-  const duration = requestedDuration ?? DEFAULT_LOCK_DURATION_MS;
+	const duration = requestedDuration ?? DEFAULT_LOCK_DURATION_MS;
 
-  if (duration <= 0) {
-    return DEFAULT_LOCK_DURATION_MS;
-  }
+	if (duration <= 0) {
+		return DEFAULT_LOCK_DURATION_MS;
+	}
 
-  return Math.min(duration, MAX_LOCK_DURATION_MS);
+	return Math.min(duration, MAX_LOCK_DURATION_MS);
 }
 
 // =============================================================================
@@ -102,30 +102,33 @@ function validateLockDuration(requestedDuration: number | undefined): number {
  * ```
  */
 export const checkLock = query({
-  args: checkLockArgs.fields,
-  returns: lockStatusDoc,
-  handler: async (ctx, args) => {
-    const { id } = args;
+	args: checkLockArgs.fields,
+	returns: lockStatusDoc,
+	handler: async (ctx, args) => {
+		const { id } = args;
 
-    const entry = await ctx.db.get(id);
-    if (!entry) {
-      throw new Error(`Content entry not found: ${id}`);
-    }
+		const entry = await ctx.db.get(id);
+		if (!entry) {
+			throw new Error(`Content entry not found: ${id}`);
+		}
 
-    const now = Date.now();
-    const hasLock = entry.lockedBy !== undefined && entry.lockExpiresAt !== undefined;
-    const isActive = hasLock && isLockActive(entry.lockExpiresAt);
-    const isExpired = hasLock && !isActive;
-    const timeRemaining = isActive ? getTimeRemaining(entry.lockExpiresAt) : undefined;
+		const _now = Date.now();
+		const hasLock =
+			entry.lockedBy !== undefined && entry.lockExpiresAt !== undefined;
+		const isActive = hasLock && isLockActive(entry.lockExpiresAt);
+		const isExpired = hasLock && !isActive;
+		const timeRemaining = isActive
+			? getTimeRemaining(entry.lockExpiresAt)
+			: undefined;
 
-    return {
-      isLocked: isActive,
-      lockedBy: isActive ? entry.lockedBy : undefined,
-      lockExpiresAt: isActive ? entry.lockExpiresAt : undefined,
-      timeRemaining,
-      isExpired,
-    };
-  },
+		return {
+			isLocked: isActive,
+			lockedBy: isActive ? entry.lockedBy : undefined,
+			lockExpiresAt: isActive ? entry.lockExpiresAt : undefined,
+			timeRemaining,
+			isExpired,
+		};
+	},
 });
 
 /**
@@ -140,80 +143,80 @@ export const checkLock = query({
  * @returns Paginated list of locked entries
  */
 export const listLockedEntries = query({
-  args: listLockedEntriesArgs.fields,
-  returns: v.object({
-    page: v.array(v.object({
-      ...contentEntryDoc.fields,
-      timeRemaining: v.optional(v.number()),
-    })),
-    continueCursor: v.union(v.string(), v.null()),
-    isDone: v.boolean(),
-  }),
-  handler: async (ctx, args) => {
-    const { contentTypeId, lockedBy, paginationOpts } = args;
-    const now = Date.now();
+	args: listLockedEntriesArgs.fields,
+	returns: v.object({
+		page: v.array(
+			v.object({
+				...contentEntryDoc.fields,
+				timeRemaining: v.optional(v.number()),
+			}),
+		),
+		continueCursor: v.union(v.string(), v.null()),
+		isDone: v.boolean(),
+	}),
+	handler: async (ctx, args) => {
+		const { contentTypeId, lockedBy, paginationOpts } = args;
+		const _now = Date.now();
 
-    // Query entries with locks using the by_locked index
-    let query = ctx.db
-      .query("content_entries")
-      .withIndex("by_locked");
+		// Query entries with locks using the by_locked index
+		const query = ctx.db.query("contentEntries").withIndex("by_locked");
 
-    // Collect all entries with locks
-    const allLocked = await query.collect();
+		// Collect all entries with locks
+		const allLocked = await query.collect();
 
-    // Filter to only active (non-expired) locks
-    let entries = allLocked.filter((entry) => {
-      // Must have lock fields set
-      if (entry.lockedBy === undefined || entry.lockExpiresAt === undefined) {
-        return false;
-      }
-      // Must not be expired
-      if (!isLockActive(entry.lockExpiresAt)) {
-        return false;
-      }
-      // Must not be deleted
-      if (entry.deletedAt !== undefined) {
-        return false;
-      }
-      // Apply content type filter if provided
-      if (contentTypeId && entry.contentTypeId !== contentTypeId) {
-        return false;
-      }
-      // Apply lockedBy filter if provided
-      if (lockedBy && entry.lockedBy !== lockedBy) {
-        return false;
-      }
-      return true;
-    });
+		// Filter to only active (non-expired) locks
+		const entries = allLocked.filter((entry) => {
+			// Must have lock fields set
+			if (entry.lockedBy === undefined || entry.lockExpiresAt === undefined) {
+				return false;
+			}
+			// Must not be expired
+			if (!isLockActive(entry.lockExpiresAt)) {
+				return false;
+			}
+			// Must not be deleted
+			if (entry.deletedAt !== undefined) {
+				return false;
+			}
+			// Apply content type filter if provided
+			if (contentTypeId && entry.contentTypeId !== contentTypeId) {
+				return false;
+			}
+			// Apply lockedBy filter if provided
+			if (lockedBy && entry.lockedBy !== lockedBy) {
+				return false;
+			}
+			return true;
+		});
 
-    // Simple pagination (manual implementation since we filtered in memory)
-    const numItems = paginationOpts.numItems ?? 50;
-    const cursor = paginationOpts.cursor;
+		// Simple pagination (manual implementation since we filtered in memory)
+		const numItems = paginationOpts.numItems ?? 50;
+		const cursor = paginationOpts.cursor;
 
-    let startIndex = 0;
-    if (cursor) {
-      const cursorIndex = entries.findIndex((e) => e._id === cursor);
-      if (cursorIndex !== -1) {
-        startIndex = cursorIndex + 1;
-      }
-    }
+		let startIndex = 0;
+		if (cursor) {
+			const cursorIndex = entries.findIndex((e) => e._id === cursor);
+			if (cursorIndex !== -1) {
+				startIndex = cursorIndex + 1;
+			}
+		}
 
-    const page = entries.slice(startIndex, startIndex + numItems);
-    const hasMore = startIndex + numItems < entries.length;
-    const nextCursor = hasMore ? page[page.length - 1]?._id ?? null : null;
+		const page = entries.slice(startIndex, startIndex + numItems);
+		const hasMore = startIndex + numItems < entries.length;
+		const nextCursor = hasMore ? page[page.length - 1]?._id ?? null : null;
 
-    // Add time remaining to each entry
-    const pageWithRemaining = page.map((entry) => ({
-      ...entry,
-      timeRemaining: getTimeRemaining(entry.lockExpiresAt),
-    }));
+		// Add time remaining to each entry
+		const pageWithRemaining = page.map((entry) => ({
+			...entry,
+			timeRemaining: getTimeRemaining(entry.lockExpiresAt),
+		}));
 
-    return {
-      page: pageWithRemaining,
-      continueCursor: nextCursor,
-      isDone: !hasMore,
-    };
-  },
+		return {
+			page: pageWithRemaining,
+			continueCursor: nextCursor,
+			isDone: !hasMore,
+		};
+	},
 });
 
 // =============================================================================
@@ -253,69 +256,71 @@ export const listLockedEntries = query({
  * ```
  */
 export const acquireLock = mutation({
-  args: acquireLockArgs.fields,
-  returns: lockAcquisitionResult,
-  handler: async (ctx, args) => {
-    const { id, userId, lockDuration } = args;
+	args: acquireLockArgs.fields,
+	returns: lockAcquisitionResult,
+	handler: async (ctx, args) => {
+		const { id, userId, lockDuration } = args;
 
-    // Retrieve the entry
-    const entry = await ctx.db.get(id);
-    if (!entry) {
-      return {
-        success: false,
-        error: `Content entry not found: ${id}`,
-      };
-    }
+		// Retrieve the entry
+		const entry = await ctx.db.get(id);
+		if (!entry) {
+			return {
+				success: false,
+				error: `Content entry not found: ${id}`,
+			};
+		}
 
-    // Check if entry is deleted
-    if (entry.deletedAt !== undefined) {
-      return {
-        success: false,
-        error: `Content entry has been deleted: ${id}`,
-      };
-    }
+		// Check if entry is deleted
+		if (entry.deletedAt !== undefined) {
+			return {
+				success: false,
+				error: `Content entry has been deleted: ${id}`,
+			};
+		}
 
-    // Calculate lock expiration
-    const validDuration = validateLockDuration(lockDuration);
-    const now = Date.now();
-    const newLockExpiresAt = now + validDuration;
+		// Calculate lock expiration
+		const validDuration = validateLockDuration(lockDuration);
+		const now = Date.now();
+		const newLockExpiresAt = now + validDuration;
 
-    // Check current lock status
-    const hasExistingLock = entry.lockedBy !== undefined && entry.lockExpiresAt !== undefined;
-    const isExistingLockActive = hasExistingLock && isLockActive(entry.lockExpiresAt);
-    const isSameUser = entry.lockedBy === userId;
+		// Check current lock status
+		const hasExistingLock =
+			entry.lockedBy !== undefined && entry.lockExpiresAt !== undefined;
+		const isExistingLockActive =
+			hasExistingLock && isLockActive(entry.lockExpiresAt);
+		const isSameUser = entry.lockedBy === userId;
 
-    // Case 1: Entry is locked by another user with an active lock
-    if (isExistingLockActive && !isSameUser) {
-      return {
-        success: false,
-        error: `Entry is locked by another user`,
-        currentLockHolder: entry.lockedBy,
-        currentLockExpiresAt: entry.lockExpiresAt,
-      };
-    }
+		// Case 1: Entry is locked by another user with an active lock
+		if (isExistingLockActive && !isSameUser) {
+			return {
+				success: false,
+				error: `Entry is locked by another user`,
+				currentLockHolder: entry.lockedBy,
+				currentLockExpiresAt: entry.lockExpiresAt,
+			};
+		}
 
-    // Case 2: Same user re-acquiring (renew) OR expired lock OR no lock
-    // Acquire/renew the lock
-    await ctx.db.patch(id, {
-      lockedBy: userId,
-      lockExpiresAt: newLockExpiresAt,
-    });
+		// Case 2: Same user re-acquiring (renew) OR expired lock OR no lock
+		// Acquire/renew the lock
+		await ctx.db.patch(id, {
+			lockedBy: userId,
+			lockExpiresAt: newLockExpiresAt,
+		});
 
-    // Fetch updated entry
-    const updatedEntry = await ctx.db.get(id);
-    if (!updatedEntry) {
-      return {
-        success: false,
-        error: "Failed to retrieve updated entry",
-      };
-    }
+		// Fetch updated entry
+		const updatedEntry = await ctx.db.get(id);
+		if (!updatedEntry) {
+			return {
+				success: false,
+				error: "Failed to retrieve updated entry",
+			};
+		}
 
-    return {
-      success: true,
-      entry: updatedEntry,
-    };
-  },
+		return {
+			success: true,
+			entry: updatedEntry,
+		};
+	},
 });
 
 /**
@@ -341,37 +346,37 @@ export const acquireLock = mutation({
  * ```
  */
 export const releaseLock = mutation({
-  args: releaseLockArgs.fields,
-  returns: contentEntryDoc,
-  handler: async (ctx, args) => {
-    const { id, userId } = args;
+	args: releaseLockArgs.fields,
+	returns: contentEntryDoc,
+	handler: async (ctx, args) => {
+		const { id, userId } = args;
 
-    const entry = await ctx.db.get(id);
-    if (!entry) {
-      throw new Error(`Content entry not found: ${id}`);
-    }
+		const entry = await ctx.db.get(id);
+		if (!entry) {
+			throw new Error(`Content entry not found: ${id}`);
+		}
 
-    // Verify the user owns the lock
-    if (entry.lockedBy !== userId) {
-      if (entry.lockedBy === undefined) {
-        throw new Error(`Content entry is not locked: ${id}`);
-      }
-      throw new Error(`Cannot release lock: entry is locked by another user`);
-    }
+		// Verify the user owns the lock
+		if (entry.lockedBy !== userId) {
+			if (entry.lockedBy === undefined) {
+				throw new Error(`Content entry is not locked: ${id}`);
+			}
+			throw new Error(`Cannot release lock: entry is locked by another user`);
+		}
 
-    // Release the lock
-    await ctx.db.patch(id, {
-      lockedBy: undefined,
-      lockExpiresAt: undefined,
-    });
+		// Release the lock
+		await ctx.db.patch(id, {
+			lockedBy: undefined,
+			lockExpiresAt: undefined,
+		});
 
-    const updatedEntry = await ctx.db.get(id);
-    if (!updatedEntry) {
-      throw new Error("Failed to retrieve updated entry");
-    }
+		const updatedEntry = await ctx.db.get(id);
+		if (!updatedEntry) {
+			throw new Error("Failed to retrieve updated entry");
+		}
 
-    return updatedEntry;
-  },
+		return updatedEntry;
+	},
 });
 
 /**
@@ -399,36 +404,36 @@ export const releaseLock = mutation({
  * ```
  */
 export const forceReleaseLock = mutation({
-  args: forceReleaseLockArgs.fields,
-  returns: contentEntryDoc,
-  handler: async (ctx, args) => {
-    const { id, releasedBy } = args;
+	args: forceReleaseLockArgs.fields,
+	returns: contentEntryDoc,
+	handler: async (ctx, args) => {
+		const { id, releasedBy } = args;
 
-    const entry = await ctx.db.get(id);
-    if (!entry) {
-      throw new Error(`Content entry not found: ${id}`);
-    }
+		const entry = await ctx.db.get(id);
+		if (!entry) {
+			throw new Error(`Content entry not found: ${id}`);
+		}
 
-    // Check if entry is actually locked
-    if (entry.lockedBy === undefined) {
-      throw new Error(`Content entry is not locked: ${id}`);
-    }
+		// Check if entry is actually locked
+		if (entry.lockedBy === undefined) {
+			throw new Error(`Content entry is not locked: ${id}`);
+		}
 
-    // Force release the lock
-    await ctx.db.patch(id, {
-      lockedBy: undefined,
-      lockExpiresAt: undefined,
-      // Track who force-released in updatedBy for audit purposes
-      updatedBy: releasedBy,
-    });
+		// Force release the lock
+		await ctx.db.patch(id, {
+			lockedBy: undefined,
+			lockExpiresAt: undefined,
+			// Track who force-released in updatedBy for audit purposes
+			updatedBy: releasedBy,
+		});
 
-    const updatedEntry = await ctx.db.get(id);
-    if (!updatedEntry) {
-      throw new Error("Failed to retrieve updated entry");
-    }
+		const updatedEntry = await ctx.db.get(id);
+		if (!updatedEntry) {
+			throw new Error("Failed to retrieve updated entry");
+		}
 
-    return updatedEntry;
-  },
+		return updatedEntry;
+	},
 });
 
 /**
@@ -460,46 +465,48 @@ export const forceReleaseLock = mutation({
  * ```
  */
 export const renewLock = mutation({
-  args: renewLockArgs.fields,
-  returns: contentEntryDoc,
-  handler: async (ctx, args) => {
-    const { id, userId, lockDuration } = args;
+	args: renewLockArgs.fields,
+	returns: contentEntryDoc,
+	handler: async (ctx, args) => {
+		const { id, userId, lockDuration } = args;
 
-    const entry = await ctx.db.get(id);
-    if (!entry) {
-      throw new Error(`Content entry not found: ${id}`);
-    }
+		const entry = await ctx.db.get(id);
+		if (!entry) {
+			throw new Error(`Content entry not found: ${id}`);
+		}
 
-    // Verify the user owns the lock
-    if (entry.lockedBy !== userId) {
-      if (entry.lockedBy === undefined) {
-        throw new Error(`Content entry is not locked: ${id}`);
-      }
-      throw new Error(`Cannot renew lock: entry is locked by another user`);
-    }
+		// Verify the user owns the lock
+		if (entry.lockedBy !== userId) {
+			if (entry.lockedBy === undefined) {
+				throw new Error(`Content entry is not locked: ${id}`);
+			}
+			throw new Error(`Cannot renew lock: entry is locked by another user`);
+		}
 
-    // Check if lock has already expired
-    if (!isLockActive(entry.lockExpiresAt)) {
-      throw new Error(`Lock has expired and cannot be renewed. Please acquire a new lock.`);
-    }
+		// Check if lock has already expired
+		if (!isLockActive(entry.lockExpiresAt)) {
+			throw new Error(
+				`Lock has expired and cannot be renewed. Please acquire a new lock.`,
+			);
+		}
 
-    // Calculate new lock expiration
-    const validDuration = validateLockDuration(lockDuration);
-    const now = Date.now();
-    const newLockExpiresAt = now + validDuration;
+		// Calculate new lock expiration
+		const validDuration = validateLockDuration(lockDuration);
+		const now = Date.now();
+		const newLockExpiresAt = now + validDuration;
 
-    // Renew the lock
-    await ctx.db.patch(id, {
-      lockExpiresAt: newLockExpiresAt,
-    });
+		// Renew the lock
+		await ctx.db.patch(id, {
+			lockExpiresAt: newLockExpiresAt,
+		});
 
-    const updatedEntry = await ctx.db.get(id);
-    if (!updatedEntry) {
-      throw new Error("Failed to retrieve updated entry");
-    }
+		const updatedEntry = await ctx.db.get(id);
+		if (!updatedEntry) {
+			throw new Error("Failed to retrieve updated entry");
+		}
 
-    return updatedEntry;
-  },
+		return updatedEntry;
+	},
 });
 
 // =============================================================================
@@ -515,27 +522,29 @@ export const renewLock = mutation({
  * @returns Object with isAllowed boolean and optional error message
  */
 export function validateLockForUpdate(
-  entry: { lockedBy?: string; lockExpiresAt?: number },
-  userId: string | undefined
+	entry: { lockedBy?: string; lockExpiresAt?: number },
+	userId: string | undefined,
 ): { isAllowed: boolean; error?: string } {
-  // If no lock, update is allowed
-  if (entry.lockedBy === undefined || entry.lockExpiresAt === undefined) {
-    return { isAllowed: true };
-  }
+	// If no lock, update is allowed
+	if (entry.lockedBy === undefined || entry.lockExpiresAt === undefined) {
+		return { isAllowed: true };
+	}
 
-  // If lock has expired, update is allowed
-  if (!isLockActive(entry.lockExpiresAt)) {
-    return { isAllowed: true };
-  }
+	// If lock has expired, update is allowed
+	if (!isLockActive(entry.lockExpiresAt)) {
+		return { isAllowed: true };
+	}
 
-  // If same user holds the lock, update is allowed
-  if (userId && entry.lockedBy === userId) {
-    return { isAllowed: true };
-  }
+	// If same user holds the lock, update is allowed
+	if (userId && entry.lockedBy === userId) {
+		return { isAllowed: true };
+	}
 
-  // Another user holds an active lock
-  return {
-    isAllowed: false,
-    error: `Cannot update: entry is locked by user ${entry.lockedBy}. Lock expires at ${new Date(entry.lockExpiresAt).toISOString()}`,
-  };
+	// Another user holds an active lock
+	return {
+		isAllowed: false,
+		error: `Cannot update: entry is locked by user ${
+			entry.lockedBy
+		}. Lock expires at ${new Date(entry.lockExpiresAt).toISOString()}`,
+	};
 }

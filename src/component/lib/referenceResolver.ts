@@ -32,42 +32,42 @@ export type ReferenceValue = SingleReference | MultipleReferences;
  * A resolved reference with the full content entry data
  */
 export interface ResolvedReference {
-  /** The content entry ID */
-  id: string;
-  /** The content type name */
-  contentTypeName: string;
-  /** The content type display name */
-  contentTypeDisplayName: string;
-  /** The entry's slug */
-  slug: string;
-  /** The entry's status */
-  status: "draft" | "published" | "archived" | "scheduled";
-  /** The entry's data (field values) */
-  data: Record<string, unknown>;
-  /** Whether the entry exists and is not deleted */
-  exists: boolean;
+	/** The content entry ID */
+	id: string;
+	/** The content type name */
+	contentTypeName: string;
+	/** The content type display name */
+	contentTypeDisplayName: string;
+	/** The entry's slug */
+	slug: string;
+	/** The entry's status */
+	status: "draft" | "published" | "archived" | "scheduled";
+	/** The entry's data (field values) */
+	data: Record<string, unknown>;
+	/** Whether the entry exists and is not deleted */
+	exists: boolean;
 }
 
 /**
  * Options for resolving references
  */
 export interface ResolveOptions {
-  /** Include soft-deleted entries (default: false) */
-  includeDeleted?: boolean;
-  /** Only return published entries (default: false) */
-  publishedOnly?: boolean;
-  /** Specific fields to include from the entry data (default: all) */
-  fields?: string[];
+	/** Include soft-deleted entries (default: false) */
+	includeDeleted?: boolean;
+	/** Only return published entries (default: false) */
+	publishedOnly?: boolean;
+	/** Specific fields to include from the entry data (default: all) */
+	fields?: string[];
 }
 
 /**
  * Result of a reference resolution operation
  */
 export interface ResolveResult {
-  /** Successfully resolved references */
-  resolved: ResolvedReference[];
-  /** IDs that could not be resolved (not found or deleted) */
-  unresolved: string[];
+	/** Successfully resolved references */
+	resolved: ResolvedReference[];
+	/** IDs that could not be resolved (not found or deleted) */
+	unresolved: string[];
 }
 
 // =============================================================================
@@ -92,62 +92,62 @@ export interface ResolveResult {
  * ```
  */
 export async function resolveReference(
-  ctx: QueryCtx,
-  referenceId: string,
-  options: ResolveOptions = {}
+	ctx: QueryCtx,
+	referenceId: string,
+	options: ResolveOptions = {},
 ): Promise<ResolvedReference | null> {
-  const { includeDeleted = false, publishedOnly = false } = options;
+	const { includeDeleted = false, publishedOnly = false } = options;
 
-  try {
-    // Get the content entry
-    const entry = await ctx.db.get(referenceId as Id<"content_entries">);
+	try {
+		// Get the content entry
+		const entry = await ctx.db.get(referenceId as Id<"contentEntries">);
 
-    if (!entry) {
-      return null;
-    }
+		if (!entry) {
+			return null;
+		}
 
-    // Check soft-delete status
-    if (!includeDeleted && entry.deletedAt !== undefined) {
-      return null;
-    }
+		// Check soft-delete status
+		if (!includeDeleted && entry.deletedAt !== undefined) {
+			return null;
+		}
 
-    // Check published status
-    if (publishedOnly && entry.status !== "published") {
-      return null;
-    }
+		// Check published status
+		if (publishedOnly && entry.status !== "published") {
+			return null;
+		}
 
-    // Get the content type for this entry
-    const contentType = await ctx.db.get(entry.contentTypeId);
+		// Get the content type for this entry
+		const contentType = await ctx.db.get(entry.contentTypeId);
 
-    if (!contentType || contentType.deletedAt !== undefined) {
-      return null;
-    }
+		if (!contentType || contentType.deletedAt !== undefined) {
+			return null;
+		}
 
-    // Filter fields if specified
-    let data = entry.data as Record<string, unknown>;
-    if (options.fields && options.fields.length > 0) {
-      const filteredData: Record<string, unknown> = {};
-      for (const field of options.fields) {
-        if (field in data) {
-          filteredData[field] = data[field];
-        }
-      }
-      data = filteredData;
-    }
+		// Filter fields if specified
+		let data = entry.data as Record<string, unknown>;
+		if (options.fields && options.fields.length > 0) {
+			const filteredData: Record<string, unknown> = {};
+			for (const field of options.fields) {
+				if (field in data) {
+					filteredData[field] = data[field];
+				}
+			}
+			data = filteredData;
+		}
 
-    return {
-      id: referenceId,
-      contentTypeName: contentType.name,
-      contentTypeDisplayName: contentType.displayName,
-      slug: entry.slug,
-      status: entry.status,
-      data,
-      exists: true,
-    };
-  } catch {
-    // Invalid ID format or other error
-    return null;
-  }
+		return {
+			id: referenceId,
+			contentTypeName: contentType.name,
+			contentTypeDisplayName: contentType.displayName,
+			slug: entry.slug,
+			status: entry.status,
+			data,
+			exists: true,
+		};
+	} catch {
+		// Invalid ID format or other error
+		return null;
+	}
 }
 
 /**
@@ -170,30 +170,30 @@ export async function resolveReference(
  * ```
  */
 export async function resolveReferences(
-  ctx: QueryCtx,
-  referenceIds: string[],
-  options: ResolveOptions = {}
+	ctx: QueryCtx,
+	referenceIds: string[],
+	options: ResolveOptions = {},
 ): Promise<ResolveResult> {
-  const resolved: ResolvedReference[] = [];
-  const unresolved: string[] = [];
+	const resolved: ResolvedReference[] = [];
+	const unresolved: string[] = [];
 
-  // Resolve each reference in parallel for efficiency
-  const promises = referenceIds.map(async (id) => {
-    const result = await resolveReference(ctx, id, options);
-    return { id, result };
-  });
+	// Resolve each reference in parallel for efficiency
+	const promises = referenceIds.map(async (id) => {
+		const result = await resolveReference(ctx, id, options);
+		return { id, result };
+	});
 
-  const results = await Promise.all(promises);
+	const results = await Promise.all(promises);
 
-  for (const { id, result } of results) {
-    if (result) {
-      resolved.push(result);
-    } else {
-      unresolved.push(id);
-    }
-  }
+	for (const { id, result } of results) {
+		if (result) {
+			resolved.push(result);
+		} else {
+			unresolved.push(id);
+		}
+	}
 
-  return { resolved, unresolved };
+	return { resolved, unresolved };
 }
 
 /**
@@ -214,43 +214,54 @@ export async function resolveReferences(
  * ```
  */
 export async function isValidReference(
-  ctx: QueryCtx,
-  referenceId: string,
-  allowedContentTypes?: string[]
+	ctx: QueryCtx,
+	referenceId: string,
+	allowedContentTypes?: string[],
 ): Promise<{ valid: boolean; error?: string }> {
-  try {
-    // Get the content entry
-    const entry = await ctx.db.get(referenceId as Id<"content_entries">);
+	try {
+		// Get the content entry
+		const entry = await ctx.db.get(referenceId as Id<"contentEntries">);
 
-    if (!entry) {
-      return { valid: false, error: `Content entry not found: ${referenceId}` };
-    }
+		if (!entry) {
+			return { valid: false, error: `Content entry not found: ${referenceId}` };
+		}
 
-    // Check soft-delete status
-    if (entry.deletedAt !== undefined) {
-      return { valid: false, error: `Content entry has been deleted: ${referenceId}` };
-    }
+		// Check soft-delete status
+		if (entry.deletedAt !== undefined) {
+			return {
+				valid: false,
+				error: `Content entry has been deleted: ${referenceId}`,
+			};
+		}
 
-    // If content type constraints specified, check them
-    if (allowedContentTypes && allowedContentTypes.length > 0) {
-      const contentType = await ctx.db.get(entry.contentTypeId);
+		// If content type constraints specified, check them
+		if (allowedContentTypes && allowedContentTypes.length > 0) {
+			const contentType = await ctx.db.get(entry.contentTypeId);
 
-      if (!contentType) {
-        return { valid: false, error: `Content type not found for entry: ${referenceId}` };
-      }
+			if (!contentType) {
+				return {
+					valid: false,
+					error: `Content type not found for entry: ${referenceId}`,
+				};
+			}
 
-      if (!allowedContentTypes.includes(contentType.name)) {
-        return {
-          valid: false,
-          error: `Expected content type: ${allowedContentTypes.join(" or ")}. Got: ${contentType.name}`,
-        };
-      }
-    }
+			if (!allowedContentTypes.includes(contentType.name)) {
+				return {
+					valid: false,
+					error: `Expected content type: ${allowedContentTypes.join(
+						" or ",
+					)}. Got: ${contentType.name}`,
+				};
+			}
+		}
 
-    return { valid: true };
-  } catch {
-    return { valid: false, error: `Invalid reference ID format: ${referenceId}` };
-  }
+		return { valid: true };
+	} catch {
+		return {
+			valid: false,
+			error: `Invalid reference ID format: ${referenceId}`,
+		};
+	}
 }
 
 /**
@@ -274,68 +285,68 @@ export async function isValidReference(
  * ```
  */
 export async function validateAllReferences(
-  ctx: QueryCtx,
-  data: Record<string, unknown>,
-  fields: Array<{
-    name: string;
-    type: string;
-    options?: {
-      allowedContentTypes?: string[];
-      multiple?: boolean;
-    };
-  }>
+	ctx: QueryCtx,
+	data: Record<string, unknown>,
+	fields: Array<{
+		name: string;
+		type: string;
+		options?: {
+			allowedContentTypes?: string[];
+			multiple?: boolean;
+		};
+	}>,
 ): Promise<{ valid: boolean; errors: string[] }> {
-  const errors: string[] = [];
+	const errors: string[] = [];
 
-  // Find all reference fields
-  const referenceFields = fields.filter((f) => f.type === "reference");
+	// Find all reference fields
+	const referenceFields = fields.filter((f) => f.type === "reference");
 
-  for (const field of referenceFields) {
-    const value = data[field.name];
+	for (const field of referenceFields) {
+		const value = data[field.name];
 
-    if (value === null || value === undefined) {
-      continue; // Skip empty values (required validation is separate)
-    }
+		if (value === null || value === undefined) {
+			continue; // Skip empty values (required validation is separate)
+		}
 
-    const allowedTypes = field.options?.allowedContentTypes;
-    const multiple = field.options?.multiple ?? false;
+		const allowedTypes = field.options?.allowedContentTypes;
+		const multiple = field.options?.multiple ?? false;
 
-    if (multiple) {
-      // Validate array of references
-      if (!Array.isArray(value)) {
-        errors.push(`${field.name}: Expected array of references`);
-        continue;
-      }
+		if (multiple) {
+			// Validate array of references
+			if (!Array.isArray(value)) {
+				errors.push(`${field.name}: Expected array of references`);
+				continue;
+			}
 
-      for (const refId of value) {
-        if (typeof refId !== "string") {
-          errors.push(`${field.name}: Invalid reference ID type`);
-          continue;
-        }
+			for (const refId of value) {
+				if (typeof refId !== "string") {
+					errors.push(`${field.name}: Invalid reference ID type`);
+					continue;
+				}
 
-        const check = await isValidReference(ctx, refId, allowedTypes);
-        if (!check.valid) {
-          errors.push(`${field.name}: ${check.error}`);
-        }
-      }
-    } else {
-      // Validate single reference
-      if (typeof value !== "string") {
-        errors.push(`${field.name}: Expected string reference ID`);
-        continue;
-      }
+				const check = await isValidReference(ctx, refId, allowedTypes);
+				if (!check.valid) {
+					errors.push(`${field.name}: ${check.error}`);
+				}
+			}
+		} else {
+			// Validate single reference
+			if (typeof value !== "string") {
+				errors.push(`${field.name}: Expected string reference ID`);
+				continue;
+			}
 
-      const check = await isValidReference(ctx, value, allowedTypes);
-      if (!check.valid) {
-        errors.push(`${field.name}: ${check.error}`);
-      }
-    }
-  }
+			const check = await isValidReference(ctx, value, allowedTypes);
+			if (!check.valid) {
+				errors.push(`${field.name}: ${check.error}`);
+			}
+		}
+	}
 
-  return {
-    valid: errors.length === 0,
-    errors,
-  };
+	return {
+		valid: errors.length === 0,
+		errors,
+	};
 }
 
 // =============================================================================
@@ -350,34 +361,38 @@ export async function validateAllReferences(
  * @returns Array of all reference IDs found in the data
  */
 export function extractReferenceIds(
-  data: Record<string, unknown>,
-  fields: Array<{ name: string; type: string; options?: { multiple?: boolean } }>
+	data: Record<string, unknown>,
+	fields: Array<{
+		name: string;
+		type: string;
+		options?: { multiple?: boolean };
+	}>,
 ): string[] {
-  const ids: string[] = [];
+	const ids: string[] = [];
 
-  const referenceFields = fields.filter((f) => f.type === "reference");
+	const referenceFields = fields.filter((f) => f.type === "reference");
 
-  for (const field of referenceFields) {
-    const value = data[field.name];
+	for (const field of referenceFields) {
+		const value = data[field.name];
 
-    if (value === null || value === undefined) {
-      continue;
-    }
+		if (value === null || value === undefined) {
+			continue;
+		}
 
-    const multiple = field.options?.multiple ?? false;
+		const multiple = field.options?.multiple ?? false;
 
-    if (multiple && Array.isArray(value)) {
-      for (const id of value) {
-        if (typeof id === "string") {
-          ids.push(id);
-        }
-      }
-    } else if (typeof value === "string") {
-      ids.push(value);
-    }
-  }
+		if (multiple && Array.isArray(value)) {
+			for (const id of value) {
+				if (typeof id === "string") {
+					ids.push(id);
+				}
+			}
+		} else if (typeof value === "string") {
+			ids.push(value);
+		}
+	}
 
-  return ids;
+	return ids;
 }
 
 /**
@@ -391,24 +406,24 @@ export function extractReferenceIds(
  * @returns The content type name or null if not found
  */
 export async function getContentTypeName(
-  ctx: QueryCtx,
-  entryId: string
+	ctx: QueryCtx,
+	entryId: string,
 ): Promise<string | null> {
-  try {
-    const entry = await ctx.db.get(entryId as Id<"content_entries">);
+	try {
+		const entry = await ctx.db.get(entryId as Id<"contentEntries">);
 
-    if (!entry || entry.deletedAt !== undefined) {
-      return null;
-    }
+		if (!entry || entry.deletedAt !== undefined) {
+			return null;
+		}
 
-    const contentType = await ctx.db.get(entry.contentTypeId);
+		const contentType = await ctx.db.get(entry.contentTypeId);
 
-    if (!contentType || contentType.deletedAt !== undefined) {
-      return null;
-    }
+		if (!contentType || contentType.deletedAt !== undefined) {
+			return null;
+		}
 
-    return contentType.name;
-  } catch {
-    return null;
-  }
+		return contentType.name;
+	} catch {
+		return null;
+	}
 }
