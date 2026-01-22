@@ -98,12 +98,12 @@ export interface ContentTypeEventPayload {
  * Payload structure for media asset events.
  */
 export interface MediaAssetEventPayload {
-  filename: string;
+  name: string;
   mimeType: string;
   type: string;
   size: number;
-  folderId?: string;
-  folderPath?: string;
+  parentId?: string;
+  path?: string;
 }
 
 /**

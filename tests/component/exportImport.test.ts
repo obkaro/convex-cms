@@ -125,6 +125,7 @@ describe("Export Entries Integration Tests", () => {
       {
         name: "blog_post",
         displayName: "Blog Post",
+					createdBy: "test-user",
         fields: [
           { name: "title", label: "Title", type: "text", required: true },
           { name: "content", label: "Content", type: "richText", required: false },
@@ -163,6 +164,7 @@ describe("Export Entries Integration Tests", () => {
       {
         name: "blog",
         displayName: "Blog",
+					createdBy: "test-user",
         fields: [
           { name: "title", label: "Title", type: "text", required: true },
         ],
@@ -174,6 +176,7 @@ describe("Export Entries Integration Tests", () => {
       {
         name: "page",
         displayName: "Page",
+					createdBy: "test-user",
         fields: [
           { name: "title", label: "Title", type: "text", required: true },
         ],
@@ -208,6 +211,7 @@ describe("Export Entries Integration Tests", () => {
       {
         name: "article",
         displayName: "Article",
+					createdBy: "test-user",
         fields: [
           { name: "title", label: "Title", type: "text", required: true },
         ],
@@ -247,6 +251,7 @@ describe("Export Entries Integration Tests", () => {
       {
         name: "post",
         displayName: "Post",
+					createdBy: "test-user",
         fields: [
           { name: "title", label: "Title", type: "text", required: true },
         ],
@@ -293,6 +298,7 @@ describe("Export Entries Integration Tests", () => {
       {
         name: "deletable",
         displayName: "Deletable",
+					createdBy: "test-user",
         fields: [
           { name: "title", label: "Title", type: "text", required: true },
         ],
@@ -329,6 +335,7 @@ describe("Export Entries Integration Tests", () => {
       {
         name: "with_deleted",
         displayName: "With Deleted",
+					createdBy: "test-user",
         fields: [
           { name: "title", label: "Title", type: "text", required: true },
         ],
@@ -360,6 +367,7 @@ describe("Export Entries Integration Tests", () => {
       {
         name: "metadata_test",
         displayName: "Metadata Test",
+					createdBy: "test-user",
         fields: [
           { name: "title", label: "Title", type: "text", required: true },
         ],
@@ -395,6 +403,7 @@ describe("Export Entries Integration Tests", () => {
       {
         name: "id_preservation",
         displayName: "ID Preservation",
+					createdBy: "test-user",
         fields: [
           { name: "title", label: "Title", type: "text", required: true },
         ],
@@ -419,6 +428,7 @@ describe("Export Entries Integration Tests", () => {
       {
         name: "limit_test",
         displayName: "Limit Test",
+					createdBy: "test-user",
         fields: [
           { name: "title", label: "Title", type: "text", required: true },
         ],
@@ -456,6 +466,7 @@ describe("Import Entries Integration Tests", () => {
       {
         name: "import_test",
         displayName: "Import Test",
+					createdBy: "test-user",
         fields: [
           { name: "title", label: "Title", type: "text", required: true },
           { name: "body", label: "Body", type: "text", required: false },
@@ -517,6 +528,7 @@ describe("Import Entries Integration Tests", () => {
       {
         name: "conflict_skip",
         displayName: "Conflict Skip",
+					createdBy: "test-user",
         fields: [
           { name: "title", label: "Title", type: "text", required: true },
         ],
@@ -573,6 +585,7 @@ describe("Import Entries Integration Tests", () => {
       {
         name: "conflict_update",
         displayName: "Conflict Update",
+					createdBy: "test-user",
         fields: [
           { name: "title", label: "Title", type: "text", required: true },
         ],
@@ -628,6 +641,7 @@ describe("Import Entries Integration Tests", () => {
       {
         name: "conflict_error",
         displayName: "Conflict Error",
+					createdBy: "test-user",
         fields: [
           { name: "title", label: "Title", type: "text", required: true },
         ],
@@ -676,6 +690,7 @@ describe("Import Entries Integration Tests", () => {
       {
         name: "validation_test",
         displayName: "Validation Test",
+					createdBy: "test-user",
         fields: [
           { name: "title", label: "Title", type: "text", required: true },
           {
@@ -750,6 +765,7 @@ describe("Import Entries Integration Tests", () => {
     await t.mutation(api.contentTypeMutations.createContentType, {
       name: "status_preserve",
       displayName: "Status Preserve",
+					createdBy: "test-user",
       fields: [
         { name: "title", label: "Title", type: "text", required: true },
       ],
@@ -794,6 +810,7 @@ describe("Import Entries Integration Tests", () => {
     await t.mutation(api.contentTypeMutations.createContentType, {
       name: "status_draft",
       displayName: "Status Draft",
+					createdBy: "test-user",
       fields: [
         { name: "title", label: "Title", type: "text", required: true },
       ],
@@ -835,6 +852,7 @@ describe("Import Entries Integration Tests", () => {
     await t.mutation(api.contentTypeMutations.createContentType, {
       name: "dry_run_test",
       displayName: "Dry Run Test",
+					createdBy: "test-user",
       fields: [
         { name: "title", label: "Title", type: "text", required: true },
       ],
@@ -879,6 +897,7 @@ describe("Import Entries Integration Tests", () => {
     await t.mutation(api.contentTypeMutations.createContentType, {
       name: "type_a",
       displayName: "Type A",
+					createdBy: "test-user",
       fields: [
         { name: "title", label: "Title", type: "text", required: true },
       ],
@@ -887,6 +906,7 @@ describe("Import Entries Integration Tests", () => {
     await t.mutation(api.contentTypeMutations.createContentType, {
       name: "type_b",
       displayName: "Type B",
+					createdBy: "test-user",
       fields: [
         { name: "title", label: "Title", type: "text", required: true },
       ],
@@ -948,6 +968,7 @@ describe("Import Entries Integration Tests", () => {
       {
         name: "author",
         displayName: "Author",
+					createdBy: "test-user",
         fields: [
           { name: "name", label: "Name", type: "text", required: true },
         ],
@@ -957,6 +978,7 @@ describe("Import Entries Integration Tests", () => {
     await t.mutation(api.contentTypeMutations.createContentType, {
       name: "article",
       displayName: "Article",
+					createdBy: "test-user",
       fields: [
         { name: "title", label: "Title", type: "text", required: true },
         {
@@ -1031,6 +1053,7 @@ describe("Export Preview Integration Tests", () => {
       {
         name: "preview_blog",
         displayName: "Preview Blog",
+					createdBy: "test-user",
         fields: [
           { name: "title", label: "Title", type: "text", required: true },
         ],
@@ -1073,6 +1096,7 @@ describe("Export Preview Integration Tests", () => {
       {
         name: "preview_type_a",
         displayName: "Preview Type A",
+					createdBy: "test-user",
         fields: [
           { name: "title", label: "Title", type: "text", required: true },
         ],
@@ -1084,6 +1108,7 @@ describe("Export Preview Integration Tests", () => {
       {
         name: "preview_type_b",
         displayName: "Preview Type B",
+					createdBy: "test-user",
         fields: [
           { name: "title", label: "Title", type: "text", required: true },
         ],
@@ -1125,6 +1150,7 @@ describe("Validate Import Package Integration Tests", () => {
     await t.mutation(api.contentTypeMutations.createContentType, {
       name: "valid_import",
       displayName: "Valid Import",
+					createdBy: "test-user",
       fields: [
         { name: "title", label: "Title", type: "text", required: true },
       ],
@@ -1192,6 +1218,7 @@ describe("Validate Import Package Integration Tests", () => {
     await t.mutation(api.contentTypeMutations.createContentType, {
       name: "invalid_entries",
       displayName: "Invalid Entries",
+					createdBy: "test-user",
       fields: [
         { name: "title", label: "Title", type: "text", required: true },
         { name: "count", label: "Count", type: "number", required: true },
@@ -1232,6 +1259,7 @@ describe("Validate Import Package Integration Tests", () => {
     await t.mutation(api.contentTypeMutations.createContentType, {
       name: "filter_type_a",
       displayName: "Filter Type A",
+					createdBy: "test-user",
       fields: [
         { name: "title", label: "Title", type: "text", required: true },
       ],
@@ -1288,6 +1316,7 @@ describe("Round-Trip Export/Import Tests", () => {
       {
         name: "roundtrip_test",
         displayName: "Roundtrip Test",
+					createdBy: "test-user",
         fields: [
           { name: "title", label: "Title", type: "text", required: true },
           { name: "description", label: "Description", type: "text", required: false },
@@ -1357,6 +1386,7 @@ describe("Round-Trip Export/Import Tests", () => {
       {
         name: "locale_roundtrip",
         displayName: "Locale Roundtrip",
+					createdBy: "test-user",
         fields: [
           { name: "title", label: "Title", type: "text", required: true },
         ],

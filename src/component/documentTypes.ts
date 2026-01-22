@@ -61,14 +61,21 @@ export type ContentEntryInternal = Infer<typeof validators.contentEntryDoc>;
 export type ContentVersionInternal = Infer<typeof validators.contentVersionDoc>;
 
 /**
- * Media asset document - internal use with typed IDs.
+ * Media item document (unified asset/folder) - internal use with typed IDs.
  */
-export type MediaAssetInternal = Infer<typeof validators.mediaAssetDoc>;
+export type MediaItemInternal = Infer<typeof validators.mediaItemDoc>;
+
+/**
+ * Media asset document - internal use with typed IDs.
+ * Extracts only the asset variant from the MediaItem union.
+ */
+export type MediaAssetInternal = Extract<MediaItemInternal, { kind: "asset" }>;
 
 /**
  * Media folder document - internal use with typed IDs.
+ * Extracts only the folder variant from the MediaItem union.
  */
-export type MediaFolderInternal = Infer<typeof validators.mediaFolderDoc>;
+export type MediaFolderInternal = Extract<MediaItemInternal, { kind: "folder" }>;
 
 /**
  * Media variant document - internal use with typed IDs.
@@ -139,14 +146,21 @@ export type ContentEntry = StringifyIds<ContentEntryInternal>;
 export type ContentVersion = StringifyIds<ContentVersionInternal>;
 
 /**
- * Media asset - client-facing with string IDs.
+ * Media item (unified asset/folder) - client-facing with string IDs.
  */
-export type MediaAsset = StringifyIds<MediaAssetInternal>;
+export type MediaItem = StringifyIds<MediaItemInternal>;
+
+/**
+ * Media asset - client-facing with string IDs.
+ * Extracts only the asset variant from the MediaItem union.
+ */
+export type MediaAsset = Extract<MediaItem, { kind: "asset" }>;
 
 /**
  * Media folder - client-facing with string IDs.
+ * Extracts only the folder variant from the MediaItem union.
  */
-export type MediaFolder = StringifyIds<MediaFolderInternal>;
+export type MediaFolder = Extract<MediaItem, { kind: "folder" }>;
 
 /**
  * Media variant - client-facing with string IDs.
@@ -192,6 +206,21 @@ export type WebhookConfig = StringifyIds<WebhookConfigInternal>;
  * Webhook delivery - client-facing with string IDs.
  */
 export type WebhookDelivery = StringifyIds<WebhookDeliveryInternal>;
+
+// =============================================================================
+// Field Definition Types (Client-Facing)
+// =============================================================================
+
+/**
+ * Internal field definition type (with typed IDs).
+ */
+export type FieldDefinitionInternal = Infer<typeof validators.fieldDefinitionValidator>;
+
+/**
+ * Client-facing field definition type (IDs as strings).
+ * Used at the API boundary where Convex IDs are serialized as strings.
+ */
+export type FieldDefinition = StringifyIds<FieldDefinitionInternal>;
 
 // =============================================================================
 // Extended Types

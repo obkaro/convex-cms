@@ -12,7 +12,17 @@
 import type {
   MediaVariant as MediaVariantType,
   ContentVersion as ContentVersionType,
+  FieldDefinition as _FieldDefinition,
 } from "../component/documentTypes.js";
+
+// Import types from validators for internal use and re-export
+import type {
+  FieldType as _FieldType,
+  ContentStatus as _ContentStatus,
+  MediaType as _MediaType,
+  VariantType as _VariantType,
+  VariantStatus as _VariantStatus,
+} from "../component/validators.js";
 
 // =============================================================================
 // Component Configuration
@@ -205,17 +215,12 @@ export type CmsOperation =
   | "contentEntries.unpublish"
   | "contentEntries.restore"
   | "contentEntries.schedule"
-  // Media Asset operations
-  | "mediaAssets.create"
-  | "mediaAssets.update"
-  | "mediaAssets.delete"
-  | "mediaAssets.read"
-  // Media Folder operations
-  | "mediaFolders.create"
-  | "mediaFolders.update"
-  | "mediaFolders.delete"
-  | "mediaFolders.read"
-  | "mediaFolders.move"
+  // Media item operations (unified assets + folders)
+  | "mediaItems.create"
+  | "mediaItems.update"
+  | "mediaItems.delete"
+  | "mediaItems.read"
+  | "mediaItems.move"
   // Version operations
   | "versions.read"
   | "versions.rollback";
@@ -1571,8 +1576,8 @@ export interface ComponentConfig {
    *       scope: "own",
    *       contentTypes: ["blog_post"],
    *     }),
-   *     { resource: "mediaAssets", action: "create" },
-   *     { resource: "mediaAssets", action: "read" },
+   *     { resource: "mediaItems", action: "create" },
+   *     { resource: "mediaItems", action: "read" },
    *   ],
    * });
    *
@@ -1703,9 +1708,9 @@ export interface CustomRoleDefinition {
  */
 export interface CustomPermission {
   /** The resource this permission applies to */
-  resource: "contentTypes" | "contentEntries" | "mediaAssets" | "mediaFolders" | "settings";
+  resource: "contentTypes" | "contentEntries" | "mediaItems" | "settings";
   /** The action being granted */
-  action: "create" | "read" | "update" | "delete" | "publish" | "unpublish" | "restore" | "manage";
+  action: "create" | "read" | "update" | "delete" | "publish" | "unpublish" | "restore" | "manage" | "move";
   /** Ownership scope (defaults to "all" if not specified) */
   scope?: "all" | "own";
   /** Whitelist of content type names this permission applies to */
@@ -1992,21 +1997,9 @@ export function resolveConfig(config?: ComponentConfig): ResolvedComponentConfig
 
 /**
  * Supported field types for content type definitions.
+ * Derived from validators (single source of truth).
  */
-export type FieldType =
-  | "text"
-  | "richText"
-  | "number"
-  | "boolean"
-  | "date"
-  | "datetime"
-  | "reference"
-  | "media"
-  | "json"
-  | "select"
-  | "multiSelect"
-  | "tags"
-  | "category";
+export type FieldType = _FieldType;
 
 /**
  * Field-specific configuration options.
@@ -2352,27 +2345,11 @@ export interface BatchResolveResult {
 
 /**
  * A field definition within a content type.
+ * Derived from the fieldDefinitionValidator (single source of truth).
+ * This is a union type of all possible field types (text, number, boolean, etc.)
+ * with their specific options.
  */
-export interface FieldDefinition {
-  /** Unique identifier for the field within the content type */
-  name: string;
-  /** Human-readable label for the field */
-  label: string;
-  /** The type of field */
-  type: FieldType;
-  /** Whether this field is required */
-  required: boolean;
-  /** Whether this field should be indexed for search */
-  searchable?: boolean;
-  /** Whether this field should support localization */
-  localized?: boolean;
-  /** Optional description/help text for the field */
-  description?: string;
-  /** Default value for the field */
-  defaultValue?: unknown;
-  /** Field-specific configuration options */
-  options?: FieldOptions;
-}
+export type FieldDefinition = _FieldDefinition;
 
 // =============================================================================
 // Content Status
@@ -2380,8 +2357,9 @@ export interface FieldDefinition {
 
 /**
  * Publishing status for content entries.
+ * Derived from validators (single source of truth).
  */
-export type ContentStatus = "draft" | "published" | "archived" | "scheduled";
+export type ContentStatus = _ContentStatus;
 
 // =============================================================================
 // Media Types
@@ -2389,18 +2367,19 @@ export type ContentStatus = "draft" | "published" | "archived" | "scheduled";
 
 /**
  * Classification of media assets.
+ * Derived from validators (single source of truth).
  */
-export type MediaType = "image" | "video" | "audio" | "document" | "other";
+export type MediaType = _MediaType;
 
 /**
  * Classification of media variant types.
  */
-export type VariantType = "thumbnail" | "responsive" | "format";
+export type VariantType = _VariantType;
 
 /**
  * Status of media variant generation.
  */
-export type VariantStatus = "pending" | "processing" | "completed" | "failed";
+export type VariantStatus = _VariantStatus;
 
 /**
  * A media variant (optimized version of a media asset).
@@ -2726,20 +2705,9 @@ export interface ComponentApi {
   };
 
   /**
-   * Media asset management functions.
+   * Media item management functions (unified assets + folders).
    */
-  mediaAssets: {
-    create: unknown;
-    update: unknown;
-    delete: unknown;
-    get: unknown;
-    list: unknown;
-  };
-
-  /**
-   * Media folder organization functions.
-   */
-  mediaFolders: {
+  mediaItems: {
     create: unknown;
     update: unknown;
     delete: unknown;

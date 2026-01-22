@@ -63,8 +63,7 @@ export const roleNameValidator = v.union(
 export const resources = [
 	"contentTypes",
 	"contentEntries",
-	"mediaAssets",
-	"mediaFolders",
+	"mediaItems",
 	"settings",
 ] as const;
 
@@ -76,8 +75,7 @@ export type Resource = typeof resources[number];
 export const resourceValidator = v.union(
 	v.literal("contentTypes"),
 	v.literal("contentEntries"),
-	v.literal("mediaAssets"),
-	v.literal("mediaFolders"),
+	v.literal("mediaItems"),
 	v.literal("settings"),
 );
 
@@ -93,6 +91,7 @@ export const actions = [
 	"unpublish",
 	"restore",
 	"manage", // Special action for full control (e.g., settings)
+	"move", // Move items between folders (media)
 ] as const;
 
 export type Action = typeof actions[number];
@@ -109,6 +108,7 @@ export const actionValidator = v.union(
 	v.literal("unpublish"),
 	v.literal("restore"),
 	v.literal("manage"),
+	v.literal("move"),
 );
 
 // =============================================================================
@@ -232,8 +232,7 @@ export const ADMIN_ROLE: RoleDefinition = {
 		{ resource: "contentEntries", action: "restore" },
 
 		// Media - full management
-		...fullCrud("mediaAssets"),
-		...fullCrud("mediaFolders"),
+		...fullCrud("mediaItems"),
 
 		// Settings - full access
 		{ resource: "settings", action: "manage" },
@@ -267,8 +266,7 @@ export const EDITOR_ROLE: RoleDefinition = {
 		{ resource: "contentEntries", action: "restore" },
 
 		// Media - full management
-		...fullCrud("mediaAssets"),
-		...fullCrud("mediaFolders"),
+		...fullCrud("mediaItems"),
 	],
 };
 
@@ -303,13 +301,10 @@ export const AUTHOR_ROLE: RoleDefinition = {
 		{ resource: "contentEntries", action: "unpublish", scope: "own" },
 
 		// Media - can create and manage own, read all (for embedding)
-		{ resource: "mediaAssets", action: "create" },
-		{ resource: "mediaAssets", action: "read", scope: "all" }, // Can read all for embedding
-		{ resource: "mediaAssets", action: "update", scope: "own" },
-		{ resource: "mediaAssets", action: "delete", scope: "own" },
-
-		// Media folders - read only (can place assets in folders but not manage folder structure)
-		...readOnly("mediaFolders"),
+		{ resource: "mediaItems", action: "create" },
+		{ resource: "mediaItems", action: "read", scope: "all" }, // Can read all for embedding
+		{ resource: "mediaItems", action: "update", scope: "own" },
+		{ resource: "mediaItems", action: "delete", scope: "own" },
 	],
 };
 
@@ -335,8 +330,7 @@ export const VIEWER_ROLE: RoleDefinition = {
 		...readOnly("contentEntries"),
 
 		// Media - read only
-		...readOnly("mediaAssets"),
-		...readOnly("mediaFolders"),
+		...readOnly("mediaItems"),
 	],
 };
 
@@ -703,8 +697,8 @@ export interface ExtendedRoleDefinition {
  *     { resource: "contentEntries", action: "read", scope: "own", contentTypes: ["blog_post"] },
  *     { resource: "contentEntries", action: "update", scope: "own", contentTypes: ["blog_post"] },
  *     { resource: "contentEntries", action: "delete", scope: "own", contentTypes: ["blog_post"] },
- *     { resource: "mediaAssets", action: "create" },
- *     { resource: "mediaAssets", action: "read" },
+ *     { resource: "mediaItems", action: "create" },
+ *     { resource: "mediaItems", action: "read" },
  *   ],
  * });
  * ```

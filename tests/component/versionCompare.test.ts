@@ -287,6 +287,7 @@ describe("Compare Versions Integration Tests", () => {
         {
           name: "blog_compare",
           displayName: "Blog",
+					createdBy: "test-user",
           fields: [
             { name: "title", label: "Title", type: "text", required: true },
             { name: "body", label: "Body", type: "richText", required: false },
@@ -356,6 +357,7 @@ describe("Compare Versions Integration Tests", () => {
         {
           name: "article_slug",
           displayName: "Article",
+					createdBy: "test-user",
           fields: [
             { name: "title", label: "Title", type: "text", required: true },
           ],
@@ -410,6 +412,7 @@ describe("Compare Versions Integration Tests", () => {
         {
           name: "page_same",
           displayName: "Page",
+					createdBy: "test-user",
           fields: [
             { name: "title", label: "Title", type: "text", required: true },
           ],
@@ -451,6 +454,7 @@ describe("Compare Versions Integration Tests", () => {
         {
           name: "temp_compare",
           displayName: "Temp",
+					createdBy: "test-user",
           fields: [
             { name: "title", label: "Title", type: "text", required: true },
           ],
@@ -484,6 +488,7 @@ describe("Compare Versions Integration Tests", () => {
         {
           name: "deleted_compare",
           displayName: "Deleted",
+					createdBy: "test-user",
           fields: [
             { name: "title", label: "Title", type: "text", required: true },
           ],
@@ -521,6 +526,7 @@ describe("Compare Versions Integration Tests", () => {
         {
           name: "no_version_compare",
           displayName: "No Version",
+					createdBy: "test-user",
           fields: [
             { name: "title", label: "Title", type: "text", required: true },
           ],
@@ -555,6 +561,7 @@ describe("Compare Versions Integration Tests", () => {
         {
           name: "add_field_test",
           displayName: "Add Field Test",
+					createdBy: "test-user",
           fields: [
             { name: "title", label: "Title", type: "text", required: true },
             { name: "count", label: "Count", type: "number", required: false },
@@ -613,6 +620,7 @@ describe("Compare Versions Integration Tests", () => {
         {
           name: "metadata_test",
           displayName: "Metadata Test",
+					createdBy: "test-user",
           fields: [
             { name: "title", label: "Title", type: "text", required: true },
           ],
@@ -660,6 +668,7 @@ describe("Compare Versions Integration Tests", () => {
         {
           name: "nested_compare",
           displayName: "Nested Compare",
+					createdBy: "test-user",
           fields: [
             { name: "title", label: "Title", type: "text", required: true },
             { name: "meta", label: "Metadata", type: "json", required: false },

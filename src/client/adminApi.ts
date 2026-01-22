@@ -39,6 +39,7 @@ import {
 } from "convex/server";
 import { v } from "convex/values";
 import type { ComponentApi } from "../component/_generated/component.js";
+import type { Id } from "../component/_generated/dataModel.js";
 import {
   fieldDefinitionValidator,
   contentStatusValidator,
@@ -211,7 +212,8 @@ export function defineAdminAPI(
           slugField: v.optional(v.string()),
           titleField: v.optional(v.string()),
           sortOrder: v.optional(v.number()),
-          createdBy: v.optional(v.string()),
+          /** Required for audit tracking - the user ID creating this content type */
+          createdBy: v.string(),
         },
         returns: v.any(),
         handler: async (ctx, args) => {
@@ -562,11 +564,10 @@ export function defineAdminAPI(
       createAsset: mutationGeneric({
         args: {
           storageId: v.string(),
-          filename: v.string(),
+          name: v.string(),
           mimeType: v.string(),
           size: v.number(),
-          type: mediaTypeValidator,
-          folderId: v.optional(v.string()),
+          parentId: v.optional(v.string()),
           width: v.optional(v.number()),
           height: v.optional(v.number()),
           title: v.optional(v.string()),
@@ -580,12 +581,11 @@ export function defineAdminAPI(
           return await ctx.runMutation(
             component.mediaAssetMutations.createMediaAsset,
             {
-              storageId: args.storageId ,
-              filename: args.filename,
+              storageId: args.storageId as Id<"_storage">,
+              name: args.name,
               mimeType: args.mimeType,
               size: args.size,
-              type: args.type,
-              folderId: args.folderId ,
+              parentId: args.parentId as Id<"mediaItems"> | undefined,
               width: args.width,
               height: args.height,
               title: args.title,
@@ -600,13 +600,12 @@ export function defineAdminAPI(
       updateAsset: mutationGeneric({
         args: {
           id: v.string(),
-          filename: v.optional(v.string()),
+          name: v.optional(v.string()),
           title: v.optional(v.string()),
           description: v.optional(v.string()),
           altText: v.optional(v.string()),
-          folderId: v.optional(v.string()),
+          parentId: v.optional(v.string()),
           tags: v.optional(v.array(v.string())),
-          updatedBy: v.optional(v.string()),
         },
         returns: v.any(),
         handler: async (ctx, args) => {
@@ -614,14 +613,13 @@ export function defineAdminAPI(
           return await ctx.runMutation(
             component.mediaAssetMutations.updateMediaAsset,
             {
-              id: args.id ,
-              filename: args.filename,
+              id: args.id as Id<"mediaItems">,
+              name: args.name,
               title: args.title,
               description: args.description,
               altText: args.altText,
-              folderId: args.folderId ,
+              parentId: args.parentId as Id<"mediaItems"> | undefined,
               tags: args.tags,
-              updatedBy: args.updatedBy,
             }
           );
         },
@@ -903,16 +901,20 @@ export function defineAdminAPI(
             (e: { status: string }) => e.status === "scheduled"
           ).length;
 
-          // Calculate media stats
-          const mediaAssets = mediaResult.page || [];
-          const images = mediaAssets.filter(
-            (m: { type: string }) => m.type === "image"
+          // Calculate media stats by filtering on mimeType prefix
+          const mediaAssets = (mediaResult.page || []) as Array<{ kind: string; mimeType?: string }>;
+          const assets = mediaAssets.filter((m) => m.kind === "asset");
+          const images = assets.filter(
+            (m) => m.mimeType?.startsWith("image/")
           ).length;
-          const videos = mediaAssets.filter(
-            (m: { type: string }) => m.type === "video"
+          const videos = assets.filter(
+            (m) => m.mimeType?.startsWith("video/")
           ).length;
-          const documents = mediaAssets.filter(
-            (m: { type: string }) => m.type === "document"
+          const documents = assets.filter(
+            (m) => m.mimeType?.startsWith("application/pdf") ||
+                   m.mimeType?.includes("document") ||
+                   m.mimeType?.includes("sheet") ||
+                   m.mimeType?.includes("presentation")
           ).length;
 
           return {

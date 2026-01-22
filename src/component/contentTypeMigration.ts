@@ -734,7 +734,7 @@ export const migrateContentType = mutation({
 		}
 
 		// Build query for entries
-		let entriesQuery = ctx.db
+		const entriesQuery = ctx.db
 			.query("contentEntries")
 			.withIndex("by_content_type", (q) => q.eq("contentTypeId", contentTypeId))
 			.filter((q) => q.eq(q.field("deletedAt"), undefined));
@@ -764,7 +764,7 @@ export const migrateContentType = mutation({
 		let failureCount = 0;
 		let skippedCount = 0;
 		let versionSnapshotsCreated = 0;
-		const now = Date.now();
+		// const now = Date.now();
 
 		for (const entry of entries) {
 			try {

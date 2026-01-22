@@ -52,8 +52,8 @@ import { internal } from "./_generated/api.js";
 import type { Doc } from "./_generated/dataModel.js";
 import {
   chunkContentEntry,
-  chunkMultipleEntries,
-  type ContentChunk,
+  // chunkMultipleEntries,
+  // type ContentChunk,
   type ContentEntryInfo,
   type ContentTypeInfo,
   type RagExtractionOptions,
@@ -707,7 +707,7 @@ export const requestBulkReindex = mutation({
     const { contentTypeId, batchSize = 100, userId } = args;
 
     // Build query for published entries
-    let entriesQuery = ctx.db
+    const entriesQuery = ctx.db
       .query("contentEntries")
       .withIndex("by_status", (q) => q.eq("status", "published"))
       .filter((q) => q.eq(q.field("deletedAt"), undefined));

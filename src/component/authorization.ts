@@ -208,8 +208,7 @@ function getResourceLabel(resource: Resource): string {
   const labels: Record<Resource, string> = {
     contentTypes: "content types",
     contentEntries: "content entries",
-    mediaAssets: "media assets",
-    mediaFolders: "media folders",
+    mediaItems: "media items",
     settings: "settings",
   };
   return labels[resource] ?? resource;
@@ -228,6 +227,7 @@ function getActionLabel(action: Action): string {
     unpublish: "unpublish",
     restore: "restore",
     manage: "manage",
+    move: "move",
   };
   return labels[action] ?? action;
 }

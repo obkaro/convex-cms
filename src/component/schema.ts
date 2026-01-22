@@ -1,6 +1,22 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
+export const fieldTypes = [
+	"text",
+	"richText",
+	"number",
+	"boolean",
+	"date",
+	"datetime",
+	"reference",
+	"media",
+	"json",
+	"select",
+	"multiSelect",
+	"tags",
+	"category",
+] as const;
+
 export const fieldTypeValidator = v.union(
 	v.literal("text"),
 	v.literal("richText"),
@@ -17,12 +33,27 @@ export const fieldTypeValidator = v.union(
 	v.literal("category"),
 );
 
+export const contentStatuses = [
+	"draft",
+	"published",
+	"archived",
+	"scheduled",
+] as const;
+
 export const contentStatusValidator = v.union(
 	v.literal("draft"),
 	v.literal("published"),
 	v.literal("archived"),
 	v.literal("scheduled"),
 );
+
+export const mediaTypes = [
+	"image",
+	"video",
+	"audio",
+	"document",
+	"other",
+] as const;
 
 export const mediaTypeValidator = v.union(
 	v.literal("image"),
@@ -203,9 +234,10 @@ export const fieldDefinitionValidator = v.union(
 	referenceFieldDefinitionValidator,
 );
 
-export const contentTypeFields = {
+const contentTypeFields = {
 	name: v.string(),
 	displayName: v.string(),
+	createdBy: v.string(),
 	description: v.optional(v.string()),
 	fields: v.array(fieldDefinitionValidator),
 	icon: v.optional(v.string()),
@@ -215,11 +247,10 @@ export const contentTypeFields = {
 	sortOrder: v.optional(v.number()),
 	isActive: v.boolean(),
 	deletedAt: v.optional(v.number()),
-	createdBy: v.optional(v.string()),
 	updatedBy: v.optional(v.string()),
 };
 
-export const contentEntryFields = {
+const contentEntryFields = {
 	contentTypeId: v.id("contentTypes"),
 	slug: v.string(),
 	status: contentStatusValidator,
@@ -238,7 +269,7 @@ export const contentEntryFields = {
 	searchText: v.optional(v.string()),
 };
 
-export const contentVersionFields = {
+const contentVersionFields = {
 	entryId: v.id("contentEntries"),
 	versionNumber: v.number(),
 	data: v.any(),
@@ -250,39 +281,54 @@ export const contentVersionFields = {
 	publishedAt: v.optional(v.number()),
 };
 
-export const mediaAssetValidator = v.object({
-	type: v.literal("asset"),
-	storageId: v.id("_storage"),
-	mimeType: v.string(),
-	size: v.number(),
-	altText: v.optional(v.string()),
-});
-
-export const mediaFolderValidator = v.object({
-	path: v.string(),
+const mediaItemBaseFields = {
+	name: v.string(),
+	title: v.optional(v.string()),
 	description: v.optional(v.string()),
-	sortOrder: v.optional(v.number()),
-	deletedAt: v.optional(v.number()),
-	createdBy: v.optional(v.string()),
-});
-
-export const mediaFields = {
-	filename: v.string(),
-	title: v.string(),
+	parentId: v.optional(v.id("mediaItems")),
 	path: v.string(),
-	description: v.optional(v.string()),
-	parentId: v.optional(v.id("media")),
+	tags: v.optional(v.array(v.string())),
+	size: v.optional(v.number()),
 	metadata: v.optional(v.record(v.string(), v.any())),
-	tags: v.optional(v.any()),
 	deletedAt: v.optional(v.number()),
 	createdBy: v.optional(v.string()),
-	updatedAt: v.optional(v.number()),
 	updatedBy: v.optional(v.string()),
-	mediaTypeMeta: v.union(mediaAssetValidator, mediaFolderValidator),
+	searchText: v.optional(v.string()),
 };
 
-export const mediaVariantFields = {
-	assetId: v.id("mediaAssets"),
+const mediaAssetSpecificFields = {
+	kind: v.literal("asset"),
+	storageId: v.id("_storage"),
+	mimeType: v.string(),
+	// assetType: mediaTypeValidator,
+	width: v.optional(v.number()),
+	height: v.optional(v.number()),
+	duration: v.optional(v.number()),
+	altText: v.optional(v.string()),
+};
+
+const mediaFolderSpecificFields = {
+	kind: v.literal("folder"),
+	sortOrder: v.optional(v.number()),
+};
+
+export const mediaAssetItemValidator = v.object({
+	...mediaItemBaseFields,
+	...mediaAssetSpecificFields,
+});
+
+export const mediaFolderItemValidator = v.object({
+	...mediaItemBaseFields,
+	...mediaFolderSpecificFields,
+});
+
+export const mediaItemValidator = v.union(
+	mediaAssetItemValidator,
+	mediaFolderItemValidator,
+);
+
+const mediaVariantFields = {
+	assetId: v.id("mediaItems"),
 	storageId: v.id("_storage"),
 	variantType: v.union(
 		v.literal("thumbnail"),
@@ -308,6 +354,40 @@ export const mediaVariantFields = {
 	processingCompletedAt: v.optional(v.number()),
 	deletedAt: v.optional(v.number()),
 	createdBy: v.optional(v.string()),
+};
+
+const taxonomyFields = {
+	name: v.string(),
+	displayName: v.string(),
+	description: v.optional(v.string()),
+	isHierarchical: v.boolean(),
+	allowInlineCreation: v.boolean(),
+	icon: v.optional(v.string()),
+	sortOrder: v.optional(v.number()),
+	isActive: v.boolean(),
+	deletedAt: v.optional(v.number()),
+	createdBy: v.optional(v.string()),
+	updatedBy: v.optional(v.string()),
+};
+
+const taxonomyTermFields = {
+	taxonomyId: v.id("taxonomies"),
+	slug: v.string(),
+	name: v.string(),
+	description: v.optional(v.string()),
+	parentId: v.optional(v.id("taxonomyTerms")),
+	path: v.optional(v.string()),
+	/** Depth in the hierarchy (0 for root terms) */
+	depth: v.number(),
+	color: v.optional(v.string()),
+	icon: v.optional(v.string()),
+	sortOrder: v.optional(v.number()),
+	/** Cached count of content entries using this term */
+	usageCount: v.number(),
+	deletedAt: v.optional(v.number()),
+	createdBy: v.optional(v.string()),
+	updatedBy: v.optional(v.string()),
+	searchText: v.optional(v.string()),
 };
 
 const schema = defineSchema({
@@ -339,17 +419,29 @@ const schema = defineSchema({
 		.index("by_entry", ["entryId"])
 		.index("by_entry_and_version", ["entryId", "versionNumber"])
 		.index("by_entry_and_published", ["entryId", "wasPublished"]),
-	mediaAssets: defineTable({
-		...mediaAssetFields,
-	})
+	mediaItems: defineTable(
+		v.union(
+			v.object({
+				...mediaItemBaseFields,
+				...mediaAssetSpecificFields,
+			}),
+			v.object({
+				...mediaItemBaseFields,
+				...mediaFolderSpecificFields,
+			}),
+		),
+	)
+		.index("by_parent", ["parentId"])
+		.index("by_path", ["path"])
+		.index("by_kind", ["kind"])
+		.index("by_kind_and_parent", ["kind", "parentId"])
 		.index("by_storage_id", ["storageId"])
-		.index("by_folder", ["folderId"])
-		.index("by_type", ["type"])
+		// .index("by_type", ["assetType"])
 		.index("by_mime_type", ["mimeType"])
 		.index("by_deleted", ["deletedAt"])
-		.searchIndex("search_assets", {
+		.searchIndex("search_media", {
 			searchField: "searchText",
-			filterFields: ["type", "folderId"],
+			// filterFields: ["kind", "assetType", "parentId"],
 		}),
 	mediaVariants: defineTable({
 		...mediaVariantFields,
@@ -360,112 +452,21 @@ const schema = defineSchema({
 		.index("by_asset_and_format", ["assetId", "format"])
 		.index("by_status", ["status"])
 		.index("by_deleted", ["deletedAt"]),
-	mediaFolders: defineTable({
-		...mediaFolderFields,
-	})
-		.index("by_parent", ["parentId"])
-		.index("by_path", ["path"])
-		.index("by_deleted", ["deletedAt"]),
-
-	/**
-	 * Taxonomies Table
-	 *
-	 * Stores taxonomy definitions (tag groups, categories, topics, etc.).
-	 * Each taxonomy defines a classification system that can be applied to content.
-	 *
-	 * A taxonomy can be:
-	 * - Flat (like tags): Terms exist at the same level
-	 * - Hierarchical (like categories): Terms can have parent-child relationships
-	 */
 	taxonomies: defineTable({
-		/** Unique machine-readable name for the taxonomy (e.g., "tags", "categories", "topics") */
-		name: v.string(),
-		/** Human-readable display name (e.g., "Tags", "Categories", "Topics") */
-		displayName: v.string(),
-		/** Optional description of the taxonomy */
-		description: v.optional(v.string()),
-		/**
-		 * Whether this taxonomy supports hierarchical terms.
-		 * When true, terms can have parent-child relationships (like categories).
-		 * When false, terms are flat (like tags).
-		 */
-		isHierarchical: v.boolean(),
-		/**
-		 * Whether users can create new terms inline when editing content.
-		 * If false, only pre-defined terms can be used.
-		 */
-		allowInlineCreation: v.boolean(),
-		/** Icon identifier for UI display */
-		icon: v.optional(v.string()),
-		/** Custom sort order for admin UI */
-		sortOrder: v.optional(v.number()),
-		/** Whether this taxonomy is active/enabled */
-		isActive: v.boolean(),
-		/** Soft delete marker */
-		deletedAt: v.optional(v.number()),
-		/** User ID who created this taxonomy */
-		createdBy: v.optional(v.string()),
-		/** User ID who last updated this taxonomy */
-		updatedBy: v.optional(v.string()),
+		...taxonomyFields,
 	})
-		// Index for looking up taxonomies by name (must be unique)
 		.index("by_name", ["name"])
-		// Index for listing active taxonomies
 		.index("by_active", ["isActive"])
-		// Index for filtering out soft-deleted taxonomies
 		.index("by_deleted", ["deletedAt"]),
-
-	/**
-	 * Taxonomy Terms Table
-	 *
-	 * Stores individual terms within a taxonomy (tags, categories, etc.).
-	 * Terms can be hierarchical (with parent references) for category-like structures.
-	 */
 	taxonomyTerms: defineTable({
-		/** Reference to the taxonomy this term belongs to */
-		taxonomyId: v.id("taxonomies"),
-		/** Unique slug for the term within its taxonomy (URL-friendly) */
-		slug: v.string(),
-		/** Human-readable name for the term */
-		name: v.string(),
-		/** Optional description of the term */
-		description: v.optional(v.string()),
-		/** Reference to parent term (for hierarchical taxonomies) */
-		parentId: v.optional(v.id("taxonomyTerms")),
-		/** Full path from root for hierarchical terms (e.g., "/parent/child/grandchild") */
-		path: v.optional(v.string()),
-		/** Depth level in hierarchy (0 = root, 1 = child, etc.) */
-		depth: v.number(),
-		/** Color code for visual display (hex color) */
-		color: v.optional(v.string()),
-		/** Icon identifier for UI display */
-		icon: v.optional(v.string()),
-		/** Custom sort order within siblings */
-		sortOrder: v.optional(v.number()),
-		/** Cached count of content entries using this term */
-		usageCount: v.number(),
-		/** Soft delete marker */
-		deletedAt: v.optional(v.number()),
-		/** User ID who created this term */
-		createdBy: v.optional(v.string()),
-		/** User ID who last updated this term */
-		updatedBy: v.optional(v.string()),
-		/** Searchable text for finding terms */
-		searchText: v.optional(v.string()),
+		...taxonomyTermFields,
 	})
-		// Index for listing terms within a taxonomy
 		.index("by_taxonomy", ["taxonomyId"])
-		// Index for looking up terms by taxonomy and slug (unique combo)
 		.index("by_taxonomy_and_slug", ["taxonomyId", "slug"])
-		// Index for finding child terms
 		.index("by_parent", ["parentId"])
-		// Index for finding terms by path (efficient for hierarchical lookups)
 		.index("by_taxonomy_and_path", ["taxonomyId", "path"])
-		// Index for filtering out soft-deleted terms
 		.index("by_deleted", ["deletedAt"])
-		// Index for finding popular terms (by usage count)
 		.index("by_taxonomy_and_usage", ["taxonomyId", "usageCount"])
-		// Search index for finding terms by name
 		.searchIndex("search_terms", {
 			searchField: "searchText",
 			filterFields: ["taxonomyId"],
@@ -500,26 +501,11 @@ const schema = defineSchema({
 		.index("by_entry_and_field", ["entryId", "fieldName"])
 		// Compound index for finding entries with a specific term in a taxonomy
 		.index("by_taxonomy_and_term", ["taxonomyId", "termId"]),
-
-	/**
-	 * Trash Configuration Table
-	 *
-	 * Stores configuration settings for the trash/soft-delete feature.
-	 * This is a singleton table - only one configuration record should exist.
-	 */
 	trashConfig: defineTable({
-		/**
-		 * Retention period in days before soft-deleted items are permanently deleted.
-		 * Default is 30 days. Set to 0 to disable automatic cleanup.
-		 */
 		retentionDays: v.number(),
-		/** Whether automatic trash cleanup is enabled */
 		autoCleanupEnabled: v.boolean(),
-		/** Last time the auto-cleanup ran (for debugging/monitoring) */
 		lastCleanupAt: v.optional(v.number()),
-		/** Number of items deleted in last cleanup */
 		lastCleanupCount: v.optional(v.number()),
-		/** User ID who last updated the config */
 		updatedBy: v.optional(v.string()),
 	}),
 
@@ -931,9 +917,8 @@ export const {
 	contentTypes,
 	contentEntries,
 	contentVersions,
-	mediaAssets,
+	mediaItems,
 	mediaVariants,
-	mediaFolders,
 	taxonomies,
 	taxonomyTerms,
 	contentEntryTags,

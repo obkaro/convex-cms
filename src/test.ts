@@ -53,7 +53,7 @@ import schema from "./component/schema.js";
 import type {
 	FieldType,
 	ContentStatus,
-	MediaType,
+	// MediaType,
 } from "./component/validators.js";
 
 // Generic ID type alias for convenience
@@ -67,9 +67,11 @@ const modules = import.meta.glob("./component/**/*.ts");
 // =============================================================================
 
 /**
- * Field definition for content types.
+ * Simplified field definition for test factories.
+ * This is a flattened interface that covers all field types for convenience.
+ * When used in ContentTypeData, it must be cast to the schema's discriminated union type.
  */
-export interface FieldDefinition {
+export interface TestFieldDefinition {
 	name: string;
 	label: string;
 	type: FieldType;
@@ -131,12 +133,16 @@ import type {
 
 /**
  * Content type data structure (without system fields).
- * Derived from ContentTypeInternal for type safety.
+ * For testing, some fields that are required at runtime have defaults.
+ * Uses the simplified TestFieldDefinition for convenience in test factories.
  */
 export type ContentTypeData = Omit<
 	ContentTypeInternal,
-	"_id" | "_creationTime"
->;
+	"_id" | "_creationTime" | "fields" | "createdBy"
+> & {
+	createdBy?: string;
+	fields: TestFieldDefinition[];
+};
 
 /**
  * Content entry data structure (without system fields).
@@ -149,7 +155,7 @@ export type ContentEntryData = Omit<
 
 /**
  * Media asset data structure (without system fields).
- * Derived from MediaAssetInternal for type safety.
+ * Uses 'name' for filename (matching unified schema).
  */
 export type MediaAssetData = Omit<MediaAssetInternal, "_id" | "_creationTime">;
 
@@ -220,7 +226,7 @@ export const fieldFactory = {
 			maxLength?: number;
 			pattern?: string;
 		} = {},
-	): FieldDefinition {
+	): TestFieldDefinition {
 		return {
 			name,
 			label,
@@ -257,7 +263,7 @@ export const fieldFactory = {
 			allowedBlocks?: string[];
 			allowedMarks?: string[];
 		} = {},
-	): FieldDefinition {
+	): TestFieldDefinition {
 		return {
 			name,
 			label,
@@ -292,7 +298,7 @@ export const fieldFactory = {
 			step?: number;
 			precision?: number;
 		} = {},
-	): FieldDefinition {
+	): TestFieldDefinition {
 		return {
 			name,
 			label,
@@ -326,7 +332,7 @@ export const fieldFactory = {
 			description?: string;
 			defaultValue?: boolean;
 		} = {},
-	): FieldDefinition {
+	): TestFieldDefinition {
 		return {
 			name,
 			label,
@@ -347,7 +353,7 @@ export const fieldFactory = {
 			required?: boolean;
 			description?: string;
 		} = {},
-	): FieldDefinition {
+	): TestFieldDefinition {
 		return {
 			name,
 			label,
@@ -367,7 +373,7 @@ export const fieldFactory = {
 			required?: boolean;
 			description?: string;
 		} = {},
-	): FieldDefinition {
+	): TestFieldDefinition {
 		return {
 			name,
 			label,
@@ -390,7 +396,7 @@ export const fieldFactory = {
 			multiple?: boolean;
 			minItems?: number;
 		} = {},
-	): FieldDefinition {
+	): TestFieldDefinition {
 		return {
 			name,
 			label,
@@ -418,7 +424,7 @@ export const fieldFactory = {
 			maxFileSize?: number;
 			multiple?: boolean;
 		} = {},
-	): FieldDefinition {
+	): TestFieldDefinition {
 		return {
 			name,
 			label,
@@ -444,7 +450,7 @@ export const fieldFactory = {
 			description?: string;
 			defaultValue?: unknown;
 		} = {},
-	): FieldDefinition {
+	): TestFieldDefinition {
 		return {
 			name,
 			label,
@@ -467,7 +473,7 @@ export const fieldFactory = {
 			description?: string;
 			defaultValue?: string;
 		} = {},
-	): FieldDefinition {
+	): TestFieldDefinition {
 		return {
 			name,
 			label,
@@ -493,7 +499,7 @@ export const fieldFactory = {
 			description?: string;
 			defaultValue?: string[];
 		} = {},
-	): FieldDefinition {
+	): TestFieldDefinition {
 		return {
 			name,
 			label,
@@ -778,7 +784,7 @@ export const contentTypeFactory = {
 	custom(
 		name: string,
 		displayName: string,
-		fields: FieldDefinition[],
+		fields: TestFieldDefinition[],
 		overrides: Partial<ContentTypeData> = {},
 	): ContentTypeData {
 		return {
@@ -1051,12 +1057,14 @@ export const mediaAssetFactory = {
 		overrides: Partial<MediaAssetData> = {},
 	): MediaAssetData {
 		mediaCounter++;
+		const name = `file-${mediaCounter}.bin`;
 		return {
+			kind: "asset",
 			storageId,
-			filename: `file-${mediaCounter}.bin`,
+			name,
+			path: `/${name}`,
 			mimeType: "application/octet-stream",
 			size: 1024,
-			type: "other",
 			...overrides,
 		};
 	},
@@ -1069,12 +1077,14 @@ export const mediaAssetFactory = {
 		overrides: Partial<MediaAssetData> = {},
 	): MediaAssetData {
 		mediaCounter++;
+		const name = `image-${mediaCounter}.jpg`;
 		return {
+			kind: "asset",
 			storageId,
-			filename: `image-${mediaCounter}.jpg`,
+			name,
+			path: `/${name}`,
 			mimeType: "image/jpeg",
 			size: 102400,
-			type: "image",
 			width: 1920,
 			height: 1080,
 			title: `Test Image ${mediaCounter}`,
@@ -1092,12 +1102,14 @@ export const mediaAssetFactory = {
 		overrides: Partial<MediaAssetData> = {},
 	): MediaAssetData {
 		mediaCounter++;
+		const name = `image-${mediaCounter}.png`;
 		return {
+			kind: "asset",
 			storageId,
-			filename: `image-${mediaCounter}.png`,
+			name,
+			path: `/${name}`,
 			mimeType: "image/png",
 			size: 204800,
-			type: "image",
 			width: 800,
 			height: 600,
 			...overrides,
@@ -1112,12 +1124,14 @@ export const mediaAssetFactory = {
 		overrides: Partial<MediaAssetData> = {},
 	): MediaAssetData {
 		mediaCounter++;
+		const name = `video-${mediaCounter}.mp4`;
 		return {
+			kind: "asset",
 			storageId,
-			filename: `video-${mediaCounter}.mp4`,
+			name,
+			path: `/${name}`,
 			mimeType: "video/mp4",
 			size: 10485760, // 10MB
-			type: "video",
 			width: 1920,
 			height: 1080,
 			duration: 120, // 2 minutes
@@ -1135,12 +1149,14 @@ export const mediaAssetFactory = {
 		overrides: Partial<MediaAssetData> = {},
 	): MediaAssetData {
 		mediaCounter++;
+		const name = `audio-${mediaCounter}.mp3`;
 		return {
+			kind: "asset",
 			storageId,
-			filename: `audio-${mediaCounter}.mp3`,
+			name,
+			path: `/${name}`,
 			mimeType: "audio/mpeg",
 			size: 5242880, // 5MB
-			type: "audio",
 			duration: 180, // 3 minutes
 			title: `Test Audio ${mediaCounter}`,
 			searchText: `Test Audio ${mediaCounter}`,
@@ -1156,12 +1172,14 @@ export const mediaAssetFactory = {
 		overrides: Partial<MediaAssetData> = {},
 	): MediaAssetData {
 		mediaCounter++;
+		const name = `document-${mediaCounter}.pdf`;
 		return {
+			kind: "asset",
 			storageId,
-			filename: `document-${mediaCounter}.pdf`,
+			name,
+			path: `/${name}`,
 			mimeType: "application/pdf",
 			size: 1048576, // 1MB
-			type: "document",
 			title: `Test Document ${mediaCounter}`,
 			searchText: `Test Document ${mediaCounter}`,
 			...overrides,
@@ -1225,6 +1243,7 @@ export const mediaFolderFactory = {
 	): MediaFolderData {
 		folderCounter++;
 		return {
+			kind: "folder",
 			name,
 			path: `/${name}`,
 			...overrides,
@@ -1236,12 +1255,13 @@ export const mediaFolderFactory = {
 	 */
 	child(
 		name: string,
-		parentId: Id<"mediaFolders">,
+		parentId: Id<"mediaItems">,
 		parentPath: string,
 		overrides: Partial<MediaFolderData> = {},
 	): MediaFolderData {
 		folderCounter++;
 		return {
+			kind: "folder",
 			name,
 			parentId,
 			path: `${parentPath}/${name}`,
@@ -1360,27 +1380,26 @@ export function assertMediaAsset(
 
 	const obj = value as Record<string, unknown>;
 
+	if (obj.kind !== "asset") {
+		throw new Error(message ?? "Media asset missing required kind: 'asset'");
+	}
+
 	if (!obj.storageId) {
 		throw new Error(
 			message ?? "Media asset missing required 'storageId' field",
 		);
 	}
 
-	if (typeof obj.filename !== "string") {
-		throw new Error(message ?? "Media asset missing required 'filename' field");
+	if (typeof obj.name !== "string") {
+		throw new Error(message ?? "Media asset missing required 'name' field");
 	}
 
 	if (typeof obj.mimeType !== "string") {
 		throw new Error(message ?? "Media asset missing required 'mimeType' field");
 	}
 
-	if (typeof obj.size !== "number") {
-		throw new Error(message ?? "Media asset missing required 'size' field");
-	}
-
-	const validTypes = ["image", "video", "audio", "document", "other"];
-	if (typeof obj.type !== "string" || !validTypes.includes(obj.type)) {
-		throw new Error(message ?? `Media asset has invalid type '${obj.type}'`);
+	if (typeof obj.path !== "string") {
+		throw new Error(message ?? "Media asset missing required 'path' field");
 	}
 }
 
@@ -1443,9 +1462,9 @@ export function assertNotDeleted(
  * Assert that a field definition has expected properties.
  */
 export function assertField(
-	fields: FieldDefinition[],
+	fields: TestFieldDefinition[],
 	fieldName: string,
-	expectations: Partial<FieldDefinition>,
+	expectations: Partial<TestFieldDefinition>,
 	message?: string,
 ): void {
 	const field = fields.find((f) => f.name === fieldName);
@@ -1455,7 +1474,7 @@ export function assertField(
 	}
 
 	for (const [key, expectedValue] of Object.entries(expectations)) {
-		const actualValue = field[key as keyof FieldDefinition];
+		const actualValue = field[key as keyof TestFieldDefinition];
 		if (JSON.stringify(actualValue) !== JSON.stringify(expectedValue)) {
 			throw new Error(
 				message ??
@@ -1511,11 +1530,7 @@ export { schema, modules };
 /**
  * Re-export type constants for convenience.
  */
-export {
-	fieldTypes,
-	contentStatuses,
-	mediaTypes,
-} from "./component/validators.js";
+export { fieldTypes, contentStatuses, mediaTypes } from "./component/schema.js";
 
 /**
  * Default export for convenient importing.

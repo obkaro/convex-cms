@@ -16,8 +16,8 @@ import {
 	deleteContentEntryArgs,
 	duplicateContentEntryArgs,
 	contentEntryDoc,
-	contentStatuses,
 } from "../../src/component/validators.js";
+import { contentStatuses } from "../../src/component/schema.js";
 
 // Import all component modules for testing
 const modules = import.meta.glob("../../src/component/**/*.ts");
@@ -102,6 +102,7 @@ describe("Content Entry Mutation Validators", () => {
 			const contentType = {
 				name: "blog_post",
 				displayName: "Blog Post",
+					createdBy: "test-user",
 				description: "A blog post entry",
 				fields: [
 					{ name: "title", label: "Title", type: "text", required: true },
@@ -839,6 +840,7 @@ describe("Content Entry Update Mutation Integration Tests", () => {
 				{
 					name: "blog_post",
 					displayName: "Blog Post",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 						{
@@ -882,6 +884,7 @@ describe("Content Entry Update Mutation Integration Tests", () => {
 				{
 					name: "article",
 					displayName: "Article",
+					createdBy: "test-user",
 					fields: [
 						{
 							name: "title",
@@ -917,6 +920,7 @@ describe("Content Entry Update Mutation Integration Tests", () => {
 				{
 					name: "page",
 					displayName: "Page",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 					],
@@ -950,6 +954,7 @@ describe("Content Entry Update Mutation Integration Tests", () => {
 				{
 					name: "post",
 					displayName: "Post",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 					],
@@ -983,6 +988,7 @@ describe("Content Entry Update Mutation Integration Tests", () => {
 				{
 					name: "document",
 					displayName: "Document",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 					],
@@ -1014,6 +1020,7 @@ describe("Content Entry Update Mutation Integration Tests", () => {
 				{
 					name: "item",
 					displayName: "Item",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 					],
@@ -1050,6 +1057,7 @@ describe("Content Entry Update Mutation Integration Tests", () => {
 				{
 					name: "searchable",
 					displayName: "Searchable",
+					createdBy: "test-user",
 					fields: [
 						{
 							name: "title",
@@ -1094,6 +1102,7 @@ describe("Content Entry Update Mutation Integration Tests", () => {
 				{
 					name: "temp",
 					displayName: "Temp",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 					],
@@ -1126,6 +1135,7 @@ describe("Content Entry Update Mutation Integration Tests", () => {
 				{
 					name: "deletable",
 					displayName: "Deletable",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 					],
@@ -1158,6 +1168,7 @@ describe("Content Entry Update Mutation Integration Tests", () => {
 				{
 					name: "to_delete",
 					displayName: "To Delete",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 					],
@@ -1190,6 +1201,7 @@ describe("Content Entry Update Mutation Integration Tests", () => {
 				{
 					name: "status_test",
 					displayName: "Status Test",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 					],
@@ -1222,6 +1234,7 @@ describe("Content Entry Update Mutation Integration Tests", () => {
 				{
 					name: "versioned",
 					displayName: "Versioned",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 					],
@@ -1256,6 +1269,7 @@ describe("Content Entry Update Mutation Integration Tests", () => {
 				{
 					name: "complex",
 					displayName: "Complex",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 						{
@@ -1320,6 +1334,7 @@ describe("Content Entry Update Mutation Integration Tests", () => {
 				{
 					name: "metadata_only",
 					displayName: "Metadata Only",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 					],
@@ -1547,6 +1562,7 @@ describe("Content Entry Duplicate Mutation Integration Tests", () => {
 				{
 					name: "blog_post",
 					displayName: "Blog Post",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 						{
@@ -1594,6 +1610,7 @@ describe("Content Entry Duplicate Mutation Integration Tests", () => {
 				{
 					name: "article",
 					displayName: "Article",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 					],
@@ -1625,6 +1642,7 @@ describe("Content Entry Duplicate Mutation Integration Tests", () => {
 				{
 					name: "post_with_media",
 					displayName: "Post with Media",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 						{ name: "image", label: "Image", type: "media", required: false },
@@ -1657,6 +1675,7 @@ describe("Content Entry Duplicate Mutation Integration Tests", () => {
 				{
 					name: "media_entry",
 					displayName: "Media Entry",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 						{ name: "single", label: "Single", type: "media", required: false },
@@ -1702,6 +1721,7 @@ describe("Content Entry Duplicate Mutation Integration Tests", () => {
 				{
 					name: "publishable",
 					displayName: "Publishable",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 					],
@@ -1747,6 +1767,7 @@ describe("Content Entry Duplicate Mutation Integration Tests", () => {
 				{
 					name: "temp_type",
 					displayName: "Temp Type",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 					],
@@ -1778,6 +1799,7 @@ describe("Content Entry Duplicate Mutation Integration Tests", () => {
 				{
 					name: "deletable_type",
 					displayName: "Deletable Type",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 					],
@@ -1809,6 +1831,7 @@ describe("Content Entry Duplicate Mutation Integration Tests", () => {
 				{
 					name: "inactive_type",
 					displayName: "Inactive Type",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 					],
@@ -1840,6 +1863,7 @@ describe("Content Entry Duplicate Mutation Integration Tests", () => {
 				{
 					name: "searchable_type",
 					displayName: "Searchable Type",
+					createdBy: "test-user",
 					fields: [
 						{
 							name: "title",
@@ -1884,6 +1908,7 @@ describe("Content Entry Duplicate Mutation Integration Tests", () => {
 				{
 					name: "localizable",
 					displayName: "Localizable",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 					],
@@ -1916,6 +1941,7 @@ describe("Content Entry Duplicate Mutation Integration Tests", () => {
 				{
 					name: "locale_test",
 					displayName: "Locale Test",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 					],
@@ -1947,6 +1973,7 @@ describe("Content Entry Duplicate Mutation Integration Tests", () => {
 				{
 					name: "multi_dup",
 					displayName: "Multi Dup",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 					],

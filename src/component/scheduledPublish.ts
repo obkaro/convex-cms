@@ -103,7 +103,7 @@ export const scheduleEntry = mutation({
 		// is still scheduled with the same timestamp before publishing
 
 		// Schedule the publish function to run at the specified time
-		const scheduledFunctionId = await ctx.scheduler.runAt(
+		await ctx.scheduler.runAt(
 			publishAt,
 			internal.scheduledPublish.executeScheduledPublish,
 			{
@@ -328,7 +328,7 @@ export const getScheduledEntries = query({
 		const to = args.to ?? now + 30 * 24 * 60 * 60 * 1000; // 30 days
 
 		// Query scheduled entries using the index
-		let query = ctx.db
+		const query = ctx.db
 			.query("contentEntries")
 			.withIndex("by_scheduled_publish", (q) => q.eq("status", "scheduled"));
 

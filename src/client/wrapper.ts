@@ -85,7 +85,7 @@ import type {
   MediaFolder,
   FieldDefinition,
   ContentStatus,
-  MediaType,
+  // MediaType,
   PaginatedResponse,
   PaginationResult,
   PaginationOpts,
@@ -324,7 +324,8 @@ export interface CreateContentTypeArgs {
   slugField?: string;
   titleField?: string;
   sortOrder?: number;
-  createdBy?: string;
+  /** Required for audit tracking - the user ID creating this content type */
+  createdBy: string;
 }
 
 export interface UpdateContentTypeArgs {
@@ -642,14 +643,15 @@ export interface CompareVersionsArgs {
 // Media Asset Arguments
 export interface CreateMediaAssetArgs {
   storageId: string;
-  filename: string;
+  /** Original filename (e.g., "photo.jpg") */
+  name: string;
   mimeType: string;
-  size: number;
-  type: MediaType;
+  size?: number;
   title?: string;
   description?: string;
   altText?: string;
-  folderId?: string;
+  /** Parent folder ID */
+  parentId?: string;
   width?: number;
   height?: number;
   duration?: number;
@@ -660,11 +662,18 @@ export interface CreateMediaAssetArgs {
 
 export interface UpdateMediaAssetArgs {
   id: string;
+  /** Rename the file */
+  name?: string;
   title?: string;
   description?: string;
   altText?: string;
-  folderId?: string;
+  /** Move to a different folder */
+  parentId?: string;
   tags?: string[];
+  metadata?: Record<string, unknown>;
+  width?: number;
+  height?: number;
+  duration?: number;
   /** User ID performing the update (used for authorization) */
   updatedBy?: string;
 }
@@ -900,7 +909,8 @@ export interface AssetWithVariants {
   original: {
     _id: string;
     _creationTime: number;
-    filename: string;
+    /** Original filename (e.g., "photo.jpg") */
+    name: string;
     mimeType: string;
     size: number;
     width?: number;
@@ -3221,16 +3231,17 @@ export class MediaAssetsApi {
       throw new Error("Media management feature is not enabled");
     }
     // Authorization check - mediaAssets.create
-    await this.authorize(ctx, "mediaAssets.create", args.createdBy);
+    await this.authorize(ctx, "mediaItems.create", args.createdBy);
     // Rate limit check - mediaAssets.create (media uploads are high-frequency operations)
-    await this.rateLimit(ctx, "mediaAssets.create", args.createdBy);
+    await this.rateLimit(ctx, "mediaItems.create", args.createdBy);
     // Validate file size
-    if (args.size > this.config.maxMediaFileSize) {
+    if (args.size && args.size > this.config.maxMediaFileSize) {
       throw new Error(
         `File size ${args.size} exceeds maximum allowed size of ${this.config.maxMediaFileSize} bytes`
       );
     }
-    return ctx.runMutation(this.api.mediaAssetMutations.createMediaAsset, args);
+    // Cast safe: createMediaAsset always returns kind="asset"
+    return ctx.runMutation(this.api.mediaAssetMutations.createMediaAsset, args) as Promise<MediaAsset>;
   }
 
   /**
@@ -3255,10 +3266,11 @@ export class MediaAssetsApi {
     }
 
     // Authorization check - mediaAssets.update (with ownership info)
-    await this.authorize(ctx, "mediaAssets.update", args.updatedBy, args.id, asset.createdBy);
+    await this.authorize(ctx, "mediaItems.update", args.updatedBy, args.id, asset.createdBy);
     // Rate limit check - mediaAssets.update
-    await this.rateLimit(ctx, "mediaAssets.update", args.updatedBy);
-    return ctx.runMutation(this.api.mediaAssetMutations.updateMediaAsset, args);
+    await this.rateLimit(ctx, "mediaItems.update", args.updatedBy);
+    // Cast safe: updateMediaAsset always returns kind="asset"
+    return ctx.runMutation(this.api.mediaAssetMutations.updateMediaAsset, args) as Promise<MediaAsset>;
   }
 
   /**
@@ -3283,10 +3295,11 @@ export class MediaAssetsApi {
     }
 
     // Authorization check - mediaAssets.delete (with ownership info)
-    await this.authorize(ctx, "mediaAssets.delete", args.deletedBy, args.id, asset.createdBy);
+    await this.authorize(ctx, "mediaItems.delete", args.deletedBy, args.id, asset.createdBy);
     // Rate limit check - mediaAssets.delete
-    await this.rateLimit(ctx, "mediaAssets.delete", args.deletedBy);
-    return ctx.runMutation(this.api.mediaAssetMutations.deleteMediaAsset, args);
+    await this.rateLimit(ctx, "mediaItems.delete", args.deletedBy);
+    // Cast safe: deleteMediaAsset always returns kind="asset"
+    return ctx.runMutation(this.api.mediaAssetMutations.deleteMediaAsset, args) as unknown as Promise<MediaAsset>;
   }
 
   /**
@@ -3303,7 +3316,8 @@ export class MediaAssetsApi {
     if (!this.config.features.mediaManagement) {
       throw new Error("Media management feature is not enabled");
     }
-    return ctx.runQuery(this.api.mediaAssets.get, args);
+    // Cast safe: mediaAssets.get filters for kind="asset"
+    return ctx.runQuery(this.api.mediaAssets.get, args) as Promise<MediaAsset | null>;
   }
 
   /**
@@ -3376,7 +3390,7 @@ export class MediaAssetsApi {
       throw new Error("Media management feature is not enabled");
     }
     // Rate limit check - mediaAssets.create (upload URL generation precedes asset creation)
-    await this.rateLimit(ctx, "mediaAssets.create", args.requestedBy);
+    await this.rateLimit(ctx, "mediaItems.create", args.requestedBy);
     return ctx.runMutation(
       this.api.mediaUploadMutations.generateUploadUrl,
       args
@@ -3405,10 +3419,11 @@ export class MediaAssetsApi {
     if (!this.config.features.mediaManagement) {
       throw new Error("Media management feature is not enabled");
     }
+    // Cast safe: restoreMediaAsset always returns kind="asset"
     return ctx.runMutation(
       this.api.mediaAssetMutations.restoreMediaAsset,
       args
-    );
+    ) as Promise<MediaAsset>;
   }
 
   /**
@@ -3556,10 +3571,11 @@ export class MediaFoldersApi {
       throw new Error("Media management feature is not enabled");
     }
     // Authorization check - mediaFolders.create
-    await this.authorize(ctx, "mediaFolders.create", args.createdBy);
+    await this.authorize(ctx, "mediaItems.create", args.createdBy);
     // Rate limit check - mediaFolders.create
-    await this.rateLimit(ctx, "mediaFolders.create", args.createdBy);
-    return ctx.runMutation(this.api.mediaFolderMutations.createMediaFolder, args);
+    await this.rateLimit(ctx, "mediaItems.create", args.createdBy);
+    // Cast safe: createMediaFolder always returns kind="folder"
+    return ctx.runMutation(this.api.mediaFolderMutations.createMediaFolder, args) as Promise<MediaFolder>;
   }
 
   /**
@@ -3584,10 +3600,11 @@ export class MediaFoldersApi {
     }
 
     // Authorization check - mediaFolders.update (with ownership info)
-    await this.authorize(ctx, "mediaFolders.update", args.updatedBy, args.id, folder.createdBy);
+    await this.authorize(ctx, "mediaItems.update", args.updatedBy, args.id, folder.createdBy);
     // Rate limit check - mediaFolders.update
-    await this.rateLimit(ctx, "mediaFolders.update", args.updatedBy);
-    return ctx.runMutation(this.api.mediaFolderMutations.updateMediaFolder, args);
+    await this.rateLimit(ctx, "mediaItems.update", args.updatedBy);
+    // Cast safe: updateMediaFolder always returns kind="folder"
+    return ctx.runMutation(this.api.mediaFolderMutations.updateMediaFolder, args) as Promise<MediaFolder>;
   }
 
   /**
@@ -3612,10 +3629,11 @@ export class MediaFoldersApi {
     }
 
     // Authorization check - mediaFolders.delete (with ownership info)
-    await this.authorize(ctx, "mediaFolders.delete", args.deletedBy, args.id, folder.createdBy);
+    await this.authorize(ctx, "mediaItems.delete", args.deletedBy, args.id, folder.createdBy);
     // Rate limit check - mediaFolders.delete
-    await this.rateLimit(ctx, "mediaFolders.delete", args.deletedBy);
-    return ctx.runMutation(this.api.mediaFolderMutations.deleteMediaFolder, args);
+    await this.rateLimit(ctx, "mediaItems.delete", args.deletedBy);
+    // Cast safe: deleteMediaFolder always returns kind="folder"
+    return ctx.runMutation(this.api.mediaFolderMutations.deleteMediaFolder, args) as Promise<MediaFolder>;
   }
 
   /**
@@ -3632,7 +3650,8 @@ export class MediaFoldersApi {
     if (!this.config.features.mediaManagement) {
       throw new Error("Media management feature is not enabled");
     }
-    return ctx.runQuery(this.api.mediaFolderMutations.getMediaFolder, args);
+    // Cast safe: getMediaFolder filters for kind="folder"
+    return ctx.runQuery(this.api.mediaFolderMutations.getMediaFolder, args) as Promise<MediaFolder | null>;
   }
 
   /**
@@ -3649,7 +3668,8 @@ export class MediaFoldersApi {
     if (!this.config.features.mediaManagement) {
       throw new Error("Media management feature is not enabled");
     }
-    return ctx.runQuery(this.api.mediaFolderMutations.listMediaFolders, args);
+    // Cast safe: listMediaFolders filters for kind="folder"
+    return ctx.runQuery(this.api.mediaFolderMutations.listMediaFolders, args) as Promise<MediaFolder[]>;
   }
 
   /**
@@ -3674,10 +3694,11 @@ export class MediaFoldersApi {
     }
 
     // Authorization check - mediaFolders.move (with ownership info)
-    await this.authorize(ctx, "mediaFolders.move", args.updatedBy, args.id, folder.createdBy);
+    await this.authorize(ctx, "mediaItems.move", args.updatedBy, args.id, folder.createdBy);
     // Rate limit check - mediaFolders.move
-    await this.rateLimit(ctx, "mediaFolders.move", args.updatedBy);
-    return ctx.runMutation(this.api.mediaFolderMutations.moveMediaFolder, args);
+    await this.rateLimit(ctx, "mediaItems.move", args.updatedBy);
+    // Cast safe: moveMediaFolder always returns kind="folder"
+    return ctx.runMutation(this.api.mediaFolderMutations.moveMediaFolder, args) as Promise<MediaFolder>;
   }
 
   /**
@@ -3703,10 +3724,11 @@ export class MediaFoldersApi {
     if (!this.config.features.mediaManagement) {
       throw new Error("Media management feature is not enabled");
     }
+    // Cast safe: restoreMediaFolder always returns kind="folder"
     return ctx.runMutation(
       this.api.mediaFolderMutations.restoreMediaFolder,
       args
-    );
+    ) as Promise<MediaFolder>;
   }
 
   /**
@@ -3731,10 +3753,11 @@ export class MediaFoldersApi {
     if (!this.config.features.mediaManagement) {
       throw new Error("Media management feature is not enabled");
     }
+    // Cast safe: getMediaFolderByPath filters for kind="folder"
     return ctx.runQuery(
       this.api.mediaFolderMutations.getMediaFolderByPath,
       args
-    );
+    ) as Promise<MediaFolder | null>;
   }
 
   /**
@@ -3762,10 +3785,11 @@ export class MediaFoldersApi {
     if (!this.config.features.mediaManagement) {
       throw new Error("Media management feature is not enabled");
     }
+    // Cast safe: getFolderTree filters for kind="folder"
     return ctx.runQuery(
       this.api.mediaFolderMutations.getFolderTree,
       args
-    );
+    ) as Promise<MediaFolder[]>;
   }
 }
 

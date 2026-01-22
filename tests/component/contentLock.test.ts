@@ -263,6 +263,7 @@ describe("Content Lock Integration Tests", () => {
       {
         name: "test_type",
         displayName: "Test Type",
+					createdBy: "test-user",
         fields: [
           { name: "title", label: "Title", type: "text", required: true },
         ],
@@ -740,6 +741,7 @@ describe("Content Lock Integration Tests", () => {
         {
           name: "lockable",
           displayName: "Lockable",
+					createdBy: "test-user",
           fields: [
             { name: "title", label: "Title", type: "text", required: true },
           ],
@@ -784,6 +786,7 @@ describe("Content Lock Integration Tests", () => {
         {
           name: "filterable",
           displayName: "Filterable",
+					createdBy: "test-user",
           fields: [
             { name: "title", label: "Title", type: "text", required: true },
           ],
@@ -827,6 +830,7 @@ describe("Content Lock Integration Tests", () => {
         {
           name: "expirable",
           displayName: "Expirable",
+					createdBy: "test-user",
           fields: [
             { name: "title", label: "Title", type: "text", required: true },
           ],
@@ -883,6 +887,7 @@ describe("Concurrent Editing Scenarios", () => {
       {
         name: "concurrent_type",
         displayName: "Concurrent Type",
+					createdBy: "test-user",
         fields: [
           { name: "title", label: "Title", type: "text", required: true },
         ],

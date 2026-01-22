@@ -625,6 +625,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           data: any;
           locale?: string;
           primaryEntryId?: string;
+          scheduledPublishAt?: number;
           slug?: string;
           status?: "draft" | "published" | "archived" | "scheduled";
         },
@@ -1210,54 +1211,162 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             role: string | null;
             userId: string;
           };
-          createdBy?: string;
+          createdBy: string;
           description?: string;
           displayName: string;
-          fields: Array<{
-            defaultValue?: any;
-            description?: string;
-            label: string;
-            localized?: boolean;
-            name: string;
-            options?: {
-              allowCreate?: boolean;
-              allowMultiple?: boolean;
-              allowedBlocks?: Array<string>;
-              allowedContentTypes?: Array<string>;
-              allowedMarks?: Array<string>;
-              allowedMimeTypes?: Array<string>;
-              max?: number;
-              maxFileSize?: number;
-              maxLength?: number;
-              maxTags?: number;
-              min?: number;
-              minItems?: number;
-              minLength?: number;
-              minTags?: number;
-              multiple?: boolean;
-              options?: Array<{ label: string; value: string }>;
-              pattern?: string;
-              precision?: number;
-              step?: number;
-              taxonomyId?: string;
-            };
-            required: boolean;
-            searchable?: boolean;
-            type:
-              | "text"
-              | "richText"
-              | "number"
-              | "boolean"
-              | "date"
-              | "datetime"
-              | "reference"
-              | "media"
-              | "json"
-              | "select"
-              | "multiSelect"
-              | "tags"
-              | "category";
-          }>;
+          fields: Array<
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options: {
+                  maxLength?: number;
+                  minLength?: number;
+                  pattern?: string;
+                };
+                required: boolean;
+                searchable?: boolean;
+                type: "text";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options: {
+                  max?: number;
+                  min?: number;
+                  precision?: number;
+                  step?: number;
+                };
+                required: boolean;
+                searchable?: boolean;
+                type: "number";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options: { falseLabel?: string; trueLabel?: string };
+                required: boolean;
+                searchable?: boolean;
+                type: "boolean";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options: {
+                  allowedBlocks?: Array<string>;
+                  allowedMarks?: Array<string>;
+                };
+                required: boolean;
+                searchable?: boolean;
+                type: "richText";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options: {
+                  allowedMimeTypes?: Array<string>;
+                  maxFileSize?: number;
+                  mediaType?:
+                    | "image"
+                    | "video"
+                    | "audio"
+                    | "document"
+                    | "other";
+                };
+                required: boolean;
+                searchable?: boolean;
+                type: "media";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options: { options?: Array<{ label: string; value: string }> };
+                required: boolean;
+                searchable?: boolean;
+                type: "select";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options: {
+                  allowCreate?: boolean;
+                  maxTags?: number;
+                  minTags?: number;
+                  taxonomyId?: string;
+                };
+                required: boolean;
+                searchable?: boolean;
+                type: "tags";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options: { allowMultiple?: boolean };
+                required: boolean;
+                searchable?: boolean;
+                type: "category";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options: { schema?: any };
+                required: boolean;
+                searchable?: boolean;
+                type: "json";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options: { schema?: any };
+                required: boolean;
+                searchable?: boolean;
+                type: "json";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options: {
+                  allowedContentTypes?: Array<string>;
+                  minItems?: number;
+                  multiple?: boolean;
+                };
+                required: boolean;
+                searchable?: boolean;
+                type: "reference";
+              }
+          >;
           icon?: string;
           name: string;
           singleton?: boolean;
@@ -1268,55 +1377,163 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         {
           _creationTime: number;
           _id: string;
-          createdBy?: string;
+          createdBy: string;
           deletedAt?: number;
           description?: string;
           displayName: string;
-          fields: Array<{
-            defaultValue?: any;
-            description?: string;
-            label: string;
-            localized?: boolean;
-            name: string;
-            options?: {
-              allowCreate?: boolean;
-              allowMultiple?: boolean;
-              allowedBlocks?: Array<string>;
-              allowedContentTypes?: Array<string>;
-              allowedMarks?: Array<string>;
-              allowedMimeTypes?: Array<string>;
-              max?: number;
-              maxFileSize?: number;
-              maxLength?: number;
-              maxTags?: number;
-              min?: number;
-              minItems?: number;
-              minLength?: number;
-              minTags?: number;
-              multiple?: boolean;
-              options?: Array<{ label: string; value: string }>;
-              pattern?: string;
-              precision?: number;
-              step?: number;
-              taxonomyId?: string;
-            };
-            required: boolean;
-            searchable?: boolean;
-            type:
-              | "text"
-              | "richText"
-              | "number"
-              | "boolean"
-              | "date"
-              | "datetime"
-              | "reference"
-              | "media"
-              | "json"
-              | "select"
-              | "multiSelect"
-              | "tags"
-              | "category";
-          }>;
+          fields: Array<
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options: {
+                  maxLength?: number;
+                  minLength?: number;
+                  pattern?: string;
+                };
+                required: boolean;
+                searchable?: boolean;
+                type: "text";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options: {
+                  max?: number;
+                  min?: number;
+                  precision?: number;
+                  step?: number;
+                };
+                required: boolean;
+                searchable?: boolean;
+                type: "number";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options: { falseLabel?: string; trueLabel?: string };
+                required: boolean;
+                searchable?: boolean;
+                type: "boolean";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options: {
+                  allowedBlocks?: Array<string>;
+                  allowedMarks?: Array<string>;
+                };
+                required: boolean;
+                searchable?: boolean;
+                type: "richText";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options: {
+                  allowedMimeTypes?: Array<string>;
+                  maxFileSize?: number;
+                  mediaType?:
+                    | "image"
+                    | "video"
+                    | "audio"
+                    | "document"
+                    | "other";
+                };
+                required: boolean;
+                searchable?: boolean;
+                type: "media";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options: { options?: Array<{ label: string; value: string }> };
+                required: boolean;
+                searchable?: boolean;
+                type: "select";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options: {
+                  allowCreate?: boolean;
+                  maxTags?: number;
+                  minTags?: number;
+                  taxonomyId?: string;
+                };
+                required: boolean;
+                searchable?: boolean;
+                type: "tags";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options: { allowMultiple?: boolean };
+                required: boolean;
+                searchable?: boolean;
+                type: "category";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options: { schema?: any };
+                required: boolean;
+                searchable?: boolean;
+                type: "json";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options: { schema?: any };
+                required: boolean;
+                searchable?: boolean;
+                type: "json";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options: {
+                  allowedContentTypes?: Array<string>;
+                  minItems?: number;
+                  multiple?: boolean;
+                };
+                required: boolean;
+                searchable?: boolean;
+                type: "reference";
+              }
+          >;
           icon?: string;
           isActive: boolean;
           name: string;
@@ -1362,51 +1579,159 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           };
           description?: string;
           displayName?: string;
-          fields?: Array<{
-            defaultValue?: any;
-            description?: string;
-            label: string;
-            localized?: boolean;
-            name: string;
-            options?: {
-              allowCreate?: boolean;
-              allowMultiple?: boolean;
-              allowedBlocks?: Array<string>;
-              allowedContentTypes?: Array<string>;
-              allowedMarks?: Array<string>;
-              allowedMimeTypes?: Array<string>;
-              max?: number;
-              maxFileSize?: number;
-              maxLength?: number;
-              maxTags?: number;
-              min?: number;
-              minItems?: number;
-              minLength?: number;
-              minTags?: number;
-              multiple?: boolean;
-              options?: Array<{ label: string; value: string }>;
-              pattern?: string;
-              precision?: number;
-              step?: number;
-              taxonomyId?: string;
-            };
-            required: boolean;
-            searchable?: boolean;
-            type:
-              | "text"
-              | "richText"
-              | "number"
-              | "boolean"
-              | "date"
-              | "datetime"
-              | "reference"
-              | "media"
-              | "json"
-              | "select"
-              | "multiSelect"
-              | "tags"
-              | "category";
-          }>;
+          fields?: Array<
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options: {
+                  maxLength?: number;
+                  minLength?: number;
+                  pattern?: string;
+                };
+                required: boolean;
+                searchable?: boolean;
+                type: "text";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options: {
+                  max?: number;
+                  min?: number;
+                  precision?: number;
+                  step?: number;
+                };
+                required: boolean;
+                searchable?: boolean;
+                type: "number";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options: { falseLabel?: string; trueLabel?: string };
+                required: boolean;
+                searchable?: boolean;
+                type: "boolean";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options: {
+                  allowedBlocks?: Array<string>;
+                  allowedMarks?: Array<string>;
+                };
+                required: boolean;
+                searchable?: boolean;
+                type: "richText";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options: {
+                  allowedMimeTypes?: Array<string>;
+                  maxFileSize?: number;
+                  mediaType?:
+                    | "image"
+                    | "video"
+                    | "audio"
+                    | "document"
+                    | "other";
+                };
+                required: boolean;
+                searchable?: boolean;
+                type: "media";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options: { options?: Array<{ label: string; value: string }> };
+                required: boolean;
+                searchable?: boolean;
+                type: "select";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options: {
+                  allowCreate?: boolean;
+                  maxTags?: number;
+                  minTags?: number;
+                  taxonomyId?: string;
+                };
+                required: boolean;
+                searchable?: boolean;
+                type: "tags";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options: { allowMultiple?: boolean };
+                required: boolean;
+                searchable?: boolean;
+                type: "category";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options: { schema?: any };
+                required: boolean;
+                searchable?: boolean;
+                type: "json";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options: { schema?: any };
+                required: boolean;
+                searchable?: boolean;
+                type: "json";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options: {
+                  allowedContentTypes?: Array<string>;
+                  minItems?: number;
+                  multiple?: boolean;
+                };
+                required: boolean;
+                searchable?: boolean;
+                type: "reference";
+              }
+          >;
           force?: boolean;
           icon?: string;
           id: string;
@@ -1432,55 +1757,163 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
               | "REFERENCE_TYPES_RESTRICTED"
               | "VALIDATION_TIGHTENED";
           }>;
-          createdBy?: string;
+          createdBy: string;
           deletedAt?: number;
           description?: string;
           displayName: string;
-          fields: Array<{
-            defaultValue?: any;
-            description?: string;
-            label: string;
-            localized?: boolean;
-            name: string;
-            options?: {
-              allowCreate?: boolean;
-              allowMultiple?: boolean;
-              allowedBlocks?: Array<string>;
-              allowedContentTypes?: Array<string>;
-              allowedMarks?: Array<string>;
-              allowedMimeTypes?: Array<string>;
-              max?: number;
-              maxFileSize?: number;
-              maxLength?: number;
-              maxTags?: number;
-              min?: number;
-              minItems?: number;
-              minLength?: number;
-              minTags?: number;
-              multiple?: boolean;
-              options?: Array<{ label: string; value: string }>;
-              pattern?: string;
-              precision?: number;
-              step?: number;
-              taxonomyId?: string;
-            };
-            required: boolean;
-            searchable?: boolean;
-            type:
-              | "text"
-              | "richText"
-              | "number"
-              | "boolean"
-              | "date"
-              | "datetime"
-              | "reference"
-              | "media"
-              | "json"
-              | "select"
-              | "multiSelect"
-              | "tags"
-              | "category";
-          }>;
+          fields: Array<
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options: {
+                  maxLength?: number;
+                  minLength?: number;
+                  pattern?: string;
+                };
+                required: boolean;
+                searchable?: boolean;
+                type: "text";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options: {
+                  max?: number;
+                  min?: number;
+                  precision?: number;
+                  step?: number;
+                };
+                required: boolean;
+                searchable?: boolean;
+                type: "number";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options: { falseLabel?: string; trueLabel?: string };
+                required: boolean;
+                searchable?: boolean;
+                type: "boolean";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options: {
+                  allowedBlocks?: Array<string>;
+                  allowedMarks?: Array<string>;
+                };
+                required: boolean;
+                searchable?: boolean;
+                type: "richText";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options: {
+                  allowedMimeTypes?: Array<string>;
+                  maxFileSize?: number;
+                  mediaType?:
+                    | "image"
+                    | "video"
+                    | "audio"
+                    | "document"
+                    | "other";
+                };
+                required: boolean;
+                searchable?: boolean;
+                type: "media";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options: { options?: Array<{ label: string; value: string }> };
+                required: boolean;
+                searchable?: boolean;
+                type: "select";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options: {
+                  allowCreate?: boolean;
+                  maxTags?: number;
+                  minTags?: number;
+                  taxonomyId?: string;
+                };
+                required: boolean;
+                searchable?: boolean;
+                type: "tags";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options: { allowMultiple?: boolean };
+                required: boolean;
+                searchable?: boolean;
+                type: "category";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options: { schema?: any };
+                required: boolean;
+                searchable?: boolean;
+                type: "json";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options: { schema?: any };
+                required: boolean;
+                searchable?: boolean;
+                type: "json";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options: {
+                  allowedContentTypes?: Array<string>;
+                  minItems?: number;
+                  multiple?: boolean;
+                };
+                required: boolean;
+                searchable?: boolean;
+                type: "reference";
+              }
+          >;
           icon?: string;
           isActive: boolean;
           name: string;
@@ -1501,55 +1934,163 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         {
           _creationTime: number;
           _id: string;
-          createdBy?: string;
+          createdBy: string;
           deletedAt?: number;
           description?: string;
           displayName: string;
-          fields: Array<{
-            defaultValue?: any;
-            description?: string;
-            label: string;
-            localized?: boolean;
-            name: string;
-            options?: {
-              allowCreate?: boolean;
-              allowMultiple?: boolean;
-              allowedBlocks?: Array<string>;
-              allowedContentTypes?: Array<string>;
-              allowedMarks?: Array<string>;
-              allowedMimeTypes?: Array<string>;
-              max?: number;
-              maxFileSize?: number;
-              maxLength?: number;
-              maxTags?: number;
-              min?: number;
-              minItems?: number;
-              minLength?: number;
-              minTags?: number;
-              multiple?: boolean;
-              options?: Array<{ label: string; value: string }>;
-              pattern?: string;
-              precision?: number;
-              step?: number;
-              taxonomyId?: string;
-            };
-            required: boolean;
-            searchable?: boolean;
-            type:
-              | "text"
-              | "richText"
-              | "number"
-              | "boolean"
-              | "date"
-              | "datetime"
-              | "reference"
-              | "media"
-              | "json"
-              | "select"
-              | "multiSelect"
-              | "tags"
-              | "category";
-          }>;
+          fields: Array<
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options: {
+                  maxLength?: number;
+                  minLength?: number;
+                  pattern?: string;
+                };
+                required: boolean;
+                searchable?: boolean;
+                type: "text";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options: {
+                  max?: number;
+                  min?: number;
+                  precision?: number;
+                  step?: number;
+                };
+                required: boolean;
+                searchable?: boolean;
+                type: "number";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options: { falseLabel?: string; trueLabel?: string };
+                required: boolean;
+                searchable?: boolean;
+                type: "boolean";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options: {
+                  allowedBlocks?: Array<string>;
+                  allowedMarks?: Array<string>;
+                };
+                required: boolean;
+                searchable?: boolean;
+                type: "richText";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options: {
+                  allowedMimeTypes?: Array<string>;
+                  maxFileSize?: number;
+                  mediaType?:
+                    | "image"
+                    | "video"
+                    | "audio"
+                    | "document"
+                    | "other";
+                };
+                required: boolean;
+                searchable?: boolean;
+                type: "media";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options: { options?: Array<{ label: string; value: string }> };
+                required: boolean;
+                searchable?: boolean;
+                type: "select";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options: {
+                  allowCreate?: boolean;
+                  maxTags?: number;
+                  minTags?: number;
+                  taxonomyId?: string;
+                };
+                required: boolean;
+                searchable?: boolean;
+                type: "tags";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options: { allowMultiple?: boolean };
+                required: boolean;
+                searchable?: boolean;
+                type: "category";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options: { schema?: any };
+                required: boolean;
+                searchable?: boolean;
+                type: "json";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options: { schema?: any };
+                required: boolean;
+                searchable?: boolean;
+                type: "json";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options: {
+                  allowedContentTypes?: Array<string>;
+                  minItems?: number;
+                  multiple?: boolean;
+                };
+                required: boolean;
+                searchable?: boolean;
+                type: "reference";
+              }
+          >;
           icon?: string;
           isActive: boolean;
           name: string;
@@ -1584,55 +2125,165 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           page: Array<{
             _creationTime: number;
             _id: string;
-            createdBy?: string;
+            createdBy: string;
             deletedAt?: number;
             description?: string;
             displayName: string;
-            fields: Array<{
-              defaultValue?: any;
-              description?: string;
-              label: string;
-              localized?: boolean;
-              name: string;
-              options?: {
-                allowCreate?: boolean;
-                allowMultiple?: boolean;
-                allowedBlocks?: Array<string>;
-                allowedContentTypes?: Array<string>;
-                allowedMarks?: Array<string>;
-                allowedMimeTypes?: Array<string>;
-                max?: number;
-                maxFileSize?: number;
-                maxLength?: number;
-                maxTags?: number;
-                min?: number;
-                minItems?: number;
-                minLength?: number;
-                minTags?: number;
-                multiple?: boolean;
-                options?: Array<{ label: string; value: string }>;
-                pattern?: string;
-                precision?: number;
-                step?: number;
-                taxonomyId?: string;
-              };
-              required: boolean;
-              searchable?: boolean;
-              type:
-                | "text"
-                | "richText"
-                | "number"
-                | "boolean"
-                | "date"
-                | "datetime"
-                | "reference"
-                | "media"
-                | "json"
-                | "select"
-                | "multiSelect"
-                | "tags"
-                | "category";
-            }>;
+            fields: Array<
+              | {
+                  defaultValue?: any;
+                  description?: string;
+                  label: string;
+                  localized?: boolean;
+                  name: string;
+                  options: {
+                    maxLength?: number;
+                    minLength?: number;
+                    pattern?: string;
+                  };
+                  required: boolean;
+                  searchable?: boolean;
+                  type: "text";
+                }
+              | {
+                  defaultValue?: any;
+                  description?: string;
+                  label: string;
+                  localized?: boolean;
+                  name: string;
+                  options: {
+                    max?: number;
+                    min?: number;
+                    precision?: number;
+                    step?: number;
+                  };
+                  required: boolean;
+                  searchable?: boolean;
+                  type: "number";
+                }
+              | {
+                  defaultValue?: any;
+                  description?: string;
+                  label: string;
+                  localized?: boolean;
+                  name: string;
+                  options: { falseLabel?: string; trueLabel?: string };
+                  required: boolean;
+                  searchable?: boolean;
+                  type: "boolean";
+                }
+              | {
+                  defaultValue?: any;
+                  description?: string;
+                  label: string;
+                  localized?: boolean;
+                  name: string;
+                  options: {
+                    allowedBlocks?: Array<string>;
+                    allowedMarks?: Array<string>;
+                  };
+                  required: boolean;
+                  searchable?: boolean;
+                  type: "richText";
+                }
+              | {
+                  defaultValue?: any;
+                  description?: string;
+                  label: string;
+                  localized?: boolean;
+                  name: string;
+                  options: {
+                    allowedMimeTypes?: Array<string>;
+                    maxFileSize?: number;
+                    mediaType?:
+                      | "image"
+                      | "video"
+                      | "audio"
+                      | "document"
+                      | "other";
+                  };
+                  required: boolean;
+                  searchable?: boolean;
+                  type: "media";
+                }
+              | {
+                  defaultValue?: any;
+                  description?: string;
+                  label: string;
+                  localized?: boolean;
+                  name: string;
+                  options: {
+                    options?: Array<{ label: string; value: string }>;
+                  };
+                  required: boolean;
+                  searchable?: boolean;
+                  type: "select";
+                }
+              | {
+                  defaultValue?: any;
+                  description?: string;
+                  label: string;
+                  localized?: boolean;
+                  name: string;
+                  options: {
+                    allowCreate?: boolean;
+                    maxTags?: number;
+                    minTags?: number;
+                    taxonomyId?: string;
+                  };
+                  required: boolean;
+                  searchable?: boolean;
+                  type: "tags";
+                }
+              | {
+                  defaultValue?: any;
+                  description?: string;
+                  label: string;
+                  localized?: boolean;
+                  name: string;
+                  options: { allowMultiple?: boolean };
+                  required: boolean;
+                  searchable?: boolean;
+                  type: "category";
+                }
+              | {
+                  defaultValue?: any;
+                  description?: string;
+                  label: string;
+                  localized?: boolean;
+                  name: string;
+                  options: { schema?: any };
+                  required: boolean;
+                  searchable?: boolean;
+                  type: "json";
+                }
+              | {
+                  defaultValue?: any;
+                  description?: string;
+                  label: string;
+                  localized?: boolean;
+                  name: string;
+                  options: { schema?: any };
+                  required: boolean;
+                  searchable?: boolean;
+                  type: "json";
+                }
+              | {
+                  defaultValue?: any;
+                  description?: string;
+                  label: string;
+                  localized?: boolean;
+                  name: string;
+                  options: {
+                    allowedContentTypes?: Array<string>;
+                    minItems?: number;
+                    multiple?: boolean;
+                  };
+                  required: boolean;
+                  searchable?: boolean;
+                  type: "reference";
+                }
+            >;
             icon?: string;
             isActive: boolean;
             name: string;
@@ -2123,39 +2774,58 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           createdBy?: string;
           description?: string;
           duration?: number;
-          filename: string;
-          folderId?: string;
           height?: number;
-          metadata?: any;
+          metadata?: Record<string, any>;
           mimeType: string;
-          size: number;
+          name: string;
+          parentId?: string;
+          size?: number;
           storageId: string;
           tags?: Array<string>;
           title?: string;
-          type: "image" | "video" | "audio" | "document" | "other";
           width?: number;
         },
-        {
-          _creationTime: number;
-          _id: string;
-          altText?: string;
-          createdBy?: string;
-          deletedAt?: number;
-          description?: string;
-          duration?: number;
-          filename: string;
-          folderId?: string;
-          height?: number;
-          metadata?: any;
-          mimeType: string;
-          searchText?: string;
-          size: number;
-          storageId: string;
-          tags?: Array<string>;
-          title?: string;
-          type: "image" | "video" | "audio" | "document" | "other";
-          width?: number;
-        },
+        | {
+            _creationTime: number;
+            _id: string;
+            altText?: string;
+            createdBy?: string;
+            deletedAt?: number;
+            description?: string;
+            duration?: number;
+            height?: number;
+            kind: "asset";
+            metadata?: Record<string, any>;
+            mimeType: string;
+            name: string;
+            parentId?: string;
+            path: string;
+            searchText?: string;
+            size?: number;
+            storageId: string;
+            tags?: Array<string>;
+            title?: string;
+            updatedBy?: string;
+            width?: number;
+          }
+        | {
+            _creationTime: number;
+            _id: string;
+            createdBy?: string;
+            deletedAt?: number;
+            description?: string;
+            kind: "folder";
+            metadata?: Record<string, any>;
+            name: string;
+            parentId?: string;
+            path: string;
+            searchText?: string;
+            size?: number;
+            sortOrder?: number;
+            tags?: Array<string>;
+            title?: string;
+            updatedBy?: string;
+          },
         Name
       >;
       deleteMediaAsset: FunctionReference<
@@ -2180,18 +2850,20 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           deletedAt?: number;
           description?: string;
           duration?: number;
-          filename: string;
-          folderId?: string;
           height?: number;
-          metadata?: any;
+          kind: "asset";
+          metadata?: Record<string, any>;
           mimeType: string;
+          name: string;
+          parentId?: string;
+          path: string;
           searchText?: string;
-          size: number;
+          size?: number;
           storageFileDeleted?: boolean;
           storageId: string;
           tags?: Array<string>;
           title?: string;
-          type: "image" | "video" | "audio" | "document" | "other";
+          updatedBy?: string;
           width?: number;
         },
         Name
@@ -2248,27 +2920,47 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           id: string;
           restoredBy?: string;
         },
-        {
-          _creationTime: number;
-          _id: string;
-          altText?: string;
-          createdBy?: string;
-          deletedAt?: number;
-          description?: string;
-          duration?: number;
-          filename: string;
-          folderId?: string;
-          height?: number;
-          metadata?: any;
-          mimeType: string;
-          searchText?: string;
-          size: number;
-          storageId: string;
-          tags?: Array<string>;
-          title?: string;
-          type: "image" | "video" | "audio" | "document" | "other";
-          width?: number;
-        },
+        | {
+            _creationTime: number;
+            _id: string;
+            altText?: string;
+            createdBy?: string;
+            deletedAt?: number;
+            description?: string;
+            duration?: number;
+            height?: number;
+            kind: "asset";
+            metadata?: Record<string, any>;
+            mimeType: string;
+            name: string;
+            parentId?: string;
+            path: string;
+            searchText?: string;
+            size?: number;
+            storageId: string;
+            tags?: Array<string>;
+            title?: string;
+            updatedBy?: string;
+            width?: number;
+          }
+        | {
+            _creationTime: number;
+            _id: string;
+            createdBy?: string;
+            deletedAt?: number;
+            description?: string;
+            kind: "folder";
+            metadata?: Record<string, any>;
+            name: string;
+            parentId?: string;
+            path: string;
+            searchText?: string;
+            size?: number;
+            sortOrder?: number;
+            tags?: Array<string>;
+            title?: string;
+            updatedBy?: string;
+          },
         Name
       >;
       updateMediaAsset: FunctionReference<
@@ -2282,34 +2974,58 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           };
           altText?: string;
           description?: string;
-          filename?: string;
-          folderId?: string;
+          duration?: number;
+          height?: number;
           id: string;
+          metadata?: Record<string, any>;
+          name?: string;
+          parentId?: string;
           tags?: Array<string>;
           title?: string;
           updatedBy?: string;
-        },
-        {
-          _creationTime: number;
-          _id: string;
-          altText?: string;
-          createdBy?: string;
-          deletedAt?: number;
-          description?: string;
-          duration?: number;
-          filename: string;
-          folderId?: string;
-          height?: number;
-          metadata?: any;
-          mimeType: string;
-          searchText?: string;
-          size: number;
-          storageId: string;
-          tags?: Array<string>;
-          title?: string;
-          type: "image" | "video" | "audio" | "document" | "other";
           width?: number;
         },
+        | {
+            _creationTime: number;
+            _id: string;
+            altText?: string;
+            createdBy?: string;
+            deletedAt?: number;
+            description?: string;
+            duration?: number;
+            height?: number;
+            kind: "asset";
+            metadata?: Record<string, any>;
+            mimeType: string;
+            name: string;
+            parentId?: string;
+            path: string;
+            searchText?: string;
+            size?: number;
+            storageId: string;
+            tags?: Array<string>;
+            title?: string;
+            updatedBy?: string;
+            width?: number;
+          }
+        | {
+            _creationTime: number;
+            _id: string;
+            createdBy?: string;
+            deletedAt?: number;
+            description?: string;
+            kind: "folder";
+            metadata?: Record<string, any>;
+            name: string;
+            parentId?: string;
+            path: string;
+            searchText?: string;
+            size?: number;
+            sortOrder?: number;
+            tags?: Array<string>;
+            title?: string;
+            updatedBy?: string;
+          },
         Name
       >;
     };
@@ -2326,11 +3042,11 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           deletedAt?: number;
           description?: string;
           duration?: number;
-          filename: string;
-          folderId?: string;
           height?: number;
-          metadata?: any;
+          kind: "asset";
+          metadata?: Record<string, any>;
           mimeType: string;
+          name: string;
           optimizationHints: {
             aspectRatio?: number;
             durationSeconds?: number;
@@ -2339,12 +3055,14 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             isVector?: boolean;
             suggestedMaxWidth?: number;
           };
+          parentId?: string;
+          path: string;
           searchText?: string;
-          size: number;
+          size?: number;
           storageId: string;
           tags?: Array<string>;
           title?: string;
-          type: "image" | "video" | "audio" | "document" | "other";
+          updatedBy?: string;
           url: string | null;
           width?: number;
         } | null,
@@ -2389,11 +3107,11 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             deletedAt?: number;
             description?: string;
             duration?: number;
-            filename: string;
-            folderId?: string;
             height?: number;
-            metadata?: any;
+            kind: "asset";
+            metadata?: Record<string, any>;
             mimeType: string;
+            name: string;
             optimizationHints: {
               aspectRatio?: number;
               durationSeconds?: number;
@@ -2402,12 +3120,14 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
               isVector?: boolean;
               suggestedMaxWidth?: number;
             };
+            parentId?: string;
+            path: string;
             searchText?: string;
-            size: number;
+            size?: number;
             storageId: string;
             tags?: Array<string>;
             title?: string;
-            type: "image" | "video" | "audio" | "document" | "other";
+            updatedBy?: string;
             url: string | null;
             width?: number;
           }>;
@@ -2427,21 +3147,54 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           };
           createdBy?: string;
           description?: string;
+          metadata?: Record<string, any>;
           name: string;
           parentId?: string;
           sortOrder?: number;
+          tags?: Array<string>;
+          title?: string;
         },
-        {
-          _creationTime: number;
-          _id: string;
-          createdBy?: string;
-          deletedAt?: number;
-          description?: string;
-          name: string;
-          parentId?: string;
-          path: string;
-          sortOrder?: number;
-        },
+        | {
+            _creationTime: number;
+            _id: string;
+            altText?: string;
+            createdBy?: string;
+            deletedAt?: number;
+            description?: string;
+            duration?: number;
+            height?: number;
+            kind: "asset";
+            metadata?: Record<string, any>;
+            mimeType: string;
+            name: string;
+            parentId?: string;
+            path: string;
+            searchText?: string;
+            size?: number;
+            storageId: string;
+            tags?: Array<string>;
+            title?: string;
+            updatedBy?: string;
+            width?: number;
+          }
+        | {
+            _creationTime: number;
+            _id: string;
+            createdBy?: string;
+            deletedAt?: number;
+            description?: string;
+            kind: "folder";
+            metadata?: Record<string, any>;
+            name: string;
+            parentId?: string;
+            path: string;
+            searchText?: string;
+            size?: number;
+            sortOrder?: number;
+            tags?: Array<string>;
+            title?: string;
+            updatedBy?: string;
+          },
         Name
       >;
       deleteMediaFolder: FunctionReference<
@@ -2458,85 +3211,241 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           id: string;
           recursive?: boolean;
         },
-        {
-          _creationTime: number;
-          _id: string;
-          createdBy?: string;
-          deletedAt?: number;
-          description?: string;
-          name: string;
-          parentId?: string;
-          path: string;
-          sortOrder?: number;
-        },
+        | {
+            _creationTime: number;
+            _id: string;
+            altText?: string;
+            createdBy?: string;
+            deletedAt?: number;
+            description?: string;
+            duration?: number;
+            height?: number;
+            kind: "asset";
+            metadata?: Record<string, any>;
+            mimeType: string;
+            name: string;
+            parentId?: string;
+            path: string;
+            searchText?: string;
+            size?: number;
+            storageId: string;
+            tags?: Array<string>;
+            title?: string;
+            updatedBy?: string;
+            width?: number;
+          }
+        | {
+            _creationTime: number;
+            _id: string;
+            createdBy?: string;
+            deletedAt?: number;
+            description?: string;
+            kind: "folder";
+            metadata?: Record<string, any>;
+            name: string;
+            parentId?: string;
+            path: string;
+            searchText?: string;
+            size?: number;
+            sortOrder?: number;
+            tags?: Array<string>;
+            title?: string;
+            updatedBy?: string;
+          },
         Name
       >;
       getFolderTree: FunctionReference<
         "query",
         "internal",
         { includeDeleted?: boolean },
-        Array<{
-          _creationTime: number;
-          _id: string;
-          createdBy?: string;
-          deletedAt?: number;
-          description?: string;
-          name: string;
-          parentId?: string;
-          path: string;
-          sortOrder?: number;
-        }>,
+        Array<
+          | {
+              _creationTime: number;
+              _id: string;
+              altText?: string;
+              createdBy?: string;
+              deletedAt?: number;
+              description?: string;
+              duration?: number;
+              height?: number;
+              kind: "asset";
+              metadata?: Record<string, any>;
+              mimeType: string;
+              name: string;
+              parentId?: string;
+              path: string;
+              searchText?: string;
+              size?: number;
+              storageId: string;
+              tags?: Array<string>;
+              title?: string;
+              updatedBy?: string;
+              width?: number;
+            }
+          | {
+              _creationTime: number;
+              _id: string;
+              createdBy?: string;
+              deletedAt?: number;
+              description?: string;
+              kind: "folder";
+              metadata?: Record<string, any>;
+              name: string;
+              parentId?: string;
+              path: string;
+              searchText?: string;
+              size?: number;
+              sortOrder?: number;
+              tags?: Array<string>;
+              title?: string;
+              updatedBy?: string;
+            }
+        >,
         Name
       >;
       getMediaFolder: FunctionReference<
         "query",
         "internal",
         { id: string; includeDeleted?: boolean },
-        {
-          _creationTime: number;
-          _id: string;
-          createdBy?: string;
-          deletedAt?: number;
-          description?: string;
-          name: string;
-          parentId?: string;
-          path: string;
-          sortOrder?: number;
-        } | null,
+        | {
+            _creationTime: number;
+            _id: string;
+            altText?: string;
+            createdBy?: string;
+            deletedAt?: number;
+            description?: string;
+            duration?: number;
+            height?: number;
+            kind: "asset";
+            metadata?: Record<string, any>;
+            mimeType: string;
+            name: string;
+            parentId?: string;
+            path: string;
+            searchText?: string;
+            size?: number;
+            storageId: string;
+            tags?: Array<string>;
+            title?: string;
+            updatedBy?: string;
+            width?: number;
+          }
+        | {
+            _creationTime: number;
+            _id: string;
+            createdBy?: string;
+            deletedAt?: number;
+            description?: string;
+            kind: "folder";
+            metadata?: Record<string, any>;
+            name: string;
+            parentId?: string;
+            path: string;
+            searchText?: string;
+            size?: number;
+            sortOrder?: number;
+            tags?: Array<string>;
+            title?: string;
+            updatedBy?: string;
+          }
+        | null,
         Name
       >;
       getMediaFolderByPath: FunctionReference<
         "query",
         "internal",
         { includeDeleted?: boolean; path: string },
-        {
-          _creationTime: number;
-          _id: string;
-          createdBy?: string;
-          deletedAt?: number;
-          description?: string;
-          name: string;
-          parentId?: string;
-          path: string;
-          sortOrder?: number;
-        } | null,
+        | {
+            _creationTime: number;
+            _id: string;
+            altText?: string;
+            createdBy?: string;
+            deletedAt?: number;
+            description?: string;
+            duration?: number;
+            height?: number;
+            kind: "asset";
+            metadata?: Record<string, any>;
+            mimeType: string;
+            name: string;
+            parentId?: string;
+            path: string;
+            searchText?: string;
+            size?: number;
+            storageId: string;
+            tags?: Array<string>;
+            title?: string;
+            updatedBy?: string;
+            width?: number;
+          }
+        | {
+            _creationTime: number;
+            _id: string;
+            createdBy?: string;
+            deletedAt?: number;
+            description?: string;
+            kind: "folder";
+            metadata?: Record<string, any>;
+            name: string;
+            parentId?: string;
+            path: string;
+            searchText?: string;
+            size?: number;
+            sortOrder?: number;
+            tags?: Array<string>;
+            title?: string;
+            updatedBy?: string;
+          }
+        | null,
         Name
       >;
       listMediaFolders: FunctionReference<
         "query",
         "internal",
         { includeDeleted?: boolean; parentId?: string },
-        Array<{
-          _creationTime: number;
-          _id: string;
-          createdBy?: string;
-          deletedAt?: number;
-          description?: string;
-          name: string;
-          parentId?: string;
-          path: string;
-          sortOrder?: number;
-        }>,
+        Array<
+          | {
+              _creationTime: number;
+              _id: string;
+              altText?: string;
+              createdBy?: string;
+              deletedAt?: number;
+              description?: string;
+              duration?: number;
+              height?: number;
+              kind: "asset";
+              metadata?: Record<string, any>;
+              mimeType: string;
+              name: string;
+              parentId?: string;
+              path: string;
+              searchText?: string;
+              size?: number;
+              storageId: string;
+              tags?: Array<string>;
+              title?: string;
+              updatedBy?: string;
+              width?: number;
+            }
+          | {
+              _creationTime: number;
+              _id: string;
+              createdBy?: string;
+              deletedAt?: number;
+              description?: string;
+              kind: "folder";
+              metadata?: Record<string, any>;
+              name: string;
+              parentId?: string;
+              path: string;
+              searchText?: string;
+              size?: number;
+              sortOrder?: number;
+              tags?: Array<string>;
+              title?: string;
+              updatedBy?: string;
+            }
+        >,
         Name
       >;
       moveMediaFolder: FunctionReference<
@@ -2551,17 +3460,47 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           id: string;
           newParentId?: string;
         },
-        {
-          _creationTime: number;
-          _id: string;
-          createdBy?: string;
-          deletedAt?: number;
-          description?: string;
-          name: string;
-          parentId?: string;
-          path: string;
-          sortOrder?: number;
-        },
+        | {
+            _creationTime: number;
+            _id: string;
+            altText?: string;
+            createdBy?: string;
+            deletedAt?: number;
+            description?: string;
+            duration?: number;
+            height?: number;
+            kind: "asset";
+            metadata?: Record<string, any>;
+            mimeType: string;
+            name: string;
+            parentId?: string;
+            path: string;
+            searchText?: string;
+            size?: number;
+            storageId: string;
+            tags?: Array<string>;
+            title?: string;
+            updatedBy?: string;
+            width?: number;
+          }
+        | {
+            _creationTime: number;
+            _id: string;
+            createdBy?: string;
+            deletedAt?: number;
+            description?: string;
+            kind: "folder";
+            metadata?: Record<string, any>;
+            name: string;
+            parentId?: string;
+            path: string;
+            searchText?: string;
+            size?: number;
+            sortOrder?: number;
+            tags?: Array<string>;
+            title?: string;
+            updatedBy?: string;
+          },
         Name
       >;
       restoreMediaFolder: FunctionReference<
@@ -2577,17 +3516,47 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           recursive?: boolean;
           restoredBy?: string;
         },
-        {
-          _creationTime: number;
-          _id: string;
-          createdBy?: string;
-          deletedAt?: number;
-          description?: string;
-          name: string;
-          parentId?: string;
-          path: string;
-          sortOrder?: number;
-        },
+        | {
+            _creationTime: number;
+            _id: string;
+            altText?: string;
+            createdBy?: string;
+            deletedAt?: number;
+            description?: string;
+            duration?: number;
+            height?: number;
+            kind: "asset";
+            metadata?: Record<string, any>;
+            mimeType: string;
+            name: string;
+            parentId?: string;
+            path: string;
+            searchText?: string;
+            size?: number;
+            storageId: string;
+            tags?: Array<string>;
+            title?: string;
+            updatedBy?: string;
+            width?: number;
+          }
+        | {
+            _creationTime: number;
+            _id: string;
+            createdBy?: string;
+            deletedAt?: number;
+            description?: string;
+            kind: "folder";
+            metadata?: Record<string, any>;
+            name: string;
+            parentId?: string;
+            path: string;
+            searchText?: string;
+            size?: number;
+            sortOrder?: number;
+            tags?: Array<string>;
+            title?: string;
+            updatedBy?: string;
+          },
         Name
       >;
       updateMediaFolder: FunctionReference<
@@ -2601,20 +3570,55 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           };
           description?: string;
           id: string;
+          metadata?: Record<string, any>;
           name?: string;
-          sortOrder?: number;
-        },
-        {
-          _creationTime: number;
-          _id: string;
-          createdBy?: string;
-          deletedAt?: number;
-          description?: string;
-          name: string;
           parentId?: string;
-          path: string;
           sortOrder?: number;
+          tags?: Array<string>;
+          title?: string;
+          updatedBy?: string;
         },
+        | {
+            _creationTime: number;
+            _id: string;
+            altText?: string;
+            createdBy?: string;
+            deletedAt?: number;
+            description?: string;
+            duration?: number;
+            height?: number;
+            kind: "asset";
+            metadata?: Record<string, any>;
+            mimeType: string;
+            name: string;
+            parentId?: string;
+            path: string;
+            searchText?: string;
+            size?: number;
+            storageId: string;
+            tags?: Array<string>;
+            title?: string;
+            updatedBy?: string;
+            width?: number;
+          }
+        | {
+            _creationTime: number;
+            _id: string;
+            createdBy?: string;
+            deletedAt?: number;
+            description?: string;
+            kind: "folder";
+            metadata?: Record<string, any>;
+            name: string;
+            parentId?: string;
+            path: string;
+            searchText?: string;
+            size?: number;
+            sortOrder?: number;
+            tags?: Array<string>;
+            title?: string;
+            updatedBy?: string;
+          },
         Name
       >;
     };
@@ -2866,9 +3870,9 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           original: {
             _creationTime: number;
             _id: string;
-            filename: string;
             height?: number;
             mimeType: string;
+            name: string;
             size: number;
             url: string | null;
             width?: number;

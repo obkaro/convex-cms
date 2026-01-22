@@ -161,18 +161,12 @@ export function operationToRbac(operation: CmsOperation): { resource: Resource; 
     "contentEntries.restore": { resource: "contentEntries", action: "restore" },
     "contentEntries.schedule": { resource: "contentEntries", action: "update" }, // Schedule uses update permission
 
-    // Media Assets
-    "mediaAssets.create": { resource: "mediaAssets", action: "create" },
-    "mediaAssets.update": { resource: "mediaAssets", action: "update" },
-    "mediaAssets.delete": { resource: "mediaAssets", action: "delete" },
-    "mediaAssets.read": { resource: "mediaAssets", action: "read" },
-
-    // Media Folders
-    "mediaFolders.create": { resource: "mediaFolders", action: "create" },
-    "mediaFolders.update": { resource: "mediaFolders", action: "update" },
-    "mediaFolders.delete": { resource: "mediaFolders", action: "delete" },
-    "mediaFolders.read": { resource: "mediaFolders", action: "read" },
-    "mediaFolders.move": { resource: "mediaFolders", action: "update" }, // Move uses update permission
+    // Media Items (unified assets and folders)
+    "mediaItems.create": { resource: "mediaItems", action: "create" },
+    "mediaItems.update": { resource: "mediaItems", action: "update" },
+    "mediaItems.delete": { resource: "mediaItems", action: "delete" },
+    "mediaItems.read": { resource: "mediaItems", action: "read" },
+    "mediaItems.move": { resource: "mediaItems", action: "move" },
 
     // Versions
     "versions.read": { resource: "contentEntries", action: "read" }, // Version read uses entry read

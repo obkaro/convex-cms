@@ -29,17 +29,20 @@
  * ```
  */
 
-import { Doc, Id } from "../_generated/dataModel.js";
+import {
+	// Doc,
+	Id,
+} from "../_generated/dataModel.js";
 import { QueryCtx } from "../_generated/server.js";
 import {
 	resolveReference,
-	resolveReferences,
-	ResolvedReference,
-	ResolveOptions,
+	// resolveReferences,
+	// ResolvedReference,
+	// ResolveOptions,
 } from "./referenceResolver.js";
 import {
 	resolveMediaReference,
-	resolveMediaReferences,
+	// resolveMediaReferences,
 	ResolvedMediaReference,
 	MediaResolveOptions,
 } from "./mediaReferenceResolver.js";

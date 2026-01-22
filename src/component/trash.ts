@@ -20,12 +20,12 @@
  */
 
 import { v } from "convex/values";
-import { paginationOptsValidator } from "convex/server";
+// import { paginationOptsValidator } from "convex/server";
 import { stream } from "convex-helpers/server/stream";
 import { query, mutation, internalMutation } from "./_generated/server.js";
 import { internal } from "./_generated/api.js";
 import {
-	contentEntryDoc,
+	// contentEntryDoc,
 	trashConfigDoc,
 	updateTrashConfigArgs,
 	listTrashArgs,
@@ -262,7 +262,7 @@ export const listTrash = query({
 
 		// Query deleted entries (where deletedAt is defined)
 		// We use filterWith to handle the complex filtering
-		let baseQuery = streamDb.query("contentEntries");
+		const baseQuery = streamDb.query("contentEntries");
 
 		const filteredQuery = baseQuery.order("desc").filterWith(async (entry) => {
 			// Must be deleted
@@ -456,7 +456,7 @@ export const emptyTrash = mutation({
 	args: emptyTrashArgs.fields,
 	returns: emptyTrashResult,
 	handler: async (ctx, args) => {
-		const { olderThanDays, contentTypeId, deletedBy } = args;
+		const { olderThanDays, contentTypeId } = args;
 
 		const now = Date.now();
 		let cutoffTime: number | undefined;

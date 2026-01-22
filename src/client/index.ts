@@ -844,7 +844,7 @@ export {
   fieldTypes,
   contentStatuses,
   mediaTypes,
-} from "../component/validators.js";
+} from "../component/schema.js";
 
 // Re-export runtime validation functions
 export {

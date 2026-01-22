@@ -173,6 +173,7 @@ describe("Get Version Integration Tests", () => {
         {
           name: "blog_post_v",
           displayName: "Blog Post",
+					createdBy: "test-user",
           fields: [
             { name: "title", label: "Title", type: "text", required: true },
             { name: "body", label: "Body", type: "richText", required: false },
@@ -217,6 +218,7 @@ describe("Get Version Integration Tests", () => {
         {
           name: "article_v",
           displayName: "Article",
+					createdBy: "test-user",
           fields: [
             { name: "title", label: "Title", type: "text", required: true },
           ],
@@ -264,6 +266,7 @@ describe("Get Version Integration Tests", () => {
         {
           name: "page_v",
           displayName: "Page",
+					createdBy: "test-user",
           fields: [
             { name: "title", label: "Title", type: "text", required: true },
           ],
@@ -298,6 +301,7 @@ describe("Get Version Integration Tests", () => {
         {
           name: "temp_v",
           displayName: "Temp",
+					createdBy: "test-user",
           fields: [
             { name: "title", label: "Title", type: "text", required: true },
           ],
@@ -331,6 +335,7 @@ describe("Get Version Integration Tests", () => {
         {
           name: "deletable_v",
           displayName: "Deletable",
+					createdBy: "test-user",
           fields: [
             { name: "title", label: "Title", type: "text", required: true },
           ],
@@ -369,6 +374,7 @@ describe("Get Version Integration Tests", () => {
         {
           name: "no_lookup_v",
           displayName: "No Lookup",
+					createdBy: "test-user",
           fields: [
             { name: "title", label: "Title", type: "text", required: true },
           ],
@@ -396,6 +402,7 @@ describe("Get Version Integration Tests", () => {
         {
           name: "cross_entry_v",
           displayName: "Cross Entry",
+					createdBy: "test-user",
           fields: [
             { name: "title", label: "Title", type: "text", required: true },
           ],
@@ -450,6 +457,7 @@ describe("Get Version Integration Tests", () => {
         {
           name: "multi_version_v",
           displayName: "Multi Version",
+					createdBy: "test-user",
           fields: [
             { name: "title", label: "Title", type: "text", required: true },
           ],
@@ -522,6 +530,7 @@ describe("Get Version Integration Tests", () => {
         {
           name: "complete_snapshot_v",
           displayName: "Complete Snapshot",
+					createdBy: "test-user",
           fields: [
             { name: "title", label: "Title", type: "text", required: true },
             { name: "count", label: "Count", type: "number", required: false },

@@ -1360,7 +1360,7 @@ export function applyFieldDefaults(
   const result = { ...data };
 
   for (const fieldDef of schema.fields) {
-    const { name, type, defaultValue } = fieldDef;
+    const { name, defaultValue } = fieldDef;
 
     // Only apply default if field is not already set
     if (result[name] === undefined || result[name] === null) {

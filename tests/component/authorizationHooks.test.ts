@@ -89,13 +89,14 @@ describe("operationToRbac", () => {
   });
 
   it("should map media operations correctly", () => {
-    expect(operationToRbac("mediaAssets.create")).toEqual({
-      resource: "mediaAssets",
+    // Unified media schema uses mediaItems for both assets and folders
+    expect(operationToRbac("mediaItems.create")).toEqual({
+      resource: "mediaItems",
       action: "create",
     });
-    expect(operationToRbac("mediaFolders.move")).toEqual({
-      resource: "mediaFolders",
-      action: "update",
+    expect(operationToRbac("mediaItems.move")).toEqual({
+      resource: "mediaItems",
+      action: "move",
     });
   });
 

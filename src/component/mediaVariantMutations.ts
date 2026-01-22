@@ -24,10 +24,11 @@ import {
 	deleteAssetVariantsArgs,
 	mediaVariantDoc,
 	mediaVariantWithUrlDoc,
-	variantTypeValidator,
-	variantStatusValidator,
+	// variantTypeValidator,
+	// variantStatusValidator,
 	generateVariantsResult,
 } from "./validators.js";
+import { classifyMimeType } from "./lib/metadataExtractor.js";
 import { emitEvent } from "./eventEmitter.js";
 import { DEFAULT_VARIANT_PRESETS } from "./mediaVariants.js";
 
@@ -94,13 +95,14 @@ export const createMediaVariant = mutation({
 		} = args;
 
 		// Validate parent asset exists and is not deleted
-		const asset = await ctx.db.get(assetId);
-		if (!asset) {
+		const item = await ctx.db.get(assetId);
+		if (!item || item.kind !== "asset") {
 			throw new Error(`Media asset not found: ${assetId}`);
 		}
-		if (asset.deletedAt !== undefined) {
+		if (item.deletedAt !== undefined) {
 			throw new Error(`Cannot create variant for deleted asset: ${assetId}`);
 		}
+		const asset = item;
 
 		// Check for duplicate variant (same dimensions, format, and preset)
 		const existingVariants = await ctx.db
@@ -158,10 +160,10 @@ export const createMediaVariant = mutation({
 			resourceId: assetId.toString(),
 			action: "updated",
 			payload: {
-				filename: asset.filename,
+				name: asset.name,
 				mimeType: asset.mimeType,
-				type: asset.type,
-				size: asset.size,
+				type: classifyMimeType(asset.mimeType),
+				size: asset.size ?? 0,
 			},
 			userId: createdBy,
 			metadata: {
@@ -234,18 +236,20 @@ export const requestVariantGeneration = mutation({
 		} = args;
 
 		// Validate parent asset exists and is not deleted
-		const asset = await ctx.db.get(assetId);
-		if (!asset) {
+		const item = await ctx.db.get(assetId);
+		if (!item || item.kind !== "asset") {
 			throw new Error(`Media asset not found: ${assetId}`);
 		}
-		if (asset.deletedAt !== undefined) {
+		if (item.deletedAt !== undefined) {
 			throw new Error(`Cannot create variant for deleted asset: ${assetId}`);
 		}
+		const asset = item;
 
 		// Validate asset is an image (variants only make sense for images)
-		if (asset.type !== "image") {
+		const assetType = classifyMimeType(asset.mimeType);
+		if (assetType !== "image") {
 			throw new Error(
-				`Variants can only be generated for images. Asset type: ${asset.type}`,
+				`Variants can only be generated for images. Asset type: ${assetType}`,
 			);
 		}
 
@@ -443,7 +447,7 @@ export const deleteMediaVariant = mutation({
 	args: deleteMediaVariantArgs.fields,
 	returns: mediaVariantDoc,
 	handler: async (ctx, args) => {
-		const { id, hardDelete = false, deletedBy } = args;
+		const { id, hardDelete = false } = args;
 
 		const variant = await ctx.db.get(id);
 		if (!variant) {
@@ -505,10 +509,10 @@ export const deleteAssetVariants = mutation({
 	args: deleteAssetVariantsArgs.fields,
 	returns: v.object({
 		deleted: v.number(),
-		assetId: v.id("mediaAssets"),
+		assetId: v.id("mediaItems"),
 	}),
 	handler: async (ctx, args) => {
-		const { assetId, hardDelete = false, deletedBy } = args;
+		const { assetId, hardDelete = false } = args;
 
 		const variants = await ctx.db
 			.query("mediaVariants")
@@ -570,7 +574,7 @@ export const deleteAssetVariants = mutation({
  */
 export const generateFromPresets = mutation({
 	args: {
-		assetId: v.id("mediaAssets"),
+		assetId: v.id("mediaItems"),
 		presets: v.array(v.string()),
 		requestedBy: v.optional(v.string()),
 	},
@@ -579,16 +583,18 @@ export const generateFromPresets = mutation({
 		const { assetId, presets, requestedBy } = args;
 
 		// Validate asset exists and is an image
-		const asset = await ctx.db.get(assetId);
-		if (!asset) {
+		const item = await ctx.db.get(assetId);
+		if (!item || item.kind !== "asset") {
 			throw new Error(`Media asset not found: ${assetId}`);
 		}
-		if (asset.deletedAt !== undefined) {
+		if (item.deletedAt !== undefined) {
 			throw new Error(`Cannot generate variants for deleted asset: ${assetId}`);
 		}
-		if (asset.type !== "image") {
+		const asset = item;
+		const assetMediaType = classifyMimeType(asset.mimeType);
+		if (assetMediaType !== "image") {
 			throw new Error(
-				`Variants can only be generated for images. Asset type: ${asset.type}`,
+				`Variants can only be generated for images. Asset type: ${assetMediaType}`,
 			);
 		}
 
@@ -683,10 +689,10 @@ export const generateFromPresets = mutation({
 			resourceId: assetId.toString(),
 			action: "updated",
 			payload: {
-				filename: asset.filename,
+				name: asset.name,
 				mimeType: asset.mimeType,
-				type: asset.type,
-				size: asset.size,
+				type: classifyMimeType(asset.mimeType),
+				size: asset.size ?? 0,
 			},
 			userId: requestedBy,
 			metadata: {
@@ -735,7 +741,7 @@ export const restoreMediaVariant = mutation({
 	},
 	returns: mediaVariantDoc,
 	handler: async (ctx, args) => {
-		const { id, restoredBy } = args;
+		const { id } = args;
 
 		const variant = await ctx.db.get(id);
 		if (!variant) {

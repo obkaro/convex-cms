@@ -108,6 +108,7 @@ describe("Bulk Publish Integration Tests", () => {
 			{
 				name: "article",
 				displayName: "Article",
+					createdBy: "test-user",
 				fields: [
 					{ name: "title", label: "Title", type: "text", required: true },
 				],
@@ -169,6 +170,7 @@ describe("Bulk Publish Integration Tests", () => {
 			{
 				name: "post",
 				displayName: "Post",
+					createdBy: "test-user",
 				fields: [
 					{ name: "title", label: "Title", type: "text", required: true },
 				],
@@ -204,6 +206,7 @@ describe("Bulk Publish Integration Tests", () => {
 			{
 				name: "deletable",
 				displayName: "Deletable",
+					createdBy: "test-user",
 				fields: [
 					{ name: "title", label: "Title", type: "text", required: true },
 				],
@@ -239,6 +242,7 @@ describe("Bulk Publish Integration Tests", () => {
 			{
 				name: "archivable",
 				displayName: "Archivable",
+					createdBy: "test-user",
 				fields: [
 					{ name: "title", label: "Title", type: "text", required: true },
 				],
@@ -267,6 +271,7 @@ describe("Bulk Publish Integration Tests", () => {
 			{
 				name: "versioned",
 				displayName: "Versioned",
+					createdBy: "test-user",
 				fields: [
 					{ name: "title", label: "Title", type: "text", required: true },
 				],
@@ -317,6 +322,7 @@ describe("Bulk Publish Integration Tests", () => {
 			{
 				name: "large_batch",
 				displayName: "Large Batch",
+					createdBy: "test-user",
 				fields: [
 					{ name: "title", label: "Title", type: "text", required: true },
 				],
@@ -346,6 +352,7 @@ describe("Bulk Publish Integration Tests", () => {
 			{
 				name: "mixed",
 				displayName: "Mixed",
+					createdBy: "test-user",
 				fields: [
 					{ name: "title", label: "Title", type: "text", required: true },
 				],
@@ -393,6 +400,7 @@ describe("Bulk Unpublish Integration Tests", () => {
 			{
 				name: "unpublishable",
 				displayName: "Unpublishable",
+					createdBy: "test-user",
 				fields: [
 					{ name: "title", label: "Title", type: "text", required: true },
 				],
@@ -446,6 +454,7 @@ describe("Bulk Unpublish Integration Tests", () => {
 			{
 				name: "draft_entry",
 				displayName: "Draft Entry",
+					createdBy: "test-user",
 				fields: [
 					{ name: "title", label: "Title", type: "text", required: true },
 				],
@@ -473,6 +482,7 @@ describe("Bulk Unpublish Integration Tests", () => {
 			{
 				name: "timestamp_test",
 				displayName: "Timestamp Test",
+					createdBy: "test-user",
 				fields: [
 					{ name: "title", label: "Title", type: "text", required: true },
 				],
@@ -516,6 +526,7 @@ describe("Bulk Delete Integration Tests", () => {
 			{
 				name: "soft_deletable",
 				displayName: "Soft Deletable",
+					createdBy: "test-user",
 				fields: [
 					{ name: "title", label: "Title", type: "text", required: true },
 				],
@@ -558,6 +569,7 @@ describe("Bulk Delete Integration Tests", () => {
 			{
 				name: "hard_deletable",
 				displayName: "Hard Deletable",
+					createdBy: "test-user",
 				fields: [
 					{ name: "title", label: "Title", type: "text", required: true },
 				],
@@ -603,6 +615,7 @@ describe("Bulk Delete Integration Tests", () => {
 			{
 				name: "already_deleted",
 				displayName: "Already Deleted",
+					createdBy: "test-user",
 				fields: [
 					{ name: "title", label: "Title", type: "text", required: true },
 				],
@@ -642,6 +655,7 @@ describe("Bulk Update Integration Tests", () => {
 			{
 				name: "updatable",
 				displayName: "Updatable",
+					createdBy: "test-user",
 				fields: [
 					{ name: "title", label: "Title", type: "text", required: true },
 					{
@@ -692,6 +706,7 @@ describe("Bulk Update Integration Tests", () => {
 			{
 				name: "status_update",
 				displayName: "Status Update",
+					createdBy: "test-user",
 				fields: [
 					{ name: "title", label: "Title", type: "text", required: true },
 				],
@@ -731,6 +746,7 @@ describe("Bulk Update Integration Tests", () => {
 			{
 				name: "validated",
 				displayName: "Validated",
+					createdBy: "test-user",
 				fields: [
 					{ name: "title", label: "Title", type: "text", required: true },
 					{
@@ -767,6 +783,7 @@ describe("Bulk Update Integration Tests", () => {
 			{
 				name: "deleted_update",
 				displayName: "Deleted Update",
+					createdBy: "test-user",
 				fields: [
 					{ name: "title", label: "Title", type: "text", required: true },
 				],
@@ -799,6 +816,7 @@ describe("Bulk Update Integration Tests", () => {
 			{
 				name: "no_update",
 				displayName: "No Update",
+					createdBy: "test-user",
 				fields: [
 					{ name: "title", label: "Title", type: "text", required: true },
 				],
@@ -827,6 +845,7 @@ describe("Bulk Update Integration Tests", () => {
 			{
 				name: "version_increment",
 				displayName: "Version Increment",
+					createdBy: "test-user",
 				fields: [
 					{ name: "title", label: "Title", type: "text", required: true },
 				],
@@ -857,6 +876,7 @@ describe("Bulk Update Integration Tests", () => {
 			{
 				name: "search_update",
 				displayName: "Search Update",
+					createdBy: "test-user",
 				fields: [
 					{
 						name: "title",
@@ -905,6 +925,7 @@ describe("Bulk Restore Integration Tests", () => {
 			{
 				name: "restorable",
 				displayName: "Restorable",
+					createdBy: "test-user",
 				fields: [
 					{ name: "title", label: "Title", type: "text", required: true },
 				],
@@ -951,6 +972,7 @@ describe("Bulk Restore Integration Tests", () => {
 			{
 				name: "not_deleted",
 				displayName: "Not Deleted",
+					createdBy: "test-user",
 				fields: [
 					{ name: "title", label: "Title", type: "text", required: true },
 				],
@@ -978,6 +1000,7 @@ describe("Bulk Restore Integration Tests", () => {
 			{
 				name: "exists_test",
 				displayName: "Exists Test",
+					createdBy: "test-user",
 				fields: [
 					{ name: "title", label: "Title", type: "text", required: true },
 				],
@@ -1016,6 +1039,7 @@ describe("Bulk Operations Edge Cases", () => {
 			{
 				name: "mixed_results",
 				displayName: "Mixed Results",
+					createdBy: "test-user",
 				fields: [
 					{ name: "title", label: "Title", type: "text", required: true },
 				],
@@ -1076,6 +1100,7 @@ describe("Bulk Operations Edge Cases", () => {
 			{
 				name: "cached_type",
 				displayName: "Cached Type",
+					createdBy: "test-user",
 				fields: [
 					{ name: "title", label: "Title", type: "text", required: true },
 					{ name: "count", label: "Count", type: "number", required: false },
