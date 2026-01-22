@@ -18,6 +18,7 @@
 import { v } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
 import { query } from "./_generated/server.js";
+import { taxonomyDoc, taxonomyTermDoc } from "./validators.js";
 
 // =============================================================================
 // Constants
@@ -27,55 +28,14 @@ const DEFAULT_NUM_ITEMS = 50;
 const MAX_NUM_ITEMS = 250;
 
 // =============================================================================
-// Validators
+// Extended Validators
 // =============================================================================
 
 /**
- * Taxonomy document validator for return types.
- */
-const taxonomyDoc = v.object({
-	_id: v.id("taxonomies"),
-	_creationTime: v.number(),
-	name: v.string(),
-	displayName: v.string(),
-	description: v.optional(v.string()),
-	isHierarchical: v.boolean(),
-	allowInlineCreation: v.boolean(),
-	icon: v.optional(v.string()),
-	sortOrder: v.optional(v.number()),
-	isActive: v.boolean(),
-	deletedAt: v.optional(v.number()),
-	createdBy: v.optional(v.string()),
-	updatedBy: v.optional(v.string()),
-});
-
-/**
- * Taxonomy term document validator for return types.
- */
-const taxonomyTermDoc = v.object({
-	_id: v.id("taxonomyTerms"),
-	_creationTime: v.number(),
-	taxonomyId: v.id("taxonomies"),
-	slug: v.string(),
-	name: v.string(),
-	description: v.optional(v.string()),
-	parentId: v.optional(v.id("taxonomyTerms")),
-	path: v.optional(v.string()),
-	depth: v.number(),
-	color: v.optional(v.string()),
-	icon: v.optional(v.string()),
-	sortOrder: v.optional(v.number()),
-	usageCount: v.number(),
-	deletedAt: v.optional(v.number()),
-	createdBy: v.optional(v.string()),
-	updatedBy: v.optional(v.string()),
-	searchText: v.optional(v.string()),
-});
-
-/**
  * Term with children for hierarchical display.
+ * Extends the base taxonomyTermDoc with a children array.
  */
-const taxonomyTermWithChildren: any = v.object({
+const taxonomyTermWithChildren: ReturnType<typeof v.object> = v.object({
 	...taxonomyTermDoc.fields,
 	children: v.array(v.any()), // Recursive type - will contain taxonomyTermWithChildren
 });

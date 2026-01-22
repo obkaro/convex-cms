@@ -113,82 +113,54 @@ export interface FieldOptions {
 	allowedMarks?: string[];
 }
 
+// =============================================================================
+// Data Types for Test Factories (without system fields)
+// =============================================================================
+
+/**
+ * These types represent the data you INSERT into the database,
+ * derived from internal document types by omitting system fields.
+ * This ensures test factories stay in sync with schema definitions.
+ */
+import type {
+	ContentTypeInternal,
+	ContentEntryInternal,
+	MediaAssetInternal,
+	MediaFolderInternal,
+} from "./component/documentTypes.js";
+
 /**
  * Content type data structure (without system fields).
+ * Derived from ContentTypeInternal for type safety.
  */
-export interface ContentTypeData {
-	name: string;
-	displayName: string;
-	description?: string;
-	fields: FieldDefinition[];
-	icon?: string;
-	singleton?: boolean;
-	slugField?: string;
-	titleField?: string;
-	sortOrder?: number;
-	isActive: boolean;
-	deletedAt?: number;
-	createdBy?: string;
-	updatedBy?: string;
-}
+export type ContentTypeData = Omit<
+	ContentTypeInternal,
+	"_id" | "_creationTime"
+>;
 
 /**
  * Content entry data structure (without system fields).
+ * Derived from ContentEntryInternal for type safety.
  */
-export interface ContentEntryData {
-	contentTypeId: Id<"contentTypes">;
-	slug: string;
-	status: ContentStatus;
-	data: Record<string, unknown>;
-	locale?: string;
-	primaryEntryId?: Id<"contentEntries">;
-	version: number;
-	scheduledPublishAt?: number;
-	firstPublishedAt?: number;
-	lastPublishedAt?: number;
-	lockedBy?: string;
-	lockExpiresAt?: number;
-	deletedAt?: number;
-	createdBy?: string;
-	updatedBy?: string;
-	searchText?: string;
-}
+export type ContentEntryData = Omit<
+	ContentEntryInternal,
+	"_id" | "_creationTime"
+>;
 
 /**
  * Media asset data structure (without system fields).
+ * Derived from MediaAssetInternal for type safety.
  */
-export interface MediaAssetData {
-	storageId: Id<"_storage">;
-	filename: string;
-	mimeType: string;
-	size: number;
-	type: MediaType;
-	title?: string;
-	description?: string;
-	altText?: string;
-	folderId?: Id<"mediaFolders">;
-	width?: number;
-	height?: number;
-	duration?: number;
-	metadata?: unknown;
-	tags?: string[];
-	deletedAt?: number;
-	createdBy?: string;
-	searchText?: string;
-}
+export type MediaAssetData = Omit<MediaAssetInternal, "_id" | "_creationTime">;
 
 /**
  * Media folder data structure (without system fields).
+ * Derived from MediaFolderInternal for type safety.
  */
-export interface MediaFolderData {
-	name: string;
-	parentId?: Id<"mediaFolders">;
-	path: string;
-	description?: string;
-	sortOrder?: number;
-	deletedAt?: number;
-	createdBy?: string;
-}
+export type MediaFolderData = Omit<
+	MediaFolderInternal,
+	"_id" | "_creationTime"
+>;
 
 // =============================================================================
 // Component Registration
