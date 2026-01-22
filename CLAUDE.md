@@ -97,6 +97,59 @@ Component provides test helpers via `/test` export for registration.
 
 See `.claude/skills` and `.automaker/context/convex_rules.mdc` for comprehensive Convex guidelines.
 
+## Type Safety Guidelines
+
+### Before Committing Code
+
+Always run these checks:
+```bash
+npm run typecheck  # Must pass with 0 errors
+npm run lint       # Must pass with 0 errors
+npm test          # Tests must pass
+```
+
+### Import Best Practices
+
+- **Type-only imports**: Use `import type { X }` for types not used at runtime
+- **Unused parameters**: Prefix with underscore (e.g., `_ctx`, `_args`)
+- **Remove unused imports**: Delete imports that are no longer used
+- **Internal vs public API**: Use `internal` object for internal functions, `api` for public functions
+
+### Switch Statement Best Practices
+
+Always wrap case blocks containing variable declarations in braces:
+```typescript
+// ✗ Bad - causes "Unexpected lexical declaration in case block"
+switch (x) {
+  case 'a':
+    const value = 1;
+    break;
+}
+
+// ✓ Good - proper block scope
+switch (x) {
+  case 'a': {
+    const value = 1;
+    break;
+  }
+}
+```
+
+### Test File Best Practices
+
+- Test variables used only for type assertions should be prefixed with `_` (e.g., `const _blogPost = defineContentType(...)`)
+- Mock objects must include all required properties of the type they mock
+- When testing status changes, use typed variables instead of literal types to avoid TypeScript narrowing issues:
+  ```typescript
+  // ✗ Bad - TypeScript narrows the type
+  const entry = { status: "draft" as const };
+  entry.status = "published";  // Error!
+
+  // ✓ Good - status can be reassigned
+  let entry: { status: string } = { status: "draft" };
+  entry = { ...entry, status: "published" };  // OK
+  ```
+
 ## Key Project Documentation
 
 - `.automaker/app_spec.txt` - Full project specification with all features

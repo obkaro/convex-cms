@@ -15,6 +15,10 @@
       "types": "./dist/client/types.d.ts",
       "import": "./dist/client/types.js"
     },
+    "./react": {
+      "types": "./dist/react/index.d.ts",
+      "import": "./dist/react/index.js"
+    },
     "./_generated/component": "./dist/component/_generated/component.js",
     "./test": "./src/test.ts"
   },
@@ -31,13 +35,16 @@
     "build:component": "tsc --project tsconfig.build.json",
     "build:cli": "tsc --project tsconfig.cli.json",
     "build:admin": "cd admin && npm run build && cp -r .output ../admin-dist",
-    "dev": "npm-run-all --parallel dev:*",
+    "dev": "npm-run-all2 --parallel dev:*",
     "dev:component": "npx convex codegen --component-dir ./src/component --watch",
     "dev:build": "tsc --project tsconfig.build.json --watch",
     "dev:example": "cd example && npx convex dev",
+    "dev:watch": "chokidar 'src/**/*.ts' -c 'npm run build:component' --silent",
     "test": "vitest",
     "lint": "eslint src/",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "alpha": "npm version prerelease --preid=alpha && npm publish --tag alpha",
+    "release": "npm version patch && npm publish"
   },
   "keywords": [
     "convex",
@@ -63,12 +70,19 @@
   },
   "devDependencies": {
     "@convex-dev/agent": "^0.3.2",
+    "@eslint/js": "^9.17.0",
     "@playwright/test": "^1.57.0",
     "@types/node": "^20.11.0",
+    "@types/react": "^19.0.0",
+    "chokidar-cli": "^3.0.0",
     "convex": "^1.17.0",
     "convex-test": "^0.0.35",
-    "npm-run-all": "^4.1.5",
+    "eslint": "^9.17.0",
+    "npm-run-all2": "^7.0.0",
+    "pkg-pr-new": "^0.0.40",
+    "prettier": "^3.4.0",
     "typescript": "^5.3.3",
+    "typescript-eslint": "^8.18.0",
     "vitest": "^1.2.0",
     "zod": "^4.3.5"
   },
