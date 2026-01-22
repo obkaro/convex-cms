@@ -532,7 +532,7 @@ export function formatDriftReport(report: SchemaDriftReport): string {
 }
 
 /**
- * Check if a drift report has any errors (not just warnings).
+ * Check if a drift report h errors (not just warnings).
  *
  * @param report - The drift report to check
  * @returns true if there are error-level issues

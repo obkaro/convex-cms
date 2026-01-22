@@ -52,7 +52,7 @@ import type { ComponentApi as GeneratedComponentApi } from "../component/_genera
  * @internal
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function callMutation<T extends ConvexFunctionReference<"mutation", "public" | "internal">, A = any>(
+function _callMutation<T extends ConvexFunctionReference<"mutation", "public" | "internal">, A = any>(
   ctx: ConvexContext,
   fn: T,
   args: A
@@ -91,18 +91,12 @@ import type {
   PaginationOpts,
   ContentQueryOptions,
   MediaQueryOptions,
-  GetUserRoleHook,
-  GetUserRoleContext,
   GetUserRoleResult,
-  AuthorizationHooks,
   AuthorizationHookContext,
-  AuthorizationHookResult,
   CmsOperation,
-  CustomRoleDefinition,
   VersionComparison,
   FieldChange,
   FieldChangeType,
-  VersionHistoryOptions,
   VariantType,
   VariantStatus,
   MediaVariant,
@@ -119,7 +113,6 @@ import {
   executeAuthorizationHooks,
   contextToRbacOptions,
   operationToRbac,
-  type ExecuteAuthorizationOptions,
   type AuthorizationResult,
 } from "../component/authorizationHooks.js";
 
@@ -136,12 +129,10 @@ import {
   hasContentTypePermission,
   getPermittedContentTypes,
   DEFAULT_ROLES,
-  type Permission,
   type Resource,
   type Action,
   type OwnershipScope,
   type RoleDefinition,
-  type ExtendedRoleDefinition,
 } from "../component/roles.js";
 
 // Import locale fallback chain utilities
@@ -291,7 +282,7 @@ export type FunctionReference<
  * proper argument and return type inference.
  *
  * Using the generated type ensures:
- * 1. Full TypeScript type safety without `as any` casts
+ * 1. Full TypeScript type safety without `` casts
  * 2. IDE autocompletion for function arguments and return values
  * 3. Compile-time errors when function signatures change
  * 4. Consistent types between the component and client code
@@ -414,7 +405,7 @@ export interface LegacyTypedComponentApi {
  * // In test files
  * const mockApi: MockComponentApi = {
  *   contentEntries: {
- *     list: { _type: "query" } as any,
+ *     list: { _type: "query" } ,
  *   },
  * } as MockComponentApi;
  * ```
@@ -4922,7 +4913,7 @@ export interface EnhancedCmsClient {
    * ```typescript
    * // In a mutation handler - will throw if not authorized
    * export const deleteEntry = mutation({
-   *   args: { id: v.id("content_entries"), userId: v.string() },
+   *   args: { id: v.id("contentEntries"), userId: v.string() },
    *   handler: async (ctx, args) => {
    *     const entry = await ctx.db.get(args.id);
    *     if (!entry) throw new Error("Entry not found");

@@ -1912,7 +1912,7 @@ export function validateRequiredHooks(config?: ComponentConfig): void {
         }
         break;
 
-      case "authorizationHooks":
+      case "authorizationHooks": {
         if (!config?.authorizationHooks) {
           throw new MissingHookError("authorizationHooks");
         }
@@ -1929,6 +1929,7 @@ export function validateRequiredHooks(config?: ComponentConfig): void {
           throw new MissingHookError("authorizationHooks");
         }
         break;
+      }
 
       case "rateLimitHooks":
         if (!config?.rateLimitHooks?.check) {
@@ -1997,7 +1998,9 @@ export type FieldType =
   | "media"
   | "json"
   | "select"
-  | "multiSelect";
+  | "multiSelect"
+  | "tags"
+  | "category";
 
 /**
  * Field-specific configuration options.

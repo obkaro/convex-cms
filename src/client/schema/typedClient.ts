@@ -32,8 +32,8 @@
  * ```
  */
 
-import type { ContentTypeDefinition, InferSchema, ContentSchema, SchemaContentTypeNames } from "./types.js";
-import type { ContentSchemaConfig, ContentEntry, ContentStatus, PaginationResult, PaginationOpts } from "../types.js";
+import type { ContentTypeDefinition, InferSchema, SchemaContentTypeNames } from "./types.js";
+import type { ContentEntry, ContentStatus, PaginationOpts } from "../types.js";
 import type { ContentSchemaInstance } from "./defineContentType.js";
 import type { ConvexContext } from "../wrapper.js";
 
@@ -314,7 +314,7 @@ export type GetContentTypeDefinition<
   TName extends string
 > = TSchema extends ContentSchemaInstance<infer TDefs>
   ? {
-      [K in keyof TDefs]: TDefs[K] extends ContentTypeDefinition<TName, infer V>
+      [K in keyof TDefs]: TDefs[K] extends ContentTypeDefinition<TName, infer _V>
         ? TDefs[K]
         : never;
     }[keyof TDefs]
