@@ -266,6 +266,7 @@ describe("Trash Integration", () => {
     const contentType = await t.mutation(api.contentTypeMutations.createContentType, {
       name: "blog_post",
       displayName: "Blog Post",
+					createdBy: "test-user",
       fields: [
         { name: "title", label: "Title", type: "text", required: true },
       ],
@@ -313,6 +314,7 @@ describe("Trash Integration", () => {
     const contentType = await t.mutation(api.contentTypeMutations.createContentType, {
       name: "article",
       displayName: "Article",
+					createdBy: "test-user",
       fields: [
         { name: "title", label: "Title", type: "text", required: true },
       ],
@@ -356,6 +358,7 @@ describe("Trash Integration", () => {
     const contentType = await t.mutation(api.contentTypeMutations.createContentType, {
       name: "note",
       displayName: "Note",
+					createdBy: "test-user",
       fields: [
         { name: "title", label: "Title", type: "text", required: true },
       ],
@@ -402,11 +405,13 @@ describe("Trash Integration", () => {
     const blogType = await t.mutation(api.contentTypeMutations.createContentType, {
       name: "blog",
       displayName: "Blog",
+					createdBy: "test-user",
       fields: [{ name: "title", label: "Title", type: "text", required: true }],
     });
     const pageType = await t.mutation(api.contentTypeMutations.createContentType, {
       name: "page",
       displayName: "Page",
+					createdBy: "test-user",
       fields: [{ name: "title", label: "Title", type: "text", required: true }],
     });
 

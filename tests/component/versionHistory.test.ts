@@ -287,6 +287,7 @@ describe("Version History Integration Tests", () => {
         {
           name: "blog_post",
           displayName: "Blog Post",
+					createdBy: "test-user",
           fields: [
             { name: "title", label: "Title", type: "text", required: true },
             {
@@ -336,6 +337,7 @@ describe("Version History Integration Tests", () => {
         {
           name: "article",
           displayName: "Article",
+					createdBy: "test-user",
           fields: [
             { name: "title", label: "Title", type: "text", required: true },
           ],
@@ -396,6 +398,7 @@ describe("Version History Integration Tests", () => {
         {
           name: "temp",
           displayName: "Temp",
+					createdBy: "test-user",
           fields: [
             { name: "title", label: "Title", type: "text", required: true },
           ],
@@ -429,6 +432,7 @@ describe("Version History Integration Tests", () => {
         {
           name: "deletable",
           displayName: "Deletable",
+					createdBy: "test-user",
           fields: [
             { name: "title", label: "Title", type: "text", required: true },
           ],
@@ -467,6 +471,7 @@ describe("Version History Integration Tests", () => {
         {
           name: "no_versions",
           displayName: "No Versions",
+					createdBy: "test-user",
           fields: [
             { name: "title", label: "Title", type: "text", required: true },
           ],
@@ -498,6 +503,7 @@ describe("Version History Integration Tests", () => {
         {
           name: "many_versions",
           displayName: "Many Versions",
+					createdBy: "test-user",
           fields: [
             { name: "title", label: "Title", type: "text", required: true },
           ],
@@ -562,6 +568,7 @@ describe("Version History Integration Tests", () => {
         {
           name: "metadata_test",
           displayName: "Metadata Test",
+					createdBy: "test-user",
           fields: [
             { name: "title", label: "Title", type: "text", required: true },
           ],

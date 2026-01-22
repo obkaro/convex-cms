@@ -309,23 +309,32 @@ function fieldTypeToTsType(field: FieldDefinition): string {
     case "datetime":
       return "number"; // Unix timestamp
 
-    case "reference":
-      if (field.options?.multiple) {
+    case "reference": {
+      // Type narrowing: field.type === "reference" means options has reference shape
+      const refOpts = field.options as { multiple?: boolean } | undefined;
+      if (refOpts?.multiple) {
         return "string[]";
       }
       return "string";
+    }
 
-    case "media":
-      if (field.options?.multiple) {
+    case "media": {
+      // Type narrowing: field.type === "media" means options has media shape
+      const mediaOpts = field.options as { multiple?: boolean } | undefined;
+      if (mediaOpts?.multiple) {
         return "string[]";
       }
       return "string";
+    }
 
-    case "select":
-      return generateSelectUnion(field.options?.options);
+    case "select": {
+      const selectOpts = field.options as { options?: Array<{ value: string; label?: string }> } | undefined;
+      return generateSelectUnion(selectOpts?.options);
+    }
 
     case "multiSelect": {
-      const unionType = generateSelectUnion(field.options?.options);
+      const multiOpts = field.options as { options?: Array<{ value: string; label?: string }> } | undefined;
+      const unionType = generateSelectUnion(multiOpts?.options);
       return `(${unionType})[]`;
     }
 

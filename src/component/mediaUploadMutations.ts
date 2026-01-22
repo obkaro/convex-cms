@@ -38,46 +38,46 @@ const ABSOLUTE_MAX_FILE_SIZE = 500 * 1024 * 1024;
  * Arguments for generating an upload URL.
  */
 const generateUploadUrlArgs = v.object({
-  /**
-   * Optional maximum file size in bytes for the upload.
-   * This is a client-side hint that should be validated when creating the media asset.
-   * Default: 50 MB, Maximum: 500 MB
-   */
-  maxFileSize: v.optional(v.number()),
-  /**
-   * Optional array of allowed MIME types for the upload.
-   * Supports patterns like "image/*" for all image types.
-   * This is a client-side hint that should be validated when creating the media asset.
-   */
-  allowedMimeTypes: v.optional(v.array(v.string())),
-  /**
-   * Optional user ID for audit logging.
-   * Can be used to track who initiated the upload.
-   */
-  requestedBy: v.optional(v.string()),
+	/**
+	 * Optional maximum file size in bytes for the upload.
+	 * This is a client-side hint that should be validated when creating the media asset.
+	 * Default: 50 MB, Maximum: 500 MB
+	 */
+	maxFileSize: v.optional(v.number()),
+	/**
+	 * Optional array of allowed MIME types for the upload.
+	 * Supports patterns like "image/*" for all image types.
+	 * This is a client-side hint that should be validated when creating the media asset.
+	 */
+	allowedMimeTypes: v.optional(v.array(v.string())),
+	/**
+	 * Optional user ID for audit logging.
+	 * Can be used to track who initiated the upload.
+	 */
+	requestedBy: v.optional(v.string()),
 });
 
 /**
  * Return type for the generateUploadUrl mutation.
  */
 const uploadUrlResultDoc = v.object({
-  /** The temporary upload URL. Valid for 1 hour. */
-  uploadUrl: v.string(),
-  /**
-   * Expiration timestamp in milliseconds since epoch.
-   * The URL becomes invalid after this time.
-   */
-  expiresAt: v.number(),
-  /**
-   * Maximum file size in bytes that will be accepted.
-   * Client should validate file size before uploading.
-   */
-  maxFileSize: v.number(),
-  /**
-   * Allowed MIME types for the upload (if specified).
-   * Client should validate file type before uploading.
-   */
-  allowedMimeTypes: v.optional(v.array(v.string())),
+	/** The temporary upload URL. Valid for 1 hour. */
+	uploadUrl: v.string(),
+	/**
+	 * Expiration timestamp in milliseconds since epoch.
+	 * The URL becomes invalid after this time.
+	 */
+	expiresAt: v.number(),
+	/**
+	 * Maximum file size in bytes that will be accepted.
+	 * Client should validate file size before uploading.
+	 */
+	maxFileSize: v.number(),
+	/**
+	 * Allowed MIME types for the upload (if specified).
+	 * Client should validate file type before uploading.
+	 */
+	allowedMimeTypes: v.optional(v.array(v.string())),
 });
 
 /**
@@ -140,52 +140,52 @@ const uploadUrlResultDoc = v.object({
  * ```
  */
 export const generateUploadUrl = mutation({
-  args: generateUploadUrlArgs.fields,
-  returns: uploadUrlResultDoc,
-  handler: async (ctx, args) => {
-    const { maxFileSize, allowedMimeTypes, requestedBy } = args;
+	args: generateUploadUrlArgs.fields,
+	returns: uploadUrlResultDoc,
+	handler: async (ctx, args) => {
+		const { maxFileSize, allowedMimeTypes } = args;
 
-    // Validate and normalize maxFileSize
-    let effectiveMaxFileSize = DEFAULT_MAX_FILE_SIZE;
-    if (maxFileSize !== undefined) {
-      if (maxFileSize <= 0) {
-        throw new Error("maxFileSize must be a positive number");
-      }
-      if (maxFileSize > ABSOLUTE_MAX_FILE_SIZE) {
-        throw new Error(
-          `maxFileSize cannot exceed ${ABSOLUTE_MAX_FILE_SIZE} bytes (500 MB)`
-        );
-      }
-      effectiveMaxFileSize = maxFileSize;
-    }
+		// Validate and normalize maxFileSize
+		let effectiveMaxFileSize = DEFAULT_MAX_FILE_SIZE;
+		if (maxFileSize !== undefined) {
+			if (maxFileSize <= 0) {
+				throw new Error("maxFileSize must be a positive number");
+			}
+			if (maxFileSize > ABSOLUTE_MAX_FILE_SIZE) {
+				throw new Error(
+					`maxFileSize cannot exceed ${ABSOLUTE_MAX_FILE_SIZE} bytes (500 MB)`,
+				);
+			}
+			effectiveMaxFileSize = maxFileSize;
+		}
 
-    // Validate allowedMimeTypes if provided
-    if (allowedMimeTypes !== undefined) {
-      if (allowedMimeTypes.length === 0) {
-        throw new Error("allowedMimeTypes cannot be an empty array");
-      }
-      // Validate MIME type patterns
-      for (const mimeType of allowedMimeTypes) {
-        if (!isValidMimeTypePattern(mimeType)) {
-          throw new Error(`Invalid MIME type pattern: ${mimeType}`);
-        }
-      }
-    }
+		// Validate allowedMimeTypes if provided
+		if (allowedMimeTypes !== undefined) {
+			if (allowedMimeTypes.length === 0) {
+				throw new Error("allowedMimeTypes cannot be an empty array");
+			}
+			// Validate MIME type patterns
+			for (const mimeType of allowedMimeTypes) {
+				if (!isValidMimeTypePattern(mimeType)) {
+					throw new Error(`Invalid MIME type pattern: ${mimeType}`);
+				}
+			}
+		}
 
-    // Generate the upload URL using Convex's storage API
-    // The URL is valid for 1 hour from generation
-    const uploadUrl = await ctx.storage.generateUploadUrl();
+		// Generate the upload URL using Convex's storage API
+		// The URL is valid for 1 hour from generation
+		const uploadUrl = await ctx.storage.generateUploadUrl();
 
-    // Calculate expiration time (1 hour from now)
-    const expiresAt = Date.now() + 60 * 60 * 1000;
+		// Calculate expiration time (1 hour from now)
+		const expiresAt = Date.now() + 60 * 60 * 1000;
 
-    return {
-      uploadUrl,
-      expiresAt,
-      maxFileSize: effectiveMaxFileSize,
-      allowedMimeTypes,
-    };
-  },
+		return {
+			uploadUrl,
+			expiresAt,
+			maxFileSize: effectiveMaxFileSize,
+			allowedMimeTypes,
+		};
+	},
 });
 
 // =============================================================================
@@ -205,16 +205,16 @@ export const generateUploadUrl = mutation({
  * @returns True if the pattern is valid
  */
 function isValidMimeTypePattern(pattern: string): boolean {
-  // Check for empty or whitespace-only strings
-  if (!pattern || pattern.trim() === "") {
-    return false;
-  }
+	// Check for empty or whitespace-only strings
+	if (!pattern || pattern.trim() === "") {
+		return false;
+	}
 
-  // MIME type pattern: type/subtype or type/*
-  // type: must start with letter, followed by alphanumeric, hyphens, underscores
-  // subtype: alphanumeric, hyphens, underscores, periods, plus signs, or wildcard
-  const mimeTypeRegex = /^[a-zA-Z][a-zA-Z0-9\-_]*\/(\*|[a-zA-Z0-9][a-zA-Z0-9\-_.+]*)$/;
-  return mimeTypeRegex.test(pattern);
+	// MIME type pattern: type/subtype or type/*
+	// type: must start with letter, followed by alphanumeric, hyphens, underscores
+	// subtype: alphanumeric, hyphens, underscores, periods, plus signs, or wildcard
+	const mimeTypeRegex = /^[a-zA-Z][a-zA-Z0-9\-_]*\/(\*|[a-zA-Z0-9][a-zA-Z0-9\-_.+]*)$/;
+	return mimeTypeRegex.test(pattern);
 }
 
 // =============================================================================

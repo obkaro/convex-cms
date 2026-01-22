@@ -40,8 +40,8 @@ import { query, mutation } from "./_generated/server.js";
 import { Id, Doc } from "./_generated/dataModel.js";
 import {
 	contentStatusValidator,
-	contentEntryDoc,
-	contentTypeDoc,
+	// contentEntryDoc,
+	// contentTypeDoc,
 	fieldTypeValidator,
 } from "./validators.js";
 import {
@@ -49,7 +49,7 @@ import {
 	ContentTypeSchema,
 	FieldDefinition,
 } from "./validation.js";
-import { generateSlug } from "./lib/slugGenerator.js";
+// import { generateSlug } from "./lib/slugGenerator.js";
 import { ensureUniqueSlug } from "./lib/slugUniqueness.js";
 
 // =============================================================================

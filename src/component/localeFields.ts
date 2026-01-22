@@ -51,7 +51,7 @@ import type { FieldDefinition } from "../client/types.js";
  * ```
  */
 export type LocalizedFieldValue<T = unknown> = {
-  [localeCode: string]: T;
+	[localeCode: string]: T;
 };
 
 /**
@@ -64,52 +64,52 @@ export type FieldValue<T = unknown> = T | LocalizedFieldValue<T>;
  * Options for resolving localized field values.
  */
 export interface LocaleResolutionOptions {
-  /**
-   * The primary locale to attempt to resolve first.
-   */
-  locale: string;
+	/**
+	 * The primary locale to attempt to resolve first.
+	 */
+	locale: string;
 
-  /**
-   * Fallback chain of locales to try if the primary locale is not found.
-   * Tried in order until a value is found.
-   *
-   * @example
-   * ```typescript
-   * // Try en-US first, then en, then the default locale
-   * fallbackChain: ["en", "en-US"]
-   * ```
-   */
-  fallbackChain?: string[];
+	/**
+	 * Fallback chain of locales to try if the primary locale is not found.
+	 * Tried in order until a value is found.
+	 *
+	 * @example
+	 * ```typescript
+	 * // Try en-US first, then en, then the default locale
+	 * fallbackChain: ["en", "en-US"]
+	 * ```
+	 */
+	fallbackChain?: string[];
 
-  /**
-   * The default locale to use as final fallback.
-   * If not specified, returns undefined when no locale matches.
-   *
-   * @default "en"
-   */
-  defaultLocale?: string;
+	/**
+	 * The default locale to use as final fallback.
+	 * If not specified, returns undefined when no locale matches.
+	 *
+	 * @default "en"
+	 */
+	defaultLocale?: string;
 }
 
 /**
  * Result of resolving a localized field value.
  */
 export interface LocaleResolutionResult<T = unknown> {
-  /**
-   * The resolved value, or undefined if no matching locale was found.
-   */
-  value: T | undefined;
+	/**
+	 * The resolved value, or undefined if no matching locale was found.
+	 */
+	value: T | undefined;
 
-  /**
-   * The locale code that was used to resolve the value.
-   * Undefined if no matching locale was found.
-   */
-  resolvedLocale: string | undefined;
+	/**
+	 * The locale code that was used to resolve the value.
+	 * Undefined if no matching locale was found.
+	 */
+	resolvedLocale: string | undefined;
 
-  /**
-   * Whether the value was resolved from the primary requested locale
-   * (as opposed to a fallback).
-   */
-  isExactMatch: boolean;
+	/**
+	 * Whether the value was resolved from the primary requested locale
+	 * (as opposed to a fallback).
+	 */
+	isExactMatch: boolean;
 }
 
 // =============================================================================
@@ -140,48 +140,50 @@ export interface LocaleResolutionResult<T = unknown> {
  * isLocalizedFieldValue({ en: "Hello" }); // false (no hyphen - ambiguous)
  * ```
  */
-export function isLocalizedFieldValue(value: unknown): value is LocalizedFieldValue {
-  if (value === null || value === undefined) {
-    return false;
-  }
+export function isLocalizedFieldValue(
+	value: unknown,
+): value is LocalizedFieldValue {
+	if (value === null || value === undefined) {
+		return false;
+	}
 
-  if (typeof value !== "object" || Array.isArray(value)) {
-    return false;
-  }
+	if (typeof value !== "object" || Array.isArray(value)) {
+		return false;
+	}
 
-  const keys = Object.keys(value);
+	const keys = Object.keys(value);
 
-  // Empty objects are not localized values
-  if (keys.length === 0) {
-    return false;
-  }
+	// Empty objects are not localized values
+	if (keys.length === 0) {
+		return false;
+	}
 
-  // Check if all keys are valid BCP 47 locale codes
-  // Valid patterns (with hyphen required for disambiguation):
-  // - "en-US" (language + ISO 3166-1 alpha-2 region, uppercase)
-  // - "zh-Hans" (language + script subtag, title case)
-  // - "zh-Hans-CN" (language + script + region)
-  // Pattern: lowercase language (2-3), optional Title-case script (4), optional UPPERCASE region (2)
-  const hyphenatedLocalePattern = /^[a-z]{2,3}(-[A-Z][a-z]{3})?(-[A-Z]{2})$/;
-  const scriptOnlyPattern = /^[a-z]{2,3}-[A-Z][a-z]{3}$/;
+	// Check if all keys are valid BCP 47 locale codes
+	// Valid patterns (with hyphen required for disambiguation):
+	// - "en-US" (language + ISO 3166-1 alpha-2 region, uppercase)
+	// - "zh-Hans" (language + script subtag, title case)
+	// - "zh-Hans-CN" (language + script + region)
+	// Pattern: lowercase language (2-3), optional Title-case script (4), optional UPPERCASE region (2)
+	// const hyphenatedLocalePattern = /^[a-z]{2,3}(-[A-Z][a-z]{3})?(-[A-Z]{2})$/;
+	// const scriptOnlyPattern = /^[a-z]{2,3}-[A-Z][a-z]{3}$/;
 
-  // At least one key must be hyphenated to confirm this is a localized structure
-  const hasHyphenatedKey = keys.some((key) => key.includes("-"));
+	// At least one key must be hyphenated to confirm this is a localized structure
+	const hasHyphenatedKey = keys.some((key) => key.includes("-"));
 
-  if (!hasHyphenatedKey) {
-    return false;
-  }
+	if (!hasHyphenatedKey) {
+		return false;
+	}
 
-  // All keys must be valid locale patterns
-  const localePattern = /^[a-z]{2,3}(-[A-Z][a-z]{3})?(-[A-Z]{2})?$/;
+	// All keys must be valid locale patterns
+	const localePattern = /^[a-z]{2,3}(-[A-Z][a-z]{3})?(-[A-Z]{2})?$/;
 
-  return keys.every((key) => {
-    // Must have hyphen if longer than 3 chars
-    if (key.length > 3 && !key.includes("-")) {
-      return false;
-    }
-    return localePattern.test(key);
-  });
+	return keys.every((key) => {
+		// Must have hyphen if longer than 3 chars
+		if (key.length > 3 && !key.includes("-")) {
+			return false;
+		}
+		return localePattern.test(key);
+	});
 }
 
 /**
@@ -191,7 +193,7 @@ export function isLocalizedFieldValue(value: unknown): value is LocalizedFieldVa
  * @returns true if the field is marked as localized
  */
 export function isFieldLocalized(fieldDef: FieldDefinition): boolean {
-  return fieldDef.localized === true;
+	return fieldDef.localized === true;
 }
 
 // =============================================================================
@@ -228,67 +230,67 @@ export function isFieldLocalized(fieldDef: FieldDefinition): boolean {
  * ```
  */
 export function getLocalizedValue<T>(
-  value: FieldValue<T>,
-  options: LocaleResolutionOptions
+	value: FieldValue<T>,
+	options: LocaleResolutionOptions,
 ): LocaleResolutionResult<T> {
-  // If not a localized value, return directly
-  if (!isLocalizedFieldValue(value)) {
-    return {
-      value: value as T,
-      resolvedLocale: undefined,
-      isExactMatch: true,
-    };
-  }
+	// If not a localized value, return directly
+	if (!isLocalizedFieldValue(value)) {
+		return {
+			value: value as T,
+			resolvedLocale: undefined,
+			isExactMatch: true,
+		};
+	}
 
-  const localizedValue = value as LocalizedFieldValue<T>;
-  const { locale, fallbackChain = [], defaultLocale = "en" } = options;
+	const localizedValue = value as LocalizedFieldValue<T>;
+	const { locale, fallbackChain = [], defaultLocale = "en" } = options;
 
-  // Try the primary locale first
-  if (locale in localizedValue) {
-    return {
-      value: localizedValue[locale],
-      resolvedLocale: locale,
-      isExactMatch: true,
-    };
-  }
+	// Try the primary locale first
+	if (locale in localizedValue) {
+		return {
+			value: localizedValue[locale],
+			resolvedLocale: locale,
+			isExactMatch: true,
+		};
+	}
 
-  // Try fallback chain
-  for (const fallbackLocale of fallbackChain) {
-    if (fallbackLocale in localizedValue) {
-      return {
-        value: localizedValue[fallbackLocale],
-        resolvedLocale: fallbackLocale,
-        isExactMatch: false,
-      };
-    }
-  }
+	// Try fallback chain
+	for (const fallbackLocale of fallbackChain) {
+		if (fallbackLocale in localizedValue) {
+			return {
+				value: localizedValue[fallbackLocale],
+				resolvedLocale: fallbackLocale,
+				isExactMatch: false,
+			};
+		}
+	}
 
-  // Try default locale
-  if (defaultLocale && defaultLocale in localizedValue) {
-    return {
-      value: localizedValue[defaultLocale],
-      resolvedLocale: defaultLocale,
-      isExactMatch: false,
-    };
-  }
+	// Try default locale
+	if (defaultLocale && defaultLocale in localizedValue) {
+		return {
+			value: localizedValue[defaultLocale],
+			resolvedLocale: defaultLocale,
+			isExactMatch: false,
+		};
+	}
 
-  // Try to find any available locale as last resort
-  const availableLocales = Object.keys(localizedValue);
-  if (availableLocales.length > 0) {
-    const firstAvailable = availableLocales[0];
-    return {
-      value: localizedValue[firstAvailable],
-      resolvedLocale: firstAvailable,
-      isExactMatch: false,
-    };
-  }
+	// Try to find any available locale as last resort
+	const availableLocales = Object.keys(localizedValue);
+	if (availableLocales.length > 0) {
+		const firstAvailable = availableLocales[0];
+		return {
+			value: localizedValue[firstAvailable],
+			resolvedLocale: firstAvailable,
+			isExactMatch: false,
+		};
+	}
 
-  // No value found
-  return {
-    value: undefined,
-    resolvedLocale: undefined,
-    isExactMatch: false,
-  };
+	// No value found
+	return {
+		value: undefined,
+		resolvedLocale: undefined,
+		isExactMatch: false,
+	};
 }
 
 /**
@@ -319,36 +321,36 @@ export function getLocalizedValue<T>(
  * ```
  */
 export function setLocalizedValue<T>(
-  existingValue: FieldValue<T> | undefined,
-  locale: string,
-  newValue: T,
-  preserveExisting = true,
-  defaultLocale = "en"
+	existingValue: FieldValue<T> | undefined,
+	locale: string,
+	newValue: T,
+	preserveExisting = true,
+	defaultLocale = "en",
 ): LocalizedFieldValue<T> {
-  // If already localized, just add/update the locale
-  if (isLocalizedFieldValue(existingValue)) {
-    return {
-      ...existingValue,
-      [locale]: newValue,
-    };
-  }
+	// If already localized, just add/update the locale
+	if (isLocalizedFieldValue(existingValue)) {
+		return {
+			...existingValue,
+			[locale]: newValue,
+		};
+	}
 
-  // Converting from plain value to localized
-  const result: LocalizedFieldValue<T> = {
-    [locale]: newValue,
-  };
+	// Converting from plain value to localized
+	const result: LocalizedFieldValue<T> = {
+		[locale]: newValue,
+	};
 
-  // Preserve existing plain value under default locale if requested
-  if (
-    preserveExisting &&
-    existingValue !== undefined &&
-    existingValue !== null &&
-    locale !== defaultLocale
-  ) {
-    result[defaultLocale] = existingValue as T;
-  }
+	// Preserve existing plain value under default locale if requested
+	if (
+		preserveExisting &&
+		existingValue !== undefined &&
+		existingValue !== null &&
+		locale !== defaultLocale
+	) {
+		result[defaultLocale] = existingValue as T;
+	}
 
-  return result;
+	return result;
 }
 
 /**
@@ -366,17 +368,17 @@ export function setLocalizedValue<T>(
  * ```
  */
 export function removeLocale<T>(
-  localizedValue: LocalizedFieldValue<T>,
-  locale: string
+	localizedValue: LocalizedFieldValue<T>,
+	locale: string,
 ): LocalizedFieldValue<T> | undefined {
-  const { [locale]: removed, ...rest } = localizedValue;
+	const { [locale]: _removed, ...rest } = localizedValue;
 
-  // Return undefined if no locales remain
-  if (Object.keys(rest).length === 0) {
-    return undefined;
-  }
+	// Return undefined if no locales remain
+	if (Object.keys(rest).length === 0) {
+		return undefined;
+	}
 
-  return rest;
+	return rest;
 }
 
 /**
@@ -395,13 +397,13 @@ export function removeLocale<T>(
  * ```
  */
 export function mergeLocalizedValues<T>(
-  target: LocalizedFieldValue<T> | undefined,
-  source: LocalizedFieldValue<T>
+	target: LocalizedFieldValue<T> | undefined,
+	source: LocalizedFieldValue<T>,
 ): LocalizedFieldValue<T> {
-  return {
-    ...(target ?? {}),
-    ...source,
-  };
+	return {
+		...(target ?? {}),
+		...source,
+	};
 }
 
 /**
@@ -422,11 +424,11 @@ export function mergeLocalizedValues<T>(
  * ```
  */
 export function getAvailableLocales(value: FieldValue): string[] {
-  if (!isLocalizedFieldValue(value)) {
-    return [];
-  }
+	if (!isLocalizedFieldValue(value)) {
+		return [];
+	}
 
-  return Object.keys(value);
+	return Object.keys(value);
 }
 
 /**
@@ -437,11 +439,11 @@ export function getAvailableLocales(value: FieldValue): string[] {
  * @returns true if the locale has a translation
  */
 export function hasLocale(value: FieldValue, locale: string): boolean {
-  if (!isLocalizedFieldValue(value)) {
-    return false;
-  }
+	if (!isLocalizedFieldValue(value)) {
+		return false;
+	}
 
-  return locale in value;
+	return locale in value;
 }
 
 // =============================================================================
@@ -452,31 +454,31 @@ export function hasLocale(value: FieldValue, locale: string): boolean {
  * Options for resolving all localized fields in content data.
  */
 export interface ResolveContentDataOptions extends LocaleResolutionOptions {
-  /**
-   * Field definitions for the content type.
-   * Used to determine which fields are localized.
-   */
-  fields: FieldDefinition[];
+	/**
+	 * Field definitions for the content type.
+	 * Used to determine which fields are localized.
+	 */
+	fields: FieldDefinition[];
 }
 
 /**
  * Result of resolving all localized fields in content data.
  */
 export interface ResolvedContentData {
-  /**
-   * The resolved data with all localized fields resolved to single values.
-   */
-  data: Record<string, unknown>;
+	/**
+	 * The resolved data with all localized fields resolved to single values.
+	 */
+	data: Record<string, unknown>;
 
-  /**
-   * Map of field names to their resolution results.
-   */
-  resolutions: Record<string, LocaleResolutionResult>;
+	/**
+	 * Map of field names to their resolution results.
+	 */
+	resolutions: Record<string, LocaleResolutionResult>;
 
-  /**
-   * Fields that were missing translations for the requested locale.
-   */
-  missingTranslations: string[];
+	/**
+	 * Fields that were missing translations for the requested locale.
+	 */
+	missingTranslations: string[];
 }
 
 /**
@@ -513,50 +515,50 @@ export interface ResolvedContentData {
  * ```
  */
 export function resolveContentData(
-  data: Record<string, unknown>,
-  options: ResolveContentDataOptions
+	data: Record<string, unknown>,
+	options: ResolveContentDataOptions,
 ): ResolvedContentData {
-  const { fields, locale, fallbackChain, defaultLocale } = options;
-  const resolvedData: Record<string, unknown> = {};
-  const resolutions: Record<string, LocaleResolutionResult> = {};
-  const missingTranslations: string[] = [];
+	const { fields, locale, fallbackChain, defaultLocale } = options;
+	const resolvedData: Record<string, unknown> = {};
+	const resolutions: Record<string, LocaleResolutionResult> = {};
+	const missingTranslations: string[] = [];
 
-  // Create a map of field names to their definitions for quick lookup
-  const fieldMap = new Map<string, FieldDefinition>();
-  for (const field of fields) {
-    fieldMap.set(field.name, field);
-  }
+	// Create a map of field names to their definitions for quick lookup
+	const fieldMap = new Map<string, FieldDefinition>();
+	for (const field of fields) {
+		fieldMap.set(field.name, field);
+	}
 
-  // Process each field in the data
-  for (const [fieldName, fieldValue] of Object.entries(data)) {
-    const fieldDef = fieldMap.get(fieldName);
+	// Process each field in the data
+	for (const [fieldName, fieldValue] of Object.entries(data)) {
+		const fieldDef = fieldMap.get(fieldName);
 
-    // If field is localized, resolve using locale
-    if (fieldDef && isFieldLocalized(fieldDef)) {
-      const result = getLocalizedValue(fieldValue, {
-        locale,
-        fallbackChain,
-        defaultLocale,
-      });
+		// If field is localized, resolve using locale
+		if (fieldDef && isFieldLocalized(fieldDef)) {
+			const result = getLocalizedValue(fieldValue, {
+				locale,
+				fallbackChain,
+				defaultLocale,
+			});
 
-      resolvedData[fieldName] = result.value;
-      resolutions[fieldName] = result;
+			resolvedData[fieldName] = result.value;
+			resolutions[fieldName] = result;
 
-      // Track if this was not an exact match (missing translation)
-      if (!result.isExactMatch && result.resolvedLocale !== undefined) {
-        missingTranslations.push(fieldName);
-      }
-    } else {
-      // Non-localized field - pass through as-is
-      resolvedData[fieldName] = fieldValue;
-    }
-  }
+			// Track if this was not an exact match (missing translation)
+			if (!result.isExactMatch && result.resolvedLocale !== undefined) {
+				missingTranslations.push(fieldName);
+			}
+		} else {
+			// Non-localized field - pass through as-is
+			resolvedData[fieldName] = fieldValue;
+		}
+	}
 
-  return {
-    data: resolvedData,
-    resolutions,
-    missingTranslations,
-  };
+	return {
+		data: resolvedData,
+		resolutions,
+		missingTranslations,
+	};
 }
 
 /**
@@ -593,113 +595,113 @@ export function resolveContentData(
  * ```
  */
 export function setLocalizedContentData(
-  existingData: Record<string, unknown>,
-  newValues: Record<string, unknown>,
-  locale: string,
-  fields: FieldDefinition[],
-  defaultLocale = "en"
+	existingData: Record<string, unknown>,
+	newValues: Record<string, unknown>,
+	locale: string,
+	fields: FieldDefinition[],
+	defaultLocale = "en",
 ): Record<string, unknown> {
-  // Create a map of field names to their definitions for quick lookup
-  const fieldMap = new Map<string, FieldDefinition>();
-  for (const field of fields) {
-    fieldMap.set(field.name, field);
-  }
+	// Create a map of field names to their definitions for quick lookup
+	const fieldMap = new Map<string, FieldDefinition>();
+	for (const field of fields) {
+		fieldMap.set(field.name, field);
+	}
 
-  const result: Record<string, unknown> = { ...existingData };
+	const result: Record<string, unknown> = { ...existingData };
 
-  for (const [fieldName, newValue] of Object.entries(newValues)) {
-    const fieldDef = fieldMap.get(fieldName);
+	for (const [fieldName, newValue] of Object.entries(newValues)) {
+		const fieldDef = fieldMap.get(fieldName);
 
-    if (fieldDef && isFieldLocalized(fieldDef)) {
-      // Localized field - merge into localized structure
-      result[fieldName] = setLocalizedValue(
-        existingData[fieldName] as FieldValue,
-        locale,
-        newValue,
-        true,
-        defaultLocale
-      );
-    } else {
-      // Non-localized field - just replace
-      result[fieldName] = newValue;
-    }
-  }
+		if (fieldDef && isFieldLocalized(fieldDef)) {
+			// Localized field - merge into localized structure
+			result[fieldName] = setLocalizedValue(
+				existingData[fieldName] as FieldValue,
+				locale,
+				newValue,
+				true,
+				defaultLocale,
+			);
+		} else {
+			// Non-localized field - just replace
+			result[fieldName] = newValue;
+		}
+	}
 
-  return result;
+	return result;
 }
 
 /**
  * Result of resolving locale content for an entry with metadata.
  */
 export interface LocaleResolvedEntry<T = Record<string, unknown>> {
-  /**
-   * The resolved data with all localized fields resolved to single values.
-   */
-  data: T;
+	/**
+	 * The resolved data with all localized fields resolved to single values.
+	 */
+	data: T;
 
-  /**
-   * Metadata about the locale resolution process.
-   */
-  localeResolution: {
-    /**
-     * The locale that was requested.
-     */
-    requestedLocale: string;
+	/**
+	 * Metadata about the locale resolution process.
+	 */
+	localeResolution: {
+		/**
+		 * The locale that was requested.
+		 */
+		requestedLocale: string;
 
-    /**
-     * The fallback chain that was used for resolution.
-     */
-    fallbackChain: string[];
+		/**
+		 * The fallback chain that was used for resolution.
+		 */
+		fallbackChain: string[];
 
-    /**
-     * The default locale used as final fallback.
-     */
-    defaultLocale: string;
+		/**
+		 * The default locale used as final fallback.
+		 */
+		defaultLocale: string;
 
-    /**
-     * Fields that were resolved from a fallback locale (missing in requested locale).
-     */
-    fieldsFromFallback: string[];
+		/**
+		 * Fields that were resolved from a fallback locale (missing in requested locale).
+		 */
+		fieldsFromFallback: string[];
 
-    /**
-     * Map of field names to the locale they were resolved from.
-     * Only includes fields that were resolved from a fallback (not the requested locale).
-     */
-    fieldResolutions: Record<string, string>;
-  };
+		/**
+		 * Map of field names to the locale they were resolved from.
+		 * Only includes fields that were resolved from a fallback (not the requested locale).
+		 */
+		fieldResolutions: Record<string, string>;
+	};
 }
 
 /**
  * Options for resolving locale content for entries.
  */
 export interface ResolveLocaleOptions {
-  /**
-   * The locale to resolve content in.
-   */
-  locale: string;
+	/**
+	 * The locale to resolve content in.
+	 */
+	locale: string;
 
-  /**
-   * Fallback chain of locales to try if the primary locale is not found.
-   */
-  fallbackChain?: string[];
+	/**
+	 * Fallback chain of locales to try if the primary locale is not found.
+	 */
+	fallbackChain?: string[];
 
-  /**
-   * The default locale to use as final fallback.
-   * @default "en"
-   */
-  defaultLocale?: string;
+	/**
+	 * The default locale to use as final fallback.
+	 * @default "en"
+	 */
+	defaultLocale?: string;
 
-  /**
-   * Field definitions for the content type.
-   * Used to determine which fields are localized.
-   */
-  fields: FieldDefinition[];
+	/**
+	 * Field definitions for the content type.
+	 * Used to determine which fields are localized.
+	 */
+	fields: FieldDefinition[];
 
-  /**
-   * Whether to include locale resolution metadata in the result.
-   * @default true
-   */
-  includeResolutionMetadata?: boolean;
+	/**
+	 * Whether to include locale resolution metadata in the result.
+	 * @default true
+	 */
+	includeResolutionMetadata?: boolean;
 }
 
 /**
@@ -746,49 +748,49 @@ export interface ResolveLocaleOptions {
  * ```
  */
 export function resolveLocaleContent<
-  T extends { data: Record<string, unknown> }
+	T extends { data: Record<string, unknown> }
 >(
-  entry: T,
-  options: ResolveLocaleOptions
+	entry: T,
+	options: ResolveLocaleOptions,
 ): T & LocaleResolvedEntry<Record<string, unknown>> {
-  const {
-    locale,
-    fallbackChain = [],
-    defaultLocale = "en",
-    fields,
-    includeResolutionMetadata = true,
-  } = options;
+	const {
+		locale,
+		fallbackChain = [],
+		defaultLocale = "en",
+		fields,
+		includeResolutionMetadata = true,
+	} = options;
 
-  // Resolve content data using existing function
-  const resolved = resolveContentData(entry.data, {
-    locale,
-    fallbackChain,
-    defaultLocale,
-    fields,
-  });
+	// Resolve content data using existing function
+	const resolved = resolveContentData(entry.data, {
+		locale,
+		fallbackChain,
+		defaultLocale,
+		fields,
+	});
 
-  // Build field resolution map for fields that used fallback
-  const fieldResolutions: Record<string, string> = {};
-  for (const [fieldName, resolution] of Object.entries(resolved.resolutions)) {
-    if (!resolution.isExactMatch && resolution.resolvedLocale) {
-      fieldResolutions[fieldName] = resolution.resolvedLocale;
-    }
-  }
+	// Build field resolution map for fields that used fallback
+	const fieldResolutions: Record<string, string> = {};
+	for (const [fieldName, resolution] of Object.entries(resolved.resolutions)) {
+		if (!resolution.isExactMatch && resolution.resolvedLocale) {
+			fieldResolutions[fieldName] = resolution.resolvedLocale;
+		}
+	}
 
-  // Return entry with resolved data and metadata
-  return {
-    ...entry,
-    data: resolved.data,
-    localeResolution: includeResolutionMetadata
-      ? {
-          requestedLocale: locale,
-          fallbackChain,
-          defaultLocale,
-          fieldsFromFallback: resolved.missingTranslations,
-          fieldResolutions,
-        }
-      : undefined,
-  } as T & LocaleResolvedEntry<Record<string, unknown>>;
+	// Return entry with resolved data and metadata
+	return {
+		...entry,
+		data: resolved.data,
+		localeResolution: includeResolutionMetadata
+			? {
+					requestedLocale: locale,
+					fallbackChain,
+					defaultLocale,
+					fieldsFromFallback: resolved.missingTranslations,
+					fieldResolutions,
+			  }
+			: undefined,
+	} as T & LocaleResolvedEntry<Record<string, unknown>>;
 }
 
 /**
@@ -818,12 +820,12 @@ export function resolveLocaleContent<
  * ```
  */
 export function resolveLocaleContentBatch<
-  T extends { data: Record<string, unknown> }
+	T extends { data: Record<string, unknown> }
 >(
-  entries: T[],
-  options: ResolveLocaleOptions
+	entries: T[],
+	options: ResolveLocaleOptions,
 ): Array<T & LocaleResolvedEntry<Record<string, unknown>>> {
-  return entries.map((entry) => resolveLocaleContent(entry, options));
+	return entries.map((entry) => resolveLocaleContent(entry, options));
 }
 
 /**
@@ -849,50 +851,52 @@ export function resolveLocaleContentBatch<
  * ```
  */
 export function getTranslationStatus(
-  data: Record<string, unknown>,
-  fields: FieldDefinition[],
-  requiredLocales: string[]
+	data: Record<string, unknown>,
+	fields: FieldDefinition[],
+	requiredLocales: string[],
 ): Record<
-  string,
-  { complete: boolean; missingFields: string[]; percentage: number }
+	string,
+	{ complete: boolean; missingFields: string[]; percentage: number }
 > {
-  const result: Record<
-    string,
-    { complete: boolean; missingFields: string[]; percentage: number }
-  > = {};
+	const result: Record<
+		string,
+		{ complete: boolean; missingFields: string[]; percentage: number }
+	> = {};
 
-  // Get all localized fields
-  const localizedFields = fields.filter(isFieldLocalized);
+	// Get all localized fields
+	const localizedFields = fields.filter(isFieldLocalized);
 
-  if (localizedFields.length === 0) {
-    // No localized fields - all locales are "complete"
-    for (const locale of requiredLocales) {
-      result[locale] = { complete: true, missingFields: [], percentage: 100 };
-    }
-    return result;
-  }
+	if (localizedFields.length === 0) {
+		// No localized fields - all locales are "complete"
+		for (const locale of requiredLocales) {
+			result[locale] = { complete: true, missingFields: [], percentage: 100 };
+		}
+		return result;
+	}
 
-  for (const locale of requiredLocales) {
-    const missingFields: string[] = [];
+	for (const locale of requiredLocales) {
+		const missingFields: string[] = [];
 
-    for (const field of localizedFields) {
-      const fieldValue = data[field.name];
+		for (const field of localizedFields) {
+			const fieldValue = data[field.name];
 
-      if (!hasLocale(fieldValue as FieldValue, locale)) {
-        missingFields.push(field.name);
-      }
-    }
+			if (!hasLocale(fieldValue as FieldValue, locale)) {
+				missingFields.push(field.name);
+			}
+		}
 
-    const percentage = Math.round(
-      ((localizedFields.length - missingFields.length) / localizedFields.length) * 100
-    );
+		const percentage = Math.round(
+			((localizedFields.length - missingFields.length) /
+				localizedFields.length) *
+				100,
+		);
 
-    result[locale] = {
-      complete: missingFields.length === 0,
-      missingFields,
-      percentage,
-    };
-  }
+		result[locale] = {
+			complete: missingFields.length === 0,
+			missingFields,
+			percentage,
+		};
+	}
 
-  return result;
+	return result;
 }

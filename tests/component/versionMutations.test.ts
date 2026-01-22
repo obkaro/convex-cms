@@ -246,6 +246,7 @@ describe("Version Snapshot Integration Tests", () => {
 				{
 					name: "snapshot_test",
 					displayName: "Snapshot Test",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 						{
@@ -295,6 +296,7 @@ describe("Version Snapshot Integration Tests", () => {
 				{
 					name: "publish_test",
 					displayName: "Publish Test",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 					],
@@ -329,6 +331,7 @@ describe("Version Snapshot Integration Tests", () => {
 				{
 					name: "accurate_test",
 					displayName: "Accurate Test",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 						{ name: "count", label: "Count", type: "number", required: false },
@@ -369,6 +372,7 @@ describe("Version Snapshot Integration Tests", () => {
 				{
 					name: "delete_test",
 					displayName: "Delete Test",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 					],
@@ -399,6 +403,7 @@ describe("Version Snapshot Integration Tests", () => {
 				{
 					name: "soft_delete_test",
 					displayName: "Soft Delete Test",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 					],
@@ -430,6 +435,7 @@ describe("Version Snapshot Integration Tests", () => {
 				{
 					name: "multi_snapshot",
 					displayName: "Multi Snapshot",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 					],
@@ -478,6 +484,7 @@ describe("Version Snapshot Integration Tests", () => {
 				{
 					name: "exists_test",
 					displayName: "Exists Test",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 					],
@@ -511,6 +518,7 @@ describe("Version Snapshot Integration Tests", () => {
 				{
 					name: "not_exists_test",
 					displayName: "Not Exists Test",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 					],
@@ -541,6 +549,7 @@ describe("Version Snapshot Integration Tests", () => {
 				{
 					name: "if_not_exists",
 					displayName: "If Not Exists",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 					],
@@ -573,6 +582,7 @@ describe("Version Snapshot Integration Tests", () => {
 				{
 					name: "existing_test",
 					displayName: "Existing Test",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 					],
@@ -615,6 +625,7 @@ describe("Version Snapshot Integration Tests", () => {
 				{
 					name: "null_test",
 					displayName: "Null Test",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 					],
@@ -648,6 +659,7 @@ describe("Version Snapshot Integration Tests", () => {
 				{
 					name: "deleted_null",
 					displayName: "Deleted Null",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 					],
@@ -683,6 +695,7 @@ describe("Version Snapshot Integration Tests", () => {
 				{
 					name: "history_test",
 					displayName: "History Test",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 					],
@@ -719,6 +732,7 @@ describe("Version Snapshot Integration Tests", () => {
 				{
 					name: "order_test",
 					displayName: "Order Test",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 					],
@@ -771,6 +785,7 @@ describe("Version Snapshot Integration Tests", () => {
 				{
 					name: "rollback_test",
 					displayName: "Rollback Test",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 						{
@@ -834,6 +849,7 @@ describe("Version Snapshot Integration Tests", () => {
 				{
 					name: "status_preserve_test",
 					displayName: "Status Preserve Test",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 					],
@@ -889,6 +905,7 @@ describe("Version Snapshot Integration Tests", () => {
 				{
 					name: "audit_trail_test",
 					displayName: "Audit Trail Test",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 					],
@@ -949,6 +966,7 @@ describe("Version Snapshot Integration Tests", () => {
 				{
 					name: "nonexistent_rollback",
 					displayName: "Non-existent Rollback",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 					],
@@ -981,6 +999,7 @@ describe("Version Snapshot Integration Tests", () => {
 				{
 					name: "deleted_rollback",
 					displayName: "Deleted Rollback",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 					],
@@ -1018,6 +1037,7 @@ describe("Version Snapshot Integration Tests", () => {
 				{
 					name: "no_version_rollback",
 					displayName: "No Version Rollback",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 					],
@@ -1046,6 +1066,7 @@ describe("Version Snapshot Integration Tests", () => {
 				{
 					name: "slug_rollback",
 					displayName: "Slug Rollback",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 					],
@@ -1092,6 +1113,7 @@ describe("Version Snapshot Integration Tests", () => {
 				{
 					name: "complex_rollback",
 					displayName: "Complex Rollback",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 						{

@@ -49,7 +49,7 @@ import type {
   CmsHookContext,
 } from "../client/types.js";
 
-import { getRole, type RoleDefinition, type RoleName } from "./roles.js";
+import { getRole, type RoleDefinition } from "./roles.js";
 
 // =============================================================================
 // User Context Types

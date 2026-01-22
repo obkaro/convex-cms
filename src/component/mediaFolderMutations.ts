@@ -18,7 +18,7 @@ import {
 	createMediaFolderArgs,
 	updateMediaFolderArgs,
 	moveFolderArgs,
-	mediaFolderDoc,
+	mediaItemDoc,
 	mutationAuthContext,
 } from "./validators.js";
 import {
@@ -57,7 +57,7 @@ const MAX_PATH_LENGTH = 500;
  * Invalid characters in folder names.
  * These characters are not allowed because they could break path parsing.
  */
-const INVALID_NAME_CHARS = /[\/\\:*?"<>|]/;
+const INVALID_NAME_CHARS = /[/\\:*?"<>|]/;
 
 // =============================================================================
 // Helper Functions
@@ -178,12 +178,12 @@ export const createMediaFolder = mutation({
 		/** Optional auth context for mutation-level authorization */
 		_auth: v.optional(mutationAuthContext),
 	},
-	returns: mediaFolderDoc,
+	returns: mediaItemDoc,
 	handler: async (ctx, args) => {
 		const { name, parentId, description, sortOrder, createdBy, _auth } = args;
 
 		// Authorization check - mediaFolders.create permission
-		requireMutationAuth(_auth, "mediaFolders", "create");
+		requireMutationAuth(_auth, "mediaItems", "create");
 
 		// Validate folder name
 		validateFolderName(name);
@@ -222,9 +222,12 @@ export const createMediaFolder = mutation({
 
 		// Check for duplicate folder name in the same parent
 		const existingFolder = await ctx.db
-			.query("mediaFolders")
+			.query("mediaItems")
 			.withIndex("by_path", (q) => q.eq("path", path))
-			.filter((q) => q.eq(q.field("deletedAt"), undefined))
+			.filter((q) => q.and(
+				q.eq(q.field("kind"), "folder"),
+				q.eq(q.field("deletedAt"), undefined)
+			))
 			.first();
 
 		if (existingFolder) {
@@ -232,7 +235,8 @@ export const createMediaFolder = mutation({
 		}
 
 		// Create the folder
-		const folderId = await ctx.db.insert("mediaFolders", {
+		const folderId = await ctx.db.insert("mediaItems", {
+			kind: "folder",
 			name: name.trim(),
 			parentId,
 			path,
@@ -288,12 +292,12 @@ export const updateMediaFolder = mutation({
 		/** Optional auth context for mutation-level authorization */
 		_auth: v.optional(mutationAuthContext),
 	},
-	returns: mediaFolderDoc,
+	returns: mediaItemDoc,
 	handler: async (ctx, args) => {
 		const { id, name, description, sortOrder, _auth } = args;
 
 		// Authorization check - mediaFolders.update permission
-		requireMutationAuth(_auth, "mediaFolders", "update");
+		requireMutationAuth(_auth, "mediaItems", "update");
 
 		// Retrieve the folder
 		const folder = await ctx.db.get(id);
@@ -332,7 +336,7 @@ export const updateMediaFolder = mutation({
 
 			// Check for duplicate name in same parent
 			const existingFolder = await ctx.db
-				.query("mediaFolders")
+				.query("mediaItems")
 				.withIndex("by_path", (q) => q.eq("path", newPath))
 				.filter((q) => q.eq(q.field("deletedAt"), undefined))
 				.first();
@@ -382,7 +386,7 @@ async function updateDescendantPaths(
 ): Promise<void> {
 	// Find all folders whose path starts with the old path
 	const descendants = await ctx.db
-		.query("mediaFolders")
+		.query("mediaItems")
 		.filter((q) => q.eq(q.field("deletedAt"), undefined))
 		.collect();
 
@@ -443,12 +447,12 @@ export const moveMediaFolder = mutation({
 		/** Optional auth context for mutation-level authorization */
 		_auth: v.optional(mutationAuthContext),
 	},
-	returns: mediaFolderDoc,
+	returns: mediaItemDoc,
 	handler: async (ctx, args) => {
 		const { id, newParentId, _auth } = args;
 
 		// Authorization check - mediaFolders.update permission (move is a form of update)
-		requireMutationAuth(_auth, "mediaFolders", "update");
+		requireMutationAuth(_auth, "mediaItems", "update");
 
 		// Retrieve the folder
 		const folder = await ctx.db.get(id);
@@ -513,7 +517,7 @@ export const moveMediaFolder = mutation({
 
 		// Check for duplicate name in new parent
 		const existingFolder = await ctx.db
-			.query("mediaFolders")
+			.query("mediaItems")
 			.withIndex("by_path", (q) => q.eq("path", newPath))
 			.filter((q) => q.eq(q.field("deletedAt"), undefined))
 			.first();
@@ -549,7 +553,7 @@ async function getMaxSubtreeDepth(
 	folderPath: string,
 ): Promise<number> {
 	const descendants = await ctx.db
-		.query("mediaFolders")
+		.query("mediaItems")
 		.filter((q) => q.eq(q.field("deletedAt"), undefined))
 		.collect();
 
@@ -577,7 +581,7 @@ async function getMaxSubtreeDepth(
  * Validator for delete folder arguments.
  */
 export const deleteMediaFolderArgs = {
-	id: v.id("mediaFolders"),
+	id: v.id("mediaItems"),
 	deletedBy: v.optional(v.string()),
 	hardDelete: v.optional(v.boolean()),
 	recursive: v.optional(v.boolean()),
@@ -626,18 +630,18 @@ export const deleteMediaFolder = mutation({
 		/** Optional auth context for mutation-level authorization */
 		_auth: v.optional(mutationAuthContext),
 	},
-	returns: mediaFolderDoc,
+	returns: mediaItemDoc,
 	handler: async (ctx, args) => {
 		const {
 			id,
-			deletedBy,
+			// deletedBy,
 			hardDelete = false,
 			recursive = false,
 			_auth,
 		} = args;
 
 		// Authorization check - mediaFolders.delete permission
-		requireMutationAuth(_auth, "mediaFolders", "delete");
+		requireMutationAuth(_auth, "mediaItems", "delete");
 
 		// Retrieve the folder
 		const folder = await ctx.db.get(id);
@@ -653,14 +657,14 @@ export const deleteMediaFolder = mutation({
 
 		// Check for contents (subfolders and assets)
 		const subfolders = await ctx.db
-			.query("mediaFolders")
+			.query("mediaItems")
 			.withIndex("by_parent", (q) => q.eq("parentId", id))
 			.filter((q) => q.eq(q.field("deletedAt"), undefined))
 			.take(1);
 
 		const assets = await ctx.db
-			.query("mediaAssets")
-			.withIndex("by_folder", (q) => q.eq("folderId", id))
+			.query("mediaItems")
+			.withIndex("by_parent", (q) => q.eq("parentId", id))
 			.filter((q) => q.eq(q.field("deletedAt"), undefined))
 			.take(1);
 
@@ -707,13 +711,15 @@ export const deleteMediaFolder = mutation({
  */
 async function deleteContentsRecursively(
 	ctx: MutationCtx,
-	folderId: Id<"mediaFolders">,
+	folderId: Id<"mediaItems">,
 	hardDelete: boolean,
 ): Promise<void> {
 	// Get all subfolders
 	const subfolders = await ctx.db
-		.query("mediaFolders")
-		.withIndex("by_parent", (q) => q.eq("parentId", folderId))
+		.query("mediaItems")
+		.withIndex("by_kind_and_parent", (q) =>
+			q.eq("kind", "folder").eq("parentId", folderId),
+		)
 		.filter((q) => q.eq(q.field("deletedAt"), undefined))
 		.collect();
 
@@ -730,12 +736,18 @@ async function deleteContentsRecursively(
 
 	// Delete/soft-delete all assets in this folder
 	const assets = await ctx.db
-		.query("mediaAssets")
-		.withIndex("by_folder", (q) => q.eq("folderId", folderId))
+		.query("mediaItems")
+		.withIndex("by_kind_and_parent", (q) =>
+			q.eq("kind", "asset").eq("parentId", folderId),
+		)
 		.filter((q) => q.eq(q.field("deletedAt"), undefined))
 		.collect();
 
-	for (const asset of assets) {
+	for (const item of assets) {
+		// Type guard for asset (we already filtered by kind="asset" in the query)
+		if (item.kind !== "asset") continue;
+		const asset = item;
+
 		if (hardDelete) {
 			// For hard delete, also delete the storage file
 			try {
@@ -761,7 +773,7 @@ async function deleteContentsRecursively(
  * Validator for restore folder arguments.
  */
 export const restoreMediaFolderArgs = {
-	id: v.id("mediaFolders"),
+	id: v.id("mediaItems"),
 	restoredBy: v.optional(v.string()),
 	recursive: v.optional(v.boolean()),
 };
@@ -797,12 +809,14 @@ export const restoreMediaFolder = mutation({
 		/** Optional auth context for mutation-level authorization */
 		_auth: v.optional(mutationAuthContext),
 	},
-	returns: mediaFolderDoc,
+	returns: mediaItemDoc,
 	handler: async (ctx, args) => {
-		const { id, restoredBy, recursive = false, _auth } = args;
+		const { id,
+			// restoredBy,
+			recursive = false, _auth } = args;
 
 		// Authorization check - use update permission for restore
-		requireMutationAuth(_auth, "mediaFolders", "update");
+		requireMutationAuth(_auth, "mediaItems", "update");
 
 		// Retrieve the folder
 		const folder = await ctx.db.get(id);
@@ -851,12 +865,14 @@ export const restoreMediaFolder = mutation({
  */
 async function restoreContentsRecursively(
 	ctx: MutationCtx,
-	folderId: Id<"mediaFolders">,
+	folderId: Id<"mediaItems">,
 ): Promise<void> {
 	// Get all soft-deleted subfolders
 	const subfolders = await ctx.db
-		.query("mediaFolders")
-		.withIndex("by_parent", (q) => q.eq("parentId", folderId))
+		.query("mediaItems")
+		.withIndex("by_kind_and_parent", (q) =>
+			q.eq("kind", "folder").eq("parentId", folderId),
+		)
 		.filter((q) => q.neq(q.field("deletedAt"), undefined))
 		.collect();
 
@@ -867,8 +883,10 @@ async function restoreContentsRecursively(
 
 	// Restore all soft-deleted assets in this folder
 	const assets = await ctx.db
-		.query("mediaAssets")
-		.withIndex("by_folder", (q) => q.eq("folderId", folderId))
+		.query("mediaItems")
+		.withIndex("by_kind_and_parent", (q) =>
+			q.eq("kind", "asset").eq("parentId", folderId),
+		)
 		.filter((q) => q.neq(q.field("deletedAt"), undefined))
 		.collect();
 
@@ -891,24 +909,25 @@ async function restoreContentsRecursively(
  */
 export const getMediaFolder = query({
 	args: {
-		id: v.id("mediaFolders"),
+		id: v.id("mediaItems"),
 		includeDeleted: v.optional(v.boolean()),
 	},
-	returns: v.union(mediaFolderDoc, v.null()),
+	returns: v.union(mediaItemDoc, v.null()),
 	handler: async (ctx, args) => {
 		const { id, includeDeleted = false } = args;
 
-		const folder = await ctx.db.get(id);
+		const item = await ctx.db.get(id);
 
-		if (!folder) {
+		// Must be a folder
+		if (!item || item.kind !== "folder") {
 			return null;
 		}
 
-		if (!includeDeleted && folder.deletedAt !== undefined) {
+		if (!includeDeleted && item.deletedAt !== undefined) {
 			return null;
 		}
 
-		return folder;
+		return item;
 	},
 });
 
@@ -922,16 +941,18 @@ export const getMediaFolder = query({
  */
 export const listMediaFolders = query({
 	args: {
-		parentId: v.optional(v.id("mediaFolders")),
+		parentId: v.optional(v.id("mediaItems")),
 		includeDeleted: v.optional(v.boolean()),
 	},
-	returns: v.array(mediaFolderDoc),
+	returns: v.array(mediaItemDoc),
 	handler: async (ctx, args) => {
 		const { parentId, includeDeleted = false } = args;
 
 		let query = ctx.db
-			.query("mediaFolders")
-			.withIndex("by_parent", (q) => q.eq("parentId", parentId));
+			.query("mediaItems")
+			.withIndex("by_kind_and_parent", (q) =>
+				q.eq("kind", "folder").eq("parentId", parentId),
+			);
 
 		if (!includeDeleted) {
 			query = query.filter((q) => q.eq(q.field("deletedAt"), undefined));
@@ -940,12 +961,15 @@ export const listMediaFolders = query({
 		const folders = await query.collect();
 
 		// Sort by sortOrder (nulls last), then by name
+		// Note: sortOrder is only defined on folders, so these are safe after kind filter
 		folders.sort((a, b) => {
-			if (a.sortOrder !== undefined && b.sortOrder !== undefined) {
-				return a.sortOrder - b.sortOrder;
+			const aOrder = a.kind === "folder" ? a.sortOrder : undefined;
+			const bOrder = b.kind === "folder" ? b.sortOrder : undefined;
+			if (aOrder !== undefined && bOrder !== undefined) {
+				return aOrder - bOrder;
 			}
-			if (a.sortOrder !== undefined) return -1;
-			if (b.sortOrder !== undefined) return 1;
+			if (aOrder !== undefined) return -1;
+			if (bOrder !== undefined) return 1;
 			return a.name.localeCompare(b.name);
 		});
 
@@ -966,13 +990,14 @@ export const getMediaFolderByPath = query({
 		path: v.string(),
 		includeDeleted: v.optional(v.boolean()),
 	},
-	returns: v.union(mediaFolderDoc, v.null()),
+	returns: v.union(mediaItemDoc, v.null()),
 	handler: async (ctx, args) => {
 		const { path, includeDeleted = false } = args;
 
 		let query = ctx.db
-			.query("mediaFolders")
-			.withIndex("by_path", (q) => q.eq("path", path));
+			.query("mediaItems")
+			.withIndex("by_path", (q) => q.eq("path", path))
+			.filter((q) => q.eq(q.field("kind"), "folder"));
 
 		if (!includeDeleted) {
 			query = query.filter((q) => q.eq(q.field("deletedAt"), undefined));
@@ -993,11 +1018,13 @@ export const getFolderTree = query({
 	args: {
 		includeDeleted: v.optional(v.boolean()),
 	},
-	returns: v.array(mediaFolderDoc),
+	returns: v.array(mediaItemDoc),
 	handler: async (ctx, args) => {
 		const { includeDeleted = false } = args;
 
-		let query = ctx.db.query("mediaFolders");
+		let query = ctx.db
+			.query("mediaItems")
+			.withIndex("by_kind", (q) => q.eq("kind", "folder"));
 
 		if (!includeDeleted) {
 			query = query.filter((q) => q.eq(q.field("deletedAt"), undefined));

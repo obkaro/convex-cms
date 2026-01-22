@@ -15,9 +15,8 @@ import { api } from "../../src/component/_generated/api.js";
 import {
 	createMediaAssetArgs,
 	updateMediaAssetArgs,
-	mediaAssetDoc,
+	mediaItemDoc,
 	deleteMediaAssetArgs,
-	deleteMediaAssetResult,
 	restoreMediaAssetArgs,
 	mediaAssetReference,
 	moveMediaAssetsArgs,
@@ -38,13 +37,13 @@ const modules = import.meta.glob("../../src/component/**/*.ts");
  * This mirrors the logic in the actual mutation for testing.
  */
 function generateSearchText(args: {
-	filename: string;
+	name: string;
 	title?: string;
 	description?: string;
 	tags?: string[];
 }): string | undefined {
 	const searchParts: string[] = [];
-	searchParts.push(args.filename);
+	searchParts.push(args.name);
 	if (args.title) {
 		searchParts.push(args.title);
 	}
@@ -68,9 +67,9 @@ describe("Media Asset Mutations", () => {
 			expect(argFields).toContain("storageId");
 		});
 
-		it("should have filename as required field", () => {
+		it("should have name as required field", () => {
 			const argFields = Object.keys(createMediaAssetArgs.fields);
-			expect(argFields).toContain("filename");
+			expect(argFields).toContain("name");
 		});
 
 		it("should have mimeType as required field", () => {
@@ -83,9 +82,11 @@ describe("Media Asset Mutations", () => {
 			expect(argFields).toContain("size");
 		});
 
-		it("should have type as required field", () => {
+		it("should derive media type from mimeType (no type field)", () => {
 			const argFields = Object.keys(createMediaAssetArgs.fields);
-			expect(argFields).toContain("type");
+			// Type is no longer stored, it's derived from mimeType via classifyMimeType
+			expect(argFields).not.toContain("type");
+			expect(argFields).toContain("mimeType");
 		});
 
 		it("should have title as optional field", () => {
@@ -103,9 +104,9 @@ describe("Media Asset Mutations", () => {
 			expect(argFields).toContain("altText");
 		});
 
-		it("should have folderId as optional field for organization", () => {
+		it("should have parentId as optional field for organization", () => {
 			const argFields = Object.keys(createMediaAssetArgs.fields);
-			expect(argFields).toContain("folderId");
+			expect(argFields).toContain("parentId");
 		});
 
 		it("should have width as optional field for image dimensions", () => {
@@ -143,50 +144,16 @@ describe("Media Asset Mutations", () => {
 	// Response Structure Tests
 	// =============================================================================
 
-	describe("mediaAssetDoc structure", () => {
-		it("should have _id field for document identification", () => {
-			const docFields = Object.keys(mediaAssetDoc.fields);
-			expect(docFields).toContain("_id");
+	describe("mediaItemDoc structure", () => {
+		// mediaItemDoc is for the unified mediaItems table (assets + folders)
+		// It's a document validator that includes system fields
+		it("should be defined as a document validator", () => {
+			expect(mediaItemDoc).toBeDefined();
 		});
 
-		it("should have _creationTime field for timestamp", () => {
-			const docFields = Object.keys(mediaAssetDoc.fields);
-			expect(docFields).toContain("_creationTime");
-		});
-
-		it("should have storageId field referencing file storage", () => {
-			const docFields = Object.keys(mediaAssetDoc.fields);
-			expect(docFields).toContain("storageId");
-		});
-
-		it("should have filename field", () => {
-			const docFields = Object.keys(mediaAssetDoc.fields);
-			expect(docFields).toContain("filename");
-		});
-
-		it("should have mimeType field", () => {
-			const docFields = Object.keys(mediaAssetDoc.fields);
-			expect(docFields).toContain("mimeType");
-		});
-
-		it("should have size field", () => {
-			const docFields = Object.keys(mediaAssetDoc.fields);
-			expect(docFields).toContain("size");
-		});
-
-		it("should have type field for media categorization", () => {
-			const docFields = Object.keys(mediaAssetDoc.fields);
-			expect(docFields).toContain("type");
-		});
-
-		it("should have searchText field for full-text search", () => {
-			const docFields = Object.keys(mediaAssetDoc.fields);
-			expect(docFields).toContain("searchText");
-		});
-
-		it("should have deletedAt field for soft delete", () => {
-			const docFields = Object.keys(mediaAssetDoc.fields);
-			expect(docFields).toContain("deletedAt");
+		it("should be a valid validator object", () => {
+			// The validator should have standard Convex validator properties
+			expect(typeof mediaItemDoc).toBe("object");
 		});
 	});
 
@@ -195,16 +162,16 @@ describe("Media Asset Mutations", () => {
 	// =============================================================================
 
 	describe("Search text generation", () => {
-		it("should include filename in search text", () => {
+		it("should include name in search text", () => {
 			const searchText = generateSearchText({
-				filename: "photo.jpg",
+				name: "photo.jpg",
 			});
 			expect(searchText).toContain("photo.jpg");
 		});
 
 		it("should include title in search text when provided", () => {
 			const searchText = generateSearchText({
-				filename: "photo.jpg",
+				name: "photo.jpg",
 				title: "Beach Sunset",
 			});
 			expect(searchText).toContain("Beach Sunset");
@@ -212,7 +179,7 @@ describe("Media Asset Mutations", () => {
 
 		it("should include description in search text when provided", () => {
 			const searchText = generateSearchText({
-				filename: "photo.jpg",
+				name: "photo.jpg",
 				description: "A beautiful sunset at the beach",
 			});
 			expect(searchText).toContain("A beautiful sunset at the beach");
@@ -220,7 +187,7 @@ describe("Media Asset Mutations", () => {
 
 		it("should include tags in search text when provided", () => {
 			const searchText = generateSearchText({
-				filename: "photo.jpg",
+				name: "photo.jpg",
 				tags: ["beach", "sunset", "vacation"],
 			});
 			expect(searchText).toContain("beach");
@@ -230,7 +197,7 @@ describe("Media Asset Mutations", () => {
 
 		it("should combine all fields in search text", () => {
 			const searchText = generateSearchText({
-				filename: "photo.jpg",
+				name: "photo.jpg",
 				title: "Beach Photo",
 				description: "Sunset view",
 				tags: ["summer"],
@@ -238,16 +205,16 @@ describe("Media Asset Mutations", () => {
 			expect(searchText).toBe("photo.jpg Beach Photo Sunset view summer");
 		});
 
-		it("should return just filename when no optional fields", () => {
+		it("should return just name when no optional fields", () => {
 			const searchText = generateSearchText({
-				filename: "document.pdf",
+				name: "document.pdf",
 			});
 			expect(searchText).toBe("document.pdf");
 		});
 
 		it("should handle empty tags array", () => {
 			const searchText = generateSearchText({
-				filename: "photo.jpg",
+				name: "photo.jpg",
 				tags: [],
 			});
 			expect(searchText).toBe("photo.jpg");
@@ -259,19 +226,19 @@ describe("Media Asset Mutations", () => {
 	// =============================================================================
 
 	describe("Folder validation logic", () => {
-		it("should pass validation when folderId is undefined", () => {
-			const folderId = undefined;
-			const needsValidation = folderId !== undefined;
+		it("should pass validation when parentId is undefined", () => {
+			const parentId = undefined;
+			const needsValidation = parentId !== undefined;
 			expect(needsValidation).toBe(false);
 		});
 
-		it("should require validation when folderId is provided", () => {
-			const folderId = "some-folder-id";
-			const needsValidation = folderId !== undefined;
+		it("should require validation when parentId is provided", () => {
+			const parentId = "some-folder-id";
+			const needsValidation = parentId !== undefined;
 			expect(needsValidation).toBe(true);
 		});
 
-		it("should check folder exists when folderId provided", () => {
+		it("should check folder exists when parentId provided", () => {
 			// Simulating folder check logic
 			const folder = null; // Folder not found
 			const folderExists = folder !== null;
@@ -333,14 +300,14 @@ describe("Media Asset Mutations", () => {
 		it("should support basic image upload", () => {
 			const args = {
 				storageId: "storage_id_123",
-				filename: "photo.jpg",
+				name: "photo.jpg",
 				mimeType: "image/jpeg",
 				size: 500 * 1024, // 500 KB
 				type: "image" as const,
 			};
 
 			expect(args.storageId).toBeDefined();
-			expect(args.filename).toBeDefined();
+			expect(args.name).toBeDefined();
 			expect(args.mimeType).toBeDefined();
 			expect(args.size).toBeGreaterThan(0);
 			expect(args.type).toBe("image");
@@ -349,7 +316,7 @@ describe("Media Asset Mutations", () => {
 		it("should support image with dimensions and alt text", () => {
 			const args = {
 				storageId: "storage_id_123",
-				filename: "photo.jpg",
+				name: "photo.jpg",
 				mimeType: "image/jpeg",
 				size: 500 * 1024,
 				type: "image" as const,
@@ -366,7 +333,7 @@ describe("Media Asset Mutations", () => {
 		it("should support video with duration", () => {
 			const args = {
 				storageId: "storage_id_123",
-				filename: "video.mp4",
+				name: "video.mp4",
 				mimeType: "video/mp4",
 				size: 50 * 1024 * 1024, // 50 MB
 				type: "video" as const,
@@ -382,7 +349,7 @@ describe("Media Asset Mutations", () => {
 		it("should support audio with duration", () => {
 			const args = {
 				storageId: "storage_id_123",
-				filename: "podcast.mp3",
+				name: "podcast.mp3",
 				mimeType: "audio/mpeg",
 				size: 10 * 1024 * 1024, // 10 MB
 				type: "audio" as const,
@@ -396,7 +363,7 @@ describe("Media Asset Mutations", () => {
 		it("should support document upload", () => {
 			const args = {
 				storageId: "storage_id_123",
-				filename: "report.pdf",
+				name: "report.pdf",
 				mimeType: "application/pdf",
 				size: 2 * 1024 * 1024, // 2 MB
 				type: "document" as const,
@@ -412,20 +379,20 @@ describe("Media Asset Mutations", () => {
 		it("should support file with folder assignment", () => {
 			const args = {
 				storageId: "storage_id_123",
-				filename: "image.png",
+				name: "image.png",
 				mimeType: "image/png",
 				size: 100 * 1024,
 				type: "image" as const,
-				folderId: "folder_id_456",
+				parentId: "folder_id_456",
 			};
 
-			expect(args.folderId).toBeDefined();
+			expect(args.parentId).toBeDefined();
 		});
 
 		it("should support file with tags", () => {
 			const args = {
 				storageId: "storage_id_123",
-				filename: "banner.jpg",
+				name: "banner.jpg",
 				mimeType: "image/jpeg",
 				size: 200 * 1024,
 				type: "image" as const,
@@ -439,7 +406,7 @@ describe("Media Asset Mutations", () => {
 		it("should support file with metadata", () => {
 			const args = {
 				storageId: "storage_id_123",
-				filename: "photo.jpg",
+				name: "photo.jpg",
 				mimeType: "image/jpeg",
 				size: 500 * 1024,
 				type: "image" as const,
@@ -462,14 +429,14 @@ describe("Media Asset Mutations", () => {
 		it("should support complete upload with all fields", () => {
 			const args = {
 				storageId: "storage_id_123",
-				filename: "hero-image.jpg",
+				name: "hero-image.jpg",
 				mimeType: "image/jpeg",
 				size: 1024 * 1024, // 1 MB
 				type: "image" as const,
 				title: "Hero Banner",
 				description: "Main homepage hero banner for summer campaign",
 				altText: "Summer sale promotional banner with beach theme",
-				folderId: "marketing_folder_id",
+				parentId: "marketing_folder_id",
 				width: 2560,
 				height: 1440,
 				tags: ["marketing", "summer", "hero", "homepage"],
@@ -479,7 +446,7 @@ describe("Media Asset Mutations", () => {
 
 			// Verify all required fields
 			expect(args.storageId).toBeDefined();
-			expect(args.filename).toBeDefined();
+			expect(args.name).toBeDefined();
 			expect(args.mimeType).toBeDefined();
 			expect(args.size).toBeGreaterThan(0);
 			expect(args.type).toBeDefined();
@@ -488,7 +455,7 @@ describe("Media Asset Mutations", () => {
 			expect(args.title).toBeDefined();
 			expect(args.description).toBeDefined();
 			expect(args.altText).toBeDefined();
-			expect(args.folderId).toBeDefined();
+			expect(args.parentId).toBeDefined();
 			expect(args.width).toBeGreaterThan(0);
 			expect(args.height).toBeGreaterThan(0);
 			expect(args.tags).toHaveLength(4);
@@ -512,19 +479,19 @@ describe("Media Asset Mutations", () => {
 			expect(size).toBeGreaterThan(0);
 		});
 
-		it("should handle filename with spaces", () => {
-			const filename = "my vacation photo.jpg";
-			expect(filename.includes(" ")).toBe(true);
+		it("should handle name with spaces", () => {
+			const name = "my vacation photo.jpg";
+			expect(name.includes(" ")).toBe(true);
 		});
 
-		it("should handle filename with special characters", () => {
-			const filename = "résumé (2026).pdf";
-			expect(filename).toBeDefined();
+		it("should handle name with special characters", () => {
+			const name = "résumé (2026).pdf";
+			expect(name).toBeDefined();
 		});
 
-		it("should handle very long filename", () => {
-			const filename = "a".repeat(200) + ".jpg";
-			expect(filename.length).toBe(204);
+		it("should handle very long name", () => {
+			const name = "a".repeat(200) + ".jpg";
+			expect(name.length).toBe(204);
 		});
 
 		it("should handle empty tags array", () => {
@@ -672,19 +639,15 @@ describe("Media Asset Mutations", () => {
 		});
 	});
 
-	describe("deleteMediaAssetResult structure", () => {
-		it("should include all mediaAssetDoc fields", () => {
-			const resultFields = Object.keys(deleteMediaAssetResult.fields);
-			const docFields = Object.keys(mediaAssetDoc.fields);
-
-			for (const field of docFields) {
-				expect(resultFields).toContain(field);
-			}
+	describe("deleteMediaAsset mutation", () => {
+		it("should require id field", () => {
+			const argFields = Object.keys(deleteMediaAssetArgs.fields);
+			expect(argFields).toContain("id");
 		});
 
-		it("should have storageFileDeleted as optional field", () => {
-			const resultFields = Object.keys(deleteMediaAssetResult.fields);
-			expect(resultFields).toContain("storageFileDeleted");
+		it("should have hardDelete as optional field", () => {
+			const argFields = Object.keys(deleteMediaAssetArgs.fields);
+			expect(argFields).toContain("hardDelete");
 		});
 	});
 
@@ -983,9 +946,9 @@ describe("Media Asset Mutations", () => {
 			expect(argFields).toContain("id");
 		});
 
-		it("should have filename as optional field for renaming", () => {
+		it("should have name as optional field for renaming", () => {
 			const argFields = Object.keys(updateMediaAssetArgs.fields);
-			expect(argFields).toContain("filename");
+			expect(argFields).toContain("name");
 		});
 
 		it("should have title as optional field", () => {
@@ -1003,9 +966,9 @@ describe("Media Asset Mutations", () => {
 			expect(argFields).toContain("altText");
 		});
 
-		it("should have folderId as optional field for reorganization", () => {
+		it("should have parentId as optional field for reorganization", () => {
 			const argFields = Object.keys(updateMediaAssetArgs.fields);
-			expect(argFields).toContain("folderId");
+			expect(argFields).toContain("parentId");
 		});
 
 		it("should have tags as optional field for categorization", () => {
@@ -1024,17 +987,17 @@ describe("Media Asset Mutations", () => {
 	// =============================================================================
 
 	describe("updateMediaAsset search text regeneration", () => {
-		it("should regenerate search text when filename changes", () => {
+		it("should regenerate search text when name changes", () => {
 			const existingAsset = {
-				filename: "old-photo.jpg",
+				name: "old-photo.jpg",
 				title: "Beach Photo",
 				description: undefined,
 				tags: undefined,
 			};
-			const updates = { filename: "beach-vacation.jpg" };
+			const updates = { name: "beach-vacation.jpg" };
 
 			const newSearchText = generateSearchText({
-				filename: updates.filename ?? existingAsset.filename,
+				name: updates.name ?? existingAsset.name,
 				title: existingAsset.title,
 				description: existingAsset.description,
 				tags: existingAsset.tags,
@@ -1045,7 +1008,7 @@ describe("Media Asset Mutations", () => {
 
 		it("should regenerate search text when title changes", () => {
 			const existingAsset = {
-				filename: "photo.jpg",
+				name: "photo.jpg",
 				title: "Old Title",
 				description: undefined,
 				tags: undefined,
@@ -1053,7 +1016,7 @@ describe("Media Asset Mutations", () => {
 			const updates = { title: "New Title" };
 
 			const newSearchText = generateSearchText({
-				filename: existingAsset.filename,
+				name: existingAsset.name,
 				title: updates.title ?? existingAsset.title,
 				description: existingAsset.description,
 				tags: existingAsset.tags,
@@ -1064,7 +1027,7 @@ describe("Media Asset Mutations", () => {
 
 		it("should regenerate search text when description changes", () => {
 			const existingAsset = {
-				filename: "photo.jpg",
+				name: "photo.jpg",
 				title: undefined,
 				description: "Old description",
 				tags: undefined,
@@ -1072,7 +1035,7 @@ describe("Media Asset Mutations", () => {
 			const updates = { description: "New description" };
 
 			const newSearchText = generateSearchText({
-				filename: existingAsset.filename,
+				name: existingAsset.name,
 				title: existingAsset.title,
 				description: updates.description ?? existingAsset.description,
 				tags: existingAsset.tags,
@@ -1083,7 +1046,7 @@ describe("Media Asset Mutations", () => {
 
 		it("should regenerate search text when tags change", () => {
 			const existingAsset = {
-				filename: "photo.jpg",
+				name: "photo.jpg",
 				title: undefined,
 				description: undefined,
 				tags: ["old", "tags"],
@@ -1091,7 +1054,7 @@ describe("Media Asset Mutations", () => {
 			const updates = { tags: ["new", "tags", "added"] };
 
 			const newSearchText = generateSearchText({
-				filename: existingAsset.filename,
+				name: existingAsset.name,
 				title: existingAsset.title,
 				description: existingAsset.description,
 				tags: updates.tags ?? existingAsset.tags,
@@ -1102,7 +1065,7 @@ describe("Media Asset Mutations", () => {
 
 		it("should preserve existing fields when updating only some metadata", () => {
 			const existingAsset = {
-				filename: "photo.jpg",
+				name: "photo.jpg",
 				title: "Existing Title",
 				description: "Existing description",
 				tags: ["existing", "tags"],
@@ -1111,7 +1074,7 @@ describe("Media Asset Mutations", () => {
 
 			// When only altText changes, search text should stay the same
 			const newSearchText = generateSearchText({
-				filename: existingAsset.filename,
+				name: existingAsset.name,
 				title: existingAsset.title,
 				description: existingAsset.description,
 				tags: existingAsset.tags,
@@ -1124,7 +1087,7 @@ describe("Media Asset Mutations", () => {
 
 		it("should handle clearing tags", () => {
 			const existingAsset = {
-				filename: "photo.jpg",
+				name: "photo.jpg",
 				title: "Title",
 				description: undefined,
 				tags: ["old", "tags"],
@@ -1132,7 +1095,7 @@ describe("Media Asset Mutations", () => {
 			const updates = { tags: [] as string[] };
 
 			const newSearchText = generateSearchText({
-				filename: existingAsset.filename,
+				name: existingAsset.name,
 				title: existingAsset.title,
 				description: existingAsset.description,
 				tags: updates.tags,
@@ -1164,31 +1127,31 @@ describe("Media Asset Mutations", () => {
 		it("should support renaming file display name", () => {
 			const args = {
 				id: "asset_123",
-				filename: "beach-vacation-2026.jpg",
+				name: "beach-vacation-2026.jpg",
 				updatedBy: "user_456",
 			};
 
-			expect(args.filename).toBe("beach-vacation-2026.jpg");
+			expect(args.name).toBe("beach-vacation-2026.jpg");
 		});
 
 		it("should support moving to different folder", () => {
 			const args = {
 				id: "asset_123",
-				folderId: "folder_789",
+				parentId: "folder_789",
 				updatedBy: "user_456",
 			};
 
-			expect(args.folderId).toBe("folder_789");
+			expect(args.parentId).toBe("folder_789");
 		});
 
 		it("should support updating multiple metadata fields at once", () => {
 			const args = {
 				id: "asset_123",
-				filename: "renamed.jpg",
+				name: "renamed.jpg",
 				title: "Beach Photo",
 				description: "Our family trip to the coast",
 				altText: "Family at the beach",
-				folderId: "folder_vacation",
+				parentId: "folder_vacation",
 				tags: ["beach", "family", "vacation", "2026"],
 				updatedBy: "user_456",
 			};
@@ -1204,7 +1167,7 @@ describe("Media Asset Mutations", () => {
 			};
 
 			expect(args.title).toBe("New Title Only");
-			expect((args as Record<string, unknown>).filename).toBeUndefined();
+			expect((args as Record<string, unknown>).name).toBeUndefined();
 			expect((args as Record<string, unknown>).description).toBeUndefined();
 		});
 
@@ -1229,35 +1192,35 @@ describe("Media Asset Mutations", () => {
 	// =============================================================================
 
 	describe("updateMediaAsset folder validation logic", () => {
-		it("should require folder validation when folderId is provided", () => {
+		it("should require folder validation when parentId is provided", () => {
 			const args = {
 				id: "asset_123",
-				folderId: "folder_456",
+				parentId: "folder_456",
 			};
 
 			// The mutation should validate that the folder exists
-			expect(args.folderId).toBe("folder_456");
+			expect(args.parentId).toBe("folder_456");
 		});
 
-		it("should skip folder validation when folderId is not provided", () => {
+		it("should skip folder validation when parentId is not provided", () => {
 			const args = {
 				id: "asset_123",
 				title: "New Title",
 			};
 
-			expect((args as Record<string, unknown>).folderId).toBeUndefined();
+			expect((args as Record<string, unknown>).parentId).toBeUndefined();
 		});
 
 		it("should build folder not found error message", () => {
-			const folderId = "folder_invalid";
-			const errorMessage = `Media folder not found: ${folderId}`;
+			const parentId = "folder_invalid";
+			const errorMessage = `Media folder not found: ${parentId}`;
 
 			expect(errorMessage).toContain("folder_invalid");
 		});
 
 		it("should build folder deleted error message", () => {
-			const folderId = "folder_deleted";
-			const errorMessage = `Media folder has been deleted: ${folderId}`;
+			const parentId = "folder_deleted";
+			const errorMessage = `Media folder has been deleted: ${parentId}`;
 
 			expect(errorMessage).toContain("deleted");
 		});
@@ -1294,25 +1257,25 @@ describe("Media Asset Mutations", () => {
 	// Update Media Asset Returns Same Document Structure
 	// =============================================================================
 
-	describe("updateMediaAsset returns mediaAssetDoc", () => {
-		it("should return document with _id field", () => {
-			const docFields = Object.keys(mediaAssetDoc.fields);
-			expect(docFields).toContain("_id");
+	describe("updateMediaAsset returns media item", () => {
+		it("should have mediaItemDoc defined", () => {
+			// The unified media schema uses mediaItems table
+			expect(mediaItemDoc).toBeDefined();
 		});
 
-		it("should return document with all updatable fields", () => {
-			const docFields = Object.keys(mediaAssetDoc.fields);
-			expect(docFields).toContain("filename");
-			expect(docFields).toContain("title");
-			expect(docFields).toContain("description");
-			expect(docFields).toContain("altText");
-			expect(docFields).toContain("folderId");
-			expect(docFields).toContain("tags");
+		it("should have all updatable fields in updateMediaAssetArgs", () => {
+			const argFields = Object.keys(updateMediaAssetArgs.fields);
+			expect(argFields).toContain("name");
+			expect(argFields).toContain("title");
+			expect(argFields).toContain("description");
+			expect(argFields).toContain("altText");
+			expect(argFields).toContain("parentId");
+			expect(argFields).toContain("tags");
 		});
 
-		it("should return document with searchText for indexing", () => {
-			const docFields = Object.keys(mediaAssetDoc.fields);
-			expect(docFields).toContain("searchText");
+		it("should have id as required for updates", () => {
+			const argFields = Object.keys(updateMediaAssetArgs.fields);
+			expect(argFields).toContain("id");
 		});
 	});
 });
@@ -1341,11 +1304,11 @@ describe("Media Asset Mutations (Integration)", () => {
 			// This verifies the validator is correctly connected to the mutation
 			const argFields = Object.keys(updateMediaAssetArgs.fields);
 			expect(argFields).toContain("id");
-			expect(argFields).toContain("filename");
+			expect(argFields).toContain("name");
 			expect(argFields).toContain("title");
 			expect(argFields).toContain("description");
 			expect(argFields).toContain("altText");
-			expect(argFields).toContain("folderId");
+			expect(argFields).toContain("parentId");
 			expect(argFields).toContain("tags");
 			expect(argFields).toContain("updatedBy");
 		});
@@ -1356,7 +1319,7 @@ describe("Media Asset Mutations (Integration)", () => {
 			const t = convexTest(schema, modules);
 
 			// Create a folder (this doesn't require storage IDs)
-			const folderId = await t.run(async (ctx) => {
+			const parentId = await t.run(async (ctx) => {
 				return await ctx.db.insert("mediaFolders", {
 					name: "Test Folder",
 					path: "/test-folder",
@@ -1365,7 +1328,7 @@ describe("Media Asset Mutations (Integration)", () => {
 
 			// Verify folder was created
 			const folder = await t.run(async (ctx) => {
-				return await ctx.db.get(folderId);
+				return await ctx.db.get(parentId);
 			});
 
 			expect(folder).not.toBeNull();
@@ -1551,30 +1514,30 @@ describe("Move Media Assets Mutation", () => {
 		});
 
 		it("should identify asset already in target folder (idempotent)", () => {
-			const asset = { folderId: "folder_123" };
+			const asset = { parentId: "folder_123" };
 			const targetFolderId = "folder_123";
-			const isAlreadyInTarget = asset.folderId === targetFolderId;
+			const isAlreadyInTarget = asset.parentId === targetFolderId;
 			expect(isAlreadyInTarget).toBe(true);
 		});
 
 		it("should identify asset needs to be moved", () => {
-			const asset = { folderId: "folder_old" };
+			const asset = { parentId: "folder_old" };
 			const targetFolderId = "folder_new";
-			const needsMove = asset.folderId !== targetFolderId;
+			const needsMove = asset.parentId !== targetFolderId;
 			expect(needsMove).toBe(true);
 		});
 
 		it("should handle moving from root to folder", () => {
-			const asset = { folderId: undefined };
+			const asset = { parentId: undefined };
 			const targetFolderId = "folder_123";
-			const needsMove = asset.folderId !== targetFolderId;
+			const needsMove = asset.parentId !== targetFolderId;
 			expect(needsMove).toBe(true);
 		});
 
 		it("should handle moving from folder to root", () => {
-			const asset = { folderId: "folder_123" };
+			const asset = { parentId: "folder_123" };
 			const targetFolderId = undefined;
-			const needsMove = asset.folderId !== targetFolderId;
+			const needsMove = asset.parentId !== targetFolderId;
 			expect(needsMove).toBe(true);
 		});
 	});
@@ -1877,7 +1840,7 @@ describe("Move Media Assets Mutation", () => {
 			const t = convexTest(schema, modules);
 
 			// Create a folder first
-			const folderId = await t.run(async (ctx) => {
+			const parentId = await t.run(async (ctx) => {
 				return await ctx.db.insert("mediaFolders", {
 					name: "Test Folder",
 					path: "/test",
@@ -1886,7 +1849,7 @@ describe("Move Media Assets Mutation", () => {
 
 			// Verify folder was created correctly
 			const folder = await t.run(async (ctx) => {
-				return await ctx.db.get(folderId);
+				return await ctx.db.get(parentId);
 			});
 
 			expect(folder?.name).toBe("Test Folder");

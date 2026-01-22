@@ -631,7 +631,7 @@ export const getTermsByEntry = query({
 		const { entryId, taxonomyId, fieldName } = args;
 
 		// Get the junction table entries
-		let junctionQuery = ctx.db
+		const junctionQuery = ctx.db
 			.query("contentEntryTags")
 			.withIndex("by_entry", (q) => q.eq("entryId", entryId));
 

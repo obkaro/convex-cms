@@ -6,8 +6,12 @@
  * MIME type constraints for media fields.
  */
 
-import { Doc, Id } from "../_generated/dataModel.js";
+import {
+	// Doc,
+	Id,
+} from "../_generated/dataModel.js";
 import { QueryCtx } from "../_generated/server.js";
+import { classifyMimeType } from "./metadataExtractor.js";
 
 // =============================================================================
 // Types
@@ -40,8 +44,8 @@ export interface ResolvedMediaReference {
 	storageId: string;
 	/** The resolved public URL for the asset */
 	url: string | null;
-	/** Original filename */
-	filename: string;
+	/** Original filename (name field) */
+	name: string;
 	/** MIME type of the file */
 	mimeType: string;
 	/** File size in bytes */
@@ -123,35 +127,40 @@ export async function resolveMediaReference(
 	const { includeDeleted = false } = options;
 
 	try {
-		// Get the media asset
-		const asset = await ctx.db.get(mediaId as Id<"mediaAssets">);
+		// Get the media item
+		const item = await ctx.db.get(mediaId as Id<"mediaItems">);
 
-		if (!asset) {
+		if (!item) {
+			return null;
+		}
+
+		// Only assets can be resolved as media references
+		if (item.kind !== "asset") {
 			return null;
 		}
 
 		// Check soft-delete status
-		if (!includeDeleted && asset.deletedAt !== undefined) {
+		if (!includeDeleted && item.deletedAt !== undefined) {
 			return null;
 		}
 
 		// Resolve the storage URL
-		const url = await ctx.storage.getUrl(asset.storageId);
+		const url = await ctx.storage.getUrl(item.storageId);
 
 		return {
 			id: mediaId,
-			storageId: asset.storageId,
+			storageId: item.storageId as string,
 			url,
-			filename: asset.filename,
-			mimeType: asset.mimeType,
-			size: asset.size,
-			type: asset.type,
-			title: asset.title,
-			description: asset.description,
-			altText: asset.altText,
-			width: asset.width,
-			height: asset.height,
-			duration: asset.duration,
+			name: item.name,
+			mimeType: item.mimeType,
+			size: item.size ?? 0,
+			type: classifyMimeType(item.mimeType),
+			title: item.title,
+			description: item.description,
+			altText: item.altText,
+			width: item.width,
+			height: item.height,
+			duration: item.duration,
 			exists: true,
 		};
 	} catch {
@@ -235,15 +244,23 @@ export async function isValidMediaReference(
 	allowedMimeTypes?: string[],
 ): Promise<MediaValidationResult> {
 	try {
-		// Get the media asset
-		const asset = await ctx.db.get(mediaId as Id<"mediaAssets">);
+		// Get the media item
+		const item = await ctx.db.get(mediaId as Id<"mediaItems">);
 
-		if (!asset) {
+		if (!item) {
 			return { valid: false, error: `Media asset not found: ${mediaId}` };
 		}
 
+		// Only assets can be validated as media references
+		if (item.kind !== "asset") {
+			return {
+				valid: false,
+				error: `Media reference is a folder, not an asset: ${mediaId}`,
+			};
+		}
+
 		// Check soft-delete status
-		if (asset.deletedAt !== undefined) {
+		if (item.deletedAt !== undefined) {
 			return {
 				valid: false,
 				error: `Media asset has been deleted: ${mediaId}`,
@@ -257,23 +274,23 @@ export async function isValidMediaReference(
 				if (pattern.endsWith("/*")) {
 					// Wildcard pattern: "image/*" matches "image/jpeg", "image/png", etc.
 					const prefix = pattern.slice(0, -1); // Remove the trailing "*"
-					return asset.mimeType.startsWith(prefix);
+					return item.mimeType.startsWith(prefix);
 				}
-				return asset.mimeType === pattern;
+				return item.mimeType === pattern;
 			});
 
 			if (!isAllowed) {
 				return {
 					valid: false,
 					error: `Media asset MIME type "${
-						asset.mimeType
+						item.mimeType
 					}" is not allowed. Expected: ${allowedMimeTypes.join(", ")}`,
-					mimeType: asset.mimeType,
+					mimeType: item.mimeType,
 				};
 			}
 		}
 
-		return { valid: true, mimeType: asset.mimeType };
+		return { valid: true, mimeType: item.mimeType };
 	} catch {
 		return { valid: false, error: `Invalid media asset ID format: ${mediaId}` };
 	}
@@ -428,13 +445,13 @@ export async function getMediaMimeType(
 	mediaId: string,
 ): Promise<string | null> {
 	try {
-		const asset = await ctx.db.get(mediaId as Id<"mediaAssets">);
+		const item = await ctx.db.get(mediaId as Id<"mediaItems">);
 
-		if (!asset || asset.deletedAt !== undefined) {
+		if (!item || item.kind !== "asset" || item.deletedAt !== undefined) {
 			return null;
 		}
 
-		return asset.mimeType;
+		return item.mimeType;
 	} catch {
 		return null;
 	}

@@ -90,32 +90,32 @@ export const get = query({
 /**
  * Create a new content entry.
  */
-export const create = mutation({
-	args: {
-		contentTypeId: v.string(),
-		data: v.any(),
-		slug: v.optional(v.string()),
-		status: v.optional(
-			v.union(
-				v.literal("draft"),
-				v.literal("published"),
-				v.literal("scheduled"),
-				v.literal("archived"),
-			),
-		),
-	},
-	handler: async (ctx, args) => {
-		return await ctx.runMutation(
-			components.convexCms.contentEntryMutations.createEntry,
-			{
-				contentTypeId: args.contentTypeId,
-				data: args.data,
-				slug: args.slug,
-				status: args.status,
-			},
-		);
-	},
-});
+// export const create = mutation({
+// 	args: {
+// 		contentTypeId: v.string(),
+// 		data: v.any(),
+// 		slug: v.optional(v.string()),
+// 		status: v.optional(
+// 			v.union(
+// 				v.literal("draft"),
+// 				v.literal("published"),
+// 				v.literal("scheduled"),
+// 				v.literal("archived"),
+// 			),
+// 		),
+// 	},
+// 	handler: async (ctx, args) => {
+// 		return await ctx.runMutation(
+// 			components.convexCms.contentEntryMutations.createEntry,
+// 			{
+// 				contentTypeId: args.contentTypeId,
+// 				data: args.data,
+// 				slug: args.slug,
+// 				status: args.status,
+// 			},
+// 		);
+// 	},
+// });
 
 /**
  * Update an existing content entry.

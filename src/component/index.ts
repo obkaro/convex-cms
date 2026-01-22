@@ -18,13 +18,10 @@ export {
 
 // Field type validators and CRUD argument validators
 export {
-  // Field type constants
-  fieldTypes,
-  contentStatuses,
-  mediaTypes,
-  type FieldType,
-  type ContentStatus,
-  type MediaType,
+  // Field type constants (types only - use validators for runtime checks)
+  // type FieldType,
+  // type ContentStatus,
+  // type MediaType,
 
   // Content type validators
   createContentTypeArgs,
@@ -51,7 +48,7 @@ export {
 
   // Media validators
   createMediaAssetArgs,
-  updateMediaAssetArgs,
+  // updateMediaAssetArgs,
   deleteMediaAssetArgs,
   restoreMediaAssetArgs,
   createMediaFolderArgs,
@@ -72,20 +69,17 @@ export {
   contentTypeDoc,
   contentEntryDoc,
   contentVersionDoc,
-  mediaAssetDoc,
-  mediaFolderDoc,
+  mediaItemDoc,
   mediaVariantDoc,
   mediaVariantWithUrlDoc,
-  deleteMediaAssetResult,
+  // deleteMediaAssetResult,
   mediaAssetReference,
 
   // Media variant validators
-  variantTypes,
-  type VariantType,
-  variantStatuses,
-  type VariantStatus,
-  variantFormats,
-  type VariantFormat,
+  // type VariantType,
+  // type VariantStatus,
+  // variantFormats,
+  // type VariantFormat,
   createMediaVariantArgs,
   requestVariantGenerationArgs,
   updateVariantStatusArgs,
@@ -1014,26 +1008,26 @@ export {
 //   - namespacePrefix: Prefix for namespaces (default: "cms")
 
 // Webhook Trigger - Scheduled function for delivering events to external systems
-export {
-  // Types
-  type WebhookDeliveryStatus,
-  type WebhookProcessorConfig,
-  type ProcessWebhooksResult,
-  type WebhookPayload,
-  type WebhookStats,
+// export {
+//   // Types
+//   type WebhookDeliveryStatus,
+//   type WebhookProcessorConfig,
+//   type ProcessWebhooksResult,
+//   type WebhookPayload,
+//   type WebhookStats,
 
-  // Constants
-  DEFAULT_WEBHOOK_CONFIG,
-  RETRY_DELAYS_MS,
+//   // Constants
+//   DEFAULT_WEBHOOK_CONFIG,
+//   RETRY_DELAYS_MS,
 
-  // Validators
-  webhookDeliveryStatusValidator,
-  createWebhookArgs,
-  updateWebhookArgs,
-  deleteWebhookArgs,
-  webhookConfigDoc,
-  webhookDeliveryDoc,
-} from "./webhookTrigger.js";
+//   // Validators
+//   webhookDeliveryStatusValidator,
+//   createWebhookArgs,
+//   updateWebhookArgs,
+//   deleteWebhookArgs,
+//   webhookConfigDoc,
+//   webhookDeliveryDoc,
+// } from "./webhookTrigger.js";
 
 // Webhook Trigger utilities are documented here:
 //

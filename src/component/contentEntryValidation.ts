@@ -638,10 +638,10 @@ async function validateSingleMediaAsset(
 	const fieldLabel = index !== undefined ? `${fieldName}[${index}]` : fieldName;
 
 	try {
-		// Try to get the media asset
-		const asset = await ctx.db.get(assetId as Id<"mediaAssets">);
+		// Try to get the media item
+		const item = await ctx.db.get(assetId as Id<"mediaItems">);
 
-		if (!asset) {
+		if (!item) {
 			errors.push({
 				field: fieldLabel,
 				message: `Media asset not found: ${assetId}`,
@@ -650,8 +650,18 @@ async function validateSingleMediaAsset(
 			return errors;
 		}
 
+		// Check if it's an asset (not a folder)
+		if (item.kind !== "asset") {
+			errors.push({
+				field: fieldLabel,
+				message: `Media reference must be an asset, not a folder: ${assetId}`,
+				code: "INVALID_TYPE",
+			});
+			return errors;
+		}
+
 		// Check if asset is deleted
-		if (asset.deletedAt !== undefined) {
+		if (item.deletedAt !== undefined) {
 			errors.push({
 				field: fieldLabel,
 				message: `Media asset has been deleted: ${assetId}`,
@@ -662,21 +672,21 @@ async function validateSingleMediaAsset(
 
 		// Validate MIME type constraint
 		if (allowedMimeTypes && allowedMimeTypes.length > 0) {
-			if (!allowedMimeTypes.includes(asset.mimeType)) {
+			if (!allowedMimeTypes.includes(item.mimeType)) {
 				errors.push({
 					field: fieldLabel,
 					message: `Media type not allowed. Expected: ${allowedMimeTypes.join(
 						", ",
-					)}. Got: ${asset.mimeType}`,
+					)}. Got: ${item.mimeType}`,
 					code: "INVALID_MIME_TYPE",
 				});
 			}
 		}
 
 		// Validate file size constraint
-		if (maxFileSize !== undefined && asset.size > maxFileSize) {
+		if (maxFileSize !== undefined && item.size > maxFileSize) {
 			const maxSizeKB = Math.round(maxFileSize / 1024);
-			const actualSizeKB = Math.round(asset.size / 1024);
+			const actualSizeKB = Math.round(item.size / 1024);
 			errors.push({
 				field: fieldLabel,
 				message: `File too large. Maximum: ${maxSizeKB}KB. Actual: ${actualSizeKB}KB`,

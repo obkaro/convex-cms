@@ -21,7 +21,7 @@ import {
   contentTypeEventType,
   ContentTypeEventPayload,
 } from "./eventEmitter.js";
-import { fieldTypeValidator } from "./validators.js";
+import { fieldTypes } from "./schema.js";
 import {
   contentTypeNotFound,
   contentTypeDeleted,
@@ -357,10 +357,10 @@ function validateFieldDefinitions(
     seenNames.add(field.name);
 
     // Validate field type is one of the supported types
-    if (field.type && !fieldTypeValidator.type.includes(field.type as FieldType)) {
+    if (field.type && !fieldTypes.includes(field.type as FieldType)) {
       errors.push({
         fieldName: field.name,
-        message: `Invalid field type "${field.type}". Must be one of: ${Object.values(fieldTypeValidator.type).join(", ")}`,
+        message: `Invalid field type "${field.type}". Must be one of: ${fieldTypes.join(", ")}`,
         code: "INVALID_FIELD_TYPE",
       });
     }

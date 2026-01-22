@@ -452,6 +452,7 @@ describe("Content Type Mutation Validators", () => {
 			const args = {
 				name: "simple_type",
 				displayName: "Simple Type",
+					createdBy: "test-user",
 				fields: [
 					{
 						name: "optional_field",
@@ -472,6 +473,7 @@ describe("Content Type Mutation Validators", () => {
 			const args = {
 				name: "site_settings",
 				displayName: "Site Settings",
+					createdBy: "test-user",
 				singleton: true,
 				fields: [
 					{
@@ -538,6 +540,7 @@ describe("Content Type Mutation Integration Tests", () => {
 				{
 					name: "blog_post",
 					displayName: "Blog Post",
+					createdBy: "test-user",
 					description: "A blog post content type",
 					fields: [
 						{
@@ -574,6 +577,7 @@ describe("Content Type Mutation Integration Tests", () => {
 			await t.mutation(api.contentTypeMutations.createContentType, {
 				name: "article",
 				displayName: "Article",
+					createdBy: "test-user",
 				fields: [
 					{ name: "title", label: "Title", type: "text", required: true },
 				],
@@ -584,6 +588,7 @@ describe("Content Type Mutation Integration Tests", () => {
 				t.mutation(api.contentTypeMutations.createContentType, {
 					name: "article",
 					displayName: "Another Article",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 					],
@@ -598,6 +603,7 @@ describe("Content Type Mutation Integration Tests", () => {
 				t.mutation(api.contentTypeMutations.createContentType, {
 					name: "Invalid-Name",
 					displayName: "Invalid",
+					createdBy: "test-user",
 					fields: [],
 				}),
 			).rejects.toThrow(/Invalid content type name/);
@@ -614,6 +620,7 @@ describe("Content Type Mutation Integration Tests", () => {
 				{
 					name: "product",
 					displayName: "Product",
+					createdBy: "test-user",
 					description: "Original description",
 					fields: [
 						{ name: "name", label: "Name", type: "text", required: true },
@@ -627,6 +634,7 @@ describe("Content Type Mutation Integration Tests", () => {
 				{
 					id: created._id,
 					displayName: "Updated Product",
+					createdBy: "test-user",
 					description: "Updated description",
 					updatedBy: "admin",
 				},
@@ -647,6 +655,7 @@ describe("Content Type Mutation Integration Tests", () => {
 				{
 					name: "settings",
 					displayName: "Settings",
+					createdBy: "test-user",
 					fields: [
 						{ name: "value", label: "Value", type: "json", required: true },
 					],
@@ -676,6 +685,7 @@ describe("Content Type Mutation Integration Tests", () => {
 				{
 					name: "old_type",
 					displayName: "Old Type",
+					createdBy: "test-user",
 					fields: [],
 				},
 			);
@@ -701,6 +711,7 @@ describe("Content Type Mutation Integration Tests", () => {
 				{
 					name: "article",
 					displayName: "Article",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 					],
@@ -734,6 +745,7 @@ describe("Content Type Mutation Integration Tests", () => {
 				{
 					name: "blog",
 					displayName: "Blog",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 						{ name: "body", label: "Body", type: "richText", required: true },
@@ -775,6 +787,7 @@ describe("Content Type Mutation Integration Tests", () => {
 				{
 					name: "page",
 					displayName: "Page",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 						{
@@ -827,6 +840,7 @@ describe("Content Type Mutation Integration Tests", () => {
 				{
 					name: "product",
 					displayName: "Product",
+					createdBy: "test-user",
 					fields: [
 						{ name: "price", label: "Price", type: "text", required: true },
 					],
@@ -862,6 +876,7 @@ describe("Content Type Mutation Integration Tests", () => {
 				{
 					name: "event",
 					displayName: "Event",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 						{
@@ -910,6 +925,7 @@ describe("Content Type Mutation Integration Tests", () => {
 				{
 					name: "task",
 					displayName: "Task",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 						{
@@ -972,6 +988,7 @@ describe("Content Type Mutation Integration Tests", () => {
 				{
 					name: "empty_type",
 					displayName: "Empty Type",
+					createdBy: "test-user",
 					fields: [
 						{
 							name: "old_field",
@@ -1011,6 +1028,7 @@ describe("Content Type Mutation Integration Tests", () => {
 				{
 					name: "document",
 					displayName: "Document",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 						{ name: "name", label: "Name", type: "text", required: true },
@@ -1041,6 +1059,7 @@ describe("Content Type Mutation Integration Tests", () => {
 				{
 					name: "post",
 					displayName: "Post",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 					],
@@ -1064,6 +1083,7 @@ describe("Content Type Mutation Integration Tests", () => {
 				{
 					name: "temp",
 					displayName: "Temp",
+					createdBy: "test-user",
 					fields: [],
 				},
 			);
@@ -1076,6 +1096,7 @@ describe("Content Type Mutation Integration Tests", () => {
 				t.mutation(api.contentTypeMutations.updateContentType, {
 					id: created._id,
 					displayName: "Updated",
+					createdBy: "test-user",
 				}),
 			).rejects.toThrow(/not found/);
 		});
@@ -1088,6 +1109,7 @@ describe("Content Type Mutation Integration Tests", () => {
 				{
 					name: "deleted_type",
 					displayName: "Deleted Type",
+					createdBy: "test-user",
 					fields: [],
 				},
 			);
@@ -1101,6 +1123,7 @@ describe("Content Type Mutation Integration Tests", () => {
 				t.mutation(api.contentTypeMutations.updateContentType, {
 					id: contentType._id,
 					displayName: "Updated",
+					createdBy: "test-user",
 				}),
 			).rejects.toThrow(/has been deleted/);
 		});
@@ -1113,6 +1136,7 @@ describe("Content Type Mutation Integration Tests", () => {
 				{
 					name: "valid_type",
 					displayName: "Valid Type",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 					],
@@ -1143,6 +1167,7 @@ describe("Content Type Mutation Integration Tests", () => {
 				{
 					name: "recoverable",
 					displayName: "Recoverable",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 						{ name: "extra", label: "Extra", type: "text", required: false },
@@ -1184,6 +1209,7 @@ describe("Content Type Mutation Integration Tests", () => {
 				{
 					name: "tagged_item",
 					displayName: "Tagged Item",
+					createdBy: "test-user",
 					fields: [
 						{
 							name: "tags",
@@ -1265,6 +1291,7 @@ describe("Content Type Mutation Integration Tests", () => {
 				{
 					name: "empty_type",
 					displayName: "Empty Type",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 					],
@@ -1302,6 +1329,7 @@ describe("Content Type Mutation Integration Tests", () => {
 				{
 					name: "to_delete",
 					displayName: "To Delete",
+					createdBy: "test-user",
 					fields: [],
 				},
 			);
@@ -1333,6 +1361,7 @@ describe("Content Type Mutation Integration Tests", () => {
 				{
 					name: "blog_with_entries",
 					displayName: "Blog With Entries",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 					],
@@ -1366,6 +1395,7 @@ describe("Content Type Mutation Integration Tests", () => {
 				{
 					name: "blog_many_entries",
 					displayName: "Blog Many Entries",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 					],
@@ -1405,6 +1435,7 @@ describe("Content Type Mutation Integration Tests", () => {
 				{
 					name: "cascade_soft",
 					displayName: "Cascade Soft",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 					],
@@ -1463,6 +1494,7 @@ describe("Content Type Mutation Integration Tests", () => {
 				{
 					name: "cascade_hard",
 					displayName: "Cascade Hard",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 					],
@@ -1536,6 +1568,7 @@ describe("Content Type Mutation Integration Tests", () => {
 				{
 					name: "temp_delete",
 					displayName: "Temp Delete",
+					createdBy: "test-user",
 					fields: [],
 				},
 			);
@@ -1560,6 +1593,7 @@ describe("Content Type Mutation Integration Tests", () => {
 				{
 					name: "already_deleted",
 					displayName: "Already Deleted",
+					createdBy: "test-user",
 					fields: [],
 				},
 			);
@@ -1584,6 +1618,7 @@ describe("Content Type Mutation Integration Tests", () => {
 				{
 					name: "partial_deleted",
 					displayName: "Partial Deleted",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 					],
@@ -1629,6 +1664,7 @@ describe("Content Type Mutation Integration Tests", () => {
 				{
 					name: "only_deleted_entries",
 					displayName: "Only Deleted Entries",
+					createdBy: "test-user",
 					fields: [
 						{ name: "title", label: "Title", type: "text", required: true },
 					],

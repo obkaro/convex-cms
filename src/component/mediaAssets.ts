@@ -12,13 +12,13 @@ import { stream } from "convex-helpers/server/stream";
 import { query, type QueryCtx } from "./_generated/server.js";
 import type { Doc, Id } from "./_generated/dataModel.js";
 import {
-  mediaAssetDoc,
+  // mediaItemDoc,
   listMediaAssetsArgs,
   paginationResultValidator,
   mediaSortFieldValidator,
   mediaSortDirectionValidator,
 } from "./validators.js";
-import schema from "./schema.js";
+import schema, { mediaAssetItemValidator } from "./schema.js";
 
 /**
  * Return type for the get query.
@@ -26,7 +26,9 @@ import schema from "./schema.js";
  * and optimization hints for efficient asset delivery.
  */
 const mediaAssetWithUrlDoc = v.object({
-  ...mediaAssetDoc.fields,
+  ...mediaAssetItemValidator.fields,
+  _id: v.id("mediaItems"),
+  _creationTime: v.number(),
   /** The resolved public URL for accessing the asset file */
   url: v.union(v.string(), v.null()),
   /**
@@ -55,7 +57,7 @@ const mediaAssetWithUrlDoc = v.object({
  */
 const getMediaAssetArgs = v.object({
   /** The ID of the media asset to retrieve */
-  id: v.id("mediaAssets"),
+  id: v.id("mediaItems"),
   /** Whether to include soft-deleted assets (default: false) */
   includeDeleted: v.optional(v.boolean()),
 });
@@ -101,29 +103,29 @@ export const get = query({
   handler: async (ctx, args) => {
     const { id, includeDeleted = false } = args;
 
-    // Retrieve the media asset by ID
-    const asset = await ctx.db.get(id);
+    // Retrieve the media item by ID
+    const item = await ctx.db.get(id);
 
-    // Return null if asset doesn't exist
-    if (!asset) {
+    // Return null if item doesn't exist or is not an asset
+    if (!item || item.kind !== "asset") {
       return null;
     }
 
     // Filter out soft-deleted assets unless explicitly requested
     // This respects the soft delete pattern used throughout the CMS
-    if (!includeDeleted && asset.deletedAt !== undefined) {
+    if (!includeDeleted && item.deletedAt !== undefined) {
       return null;
     }
 
     // Resolve the storage URL from Convex file storage
     // This generates a public URL that can be used directly in img/video tags
-    const url = await ctx.storage.getUrl(asset.storageId);
+    const url = await ctx.storage.getUrl(item.storageId);
 
     // Build optimization hints based on asset type and metadata
-    const optimizationHints = buildOptimizationHints(asset);
+    const optimizationHints = buildOptimizationHints(item);
 
     return {
-      ...asset,
+      ...item,
       url,
       optimizationHints,
     };
@@ -167,7 +169,6 @@ const RESIZABLE_MIME_TYPES = [
  * - Media playback (duration)
  */
 function buildOptimizationHints(asset: {
-  type: string;
   mimeType: string;
   width?: number;
   height?: number;
@@ -336,6 +337,9 @@ export const list = query({
       paginationOpts,
     } = args;
 
+    // Map folderId to parentId for the unified mediaItems table
+    const parentId = folderId as Id<"mediaItems"> | undefined;
+
     // Clamp numItems to valid range
     const numItems = Math.min(
       Math.max(1, paginationOpts.numItems ?? DEFAULT_NUM_ITEMS),
@@ -356,7 +360,7 @@ export const list = query({
     if (search && search.trim().length > 0) {
       return handleSearchQuery(ctx, {
         search: search.trim(),
-        folderId,
+        parentId,
         includeRootLevel,
         type,
         mimeType,
@@ -370,7 +374,7 @@ export const list = query({
 
     // Handle standard index-based queries
     return handleIndexQuery(ctx, {
-      folderId,
+      parentId,
       includeRootLevel,
       type,
       mimeType,
@@ -477,8 +481,8 @@ function matchesTags(asset: { tags?: string[] }, requiredTags?: string[]): boole
  */
 async function enrichAsset(
   ctx: QueryCtx,
-  asset: Doc<"mediaAssets">
-): Promise<Doc<"mediaAssets"> & { url: string | null; optimizationHints: ReturnType<typeof buildOptimizationHints> }> {
+  asset: Doc<"mediaItems"> & { kind: "asset" }
+): Promise<Doc<"mediaItems"> & { kind: "asset"; url: string | null; optimizationHints: ReturnType<typeof buildOptimizationHints> }> {
   const url = await ctx.storage.getUrl(asset.storageId);
   const optimizationHints = buildOptimizationHints(asset);
   return {
@@ -496,7 +500,7 @@ async function handleSearchQuery(
   ctx: QueryCtx,
   args: {
     search: string;
-    folderId?: Id<"mediaFolders">;
+    parentId?: Id<"mediaItems">;
     includeRootLevel?: boolean;
     type?: string;
     mimeType?: string;
@@ -509,7 +513,7 @@ async function handleSearchQuery(
 ): Promise<MediaAssetPaginationResult> {
   const {
     search,
-    folderId,
+    parentId,
     includeRootLevel,
     type,
     mimeType,
@@ -522,18 +526,21 @@ async function handleSearchQuery(
   const { numItems, cursor } = paginationOpts;
 
   // Build search query with filter fields available in the index
-  // The search_assets index supports filtering by type and folderId
+  // The search_media index supports filtering by kind, type, and parentId
   const searchQuery = ctx.db
-    .query("mediaAssets")
-    .withSearchIndex("search_assets", (q: any) => {
+    .query("mediaItems")
+    .withSearchIndex("search_media", (q: any) => {
       let query = q.search("searchText", search);
+
+      // Always filter for assets only
+      query = query.eq("kind", "asset");
 
       // Apply filter fields available in the search index
       if (type) {
         query = query.eq("type", type);
       }
-      if (folderId) {
-        query = query.eq("folderId", folderId);
+      if (parentId) {
+        query = query.eq("parentId", parentId);
       }
 
       return query;
@@ -556,18 +563,18 @@ async function handleSearchQuery(
   }
 
   // Filter by folder (for root level handling)
-  if (folderId && includeRootLevel) {
+  if (parentId && includeRootLevel) {
     // Show both folder assets and root-level assets
     filteredResults = filteredResults.filter(
-      (asset: any) => asset.folderId === folderId || asset.folderId === undefined
+      (asset: any) => asset.parentId === parentId || asset.parentId === undefined
     );
-  } else if (!folderId && includeRootLevel === false) {
+  } else if (!parentId && includeRootLevel === false) {
     // Explicitly exclude root-level assets when not filtering by folder
     filteredResults = filteredResults.filter(
-      (asset: any) => asset.folderId !== undefined
+      (asset: any) => asset.parentId !== undefined
     );
   }
-  // Default (no folderId, includeRootLevel undefined/true): show all assets
+  // Default (no parentId, includeRootLevel undefined/true): show all assets
 
   // Filter by MIME type
   if (hasMimeFilter) {
@@ -625,7 +632,7 @@ async function handleSearchQuery(
 async function handleIndexQuery(
   ctx: QueryCtx,
   args: {
-    folderId?: Id<"mediaFolders">;
+    parentId?: Id<"mediaItems">;
     includeRootLevel?: boolean;
     type?: string;
     mimeType?: string;
@@ -637,7 +644,7 @@ async function handleIndexQuery(
   }
 ): Promise<MediaAssetPaginationResult> {
   const {
-    folderId,
+    parentId,
     includeRootLevel,
     type,
     mimeType,
@@ -655,32 +662,32 @@ async function handleIndexQuery(
   // Check for post-processing filters
   const hasMimeFilter = mimeType || mimeTypePrefix;
   const hasTagFilter = tags && tags.length > 0;
-  const hasFolderLogic = folderId || includeRootLevel !== undefined;
-  const needsPostFiltering = !includeDeleted || hasMimeFilter || hasTagFilter;
+  const hasFolderLogic = parentId || includeRootLevel !== undefined;
+  const hasTypeFilter = !!type;
+  const needsPostFiltering = !includeDeleted || hasMimeFilter || hasTagFilter || hasTypeFilter;
 
   // Create the stream-based query
   const streamDb = stream(ctx.db, schema);
 
   // Select the best index based on filters
+  // Always need to filter for kind: "asset"
+  // Note: `type` filtering is now done post-query since type is derived from mimeType
   let baseQuery;
-  if (type) {
-    // Use by_type index when filtering by media type
+  if (mimeType) {
+    // Use by_mime_type index for exact MIME type match (assets only)
     baseQuery = streamDb
-      .query("mediaAssets")
-      .withIndex("by_type", (q: any) => q.eq("type", type));
-  } else if (mimeType) {
-    // Use by_mime_type index for exact MIME type match
-    baseQuery = streamDb
-      .query("mediaAssets")
+      .query("mediaItems")
       .withIndex("by_mime_type", (q: any) => q.eq("mimeType", mimeType));
-  } else if (folderId) {
-    // Use by_folder index when filtering by folder
+  } else if (parentId) {
+    // Use by_kind_and_parent index when filtering by folder
     baseQuery = streamDb
-      .query("mediaAssets")
-      .withIndex("by_folder", (q: any) => q.eq("folderId", folderId));
+      .query("mediaItems")
+      .withIndex("by_kind_and_parent", (q: any) => q.eq("kind", "asset").eq("parentId", parentId));
   } else {
-    // Default: scan all assets (ordered by _creationTime)
-    baseQuery = streamDb.query("mediaAssets");
+    // Default: use by_kind index to get only assets
+    baseQuery = streamDb
+      .query("mediaItems")
+      .withIndex("by_kind", (q: any) => q.eq("kind", "asset"));
   }
 
   // Apply order for index-based sorting
@@ -688,38 +695,56 @@ async function handleIndexQuery(
   const orderedQuery = baseQuery.order(order);
 
   // Apply filterWith for post-processing filters
-  const filteredQuery = orderedQuery.filterWith(async (asset: any) => {
+  const filteredQuery = orderedQuery.filterWith(async (item: any) => {
+    // Ensure this is an asset (in case the query didn't filter by kind)
+    if (item.kind !== "asset") {
+      return false;
+    }
+
     // Filter by soft-delete status
-    if (!includeDeleted && asset.deletedAt !== undefined) {
+    if (!includeDeleted && item.deletedAt !== undefined) {
       return false;
     }
 
     // Filter by folder logic (when not already using folder index)
-    if (!folderId && hasFolderLogic) {
-      if (includeRootLevel === true && asset.folderId !== undefined) {
+    if (!parentId && hasFolderLogic) {
+      if (includeRootLevel === true && item.parentId !== undefined) {
         return false; // Only show root-level assets
       }
-      if (includeRootLevel === false && asset.folderId === undefined) {
+      if (includeRootLevel === false && item.parentId === undefined) {
         return false; // Exclude root-level assets
       }
     }
 
     // Filter by MIME type (when not already using mimeType index)
     if (hasMimeFilter && !mimeType) {
-      if (!matchesMimeType(asset, undefined, mimeTypePrefix)) {
+      if (!matchesMimeType(item, undefined, mimeTypePrefix)) {
         return false;
       }
     }
 
     // Filter by tags
-    if (hasTagFilter && !matchesTags(asset, tags)) {
+    if (hasTagFilter && !matchesTags(item, tags)) {
       return false;
     }
 
-    // Additional MIME type filter when using other indexes
-    if (mimeType && type) {
-      // When using type index, also need to filter by exact mimeType
-      if (asset.mimeType !== mimeType) {
+    // Filter by media type category (type is derived from mimeType)
+    if (type) {
+      // Map type to mimeType prefix for filtering
+      const mimePrefix = type === "other" ? null : `${type}/`;
+      if (mimePrefix && !item.mimeType.startsWith(mimePrefix)) {
+        return false;
+      }
+      // For "other" type, exclude known media types
+      if (type === "other" && (
+        item.mimeType.startsWith("image/") ||
+        item.mimeType.startsWith("video/") ||
+        item.mimeType.startsWith("audio/") ||
+        item.mimeType.startsWith("application/pdf") ||
+        item.mimeType.includes("document") ||
+        item.mimeType.includes("sheet") ||
+        item.mimeType.includes("presentation")
+      )) {
         return false;
       }
     }
