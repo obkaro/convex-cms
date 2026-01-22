@@ -12,7 +12,6 @@ import {
   updateContentTypeArgs,
   deleteContentTypeArgs,
   contentTypeDoc,
-  fieldTypes,
   type FieldType,
   mutationAuthContext,
 } from "./validators.js";
@@ -22,6 +21,7 @@ import {
   contentTypeEventType,
   ContentTypeEventPayload,
 } from "./eventEmitter.js";
+import { fieldTypeValidator } from "./validators.js";
 import {
   contentTypeNotFound,
   contentTypeDeleted,
@@ -32,7 +32,7 @@ import {
   contentTypeTitleFieldInvalid,
   contentTypeHasEntries,
   contentTypeBreakingChange,
-  batchSizeExceeded,
+  // batchSizeExceeded,
   internalError,
 } from "./lib/errors.js";
 import { requireMutationAuth } from "./lib/mutationAuth.js";
@@ -357,10 +357,10 @@ function validateFieldDefinitions(
     seenNames.add(field.name);
 
     // Validate field type is one of the supported types
-    if (field.type && !fieldTypes.includes(field.type as FieldType)) {
+    if (field.type && !fieldTypeValidator.type.includes(field.type as FieldType)) {
       errors.push({
         fieldName: field.name,
-        message: `Invalid field type "${field.type}". Must be one of: ${fieldTypes.join(", ")}`,
+        message: `Invalid field type "${field.type}". Must be one of: ${Object.values(fieldTypeValidator.type).join(", ")}`,
         code: "INVALID_FIELD_TYPE",
       });
     }

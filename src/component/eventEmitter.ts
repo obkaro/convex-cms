@@ -27,6 +27,11 @@
 
 import { v } from "convex/values";
 import { mutation, query, internalMutation, MutationCtx } from "./_generated/server.js";
+import {
+  eventResourceTypeValidator,
+  eventActionValidator,
+  cmsEventDoc,
+} from "./validators.js";
 
 // =============================================================================
 // Event Types
@@ -212,61 +217,14 @@ export async function emitEvent(
  */
 export const listEvents = query({
   args: {
-    resourceType: v.optional(
-      v.union(
-        v.literal("contentEntry"),
-        v.literal("contentType"),
-        v.literal("mediaAsset"),
-        v.literal("mediaFolder")
-      )
-    ),
-    action: v.optional(
-      v.union(
-        v.literal("created"),
-        v.literal("updated"),
-        v.literal("published"),
-        v.literal("unpublished"),
-        v.literal("deleted"),
-        v.literal("restored"),
-        v.literal("duplicated"),
-        v.literal("scheduled")
-      )
-    ),
+    resourceType: v.optional(eventResourceTypeValidator),
+    action: v.optional(eventActionValidator),
     processed: v.optional(v.boolean()),
     limit: v.optional(v.number()),
     cursor: v.optional(v.string()),
   },
   returns: v.object({
-    events: v.array(
-      v.object({
-        _id: v.id("cmsEvents"),
-        _creationTime: v.number(),
-        eventType: v.string(),
-        resourceType: v.union(
-          v.literal("contentEntry"),
-          v.literal("contentType"),
-          v.literal("mediaAsset"),
-          v.literal("mediaFolder")
-        ),
-        resourceId: v.string(),
-        action: v.union(
-          v.literal("created"),
-          v.literal("updated"),
-          v.literal("published"),
-          v.literal("unpublished"),
-          v.literal("deleted"),
-          v.literal("restored"),
-          v.literal("duplicated"),
-          v.literal("scheduled")
-        ),
-        payload: v.any(),
-        userId: v.optional(v.string()),
-        processed: v.boolean(),
-        processedAt: v.optional(v.number()),
-        correlationId: v.optional(v.string()),
-        metadata: v.optional(v.any()),
-      })
-    ),
+    events: v.array(cmsEventDoc),
     hasMore: v.boolean(),
   }),
   handler: async (ctx, args) => {
@@ -318,45 +276,11 @@ export const listEvents = query({
  */
 export const getResourceEvents = query({
   args: {
-    resourceType: v.union(
-      v.literal("contentEntry"),
-      v.literal("contentType"),
-      v.literal("mediaAsset"),
-      v.literal("mediaFolder")
-    ),
+    resourceType: eventResourceTypeValidator,
     resourceId: v.string(),
     limit: v.optional(v.number()),
   },
-  returns: v.array(
-    v.object({
-      _id: v.id("cmsEvents"),
-      _creationTime: v.number(),
-      eventType: v.string(),
-      resourceType: v.union(
-        v.literal("contentEntry"),
-        v.literal("contentType"),
-        v.literal("mediaAsset"),
-        v.literal("mediaFolder")
-      ),
-      resourceId: v.string(),
-      action: v.union(
-        v.literal("created"),
-        v.literal("updated"),
-        v.literal("published"),
-        v.literal("unpublished"),
-        v.literal("deleted"),
-        v.literal("restored"),
-        v.literal("duplicated"),
-        v.literal("scheduled")
-      ),
-      payload: v.any(),
-      userId: v.optional(v.string()),
-      processed: v.boolean(),
-      processedAt: v.optional(v.number()),
-      correlationId: v.optional(v.string()),
-      metadata: v.optional(v.any()),
-    })
-  ),
+  returns: v.array(cmsEventDoc),
   handler: async (ctx, args) => {
     const { resourceType, resourceId, limit = 50 } = args;
 
@@ -386,36 +310,7 @@ export const getUnprocessedEvents = query({
   args: {
     limit: v.optional(v.number()),
   },
-  returns: v.array(
-    v.object({
-      _id: v.id("cmsEvents"),
-      _creationTime: v.number(),
-      eventType: v.string(),
-      resourceType: v.union(
-        v.literal("contentEntry"),
-        v.literal("contentType"),
-        v.literal("mediaAsset"),
-        v.literal("mediaFolder")
-      ),
-      resourceId: v.string(),
-      action: v.union(
-        v.literal("created"),
-        v.literal("updated"),
-        v.literal("published"),
-        v.literal("unpublished"),
-        v.literal("deleted"),
-        v.literal("restored"),
-        v.literal("duplicated"),
-        v.literal("scheduled")
-      ),
-      payload: v.any(),
-      userId: v.optional(v.string()),
-      processed: v.boolean(),
-      processedAt: v.optional(v.number()),
-      correlationId: v.optional(v.string()),
-      metadata: v.optional(v.any()),
-    })
-  ),
+  returns: v.array(cmsEventDoc),
   handler: async (ctx, args) => {
     const { limit = 100 } = args;
 

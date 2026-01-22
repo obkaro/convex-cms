@@ -13,6 +13,12 @@ import { components } from "./_generated/api";
 // Field Type Validators
 // =============================================================================
 
+// Note: These validators are duplicates of what's defined in the component's schema.
+// They're maintained locally because Convex component validators are not directly
+// importable - the component exposes functions via the API, not raw validators.
+// These must be kept in sync with src/component/schema.ts field definitions.
+// See: https://docs.convex.dev/components/overview
+
 /**
  * Validator for field types supported by the CMS.
  */

@@ -1,29 +1,22 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
-/**
- * Field type definitions supported by the CMS.
- * Each field type has specific validation rules and rendering behaviors.
- */
-// export const fieldTypeValidator = v.union(
-// 	v.literal("text"),
-// 	v.literal("richText"),
-// 	v.literal("number"),
-// 	v.literal("boolean"),
-// 	v.literal("date"),
-// 	v.literal("datetime"),
-// 	v.literal("reference"),
-// 	v.literal("media"),
-// 	v.literal("json"),
-// 	v.literal("select"),
-// 	v.literal("multiSelect"),
-// 	v.literal("tags"),
-// 	v.literal("category"),
-// );
+export const fieldTypeValidator = v.union(
+	v.literal("text"),
+	v.literal("richText"),
+	v.literal("number"),
+	v.literal("boolean"),
+	v.literal("date"),
+	v.literal("datetime"),
+	v.literal("reference"),
+	v.literal("media"),
+	v.literal("json"),
+	v.literal("select"),
+	v.literal("multiSelect"),
+	v.literal("tags"),
+	v.literal("category"),
+);
 
-/**
- * Content entry status for publishing workflow.
- */
 export const contentStatusValidator = v.union(
 	v.literal("draft"),
 	v.literal("published"),
@@ -31,9 +24,6 @@ export const contentStatusValidator = v.union(
 	v.literal("scheduled"),
 );
 
-/**
- * Media asset type classification.
- */
 export const mediaTypeValidator = v.union(
 	v.literal("image"),
 	v.literal("video"),
@@ -42,18 +32,12 @@ export const mediaTypeValidator = v.union(
 	v.literal("other"),
 );
 
-/**
- * Media variant type classification.
- */
 export const variantTypeValidator = v.union(
 	v.literal("thumbnail"),
 	v.literal("responsive"),
 	v.literal("format"),
 );
 
-/**
- * Media variant generation status.
- */
 export const variantStatusValidator = v.union(
 	v.literal("pending"),
 	v.literal("processing"),
@@ -61,85 +45,15 @@ export const variantStatusValidator = v.union(
 	v.literal("failed"),
 );
 
-/**
- * Base field definition shared by all field types.
- */
 const baseFieldDefinition = {
-	/** Unique identifier for the field within the content type */
 	name: v.string(),
-	/** Human-readable label for the field */
 	label: v.string(),
-	/** The type of field (text, richText, number, etc.) */
-	// type: fieldTypeValidator,
-	/** Whether this field is required */
 	required: v.boolean(),
-	/** Whether this field should be indexed for search */
 	searchable: v.optional(v.boolean()),
-	/** Whether this field should support localization */
 	localized: v.optional(v.boolean()),
-	/** Optional description/help text for the field */
 	description: v.optional(v.string()),
-	/** Default value for the field (type depends on field type) */
 	defaultValue: v.optional(v.any()),
 };
-
-/**
- * Field-specific options for different field types.
- * This allows type-specific configuration like min/max for numbers,
- * allowed content types for references, etc.
- */
-// const fieldOptionsValidator = v.optional(
-// 	v.object({
-// 		// Text fields
-// 		minLength: v.optional(v.number()),
-// 		maxLength: v.optional(v.number()),
-// 		pattern: v.optional(v.string()),
-
-// 		// Number fields
-// 		min: v.optional(v.number()),
-// 		max: v.optional(v.number()),
-// 		step: v.optional(v.number()),
-// 		precision: v.optional(v.number()),
-
-// 		// Reference fields
-// 		allowedContentTypes: v.optional(v.array(v.string())),
-// 		multiple: v.optional(v.boolean()),
-// 		/** Minimum number of references required (only applies when multiple is true) */
-// 		minItems: v.optional(v.number()),
-
-// 		// Media fields
-// 		allowedMimeTypes: v.optional(v.array(v.string())),
-// 		maxFileSize: v.optional(v.number()),
-
-// 		// Select fields
-// 		options: v.optional(
-// 			v.array(
-// 				v.object({
-// 					value: v.string(),
-// 					label: v.string(),
-// 				}),
-// 			),
-// 		),
-
-// 		// Rich text fields
-// 		allowedBlocks: v.optional(v.array(v.string())),
-// 		allowedMarks: v.optional(v.array(v.string())),
-
-// 		// Tag fields
-// 		/** The taxonomy ID to use for this tag field */
-// 		taxonomyId: v.optional(v.id("taxonomies")),
-// 		/** Whether to allow creating new tags inline */
-// 		allowCreate: v.optional(v.boolean()),
-// 		/** Maximum number of tags that can be selected */
-// 		maxTags: v.optional(v.number()),
-// 		/** Minimum number of tags required */
-// 		minTags: v.optional(v.number()),
-
-// 		// Category fields
-// 		/** Whether to allow selecting multiple categories */
-// 		allowMultiple: v.optional(v.boolean()),
-// 	}),
-// );
 
 export const textFieldDefinitionValidator = v.object({
 	...baseFieldDefinition,
@@ -275,9 +189,6 @@ export const datetimeFieldDefinitionValidator = v.object({
 	}),
 });
 
-/**
- * Complete field definition including base fields and type-specific options.
- */
 export const fieldDefinitionValidator = v.union(
 	textFieldDefinitionValidator,
 	numberFieldDefinitionValidator,
@@ -291,312 +202,169 @@ export const fieldDefinitionValidator = v.union(
 	jsonFieldDefinitionValidator,
 	referenceFieldDefinitionValidator,
 );
-/**
- * Core CMS Schema Definition
- *
- * Defines five main tables:
- * 1. contentTypes - Schema definitions for content
- * 2. contentEntries - Actual content instances
- * 3. contentVersions - Version history with snapshots
- * 4. mediaAssets - File storage records
- * 5. mediaFolders - Folder organization
- */
-const schema = defineSchema({
-	/**
-	 * Content Types Table
-	 *
-	 * Stores content type definitions including field schemas.
-	 * Each content type defines a blueprint for creating content entries.
-	 */
-	contentTypes: defineTable({
-		/** Unique machine-readable name for the content type (e.g., "blog_post") */
-		name: v.string(),
-		/** Human-readable display name (e.g., "Blog Post") */
-		displayName: v.string(),
-		/** Optional description of the content type */
-		description: v.optional(v.string()),
-		/** Array of field definitions that make up this content type */
-		fields: v.array(fieldDefinitionValidator),
-		/** Icon identifier for UI display */
-		icon: v.optional(v.string()),
-		/** Whether this content type is a singleton (only one entry allowed) */
-		singleton: v.optional(v.boolean()),
-		/** Field name to use for generating slugs (defaults to "title") */
-		slugField: v.optional(v.string()),
-		/** Field name to use as the title/display name in lists */
-		titleField: v.optional(v.string()),
-		/** Custom sort order for admin UI */
-		sortOrder: v.optional(v.number()),
-		/** Whether this content type is active/enabled */
-		isActive: v.boolean(),
-		/** Soft delete marker */
-		deletedAt: v.optional(v.number()),
-		/** User ID who created this content type (passed from parent app) */
-		createdBy: v.optional(v.string()),
-		/** User ID who last updated this content type */
-		updatedBy: v.optional(v.string()),
-	})
-		// Index for looking up content types by name (must be unique)
-		.index("by_name", ["name"])
-		// Index for listing active content types
-		.index("by_active", ["isActive"])
-		// Index for filtering out soft-deleted types
-		.index("by_deleted", ["deletedAt"]),
 
-	/**
-	 * Content Entries Table
-	 *
-	 * Stores actual content instances created from content types.
-	 * Supports draft/publish workflow and localization.
-	 */
-	contentEntries: defineTable({
-		/** Reference to the content type this entry belongs to */
-		contentTypeId: v.id("contentTypes"),
-		/** URL-friendly slug for this entry (unique per content type) */
-		slug: v.string(),
-		/** Current status of the entry */
-		status: contentStatusValidator,
-		/** The actual content data (validated against content type schema at runtime) */
-		data: v.any(),
-		/** Locale code for this entry (e.g., "en-US") */
-		locale: v.optional(v.string()),
-		/** Reference to the primary entry if this is a localized variant */
-		primaryEntryId: v.optional(v.id("contentEntries")),
-		/** Current version number */
-		version: v.number(),
-		/** Scheduled publish time (if status is "scheduled") */
-		scheduledPublishAt: v.optional(v.number()),
-		/** When the entry was first published */
-		firstPublishedAt: v.optional(v.number()),
-		/** When the entry was last published */
-		lastPublishedAt: v.optional(v.number()),
-		/** User ID who has locked this entry for editing */
-		lockedBy: v.optional(v.string()),
-		/** When the lock expires */
-		lockExpiresAt: v.optional(v.number()),
-		/** Soft delete marker */
-		deletedAt: v.optional(v.number()),
-		/** User ID who created this entry */
-		createdBy: v.optional(v.string()),
-		/** User ID who last updated this entry */
-		updatedBy: v.optional(v.string()),
-		/** Searchable text extracted from content for full-text search */
-		searchText: v.optional(v.string()),
+export const contentTypeFields = {
+	name: v.string(),
+	displayName: v.string(),
+	description: v.optional(v.string()),
+	fields: v.array(fieldDefinitionValidator),
+	icon: v.optional(v.string()),
+	singleton: v.optional(v.boolean()),
+	slugField: v.optional(v.string()),
+	titleField: v.optional(v.string()),
+	sortOrder: v.optional(v.number()),
+	isActive: v.boolean(),
+	deletedAt: v.optional(v.number()),
+	createdBy: v.optional(v.string()),
+	updatedBy: v.optional(v.string()),
+};
+
+export const contentEntryFields = {
+	contentTypeId: v.id("contentTypes"),
+	slug: v.string(),
+	status: contentStatusValidator,
+	data: v.any(),
+	locale: v.optional(v.string()),
+	primaryEntryId: v.optional(v.id("contentEntries")),
+	version: v.number(),
+	scheduledPublishAt: v.optional(v.number()),
+	firstPublishedAt: v.optional(v.number()),
+	lastPublishedAt: v.optional(v.number()),
+	lockedBy: v.optional(v.string()),
+	lockExpiresAt: v.optional(v.number()),
+	deletedAt: v.optional(v.number()),
+	createdBy: v.optional(v.string()),
+	updatedBy: v.optional(v.string()),
+	searchText: v.optional(v.string()),
+};
+
+export const contentVersionFields = {
+	entryId: v.id("contentEntries"),
+	versionNumber: v.number(),
+	data: v.any(),
+	slug: v.string(),
+	status: contentStatusValidator,
+	changeDescription: v.optional(v.string()),
+	createdBy: v.optional(v.string()),
+	wasPublished: v.boolean(),
+	publishedAt: v.optional(v.number()),
+};
+
+export const mediaAssetValidator = v.object({
+	type: v.literal("asset"),
+	storageId: v.id("_storage"),
+	mimeType: v.string(),
+	size: v.number(),
+	altText: v.optional(v.string()),
+});
+
+export const mediaFolderValidator = v.object({
+	path: v.string(),
+	description: v.optional(v.string()),
+	sortOrder: v.optional(v.number()),
+	deletedAt: v.optional(v.number()),
+	createdBy: v.optional(v.string()),
+});
+
+export const mediaFields = {
+	filename: v.string(),
+	title: v.string(),
+	path: v.string(),
+	description: v.optional(v.string()),
+	parentId: v.optional(v.id("media")),
+	metadata: v.optional(v.record(v.string(), v.any())),
+	tags: v.optional(v.any()),
+	deletedAt: v.optional(v.number()),
+	createdBy: v.optional(v.string()),
+	updatedAt: v.optional(v.number()),
+	updatedBy: v.optional(v.string()),
+	mediaTypeMeta: v.union(mediaAssetValidator, mediaFolderValidator),
+};
+
+export const mediaVariantFields = {
+	assetId: v.id("mediaAssets"),
+	storageId: v.id("_storage"),
+	variantType: v.union(
+		v.literal("thumbnail"),
+		v.literal("responsive"),
+		v.literal("format"),
+	),
+	width: v.optional(v.number()),
+	height: v.optional(v.number()),
+	format: v.string(),
+	mimeType: v.string(),
+	size: v.number(),
+	quality: v.optional(v.number()),
+	preset: v.optional(v.string()),
+	autoGenerated: v.boolean(),
+	status: v.union(
+		v.literal("pending"),
+		v.literal("processing"),
+		v.literal("completed"),
+		v.literal("failed"),
+	),
+	errorMessage: v.optional(v.string()),
+	processingStartedAt: v.optional(v.number()),
+	processingCompletedAt: v.optional(v.number()),
+	deletedAt: v.optional(v.number()),
+	createdBy: v.optional(v.string()),
+};
+
+const schema = defineSchema({
+	contentTypes: defineTable({
+		...contentTypeFields,
 	})
-		// Index for looking up entries by content type
+		.index("by_name", ["name"])
+		.index("by_active", ["isActive"])
+		.index("by_deleted", ["deletedAt"]),
+	contentEntries: defineTable({
+		...contentEntryFields,
+	})
 		.index("by_content_type", ["contentTypeId"])
-		// Index for looking up entries by slug within a content type
 		.index("by_content_type_and_slug", ["contentTypeId", "slug"])
-		// Index for filtering by status
 		.index("by_status", ["status"])
-		// Index for filtering by content type and status
 		.index("by_content_type_and_status", ["contentTypeId", "status"])
-		// Index for finding localized variants
 		.index("by_primary_entry", ["primaryEntryId"])
-		// Index for finding entries by locale
 		.index("by_locale", ["locale"])
-		// Index for filtering out soft-deleted entries
 		.index("by_deleted", ["deletedAt"])
-		// Index for scheduled publishing jobs
 		.index("by_scheduled_publish", ["status", "scheduledPublishAt"])
-		// Index for finding locked entries
 		.index("by_locked", ["lockedBy"])
-		// Search index for full-text search on content
 		.searchIndex("search_content", {
 			searchField: "searchText",
 			filterFields: ["contentTypeId", "status", "locale"],
 		}),
-
-	/**
-	 * Content Versions Table
-	 *
-	 * Stores version snapshots for content entries.
-	 * Enables version history, comparison, and rollback.
-	 */
 	contentVersions: defineTable({
-		/** Reference to the content entry this version belongs to */
-		entryId: v.id("contentEntries"),
-		/** Version number (incrementing) */
-		versionNumber: v.number(),
-		/** Snapshot of the content data at this version */
-		data: v.any(),
-		/** Snapshot of the slug at this version */
-		slug: v.string(),
-		/** Status when this version was created */
-		status: contentStatusValidator,
-		/** Optional description of changes in this version */
-		changeDescription: v.optional(v.string()),
-		/** User ID who created this version */
-		createdBy: v.optional(v.string()),
-		/** Whether this version was published */
-		wasPublished: v.boolean(),
-		/** When this version was published (if ever) */
-		publishedAt: v.optional(v.number()),
+		...contentVersionFields,
 	})
-		// Index for listing versions of an entry
 		.index("by_entry", ["entryId"])
-		// Index for getting a specific version of an entry
 		.index("by_entry_and_version", ["entryId", "versionNumber"])
-		// Index for finding published versions
 		.index("by_entry_and_published", ["entryId", "wasPublished"]),
-
-	/**
-	 * Media Assets Table
-	 *
-	 * Stores metadata for uploaded media files.
-	 * Actual files are stored using Convex File Storage.
-	 */
 	mediaAssets: defineTable({
-		/** Reference to the Convex storage file */
-		storageId: v.id("_storage"),
-		/** Original filename as uploaded */
-		filename: v.string(),
-		/** MIME type of the file */
-		mimeType: v.string(),
-		/** File size in bytes */
-		size: v.number(),
-		/** Classified media type (image, video, audio, document, other) */
-		type: mediaTypeValidator,
-		/** Human-readable title/alt text */
-		title: v.optional(v.string()),
-		/** Description/caption for the asset */
-		description: v.optional(v.string()),
-		/** Alt text for accessibility (images) */
-		altText: v.optional(v.string()),
-		/** Reference to the folder containing this asset */
-		folderId: v.optional(v.id("mediaFolders")),
-		/** Image dimensions (if applicable) */
-		width: v.optional(v.number()),
-		height: v.optional(v.number()),
-		/** Duration in seconds (for video/audio) */
-		duration: v.optional(v.number()),
-		/** Additional metadata extracted from the file */
-		metadata: v.optional(v.any()),
-		/** Tags for organization and filtering */
-		tags: v.optional(v.array(v.string())),
-		/** Soft delete marker */
-		deletedAt: v.optional(v.number()),
-		/** User ID who uploaded this asset */
-		createdBy: v.optional(v.string()),
-		/** Searchable text for finding assets */
-		searchText: v.optional(v.string()),
+		...mediaAssetFields,
 	})
-		// Index for looking up assets by storage ID
 		.index("by_storage_id", ["storageId"])
-		// Index for listing assets in a folder
 		.index("by_folder", ["folderId"])
-		// Index for filtering by media type
 		.index("by_type", ["type"])
-		// Index for filtering by MIME type
 		.index("by_mime_type", ["mimeType"])
-		// Index for filtering out soft-deleted assets
 		.index("by_deleted", ["deletedAt"])
-		// Search index for finding assets by name/description
 		.searchIndex("search_assets", {
 			searchField: "searchText",
 			filterFields: ["type", "folderId"],
 		}),
-
-	/**
-	 * Media Variants Table
-	 *
-	 * Stores optimized variants of media assets (thumbnails, responsive sizes, format conversions).
-	 * Each variant references a parent media asset and has its own storage file.
-	 * Supports automatic generation of responsive image sets and format optimization.
-	 */
 	mediaVariants: defineTable({
-		/** Reference to the parent media asset */
-		assetId: v.id("mediaAssets"),
-		/** Reference to the Convex storage file for this variant */
-		storageId: v.id("_storage"),
-		/**
-		 * Type of variant:
-		 * - thumbnail: Small preview image (typically square crop)
-		 * - responsive: Sized for responsive images (maintains aspect ratio)
-		 * - format: Same dimensions but different file format (e.g., WebP, AVIF)
-		 */
-		variantType: v.union(
-			v.literal("thumbnail"),
-			v.literal("responsive"),
-			v.literal("format"),
-		),
-		/** Target width in pixels (null for format-only conversions that maintain original size) */
-		width: v.optional(v.number()),
-		/** Target height in pixels (null for format-only conversions that maintain original size) */
-		height: v.optional(v.number()),
-		/** Output format of the variant (e.g., "webp", "avif", "jpeg", "png") */
-		format: v.string(),
-		/** MIME type of the variant file */
-		mimeType: v.string(),
-		/** File size of the variant in bytes */
-		size: v.number(),
-		/** Quality setting used (0-100, applicable for lossy formats) */
-		quality: v.optional(v.number()),
-		/**
-		 * Preset name if this variant was generated from a predefined preset.
-		 * Common presets: "thumbnail", "small", "medium", "large", "webp", "avif"
-		 */
-		preset: v.optional(v.string()),
-		/** Whether this variant was auto-generated vs manually created */
-		autoGenerated: v.boolean(),
-		/** Generation status for tracking async processing */
-		status: v.union(
-			v.literal("pending"),
-			v.literal("processing"),
-			v.literal("completed"),
-			v.literal("failed"),
-		),
-		/** Error message if generation failed */
-		errorMessage: v.optional(v.string()),
-		/** Timestamp when processing started */
-		processingStartedAt: v.optional(v.number()),
-		/** Timestamp when processing completed */
-		processingCompletedAt: v.optional(v.number()),
-		/** Soft delete marker */
-		deletedAt: v.optional(v.number()),
-		/** User ID who created/requested this variant */
-		createdBy: v.optional(v.string()),
+		...mediaVariantFields,
 	})
-		// Index for listing all variants of an asset
 		.index("by_asset", ["assetId"])
-		// Index for finding specific variant by asset and type
 		.index("by_asset_and_type", ["assetId", "variantType"])
-		// Index for finding variants by preset
 		.index("by_asset_and_preset", ["assetId", "preset"])
-		// Index for finding variants by format
 		.index("by_asset_and_format", ["assetId", "format"])
-		// Index for finding pending/processing variants (for job queue)
 		.index("by_status", ["status"])
-		// Index for filtering out soft-deleted variants
 		.index("by_deleted", ["deletedAt"]),
-
-	/**
-	 * Media Folders Table
-	 *
-	 * Provides folder hierarchy for organizing media assets.
-	 * Supports nested folders for complex organization.
-	 */
 	mediaFolders: defineTable({
-		/** Folder name */
-		name: v.string(),
-		/** Reference to parent folder (null for root folders) */
-		parentId: v.optional(v.id("mediaFolders")),
-		/** Full path from root (e.g., "/images/blog/2026") */
-		path: v.string(),
-		/** Description of the folder */
-		description: v.optional(v.string()),
-		/** Custom sort order */
-		sortOrder: v.optional(v.number()),
-		/** Soft delete marker */
-		deletedAt: v.optional(v.number()),
-		/** User ID who created this folder */
-		createdBy: v.optional(v.string()),
+		...mediaFolderFields,
 	})
-		// Index for listing child folders
 		.index("by_parent", ["parentId"])
-		// Index for looking up folders by path
 		.index("by_path", ["path"])
-		// Index for filtering out soft-deleted folders
 		.index("by_deleted", ["deletedAt"]),
 
 	/**

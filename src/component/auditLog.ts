@@ -119,61 +119,19 @@ export interface AuditLogFilters {
 }
 
 // =============================================================================
-// Validators
+// Validators (imported from central validators.ts)
 // =============================================================================
 
-/**
- * Validator for audit resource type.
- */
-export const auditResourceTypeValidator = v.union(
-	v.literal("contentEntry"),
-	v.literal("contentType"),
-	v.literal("mediaAsset"),
-	v.literal("mediaFolder"),
-	v.literal("settings"),
-);
+// Import validators from the central validators module to avoid duplication.
+// The auditLogDoc validator is derived from schema using convex-helpers doc().
+import {
+	auditResourceTypeValidator,
+	auditActionValidator,
+	auditLogDoc as auditLogDocValidator,
+} from "./validators.js";
 
-/**
- * Validator for audit action.
- */
-export const auditActionValidator = v.union(
-	v.literal("created"),
-	v.literal("updated"),
-	v.literal("published"),
-	v.literal("unpublished"),
-	v.literal("deleted"),
-	v.literal("restored"),
-	v.literal("duplicated"),
-	v.literal("scheduled"),
-	v.literal("locked"),
-	v.literal("unlocked"),
-	v.literal("rolledBack"),
-	v.literal("migrated"),
-);
-
-/**
- * Validator for audit log document.
- */
-export const auditLogDocValidator = v.object({
-	_id: v.id("auditLogs"),
-	_creationTime: v.number(),
-	resourceType: auditResourceTypeValidator,
-	resourceId: v.string(),
-	action: auditActionValidator,
-	userId: v.optional(v.string()),
-	userDisplayName: v.optional(v.string()),
-	previousState: v.optional(v.any()),
-	newState: v.optional(v.any()),
-	changeSummary: v.optional(v.string()),
-	changedFields: v.optional(v.array(v.string())),
-	ipAddress: v.optional(v.string()),
-	userAgent: v.optional(v.string()),
-	sessionId: v.optional(v.string()),
-	requestId: v.optional(v.string()),
-	metadata: v.optional(v.any()),
-	contentTypeName: v.optional(v.string()),
-	entrySlug: v.optional(v.string()),
-});
+// Re-export for consumers of this module
+export { auditResourceTypeValidator, auditActionValidator, auditLogDocValidator };
 
 // =============================================================================
 // Internal Helper: Log Audit Entry

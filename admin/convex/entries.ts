@@ -3,6 +3,11 @@
  *
  * These functions wrap the internal CMS component functions to expose
  * them as public API for the admin UI.
+ *
+ * Note: Status validators used here are duplicates of contentStatusValidator
+ * from the component schema. They're maintained inline because Convex component
+ * validators are not directly importable through the component API.
+ * These must be kept in sync with src/component/schema.ts.
  */
 
 import { v } from "convex/values";
