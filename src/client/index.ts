@@ -62,7 +62,7 @@
  * import { cms } from "./cms";
  *
  * export const publishPost = mutation({
- *   args: { entryId: v.id("content_entries"), userId: v.string() },
+ *   args: { entryId: v.id("contentEntries"), userId: v.string() },
  *   handler: async (ctx, args) => {
  *     // Check if user can publish content
  *     const result = await cms.hasPermissionForUser(args.userId, {
@@ -84,23 +84,27 @@
 export * from "./types.js";
 
 // =============================================================================
+// Admin API Helper (for Admin UI integration)
+// =============================================================================
+
+export {
+  defineAdminAPI,
+  type AdminApiOptions,
+  type AdminOperation,
+} from "./adminApi.js";
+
+// =============================================================================
 // CMS Client Factory (Enhanced with Typed Methods)
 // =============================================================================
 
 import {
   type ComponentConfig,
-  type ResolvedComponentConfig,
   type FeatureFlags,
   type LocaleCode,
   type GetUserRoleResult,
-  type AuthorizationHooks,
-  type AuthorizationHook,
   type AuthorizationHookContext,
-  type AuthorizationHookResult,
-  type CmsOperation,
   resolveConfig,
   validateRequiredHooks,
-  MissingHookError,
 } from "./types.js";
 
 import {
@@ -115,7 +119,6 @@ import {
   MediaAssetsApi,
   MediaFoldersApi,
   MediaVariantsApi,
-  createEnhancedCmsClient as createEnhancedCmsClientInternal,
 } from "./wrapper.js";
 
 // Re-export authorization hooks execution utilities
@@ -214,9 +217,6 @@ import { UnauthorizedError as UnauthorizedErrorInternal } from "../component/aut
 import type { AuthorizationHelper } from "./wrapper.js";
 // Import AuthorizationHookContext from types for internal use
 import type { AuthorizationHookContext as InternalAuthHookContext } from "./types.js";
-
-// Import error class from types (also re-exported via export * from "./types.js")
-import { AuthorizationNotConfiguredError } from "./types.js";
 
 import {
   hasPermission,

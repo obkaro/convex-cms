@@ -771,7 +771,7 @@ export function createCmsTools(
         componentApi.contentTypeMutations.updateContentType,
         {
           ...args,
-          id: args.id as any,
+          id: args.id ,
           updatedBy: args.updatedBy ?? defaultUserId,
         }
       );
@@ -808,7 +808,7 @@ export function createCmsTools(
       // The contentTypes.get query supports both id and name lookup via args
       if (args.id) {
         const result = await ctx.runQuery(componentApi.contentTypes.get, {
-          id: args.id as any,
+          id: args.id ,
         });
         return result;
       } else if (args.name) {
@@ -840,7 +840,7 @@ export function createCmsTools(
         componentApi.contentEntryMutations.createEntry,
         {
           ...args,
-          contentTypeId: args.contentTypeId as any,
+          contentTypeId: args.contentTypeId ,
           createdBy: args.createdBy ?? defaultUserId,
         }
       );
@@ -861,7 +861,7 @@ export function createCmsTools(
         componentApi.contentEntryMutations.updateEntry,
         {
           ...args,
-          id: args.id as any,
+          id: args.id ,
           updatedBy: args.updatedBy ?? defaultUserId,
         }
       );
@@ -882,7 +882,7 @@ export function createCmsTools(
         componentApi.contentEntryMutations.publishEntry,
         {
           ...args,
-          id: args.id as any,
+          id: args.id ,
           updatedBy: args.updatedBy ?? defaultUserId,
         }
       );
@@ -903,7 +903,7 @@ export function createCmsTools(
         componentApi.contentEntryMutations.unpublishEntry,
         {
           ...args,
-          id: args.id as any,
+          id: args.id ,
           updatedBy: args.updatedBy ?? defaultUserId,
         }
       );
@@ -925,7 +925,7 @@ export function createCmsTools(
         componentApi.scheduledPublish.scheduleEntry,
         {
           ...args,
-          id: args.id as any,
+          id: args.id ,
           updatedBy: args.updatedBy ?? defaultUserId,
         }
       );
@@ -946,7 +946,7 @@ export function createCmsTools(
         componentApi.contentEntryMutations.deleteEntry,
         {
           ...args,
-          id: args.id as any,
+          id: args.id ,
           deletedBy: args.deletedBy ?? defaultUserId,
         }
       );
@@ -967,7 +967,7 @@ export function createCmsTools(
         componentApi.contentEntryMutations.duplicateEntry,
         {
           ...args,
-          sourceEntryId: args.sourceEntryId as any,
+          sourceEntryId: args.sourceEntryId ,
           createdBy: args.createdBy ?? defaultUserId,
         }
       );
@@ -986,7 +986,7 @@ export function createCmsTools(
     args: listContentEntriesArgsSchema,
     handler: async (ctx, args) => {
       const result = await ctx.runQuery(componentApi.contentEntries.list, {
-        contentTypeId: args.contentTypeId as any,
+        contentTypeId: args.contentTypeId ,
         contentTypeName: args.contentTypeName,
         status: args.status,
         statusIn: args.statusIn,
@@ -1014,7 +1014,7 @@ export function createCmsTools(
     handler: async (ctx, args) => {
       if (args.id) {
         const result = await ctx.runQuery(componentApi.contentEntries.get, {
-          id: args.id as any,
+          id: args.id ,
         });
         return result;
       } else if (args.slug) {
@@ -1023,7 +1023,7 @@ export function createCmsTools(
             componentApi.contentEntries.getBySlug,
             {
               slug: args.slug,
-              contentTypeId: args.contentTypeId as any,
+              contentTypeId: args.contentTypeId ,
             }
           );
           return result;
@@ -1057,7 +1057,7 @@ export function createCmsTools(
       const result = await ctx.runMutation(
         componentApi.contentEntryMutations.restoreEntry,
         {
-          id: args.id as any,
+          id: args.id ,
           updatedBy: args.updatedBy ?? defaultUserId,
         }
       );
@@ -1082,8 +1082,8 @@ export function createCmsTools(
         componentApi.mediaAssetMutations.createMediaAsset,
         {
           ...args,
-          storageId: args.storageId as any,
-          folderId: args.folderId as any,
+          storageId: args.storageId ,
+          folderId: args.folderId ,
           createdBy: args.createdBy ?? defaultUserId,
         }
       );
@@ -1103,8 +1103,8 @@ export function createCmsTools(
         componentApi.mediaAssetMutations.updateMediaAsset,
         {
           ...args,
-          id: args.id as any,
-          folderId: args.folderId as any,
+          id: args.id ,
+          folderId: args.folderId ,
         }
       );
       return result;
@@ -1120,7 +1120,7 @@ export function createCmsTools(
     args: listMediaAssetsArgsSchema,
     handler: async (ctx, args) => {
       const result = await ctx.runQuery(componentApi.mediaAssets.list, {
-        folderId: args.folderId as any,
+        folderId: args.folderId ,
         type: args.type,
         mimeType: args.mimeType,
         search: args.search,
@@ -1142,7 +1142,7 @@ export function createCmsTools(
     args: getMediaAssetArgsSchema,
     handler: async (ctx, args) => {
       const result = await ctx.runQuery(componentApi.mediaAssets.get, {
-        id: args.id as any,
+        id: args.id ,
       });
       return result;
     },
@@ -1159,7 +1159,7 @@ export function createCmsTools(
       const result = await ctx.runMutation(
         componentApi.mediaAssetMutations.deleteMediaAsset,
         {
-          id: args.id as any,
+          id: args.id ,
           deletedBy: args.deletedBy ?? defaultUserId,
           hardDelete: args.hardDelete,
         }
@@ -1184,7 +1184,7 @@ export function createCmsTools(
       const result = await ctx.runMutation(
         componentApi.bulkOperations.bulkPublish,
         {
-          ids: args.ids as any[],
+          ids: args.ids,
           changeDescription: args.changeDescription,
           updatedBy: args.updatedBy ?? defaultUserId,
         }
@@ -1204,7 +1204,7 @@ export function createCmsTools(
       const result = await ctx.runMutation(
         componentApi.bulkOperations.bulkUnpublish,
         {
-          ids: args.ids as any[],
+          ids: args.ids,
           updatedBy: args.updatedBy ?? defaultUserId,
         }
       );
@@ -1224,7 +1224,7 @@ export function createCmsTools(
       const result = await ctx.runMutation(
         componentApi.bulkOperations.bulkDelete,
         {
-          ids: args.ids as any[],
+          ids: args.ids,
           deletedBy: args.deletedBy ?? defaultUserId,
           hardDelete: args.hardDelete,
         }
@@ -1247,7 +1247,7 @@ export function createCmsTools(
     args: searchContentArgsSchema,
     handler: async (ctx, args) => {
       const result = await ctx.runQuery(componentApi.contentEntries.list, {
-        contentTypeId: args.contentTypeId as any,
+        contentTypeId: args.contentTypeId ,
         contentTypeName: args.contentTypeName,
         status: args.status,
         search: args.query,

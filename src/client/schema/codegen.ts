@@ -21,7 +21,7 @@
 
 import type { ConvexContext } from "../wrapper.js";
 import type { EnhancedCmsClient } from "../wrapper.js";
-import type { ContentType, FieldDefinition, FieldType } from "../types.js";
+import type { ContentType, FieldDefinition } from "../types.js";
 
 // =============================================================================
 // Types
@@ -324,9 +324,10 @@ function fieldTypeToTsType(field: FieldDefinition): string {
     case "select":
       return generateSelectUnion(field.options?.options);
 
-    case "multiSelect":
+    case "multiSelect": {
       const unionType = generateSelectUnion(field.options?.options);
       return `(${unionType})[]`;
+    }
 
     case "json":
       return "unknown";
@@ -392,7 +393,6 @@ export function generateTypesFromDefinitions(
     includeJsDoc = true,
     exclude = [],
     includeNameUnion = true,
-    includeDiscriminatedUnion = false,
     typeSuffix = "Data",
     allOptional = false,
   } = options;

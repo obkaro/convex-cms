@@ -16,7 +16,7 @@
  *     title: v.string(),
  *     slug: v.string(),
  *     content: v.string(),
- *     author: v.id("content_entries"),
+ *     author: v.id("contentEntries"),
  *     category: v.optional(v.union(v.literal("tech"), v.literal("news"))),
  *     publishedAt: v.optional(v.number()),
  *   }),
@@ -219,7 +219,7 @@ export function createContentSchema<
   const byName = new Map<string, ContentTypeDefinition>();
   const names: string[] = [];
 
-  for (const [key, def] of Object.entries(definitions)) {
+  for (const [_key, def] of Object.entries(definitions)) {
     if (byName.has(def.name)) {
       throw new Error(
         `Duplicate content type name "${def.name}" in schema. ` +
@@ -300,7 +300,7 @@ export interface ContentSchemaInstance<
 
 /**
  * Field definition format expected by the CMS database.
- * This is the format stored in content_types.fields.
+ * This is the format stored in contentTypes.fields.
  */
 export interface DatabaseFieldDefinition {
   name: string;
@@ -431,7 +431,7 @@ function inferFieldType(validatorType: string): string {
  * Build field options from extracted field info and metadata.
  *
  * This function maps all FieldMeta options to the database field options format.
- * The options object is stored in content_types.fields[].options and is used
+ * The options object is stored in contentTypes.fields[].options and is used
  * for validation and UI rendering.
  *
  * @internal

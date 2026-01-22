@@ -28,7 +28,7 @@
  * ```
  */
 
-import type { Infer, Validator } from "convex/values";
+import type { Validator } from "convex/values";
 
 // =============================================================================
 // Field Metadata Types
@@ -479,7 +479,7 @@ export interface ContentTypeConfig<
    * validator: v.object({
    *   title: v.string(),
    *   content: v.string(),
-   *   author: v.id("content_entries"),
+   *   author: v.id("contentEntries"),
    * })
    * ```
    */
