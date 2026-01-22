@@ -26,69 +26,71 @@ export type MultipleMediaReferences = string[];
 /**
  * Media field value - either single or multiple based on field configuration
  */
-export type MediaReferenceValue = SingleMediaReference | MultipleMediaReferences;
+export type MediaReferenceValue =
+	| SingleMediaReference
+	| MultipleMediaReferences;
 
 /**
  * A resolved media reference with full asset data
  */
 export interface ResolvedMediaReference {
-  /** The media asset ID */
-  id: string;
-  /** The storage ID for the file */
-  storageId: string;
-  /** The resolved public URL for the asset */
-  url: string | null;
-  /** Original filename */
-  filename: string;
-  /** MIME type of the file */
-  mimeType: string;
-  /** File size in bytes */
-  size: number;
-  /** Classified media type */
-  type: "image" | "video" | "audio" | "document" | "other";
-  /** Human-readable title */
-  title?: string;
-  /** Description/caption */
-  description?: string;
-  /** Alt text for accessibility */
-  altText?: string;
-  /** Image dimensions (if applicable) */
-  width?: number;
-  height?: number;
-  /** Duration in seconds (for video/audio) */
-  duration?: number;
-  /** Whether the asset exists and is not deleted */
-  exists: boolean;
+	/** The media asset ID */
+	id: string;
+	/** The storage ID for the file */
+	storageId: string;
+	/** The resolved public URL for the asset */
+	url: string | null;
+	/** Original filename */
+	filename: string;
+	/** MIME type of the file */
+	mimeType: string;
+	/** File size in bytes */
+	size: number;
+	/** Classified media type */
+	type: "image" | "video" | "audio" | "document" | "other";
+	/** Human-readable title */
+	title?: string;
+	/** Description/caption */
+	description?: string;
+	/** Alt text for accessibility */
+	altText?: string;
+	/** Image dimensions (if applicable) */
+	width?: number;
+	height?: number;
+	/** Duration in seconds (for video/audio) */
+	duration?: number;
+	/** Whether the asset exists and is not deleted */
+	exists: boolean;
 }
 
 /**
  * Options for resolving media references
  */
 export interface MediaResolveOptions {
-  /** Include soft-deleted assets (default: false) */
-  includeDeleted?: boolean;
+	/** Include soft-deleted assets (default: false) */
+	includeDeleted?: boolean;
 }
 
 /**
  * Result of a media resolution operation
  */
 export interface MediaResolveResult {
-  /** Successfully resolved media references */
-  resolved: ResolvedMediaReference[];
-  /** IDs that could not be resolved (not found or deleted) */
-  unresolved: string[];
+	/** Successfully resolved media references */
+	resolved: ResolvedMediaReference[];
+	/** IDs that could not be resolved (not found or deleted) */
+	unresolved: string[];
 }
 
 /**
  * Result of validating a media reference
  */
 export interface MediaValidationResult {
-  /** Whether the reference is valid */
-  valid: boolean;
-  /** Error message if not valid */
-  error?: string;
-  /** The MIME type of the referenced asset (if found) */
-  mimeType?: string;
+	/** Whether the reference is valid */
+	valid: boolean;
+	/** Error message if not valid */
+	error?: string;
+	/** The MIME type of the referenced asset (if found) */
+	mimeType?: string;
 }
 
 // =============================================================================
@@ -114,48 +116,48 @@ export interface MediaValidationResult {
  * ```
  */
 export async function resolveMediaReference(
-  ctx: QueryCtx,
-  mediaId: string,
-  options: MediaResolveOptions = {}
+	ctx: QueryCtx,
+	mediaId: string,
+	options: MediaResolveOptions = {},
 ): Promise<ResolvedMediaReference | null> {
-  const { includeDeleted = false } = options;
+	const { includeDeleted = false } = options;
 
-  try {
-    // Get the media asset
-    const asset = await ctx.db.get(mediaId as Id<"media_assets">);
+	try {
+		// Get the media asset
+		const asset = await ctx.db.get(mediaId as Id<"mediaAssets">);
 
-    if (!asset) {
-      return null;
-    }
+		if (!asset) {
+			return null;
+		}
 
-    // Check soft-delete status
-    if (!includeDeleted && asset.deletedAt !== undefined) {
-      return null;
-    }
+		// Check soft-delete status
+		if (!includeDeleted && asset.deletedAt !== undefined) {
+			return null;
+		}
 
-    // Resolve the storage URL
-    const url = await ctx.storage.getUrl(asset.storageId);
+		// Resolve the storage URL
+		const url = await ctx.storage.getUrl(asset.storageId);
 
-    return {
-      id: mediaId,
-      storageId: asset.storageId,
-      url,
-      filename: asset.filename,
-      mimeType: asset.mimeType,
-      size: asset.size,
-      type: asset.type,
-      title: asset.title,
-      description: asset.description,
-      altText: asset.altText,
-      width: asset.width,
-      height: asset.height,
-      duration: asset.duration,
-      exists: true,
-    };
-  } catch {
-    // Invalid ID format or other error
-    return null;
-  }
+		return {
+			id: mediaId,
+			storageId: asset.storageId,
+			url,
+			filename: asset.filename,
+			mimeType: asset.mimeType,
+			size: asset.size,
+			type: asset.type,
+			title: asset.title,
+			description: asset.description,
+			altText: asset.altText,
+			width: asset.width,
+			height: asset.height,
+			duration: asset.duration,
+			exists: true,
+		};
+	} catch {
+		// Invalid ID format or other error
+		return null;
+	}
 }
 
 /**
@@ -180,30 +182,30 @@ export async function resolveMediaReference(
  * ```
  */
 export async function resolveMediaReferences(
-  ctx: QueryCtx,
-  mediaIds: string[],
-  options: MediaResolveOptions = {}
+	ctx: QueryCtx,
+	mediaIds: string[],
+	options: MediaResolveOptions = {},
 ): Promise<MediaResolveResult> {
-  const resolved: ResolvedMediaReference[] = [];
-  const unresolved: string[] = [];
+	const resolved: ResolvedMediaReference[] = [];
+	const unresolved: string[] = [];
 
-  // Resolve each reference in parallel for efficiency
-  const promises = mediaIds.map(async (id) => {
-    const result = await resolveMediaReference(ctx, id, options);
-    return { id, result };
-  });
+	// Resolve each reference in parallel for efficiency
+	const promises = mediaIds.map(async (id) => {
+		const result = await resolveMediaReference(ctx, id, options);
+		return { id, result };
+	});
 
-  const results = await Promise.all(promises);
+	const results = await Promise.all(promises);
 
-  for (const { id, result } of results) {
-    if (result) {
-      resolved.push(result);
-    } else {
-      unresolved.push(id);
-    }
-  }
+	for (const { id, result } of results) {
+		if (result) {
+			resolved.push(result);
+		} else {
+			unresolved.push(id);
+		}
+	}
 
-  return { resolved, unresolved };
+	return { resolved, unresolved };
 }
 
 // =============================================================================
@@ -228,48 +230,53 @@ export async function resolveMediaReferences(
  * ```
  */
 export async function isValidMediaReference(
-  ctx: QueryCtx,
-  mediaId: string,
-  allowedMimeTypes?: string[]
+	ctx: QueryCtx,
+	mediaId: string,
+	allowedMimeTypes?: string[],
 ): Promise<MediaValidationResult> {
-  try {
-    // Get the media asset
-    const asset = await ctx.db.get(mediaId as Id<"media_assets">);
+	try {
+		// Get the media asset
+		const asset = await ctx.db.get(mediaId as Id<"mediaAssets">);
 
-    if (!asset) {
-      return { valid: false, error: `Media asset not found: ${mediaId}` };
-    }
+		if (!asset) {
+			return { valid: false, error: `Media asset not found: ${mediaId}` };
+		}
 
-    // Check soft-delete status
-    if (asset.deletedAt !== undefined) {
-      return { valid: false, error: `Media asset has been deleted: ${mediaId}` };
-    }
+		// Check soft-delete status
+		if (asset.deletedAt !== undefined) {
+			return {
+				valid: false,
+				error: `Media asset has been deleted: ${mediaId}`,
+			};
+		}
 
-    // If MIME type constraints specified, check them
-    if (allowedMimeTypes && allowedMimeTypes.length > 0) {
-      // Support wildcard patterns like "image/*"
-      const isAllowed = allowedMimeTypes.some((pattern) => {
-        if (pattern.endsWith("/*")) {
-          // Wildcard pattern: "image/*" matches "image/jpeg", "image/png", etc.
-          const prefix = pattern.slice(0, -1); // Remove the trailing "*"
-          return asset.mimeType.startsWith(prefix);
-        }
-        return asset.mimeType === pattern;
-      });
+		// If MIME type constraints specified, check them
+		if (allowedMimeTypes && allowedMimeTypes.length > 0) {
+			// Support wildcard patterns like "image/*"
+			const isAllowed = allowedMimeTypes.some((pattern) => {
+				if (pattern.endsWith("/*")) {
+					// Wildcard pattern: "image/*" matches "image/jpeg", "image/png", etc.
+					const prefix = pattern.slice(0, -1); // Remove the trailing "*"
+					return asset.mimeType.startsWith(prefix);
+				}
+				return asset.mimeType === pattern;
+			});
 
-      if (!isAllowed) {
-        return {
-          valid: false,
-          error: `Media asset MIME type "${asset.mimeType}" is not allowed. Expected: ${allowedMimeTypes.join(", ")}`,
-          mimeType: asset.mimeType,
-        };
-      }
-    }
+			if (!isAllowed) {
+				return {
+					valid: false,
+					error: `Media asset MIME type "${
+						asset.mimeType
+					}" is not allowed. Expected: ${allowedMimeTypes.join(", ")}`,
+					mimeType: asset.mimeType,
+				};
+			}
+		}
 
-    return { valid: true, mimeType: asset.mimeType };
-  } catch {
-    return { valid: false, error: `Invalid media asset ID format: ${mediaId}` };
-  }
+		return { valid: true, mimeType: asset.mimeType };
+	} catch {
+		return { valid: false, error: `Invalid media asset ID format: ${mediaId}` };
+	}
 }
 
 /**
@@ -293,68 +300,72 @@ export async function isValidMediaReference(
  * ```
  */
 export async function validateAllMediaReferences(
-  ctx: QueryCtx,
-  data: Record<string, unknown>,
-  fields: Array<{
-    name: string;
-    type: string;
-    options?: {
-      allowedMimeTypes?: string[];
-      multiple?: boolean;
-    };
-  }>
+	ctx: QueryCtx,
+	data: Record<string, unknown>,
+	fields: Array<{
+		name: string;
+		type: string;
+		options?: {
+			allowedMimeTypes?: string[];
+			multiple?: boolean;
+		};
+	}>,
 ): Promise<{ valid: boolean; errors: string[] }> {
-  const errors: string[] = [];
+	const errors: string[] = [];
 
-  // Find all media fields
-  const mediaFields = fields.filter((f) => f.type === "media");
+	// Find all media fields
+	const mediaFields = fields.filter((f) => f.type === "media");
 
-  for (const field of mediaFields) {
-    const value = data[field.name];
+	for (const field of mediaFields) {
+		const value = data[field.name];
 
-    if (value === null || value === undefined) {
-      continue; // Skip empty values (required validation is separate)
-    }
+		if (value === null || value === undefined) {
+			continue; // Skip empty values (required validation is separate)
+		}
 
-    const allowedMimeTypes = field.options?.allowedMimeTypes;
-    const multiple = field.options?.multiple ?? false;
+		const allowedMimeTypes = field.options?.allowedMimeTypes;
+		const multiple = field.options?.multiple ?? false;
 
-    if (multiple) {
-      // Validate array of media references (gallery)
-      if (!Array.isArray(value)) {
-        errors.push(`${field.name}: Expected array of media asset IDs`);
-        continue;
-      }
+		if (multiple) {
+			// Validate array of media references (gallery)
+			if (!Array.isArray(value)) {
+				errors.push(`${field.name}: Expected array of media asset IDs`);
+				continue;
+			}
 
-      for (const mediaId of value) {
-        if (typeof mediaId !== "string") {
-          errors.push(`${field.name}: Invalid media asset ID type`);
-          continue;
-        }
+			for (const mediaId of value) {
+				if (typeof mediaId !== "string") {
+					errors.push(`${field.name}: Invalid media asset ID type`);
+					continue;
+				}
 
-        const check = await isValidMediaReference(ctx, mediaId, allowedMimeTypes);
-        if (!check.valid) {
-          errors.push(`${field.name}: ${check.error}`);
-        }
-      }
-    } else {
-      // Validate single media reference
-      if (typeof value !== "string") {
-        errors.push(`${field.name}: Expected string media asset ID`);
-        continue;
-      }
+				const check = await isValidMediaReference(
+					ctx,
+					mediaId,
+					allowedMimeTypes,
+				);
+				if (!check.valid) {
+					errors.push(`${field.name}: ${check.error}`);
+				}
+			}
+		} else {
+			// Validate single media reference
+			if (typeof value !== "string") {
+				errors.push(`${field.name}: Expected string media asset ID`);
+				continue;
+			}
 
-      const check = await isValidMediaReference(ctx, value, allowedMimeTypes);
-      if (!check.valid) {
-        errors.push(`${field.name}: ${check.error}`);
-      }
-    }
-  }
+			const check = await isValidMediaReference(ctx, value, allowedMimeTypes);
+			if (!check.valid) {
+				errors.push(`${field.name}: ${check.error}`);
+			}
+		}
+	}
 
-  return {
-    valid: errors.length === 0,
-    errors,
-  };
+	return {
+		valid: errors.length === 0,
+		errors,
+	};
 }
 
 // =============================================================================
@@ -369,34 +380,38 @@ export async function validateAllMediaReferences(
  * @returns Array of all media asset IDs found in the data
  */
 export function extractMediaIds(
-  data: Record<string, unknown>,
-  fields: Array<{ name: string; type: string; options?: { multiple?: boolean } }>
+	data: Record<string, unknown>,
+	fields: Array<{
+		name: string;
+		type: string;
+		options?: { multiple?: boolean };
+	}>,
 ): string[] {
-  const ids: string[] = [];
+	const ids: string[] = [];
 
-  const mediaFields = fields.filter((f) => f.type === "media");
+	const mediaFields = fields.filter((f) => f.type === "media");
 
-  for (const field of mediaFields) {
-    const value = data[field.name];
+	for (const field of mediaFields) {
+		const value = data[field.name];
 
-    if (value === null || value === undefined) {
-      continue;
-    }
+		if (value === null || value === undefined) {
+			continue;
+		}
 
-    const multiple = field.options?.multiple ?? false;
+		const multiple = field.options?.multiple ?? false;
 
-    if (multiple && Array.isArray(value)) {
-      for (const id of value) {
-        if (typeof id === "string") {
-          ids.push(id);
-        }
-      }
-    } else if (typeof value === "string") {
-      ids.push(value);
-    }
-  }
+		if (multiple && Array.isArray(value)) {
+			for (const id of value) {
+				if (typeof id === "string") {
+					ids.push(id);
+				}
+			}
+		} else if (typeof value === "string") {
+			ids.push(value);
+		}
+	}
 
-  return ids;
+	return ids;
 }
 
 /**
@@ -409,20 +424,20 @@ export function extractMediaIds(
  * @returns The MIME type or null if not found
  */
 export async function getMediaMimeType(
-  ctx: QueryCtx,
-  mediaId: string
+	ctx: QueryCtx,
+	mediaId: string,
 ): Promise<string | null> {
-  try {
-    const asset = await ctx.db.get(mediaId as Id<"media_assets">);
+	try {
+		const asset = await ctx.db.get(mediaId as Id<"mediaAssets">);
 
-    if (!asset || asset.deletedAt !== undefined) {
-      return null;
-    }
+		if (!asset || asset.deletedAt !== undefined) {
+			return null;
+		}
 
-    return asset.mimeType;
-  } catch {
-    return null;
-  }
+		return asset.mimeType;
+	} catch {
+		return null;
+	}
 }
 
 /**
@@ -439,12 +454,15 @@ export async function getMediaMimeType(
  * matchesMimeTypePattern("image/jpeg", "video/*"); // false
  * ```
  */
-export function matchesMimeTypePattern(mimeType: string, pattern: string): boolean {
-  if (pattern.endsWith("/*")) {
-    const prefix = pattern.slice(0, -1);
-    return mimeType.startsWith(prefix);
-  }
-  return mimeType === pattern;
+export function matchesMimeTypePattern(
+	mimeType: string,
+	pattern: string,
+): boolean {
+	if (pattern.endsWith("/*")) {
+		const prefix = pattern.slice(0, -1);
+		return mimeType.startsWith(prefix);
+	}
+	return mimeType === pattern;
 }
 
 /**
@@ -454,6 +472,9 @@ export function matchesMimeTypePattern(mimeType: string, pattern: string): boole
  * @param patterns - Array of patterns to match against
  * @returns Whether the MIME type matches any pattern
  */
-export function matchesAnyMimeTypePattern(mimeType: string, patterns: string[]): boolean {
-  return patterns.some((pattern) => matchesMimeTypePattern(mimeType, pattern));
+export function matchesAnyMimeTypePattern(
+	mimeType: string,
+	patterns: string[],
+): boolean {
+	return patterns.some((pattern) => matchesMimeTypePattern(mimeType, pattern));
 }

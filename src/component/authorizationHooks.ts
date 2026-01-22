@@ -596,7 +596,7 @@ export function createContentEntryAuthContext(
   entry?: { _id: unknown; createdBy?: string; contentTypeId: unknown },
   contentType?: { _id: unknown; name: string },
   operationData?: Record<string, unknown>
-): AuthorizationHookContext {
+): Omit<AuthorizationHookContext, "ctx"> {
   return {
     operation,
     userId,

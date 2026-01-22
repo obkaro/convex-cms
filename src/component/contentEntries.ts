@@ -10,7 +10,8 @@
 import { v, type Infer } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
 import { stream } from "convex-helpers/server/stream";
-import { query } from "./_generated/server.js";
+import { query, type QueryCtx } from "./_generated/server.js";
+import type { Id } from "./_generated/dataModel.js";
 import {
   contentEntryDoc,
   contentVersionDoc,
@@ -317,7 +318,7 @@ function deepEquals(a: unknown, b: unknown): boolean {
  */
 const getContentEntryArgs = v.object({
   /** The ID of the content entry to retrieve */
-  id: v.id("content_entries"),
+  id: v.id("contentEntries"),
   /** Whether to include the latest version info in the response */
   includeVersion: v.optional(v.boolean()),
 });
@@ -380,7 +381,7 @@ export const get = query({
     // If version info is requested, fetch the latest version
     if (args.includeVersion) {
       const latestVersion = await ctx.db
-        .query("content_versions")
+        .query("contentVersions")
         .withIndex("by_entry_and_version", (q) =>
           q.eq("entryId", args.id).eq("versionNumber", entry.version)
         )
@@ -409,7 +410,7 @@ export const get = query({
  */
 const getBySlugArgs = v.object({
   /** The ID of the content type to search within */
-  contentTypeId: v.id("content_types"),
+  contentTypeId: v.id("contentTypes"),
   /** The URL-friendly slug to look up */
   slug: v.string(),
   /** Optional status filter (e.g., "published" for public content) */
@@ -475,7 +476,7 @@ export const getBySlug = query({
     // Query using the compound index for efficient lookup
     // The by_content_type_and_slug index enables O(1) lookups
     const entry = await ctx.db
-      .query("content_entries")
+      .query("contentEntries")
       .withIndex("by_content_type_and_slug", (q) =>
         q.eq("contentTypeId", contentTypeId).eq("slug", slug)
       )
@@ -540,7 +541,7 @@ export const getBySlugAndTypeName = query({
 
     // First, look up the content type by name using the by_name index
     const contentType = await ctx.db
-      .query("content_types")
+      .query("contentTypes")
       .withIndex("by_name", (q) => q.eq("name", contentTypeName))
       .first();
 
@@ -557,7 +558,7 @@ export const getBySlugAndTypeName = query({
 
     // Query the entry using the compound index
     const entry = await ctx.db
-      .query("content_entries")
+      .query("contentEntries")
       .withIndex("by_content_type_and_slug", (q) =>
         q.eq("contentTypeId", contentType._id).eq("slug", slug)
       )
@@ -602,7 +603,7 @@ const MAX_NUM_ITEMS = 250;
  */
 const listContentEntriesArgs = v.object({
   /** Filter by content type ID */
-  contentTypeId: v.optional(v.id("content_types")),
+  contentTypeId: v.optional(v.id("contentTypes")),
   /** Filter by content type name (alternative to contentTypeId) */
   contentTypeName: v.optional(v.string()),
   /** Filter by a single entry status (draft, published, archived, scheduled) */
@@ -849,7 +850,7 @@ export const list = query({
     let resolvedContentTypeId = contentTypeId;
     if (!resolvedContentTypeId && contentTypeName) {
       const contentType = await ctx.db
-        .query("content_types")
+        .query("contentTypes")
         .withIndex("by_name", (q) => q.eq("name", contentTypeName))
         .first();
 
@@ -975,10 +976,10 @@ function sortEntries(entries: any[], sortOptions: SortOptions): any[] {
  * apply status filtering in post-processing.
  */
 async function handleSearchQuery(
-  ctx: any,
+  ctx: QueryCtx,
   args: {
     search: string;
-    contentTypeId?: any;
+    contentTypeId?: Id<"contentTypes">;
     statuses?: string[];
     locale?: string;
     includeDeleted: boolean;
@@ -996,8 +997,8 @@ async function handleSearchQuery(
 
   // Build search query with filter fields
   // The search_content index supports filtering by contentTypeId, status, and locale
-  let searchQuery = ctx.db
-    .query("content_entries")
+  const searchQuery = ctx.db
+    .query("contentEntries")
     .withSearchIndex("search_content", (q: any) => {
       let query = q.search("searchText", search);
 
@@ -1092,9 +1093,9 @@ async function handleSearchQuery(
  *   which requires fetching more results upfront
  */
 async function handlePaginatorQuery(
-  ctx: any,
+  ctx: QueryCtx,
   args: {
-    contentTypeId?: any;
+    contentTypeId?: Id<"contentTypes">;
     statuses?: string[];
     locale?: string;
     includeDeleted: boolean;
@@ -1118,30 +1119,30 @@ async function handlePaginatorQuery(
   if (contentTypeId && singleStatus) {
     // Use compound index for content type + single status filtering
     baseQuery = streamDb
-      .query("content_entries")
+      .query("contentEntries")
       .withIndex("by_content_type_and_status", (q) =>
-        q.eq("contentTypeId", contentTypeId).eq("status", singleStatus as any)
+        q.eq("contentTypeId", contentTypeId).eq("status", singleStatus as "draft" | "published" | "archived" | "scheduled")
       );
   } else if (contentTypeId) {
     // Use content type index
     baseQuery = streamDb
-      .query("content_entries")
+      .query("contentEntries")
       .withIndex("by_content_type", (q) =>
         q.eq("contentTypeId", contentTypeId)
       );
   } else if (singleStatus) {
     // Use status index for single status
     baseQuery = streamDb
-      .query("content_entries")
-      .withIndex("by_status", (q) => q.eq("status", singleStatus as any));
+      .query("contentEntries")
+      .withIndex("by_status", (q) => q.eq("status", singleStatus as "draft" | "published" | "archived" | "scheduled"));
   } else if (locale) {
     // Use locale index
     baseQuery = streamDb
-      .query("content_entries")
+      .query("contentEntries")
       .withIndex("by_locale", (q) => q.eq("locale", locale));
   } else {
     // No specific filter - use creation time index (most efficient for full scans)
-    baseQuery = streamDb.query("content_entries");
+    baseQuery = streamDb.query("contentEntries");
   }
 
   // Check if field filters are present
@@ -1244,12 +1245,14 @@ async function handlePaginatorQuery(
  * and then implements cursor-based pagination on the sorted results.
  */
 async function handleCustomSortQuery(
-  ctx: any,
+  _ctx: QueryCtx,
   args: {
+    // Stream query from convex-helpers - complex generic type, kept untyped for simplicity
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     orderedQuery: any;
     statuses?: string[];
     locale?: string;
-    contentTypeId?: any;
+    contentTypeId?: Id<"contentTypes">;
     singleStatus?: string;
     includeDeleted: boolean;
     fieldFilters?: FieldFilter[];
@@ -1278,7 +1281,8 @@ async function handleCustomSortQuery(
   const fetchLimit = (numItems + 1) * fetchMultiplier;
 
   // Collect results from the stream
-  const allResults: any[] = [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const _allResults: any[] = [];
   let hasMore = false;
 
   // Use filterWith to apply filters while collecting results
@@ -1315,7 +1319,7 @@ async function handleCustomSortQuery(
   // Fetch limited results
   const result = await filteredQuery.paginate({
     numItems: fetchLimit,
-    cursor: undefined, // Always start from beginning for custom sort
+    cursor: null, // Always start from beginning for custom sort
     maximumRowsRead: fetchLimit * 2,
   });
 
@@ -1363,7 +1367,7 @@ async function handleCustomSortQuery(
  */
 const versionHistoryArgs = v.object({
   /** The ID of the content entry to get version history for */
-  entryId: v.id("content_entries"),
+  entryId: v.id("contentEntries"),
   /** Standard pagination options */
   paginationOpts: paginationOptsValidator,
 });
@@ -1469,7 +1473,7 @@ export const getVersionHistory = query({
     // Query versions using the by_entry index, ordered by creation time descending
     // This gives us newest versions first
     const result = await streamDb
-      .query("content_versions")
+      .query("contentVersions")
       .withIndex("by_entry", (q) => q.eq("entryId", entryId))
       .order("desc")
       .paginate(clampedPaginationOpts);
@@ -1542,8 +1546,8 @@ export const getVersionHistory = query({
  */
 export const getVersion = query({
   args: {
-    entryId: v.id("content_entries"),
-    versionId: v.optional(v.id("content_versions")),
+    entryId: v.id("contentEntries"),
+    versionId: v.optional(v.id("contentVersions")),
     versionNumber: v.optional(v.number()),
   },
   returns: v.union(contentVersionDoc, v.null()),
@@ -1583,7 +1587,7 @@ export const getVersion = query({
     // Lookup by version number (compound index query)
     if (versionNumber !== undefined) {
       const version = await ctx.db
-        .query("content_versions")
+        .query("contentVersions")
         .withIndex("by_entry_and_version", (q) =>
           q.eq("entryId", entryId).eq("versionNumber", versionNumber)
         )
@@ -1744,13 +1748,13 @@ export const compareVersions = query({
     // Fetch both versions using the compound index
     const [fromVersion, toVersion] = await Promise.all([
       ctx.db
-        .query("content_versions")
+        .query("contentVersions")
         .withIndex("by_entry_and_version", (q) =>
           q.eq("entryId", entryId).eq("versionNumber", fromVersionNumber)
         )
         .first(),
       ctx.db
-        .query("content_versions")
+        .query("contentVersions")
         .withIndex("by_entry_and_version", (q) =>
           q.eq("entryId", entryId).eq("versionNumber", toVersionNumber)
         )
@@ -1830,7 +1834,7 @@ export const compareVersions = query({
  */
 const countContentEntriesArgs = v.object({
   /** Filter by content type ID */
-  contentTypeId: v.optional(v.id("content_types")),
+  contentTypeId: v.optional(v.id("contentTypes")),
   /** Filter by content type name (alternative to contentTypeId) */
   contentTypeName: v.optional(v.string()),
   /** Filter by a single entry status */
@@ -1906,7 +1910,7 @@ export const count = query({
     let resolvedContentTypeId = contentTypeId;
     if (!resolvedContentTypeId && contentTypeName) {
       const contentType = await ctx.db
-        .query("content_types")
+        .query("contentTypes")
         .withIndex("by_name", (q) => q.eq("name", contentTypeName))
         .first();
 
@@ -1927,25 +1931,25 @@ export const count = query({
     if (resolvedContentTypeId && singleStatus) {
       // Use compound index for content type + single status filtering
       queryBuilder = ctx.db
-        .query("content_entries")
+        .query("contentEntries")
         .withIndex("by_content_type_and_status", (q) =>
-          q.eq("contentTypeId", resolvedContentTypeId!).eq("status", singleStatus as any)
+          q.eq("contentTypeId", resolvedContentTypeId!).eq("status", singleStatus as "draft" | "published" | "archived" | "scheduled")
         );
     } else if (resolvedContentTypeId) {
       // Use content type index
       queryBuilder = ctx.db
-        .query("content_entries")
+        .query("contentEntries")
         .withIndex("by_content_type", (q) =>
           q.eq("contentTypeId", resolvedContentTypeId!)
         );
     } else if (singleStatus) {
       // Use status index for single status
       queryBuilder = ctx.db
-        .query("content_entries")
-        .withIndex("by_status", (q) => q.eq("status", singleStatus as any));
+        .query("contentEntries")
+        .withIndex("by_status", (q) => q.eq("status", singleStatus as "draft" | "published" | "archived" | "scheduled"));
     } else {
       // No specific filter - full table scan
-      queryBuilder = ctx.db.query("content_entries");
+      queryBuilder = ctx.db.query("contentEntries");
     }
 
     // Count entries by iterating through the query results

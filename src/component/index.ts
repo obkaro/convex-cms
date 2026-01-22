@@ -825,7 +825,7 @@ export {
 //   - avif: AVIF format conversion (original dimensions)
 //
 // Variant workflow:
-//   1. Upload original image to media_assets
+//   1. Upload original image to mediaAssets
 //   2. Call generateFromPresets() to queue variants for processing
 //   3. External processor picks up pending variants from getPendingVariants()
 //   4. Processor generates image, uploads to storage, calls completeVariant()
@@ -1065,10 +1065,10 @@ export {
 //   - triggerWebhookCheck: Scheduler entry point
 //
 // Webhook workflow:
-//   1. Content mutation emits event to cms_events table
+//   1. Content mutation emits event to cmsEvents table
 //   2. Background job polls for unprocessed events
 //   3. For each event, matching webhooks are found
-//   4. Delivery records are created in webhook_deliveries table
+//   4. Delivery records are created in webhookDeliveries table
 //   5. HTTP POST requests are sent to webhook URLs
 //   6. Success/failure tracked with automatic retry for failures
 //

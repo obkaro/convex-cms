@@ -46,6 +46,7 @@ import type {
   GetUserRoleResult,
   AuthorizationHookContext,
   CmsOperation,
+  CmsHookContext,
 } from "../client/types.js";
 
 import { getRole, type RoleDefinition, type RoleName } from "./roles.js";
@@ -149,6 +150,12 @@ export interface UserContext {
  * Options for creating a user context.
  */
 export interface CreateUserContextOptions {
+  /**
+   * The CMS hook context (provides db and auth access for hooks).
+   * Required when using getUserRole hook.
+   */
+  ctx?: CmsHookContext;
+
   /**
    * The raw user context input.
    */
@@ -401,17 +408,19 @@ export function validateUserContextInput(
 /**
  * Resolve the user's CMS role using the getUserRole hook.
  *
+ * @param ctx - The CMS hook context (provides db and auth access)
  * @param userId - The user ID to look up
  * @param getUserRole - The getUserRole hook from configuration
  * @returns The resolved role name or null
  *
  * @example
  * ```typescript
- * const role = await resolveUserRole("user_123", config.getUserRole);
+ * const role = await resolveUserRole(ctx, "user_123", config.getUserRole);
  * console.log(role); // "editor" or null
  * ```
  */
 export async function resolveUserRole(
+  ctx: CmsHookContext,
   userId: string,
   getUserRole?: GetUserRoleHook
 ): Promise<GetUserRoleResult> {
@@ -421,7 +430,7 @@ export async function resolveUserRole(
 
   try {
     const context: GetUserRoleContext = { userId };
-    return await getUserRole(context);
+    return await getUserRole(ctx, context);
   } catch (error) {
     // Re-throw with context for better error handling
     const message = error instanceof Error ? error.message : "Unknown error";
@@ -471,6 +480,7 @@ export async function createUserContext(
   options: CreateUserContextOptions
 ): Promise<UserContext> {
   const {
+    ctx,
     input,
     getUserRole,
     customRoles,
@@ -499,9 +509,9 @@ export async function createUserContext(
   if (input.role !== undefined && input.role !== null) {
     // Use pre-provided role
     role = input.role;
-  } else if (userId && getUserRole) {
+  } else if (userId && getUserRole && ctx) {
     // Resolve role via hook
-    role = await resolveUserRole(userId, getUserRole);
+    role = await resolveUserRole(ctx, userId, getUserRole);
   }
 
   // Validate resolved role
@@ -694,7 +704,7 @@ export function buildAuthorizationContext(
     contentTypeName?: string;
     operationData?: Record<string, unknown>;
   }
-): AuthorizationHookContext {
+): Omit<AuthorizationHookContext, "ctx"> {
   return {
     operation,
     userId: userContext.userId,

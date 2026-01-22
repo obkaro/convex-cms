@@ -2,7 +2,7 @@
  * Event Emitter Module
  *
  * Internal system to emit events on content changes (created, updated, published, deleted).
- * Events are stored in the cms_events table for async processing by external systems,
+ * Events are stored in the cmsEvents table for async processing by external systems,
  * webhooks, audit logging, and other integrations.
  *
  * Design Philosophy:
@@ -26,7 +26,7 @@
  */
 
 import { v } from "convex/values";
-import { mutation, query, internalMutation } from "./_generated/server.js";
+import { mutation, query, internalMutation, MutationCtx } from "./_generated/server.js";
 
 // =============================================================================
 // Event Types
@@ -158,16 +158,16 @@ export interface CMSEvent {
 /**
  * Internal helper function to emit events within mutation handlers.
  *
- * This function inserts an event record into the cms_events table.
+ * This function inserts an event record into the cmsEvents table.
  * It's designed to be called from within other mutations to ensure
  * the event is part of the same atomic transaction.
  *
- * @param ctx - The mutation context
+ * @param ctx - The mutation context from Convex
  * @param params - Event parameters
- * @returns The created event ID
+ * @returns The created event ID as a string
  */
 export async function emitEvent(
-  ctx: { db: { insert: (table: "cms_events", doc: Record<string, unknown>) => Promise<unknown> } },
+  ctx: MutationCtx,
   params: EmitEventParams
 ): Promise<string> {
   const {
@@ -181,7 +181,7 @@ export async function emitEvent(
     metadata,
   } = params;
 
-  const eventId = await ctx.db.insert("cms_events", {
+  const eventId = await ctx.db.insert("cmsEvents", {
     eventType,
     resourceType,
     resourceId,
@@ -193,7 +193,7 @@ export async function emitEvent(
     metadata,
   });
 
-  return eventId as unknown as string;
+  return eventId;
 }
 
 // =============================================================================
@@ -239,7 +239,7 @@ export const listEvents = query({
   returns: v.object({
     events: v.array(
       v.object({
-        _id: v.id("cms_events"),
+        _id: v.id("cmsEvents"),
         _creationTime: v.number(),
         eventType: v.string(),
         resourceType: v.union(
@@ -272,16 +272,21 @@ export const listEvents = query({
   handler: async (ctx, args) => {
     const { resourceType, action, processed, limit = 50 } = args;
 
-    let query = ctx.db.query("cms_events");
-
-    // Apply filters based on available indexes
-    if (processed !== undefined) {
-      query = query.withIndex("by_processed", (q) => q.eq("processed", processed));
-    }
-
     // Collect and filter in memory for other filters
     // (In a production system, you might want more specific indexes)
-    let events = await query.order("desc").take(limit * 2);
+    let events;
+    if (processed !== undefined) {
+      events = await ctx.db
+        .query("cmsEvents")
+        .withIndex("by_processed", (q) => q.eq("processed", processed))
+        .order("desc")
+        .take(limit * 2);
+    } else {
+      events = await ctx.db
+        .query("cmsEvents")
+        .order("desc")
+        .take(limit * 2);
+    }
 
     // Apply additional filters
     if (resourceType !== undefined) {
@@ -324,7 +329,7 @@ export const getResourceEvents = query({
   },
   returns: v.array(
     v.object({
-      _id: v.id("cms_events"),
+      _id: v.id("cmsEvents"),
       _creationTime: v.number(),
       eventType: v.string(),
       resourceType: v.union(
@@ -356,7 +361,7 @@ export const getResourceEvents = query({
     const { resourceType, resourceId, limit = 50 } = args;
 
     const events = await ctx.db
-      .query("cms_events")
+      .query("cmsEvents")
       .withIndex("by_resource", (q) =>
         q.eq("resourceType", resourceType).eq("resourceId", resourceId)
       )
@@ -383,7 +388,7 @@ export const getUnprocessedEvents = query({
   },
   returns: v.array(
     v.object({
-      _id: v.id("cms_events"),
+      _id: v.id("cmsEvents"),
       _creationTime: v.number(),
       eventType: v.string(),
       resourceType: v.union(
@@ -415,7 +420,7 @@ export const getUnprocessedEvents = query({
     const { limit = 100 } = args;
 
     const events = await ctx.db
-      .query("cms_events")
+      .query("cmsEvents")
       .withIndex("by_processed", (q) => q.eq("processed", false))
       .order("asc") // Process oldest first
       .take(limit);
@@ -440,7 +445,7 @@ export const getUnprocessedEvents = query({
  */
 export const markEventsProcessed = mutation({
   args: {
-    eventIds: v.array(v.id("cms_events")),
+    eventIds: v.array(v.id("cmsEvents")),
   },
   returns: v.object({
     processedCount: v.number(),
@@ -496,9 +501,9 @@ export const internalEmitEvent = internalMutation({
     correlationId: v.optional(v.string()),
     metadata: v.optional(v.any()),
   },
-  returns: v.id("cms_events"),
+  returns: v.id("cmsEvents"),
   handler: async (ctx, args) => {
-    const eventId = await ctx.db.insert("cms_events", {
+    const eventId = await ctx.db.insert("cmsEvents", {
       eventType: args.eventType,
       resourceType: args.resourceType,
       resourceId: args.resourceId,
@@ -538,7 +543,7 @@ export const cleanupOldEvents = mutation({
 
     // Get old processed events
     const oldEvents = await ctx.db
-      .query("cms_events")
+      .query("cmsEvents")
       .withIndex("by_processed", (q) => q.eq("processed", true))
       .filter((q) => q.lt(q.field("_creationTime"), cutoffTime))
       .take(1000); // Batch limit for safety

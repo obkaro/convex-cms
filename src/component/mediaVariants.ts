@@ -13,6 +13,7 @@
  */
 
 import { v, type Infer } from "convex/values";
+import type { Id } from "./_generated/dataModel.js";
 import { query } from "./_generated/server.js";
 import {
   mediaVariantDoc,
@@ -199,7 +200,7 @@ export const list = query({
     if (variantType) {
       // Use the compound index for type filtering
       variants = await ctx.db
-        .query("media_variants")
+        .query("mediaVariants")
         .withIndex("by_asset_and_type", (q) =>
           q.eq("assetId", assetId).eq("variantType", variantType)
         )
@@ -207,7 +208,7 @@ export const list = query({
     } else if (preset) {
       // Use the preset index
       variants = await ctx.db
-        .query("media_variants")
+        .query("mediaVariants")
         .withIndex("by_asset_and_preset", (q) =>
           q.eq("assetId", assetId).eq("preset", preset)
         )
@@ -215,7 +216,7 @@ export const list = query({
     } else if (format) {
       // Use the format index
       variants = await ctx.db
-        .query("media_variants")
+        .query("mediaVariants")
         .withIndex("by_asset_and_format", (q) =>
           q.eq("assetId", assetId).eq("format", format)
         )
@@ -223,7 +224,7 @@ export const list = query({
     } else {
       // Default: get all variants for the asset
       variants = await ctx.db
-        .query("media_variants")
+        .query("mediaVariants")
         .withIndex("by_asset", (q) => q.eq("assetId", assetId))
         .collect();
     }
@@ -322,7 +323,7 @@ export const getBestVariant = query({
 
     // Get all completed variants for the asset
     const variants = await ctx.db
-      .query("media_variants")
+      .query("mediaVariants")
       .withIndex("by_asset", (q) => q.eq("assetId", assetId))
       .filter((q) =>
         q.and(
@@ -339,7 +340,9 @@ export const getBestVariant = query({
         if (asset && asset.deletedAt === undefined) {
           const url = await ctx.storage.getUrl(asset.storageId);
           return {
-            _id: asset._id as any, // Type coercion for the union return
+            // When isOriginal=true, _id is actually an asset ID, not variant ID.
+            // Consumers should check isOriginal before using _id.
+            _id: asset._id as unknown as Id<"mediaVariants">,
             _creationTime: asset._creationTime,
             assetId: asset._id,
             storageId: asset.storageId,
@@ -452,7 +455,7 @@ export const getBestVariant = query({
  */
 export const getResponsiveSrcset = query({
   args: {
-    assetId: v.id("media_assets"),
+    assetId: v.id("mediaAssets"),
     format: v.optional(v.string()),
   },
   returns: responsiveSrcsetResult,
@@ -476,7 +479,7 @@ export const getResponsiveSrcset = query({
     let variants;
     if (format) {
       variants = await ctx.db
-        .query("media_variants")
+        .query("mediaVariants")
         .withIndex("by_asset_and_format", (q) =>
           q.eq("assetId", assetId).eq("format", format)
         )
@@ -493,7 +496,7 @@ export const getResponsiveSrcset = query({
         .collect();
     } else {
       variants = await ctx.db
-        .query("media_variants")
+        .query("mediaVariants")
         .withIndex("by_asset", (q) => q.eq("assetId", assetId))
         .filter((q) =>
           q.and(
@@ -629,20 +632,20 @@ export const getPendingVariants = query({
 
     if (status) {
       variants = await ctx.db
-        .query("media_variants")
+        .query("mediaVariants")
         .withIndex("by_status", (q) => q.eq("status", status))
         .order("asc") // Process oldest first
         .take(limit);
     } else {
       // Get both pending and processing
       const pending = await ctx.db
-        .query("media_variants")
+        .query("mediaVariants")
         .withIndex("by_status", (q) => q.eq("status", "pending"))
         .order("asc")
         .take(limit);
 
       const processing = await ctx.db
-        .query("media_variants")
+        .query("mediaVariants")
         .withIndex("by_status", (q) => q.eq("status", "processing"))
         .order("asc")
         .take(limit);
@@ -684,12 +687,12 @@ export const getPendingVariants = query({
  */
 export const getAssetWithVariants = query({
   args: {
-    assetId: v.id("media_assets"),
+    assetId: v.id("mediaAssets"),
   },
   returns: v.union(
     v.object({
       original: v.object({
-        _id: v.id("media_assets"),
+        _id: v.id("mediaAssets"),
         _creationTime: v.number(),
         filename: v.string(),
         mimeType: v.string(),
@@ -720,7 +723,7 @@ export const getAssetWithVariants = query({
 
     // Get all completed variants
     const variants = await ctx.db
-      .query("media_variants")
+      .query("mediaVariants")
       .withIndex("by_asset", (q) => q.eq("assetId", assetId))
       .filter((q) =>
         q.and(

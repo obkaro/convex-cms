@@ -5,109 +5,21 @@ import { v } from "convex/values";
  * Field type definitions supported by the CMS.
  * Each field type has specific validation rules and rendering behaviors.
  */
-export const fieldTypeValidator = v.union(
-	v.literal("text"),
-	v.literal("richText"),
-	v.literal("number"),
-	v.literal("boolean"),
-	v.literal("date"),
-	v.literal("datetime"),
-	v.literal("reference"),
-	v.literal("media"),
-	v.literal("json"),
-	v.literal("select"),
-	v.literal("multiSelect"),
-	v.literal("tags"),
-	v.literal("category"),
-);
-
-/**
- * Base field definition shared by all field types.
- */
-const baseFieldDefinition = {
-	/** Unique identifier for the field within the content type */
-	name: v.string(),
-	/** Human-readable label for the field */
-	label: v.string(),
-	/** The type of field (text, richText, number, etc.) */
-	type: fieldTypeValidator,
-	/** Whether this field is required */
-	required: v.boolean(),
-	/** Whether this field should be indexed for search */
-	searchable: v.optional(v.boolean()),
-	/** Whether this field should support localization */
-	localized: v.optional(v.boolean()),
-	/** Optional description/help text for the field */
-	description: v.optional(v.string()),
-	/** Default value for the field (type depends on field type) */
-	defaultValue: v.optional(v.any()),
-};
-
-/**
- * Field-specific options for different field types.
- * This allows type-specific configuration like min/max for numbers,
- * allowed content types for references, etc.
- */
-const fieldOptionsValidator = v.optional(
-	v.object({
-		// Text fields
-		minLength: v.optional(v.number()),
-		maxLength: v.optional(v.number()),
-		pattern: v.optional(v.string()),
-
-		// Number fields
-		min: v.optional(v.number()),
-		max: v.optional(v.number()),
-		step: v.optional(v.number()),
-		precision: v.optional(v.number()),
-
-		// Reference fields
-		allowedContentTypes: v.optional(v.array(v.string())),
-		multiple: v.optional(v.boolean()),
-		/** Minimum number of references required (only applies when multiple is true) */
-		minItems: v.optional(v.number()),
-
-		// Media fields
-		allowedMimeTypes: v.optional(v.array(v.string())),
-		maxFileSize: v.optional(v.number()),
-
-		// Select fields
-		options: v.optional(
-			v.array(
-				v.object({
-					value: v.string(),
-					label: v.string(),
-				}),
-			),
-		),
-
-		// Rich text fields
-		allowedBlocks: v.optional(v.array(v.string())),
-		allowedMarks: v.optional(v.array(v.string())),
-
-		// Tag fields
-		/** The taxonomy ID to use for this tag field */
-		taxonomyId: v.optional(v.id("taxonomies")),
-		/** Whether to allow creating new tags inline */
-		allowCreate: v.optional(v.boolean()),
-		/** Maximum number of tags that can be selected */
-		maxTags: v.optional(v.number()),
-		/** Minimum number of tags required */
-		minTags: v.optional(v.number()),
-
-		// Category fields
-		/** Whether to allow selecting multiple categories */
-		allowMultiple: v.optional(v.boolean()),
-	}),
-);
-
-/**
- * Complete field definition including base fields and type-specific options.
- */
-export const fieldDefinitionValidator = v.object({
-	...baseFieldDefinition,
-	options: fieldOptionsValidator,
-});
+// export const fieldTypeValidator = v.union(
+// 	v.literal("text"),
+// 	v.literal("richText"),
+// 	v.literal("number"),
+// 	v.literal("boolean"),
+// 	v.literal("date"),
+// 	v.literal("datetime"),
+// 	v.literal("reference"),
+// 	v.literal("media"),
+// 	v.literal("json"),
+// 	v.literal("select"),
+// 	v.literal("multiSelect"),
+// 	v.literal("tags"),
+// 	v.literal("category"),
+// );
 
 /**
  * Content entry status for publishing workflow.
@@ -150,14 +62,244 @@ export const variantStatusValidator = v.union(
 );
 
 /**
+ * Base field definition shared by all field types.
+ */
+const baseFieldDefinition = {
+	/** Unique identifier for the field within the content type */
+	name: v.string(),
+	/** Human-readable label for the field */
+	label: v.string(),
+	/** The type of field (text, richText, number, etc.) */
+	// type: fieldTypeValidator,
+	/** Whether this field is required */
+	required: v.boolean(),
+	/** Whether this field should be indexed for search */
+	searchable: v.optional(v.boolean()),
+	/** Whether this field should support localization */
+	localized: v.optional(v.boolean()),
+	/** Optional description/help text for the field */
+	description: v.optional(v.string()),
+	/** Default value for the field (type depends on field type) */
+	defaultValue: v.optional(v.any()),
+};
+
+/**
+ * Field-specific options for different field types.
+ * This allows type-specific configuration like min/max for numbers,
+ * allowed content types for references, etc.
+ */
+// const fieldOptionsValidator = v.optional(
+// 	v.object({
+// 		// Text fields
+// 		minLength: v.optional(v.number()),
+// 		maxLength: v.optional(v.number()),
+// 		pattern: v.optional(v.string()),
+
+// 		// Number fields
+// 		min: v.optional(v.number()),
+// 		max: v.optional(v.number()),
+// 		step: v.optional(v.number()),
+// 		precision: v.optional(v.number()),
+
+// 		// Reference fields
+// 		allowedContentTypes: v.optional(v.array(v.string())),
+// 		multiple: v.optional(v.boolean()),
+// 		/** Minimum number of references required (only applies when multiple is true) */
+// 		minItems: v.optional(v.number()),
+
+// 		// Media fields
+// 		allowedMimeTypes: v.optional(v.array(v.string())),
+// 		maxFileSize: v.optional(v.number()),
+
+// 		// Select fields
+// 		options: v.optional(
+// 			v.array(
+// 				v.object({
+// 					value: v.string(),
+// 					label: v.string(),
+// 				}),
+// 			),
+// 		),
+
+// 		// Rich text fields
+// 		allowedBlocks: v.optional(v.array(v.string())),
+// 		allowedMarks: v.optional(v.array(v.string())),
+
+// 		// Tag fields
+// 		/** The taxonomy ID to use for this tag field */
+// 		taxonomyId: v.optional(v.id("taxonomies")),
+// 		/** Whether to allow creating new tags inline */
+// 		allowCreate: v.optional(v.boolean()),
+// 		/** Maximum number of tags that can be selected */
+// 		maxTags: v.optional(v.number()),
+// 		/** Minimum number of tags required */
+// 		minTags: v.optional(v.number()),
+
+// 		// Category fields
+// 		/** Whether to allow selecting multiple categories */
+// 		allowMultiple: v.optional(v.boolean()),
+// 	}),
+// );
+
+export const textFieldDefinitionValidator = v.object({
+	...baseFieldDefinition,
+	type: v.literal("text"),
+	options: v.object({
+		minLength: v.optional(v.number()),
+		maxLength: v.optional(v.number()),
+		pattern: v.optional(v.string()),
+	}),
+});
+
+export const numberFieldDefinitionValidator = v.object({
+	...baseFieldDefinition,
+	type: v.literal("number"),
+	options: v.object({
+		min: v.optional(v.number()),
+		max: v.optional(v.number()),
+		step: v.optional(v.number()),
+		precision: v.optional(v.number()),
+	}),
+});
+
+export const booleanFieldDefinitionValidator = v.object({
+	...baseFieldDefinition,
+	type: v.literal("boolean"),
+	options: v.object({
+		trueLabel: v.optional(v.string()),
+		falseLabel: v.optional(v.string()),
+	}),
+});
+
+export const richTextFieldDefinitionValidator = v.object({
+	...baseFieldDefinition,
+	type: v.literal("richText"),
+	options: v.object({
+		allowedBlocks: v.optional(v.array(v.string())),
+		allowedMarks: v.optional(v.array(v.string())),
+	}),
+});
+
+export const mediaFieldDefinitionValidator = v.object({
+	...baseFieldDefinition,
+	type: v.literal("media"),
+	options: v.object({
+		mediaType: v.optional(mediaTypeValidator),
+		allowedMimeTypes: v.optional(v.array(v.string())),
+		maxFileSize: v.optional(v.number()),
+	}),
+});
+
+export const selectFieldDefinitionValidator = v.object({
+	...baseFieldDefinition,
+	type: v.literal("select"),
+	options: v.object({
+		options: v.optional(
+			v.array(
+				v.object({
+					value: v.string(),
+					label: v.string(),
+				}),
+			),
+		),
+	}),
+});
+
+export const tagsFieldDefinitionValidator = v.object({
+	...baseFieldDefinition,
+	type: v.literal("tags"),
+	options: v.object({
+		taxonomyId: v.optional(v.id("taxonomies")),
+		allowCreate: v.optional(v.boolean()),
+		maxTags: v.optional(v.number()),
+		minTags: v.optional(v.number()),
+	}),
+});
+
+export const categoryFieldDefinitionValidator = v.object({
+	...baseFieldDefinition,
+	type: v.literal("category"),
+	options: v.object({
+		allowMultiple: v.optional(v.boolean()),
+	}),
+});
+
+export const jsonFieldDefinitionValidator = v.object({
+	...baseFieldDefinition,
+	type: v.literal("json"),
+	options: v.object({
+		schema: v.optional(v.any()),
+	}),
+});
+
+export const referenceFieldDefinitionValidator = v.object({
+	...baseFieldDefinition,
+	type: v.literal("reference"),
+	options: v.object({
+		allowedContentTypes: v.optional(v.array(v.string())),
+		multiple: v.optional(v.boolean()),
+		minItems: v.optional(v.number()),
+	}),
+});
+
+export const multiSelectFieldDefinitionValidator = v.object({
+	...baseFieldDefinition,
+	type: v.literal("multiSelect"),
+	options: v.object({
+		options: v.optional(
+			v.array(
+				v.object({
+					value: v.string(),
+					label: v.string(),
+				}),
+			),
+		),
+	}),
+});
+
+export const dateFieldDefinitionValidator = v.object({
+	...baseFieldDefinition,
+	type: v.literal("date"),
+	options: v.object({
+		min: v.optional(v.number()),
+		max: v.optional(v.number()),
+	}),
+});
+
+export const datetimeFieldDefinitionValidator = v.object({
+	...baseFieldDefinition,
+	type: v.literal("datetime"),
+	options: v.object({
+		min: v.optional(v.number()),
+		max: v.optional(v.number()),
+	}),
+});
+
+/**
+ * Complete field definition including base fields and type-specific options.
+ */
+export const fieldDefinitionValidator = v.union(
+	textFieldDefinitionValidator,
+	numberFieldDefinitionValidator,
+	booleanFieldDefinitionValidator,
+	richTextFieldDefinitionValidator,
+	mediaFieldDefinitionValidator,
+	selectFieldDefinitionValidator,
+	tagsFieldDefinitionValidator,
+	categoryFieldDefinitionValidator,
+	jsonFieldDefinitionValidator,
+	jsonFieldDefinitionValidator,
+	referenceFieldDefinitionValidator,
+);
+/**
  * Core CMS Schema Definition
  *
  * Defines five main tables:
- * 1. content_types - Schema definitions for content
- * 2. content_entries - Actual content instances
- * 3. content_versions - Version history with snapshots
- * 4. media_assets - File storage records
- * 5. media_folders - Folder organization
+ * 1. contentTypes - Schema definitions for content
+ * 2. contentEntries - Actual content instances
+ * 3. contentVersions - Version history with snapshots
+ * 4. mediaAssets - File storage records
+ * 5. mediaFolders - Folder organization
  */
 const schema = defineSchema({
 	/**
@@ -166,7 +308,7 @@ const schema = defineSchema({
 	 * Stores content type definitions including field schemas.
 	 * Each content type defines a blueprint for creating content entries.
 	 */
-	content_types: defineTable({
+	contentTypes: defineTable({
 		/** Unique machine-readable name for the content type (e.g., "blog_post") */
 		name: v.string(),
 		/** Human-readable display name (e.g., "Blog Post") */
@@ -207,9 +349,9 @@ const schema = defineSchema({
 	 * Stores actual content instances created from content types.
 	 * Supports draft/publish workflow and localization.
 	 */
-	content_entries: defineTable({
+	contentEntries: defineTable({
 		/** Reference to the content type this entry belongs to */
-		contentTypeId: v.id("content_types"),
+		contentTypeId: v.id("contentTypes"),
 		/** URL-friendly slug for this entry (unique per content type) */
 		slug: v.string(),
 		/** Current status of the entry */
@@ -219,7 +361,7 @@ const schema = defineSchema({
 		/** Locale code for this entry (e.g., "en-US") */
 		locale: v.optional(v.string()),
 		/** Reference to the primary entry if this is a localized variant */
-		primaryEntryId: v.optional(v.id("content_entries")),
+		primaryEntryId: v.optional(v.id("contentEntries")),
 		/** Current version number */
 		version: v.number(),
 		/** Scheduled publish time (if status is "scheduled") */
@@ -271,9 +413,9 @@ const schema = defineSchema({
 	 * Stores version snapshots for content entries.
 	 * Enables version history, comparison, and rollback.
 	 */
-	content_versions: defineTable({
+	contentVersions: defineTable({
 		/** Reference to the content entry this version belongs to */
-		entryId: v.id("content_entries"),
+		entryId: v.id("contentEntries"),
 		/** Version number (incrementing) */
 		versionNumber: v.number(),
 		/** Snapshot of the content data at this version */
@@ -304,7 +446,7 @@ const schema = defineSchema({
 	 * Stores metadata for uploaded media files.
 	 * Actual files are stored using Convex File Storage.
 	 */
-	media_assets: defineTable({
+	mediaAssets: defineTable({
 		/** Reference to the Convex storage file */
 		storageId: v.id("_storage"),
 		/** Original filename as uploaded */
@@ -322,7 +464,7 @@ const schema = defineSchema({
 		/** Alt text for accessibility (images) */
 		altText: v.optional(v.string()),
 		/** Reference to the folder containing this asset */
-		folderId: v.optional(v.id("media_folders")),
+		folderId: v.optional(v.id("mediaFolders")),
 		/** Image dimensions (if applicable) */
 		width: v.optional(v.number()),
 		height: v.optional(v.number()),
@@ -362,9 +504,9 @@ const schema = defineSchema({
 	 * Each variant references a parent media asset and has its own storage file.
 	 * Supports automatic generation of responsive image sets and format optimization.
 	 */
-	media_variants: defineTable({
+	mediaVariants: defineTable({
 		/** Reference to the parent media asset */
-		assetId: v.id("media_assets"),
+		assetId: v.id("mediaAssets"),
 		/** Reference to the Convex storage file for this variant */
 		storageId: v.id("_storage"),
 		/**
@@ -434,11 +576,11 @@ const schema = defineSchema({
 	 * Provides folder hierarchy for organizing media assets.
 	 * Supports nested folders for complex organization.
 	 */
-	media_folders: defineTable({
+	mediaFolders: defineTable({
 		/** Folder name */
 		name: v.string(),
 		/** Reference to parent folder (null for root folders) */
-		parentId: v.optional(v.id("media_folders")),
+		parentId: v.optional(v.id("mediaFolders")),
 		/** Full path from root (e.g., "/images/blog/2026") */
 		path: v.string(),
 		/** Description of the folder */
@@ -511,7 +653,7 @@ const schema = defineSchema({
 	 * Stores individual terms within a taxonomy (tags, categories, etc.).
 	 * Terms can be hierarchical (with parent references) for category-like structures.
 	 */
-	taxonomy_terms: defineTable({
+	taxonomyTerms: defineTable({
 		/** Reference to the taxonomy this term belongs to */
 		taxonomyId: v.id("taxonomies"),
 		/** Unique slug for the term within its taxonomy (URL-friendly) */
@@ -521,7 +663,7 @@ const schema = defineSchema({
 		/** Optional description of the term */
 		description: v.optional(v.string()),
 		/** Reference to parent term (for hierarchical taxonomies) */
-		parentId: v.optional(v.id("taxonomy_terms")),
+		parentId: v.optional(v.id("taxonomyTerms")),
 		/** Full path from root for hierarchical terms (e.g., "/parent/child/grandchild") */
 		path: v.optional(v.string()),
 		/** Depth level in hierarchy (0 = root, 1 = child, etc.) */
@@ -568,11 +710,11 @@ const schema = defineSchema({
 	 * Enables many-to-many relationships between entries and terms.
 	 * This junction table approach supports efficient queries in both directions.
 	 */
-	content_entry_tags: defineTable({
+	contentEntryTags: defineTable({
 		/** Reference to the content entry */
-		entryId: v.id("content_entries"),
+		entryId: v.id("contentEntries"),
 		/** Reference to the taxonomy term */
-		termId: v.id("taxonomy_terms"),
+		termId: v.id("taxonomyTerms"),
 		/** Reference to the taxonomy (denormalized for efficient filtering) */
 		taxonomyId: v.id("taxonomies"),
 		/** The field name that holds this tag (supports multiple tag fields per entry) */
@@ -597,7 +739,7 @@ const schema = defineSchema({
 	 * Stores configuration settings for the trash/soft-delete feature.
 	 * This is a singleton table - only one configuration record should exist.
 	 */
-	trash_config: defineTable({
+	trashConfig: defineTable({
 		/**
 		 * Retention period in days before soft-deleted items are permanently deleted.
 		 * Default is 30 days. Set to 0 to disable automatic cleanup.
@@ -623,7 +765,7 @@ const schema = defineSchema({
 	 * Events are immutable once created - they represent a historical record
 	 * of what happened in the CMS.
 	 */
-	cms_events: defineTable({
+	cmsEvents: defineTable({
 		/**
 		 * The type of event that occurred.
 		 * Format: "{resource}.{action}" (e.g., "contentEntry.created")
@@ -704,16 +846,16 @@ const schema = defineSchema({
 	 *
 	 * Comprehensive audit logging for all CMS operations.
 	 * Records user, action, timestamp, and before/after states.
-	 * Unlike cms_events (which are for operational processing like webhooks),
-	 * audit_logs are optimized for compliance, security auditing, and history retrieval.
+	 * Unlike cmsEvents (which are for operational processing like webhooks),
+	 * auditLogs are optimized for compliance, security auditing, and history retrieval.
 	 *
-	 * Key differences from cms_events:
+	 * Key differences from cmsEvents:
 	 * - Stores complete before/after state snapshots for diff analysis
 	 * - Longer retention (typically permanent for compliance)
 	 * - Rich filtering for audit trail queries
 	 * - Includes IP address and user agent for security auditing
 	 */
-	audit_logs: defineTable({
+	auditLogs: defineTable({
 		/**
 		 * The type of resource that was affected.
 		 * One of: "contentEntry", "contentType", "mediaAsset", "mediaFolder", "settings"
@@ -835,7 +977,7 @@ const schema = defineSchema({
 	 * - Authentication settings (secret for HMAC signing)
 	 * - Retry behavior and rate limiting
 	 */
-	webhook_configs: defineTable({
+	webhookConfigs: defineTable({
 		/**
 		 * Human-readable name for this webhook configuration.
 		 * e.g., "Production CDN Invalidation", "Search Index Sync"
@@ -929,15 +1071,15 @@ const schema = defineSchema({
 	 * Each delivery record represents a single attempt to deliver
 	 * an event to a webhook endpoint.
 	 */
-	webhook_deliveries: defineTable({
+	webhookDeliveries: defineTable({
 		/**
 		 * Reference to the webhook configuration.
 		 */
-		webhookId: v.id("webhook_configs"),
+		webhookId: v.id("webhookConfigs"),
 		/**
 		 * Reference to the CMS event being delivered.
 		 */
-		eventId: v.id("cms_events"),
+		eventId: v.id("cmsEvents"),
 		/**
 		 * The event type (copied for efficient querying).
 		 */
@@ -1018,17 +1160,17 @@ export default schema;
  * These can be extended for function return validators.
  */
 export const {
-	content_types,
-	content_entries,
-	content_versions,
-	media_assets,
-	media_variants,
-	media_folders,
+	contentTypes,
+	contentEntries,
+	contentVersions,
+	mediaAssets,
+	mediaVariants,
+	mediaFolders,
 	taxonomies,
-	taxonomy_terms,
-	content_entry_tags,
-	cms_events,
-	audit_logs,
-	webhook_configs,
-	webhook_deliveries,
+	taxonomyTerms,
+	contentEntryTags,
+	cmsEvents,
+	auditLogs,
+	webhookConfigs,
+	webhookDeliveries,
 } = schema.tables;

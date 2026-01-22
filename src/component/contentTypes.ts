@@ -40,12 +40,12 @@ const MAX_NUM_ITEMS = 250;
  * - Use `name` for lookup by machine-readable name (uses by_name index)
  */
 const getContentTypeArgs = v.object({
-  /** The ID of the content type to retrieve (direct lookup) */
-  id: v.optional(v.id("content_types")),
-  /** The machine-readable name of the content type (e.g., "blog_post") */
-  name: v.optional(v.string()),
-  /** Whether to include soft-deleted content types (default: false) */
-  includeDeleted: v.optional(v.boolean()),
+	/** The ID of the content type to retrieve (direct lookup) */
+	id: v.optional(v.id("contentTypes")),
+	/** The machine-readable name of the content type (e.g., "blog_post") */
+	name: v.optional(v.string()),
+	/** Whether to include soft-deleted content types (default: false) */
+	includeDeleted: v.optional(v.boolean()),
 });
 
 /**
@@ -83,44 +83,44 @@ const getContentTypeArgs = v.object({
  * ```
  */
 export const get = query({
-  args: getContentTypeArgs.fields,
-  returns: v.union(contentTypeDoc, v.null()),
-  handler: async (ctx, args) => {
-    const { id, name, includeDeleted = false } = args;
+	args: getContentTypeArgs.fields,
+	returns: v.union(contentTypeDoc, v.null()),
+	handler: async (ctx, args) => {
+		const { id, name, includeDeleted = false } = args;
 
-    // Validate that at least one identifier is provided
-    if (!id && !name) {
-      // Return null if neither id nor name is provided
-      // This matches the pattern used in other get functions
-      return null;
-    }
+		// Validate that at least one identifier is provided
+		if (!id && !name) {
+			// Return null if neither id nor name is provided
+			// This matches the pattern used in other get functions
+			return null;
+		}
 
-    let contentType;
+		let contentType;
 
-    // Lookup by ID (direct document access - O(1))
-    if (id) {
-      contentType = await ctx.db.get(id);
-    }
-    // Lookup by name using the by_name index
-    else if (name) {
-      contentType = await ctx.db
-        .query("content_types")
-        .withIndex("by_name", (q) => q.eq("name", name))
-        .first();
-    }
+		// Lookup by ID (direct document access - O(1))
+		if (id) {
+			contentType = await ctx.db.get(id);
+		}
+		// Lookup by name using the by_name index
+		else if (name) {
+			contentType = await ctx.db
+				.query("contentTypes")
+				.withIndex("by_name", (q) => q.eq("name", name))
+				.first();
+		}
 
-    // Return null if not found
-    if (!contentType) {
-      return null;
-    }
+		// Return null if not found
+		if (!contentType) {
+			return null;
+		}
 
-    // Filter out soft-deleted types unless explicitly requested
-    if (!includeDeleted && contentType.deletedAt !== undefined) {
-      return null;
-    }
+		// Filter out soft-deleted types unless explicitly requested
+		if (!includeDeleted && contentType.deletedAt !== undefined) {
+			return null;
+		}
 
-    return contentType;
-  },
+		return contentType;
+	},
 });
 
 // =============================================================================
@@ -131,46 +131,46 @@ export const get = query({
  * Sort field options for content type listing.
  */
 const sortByValidator = v.optional(
-  v.union(v.literal("name"), v.literal("createdAt"))
+	v.union(v.literal("name"), v.literal("createdAt")),
 );
 
 /**
  * Sort direction options.
  */
 const sortDirectionValidator = v.optional(
-  v.union(v.literal("asc"), v.literal("desc"))
+	v.union(v.literal("asc"), v.literal("desc")),
 );
 
 /**
  * Arguments for listing content types with filtering and pagination.
  */
 const listContentTypesArgs = v.object({
-  /** Filter by active status: true = active only, false = inactive only, undefined = all */
-  isActive: v.optional(v.boolean()),
-  /** Whether to include soft-deleted content types (default: false) */
-  includeDeleted: v.optional(v.boolean()),
-  /** Field to sort by: "name" (alphabetical) or "createdAt" (by creation date). Default: "name" */
-  sortBy: sortByValidator,
-  /** Sort direction: "asc" (ascending) or "desc" (descending). Default: "asc" for name, "desc" for createdAt */
-  sortDirection: sortDirectionValidator,
-  /**
-   * Pagination options using standard Convex pagination format.
-   * Compatible with usePaginatedQuery hook on the client.
-   * If not provided, returns all matching results (non-paginated).
-   */
-  paginationOpts: v.optional(paginationOptsValidator),
+	/** Filter by active status: true = active only, false = inactive only, undefined = all */
+	isActive: v.optional(v.boolean()),
+	/** Whether to include soft-deleted content types (default: false) */
+	includeDeleted: v.optional(v.boolean()),
+	/** Field to sort by: "name" (alphabetical) or "createdAt" (by creation date). Default: "name" */
+	sortBy: sortByValidator,
+	/** Sort direction: "asc" (ascending) or "desc" (descending). Default: "asc" for name, "desc" for createdAt */
+	sortDirection: sortDirectionValidator,
+	/**
+	 * Pagination options using standard Convex pagination format.
+	 * Compatible with usePaginatedQuery hook on the client.
+	 * If not provided, returns all matching results (non-paginated).
+	 */
+	paginationOpts: v.optional(paginationOptsValidator),
 });
 
 /**
  * Paginated response using standard Convex PaginationResult format.
  */
 const paginatedContentTypesResponse = v.object({
-  /** Array of content type documents for this page */
-  page: v.array(contentTypeDoc),
-  /** Cursor for fetching the next page (pass to next query's paginationOpts.cursor) */
-  continueCursor: v.union(v.string(), v.null()),
-  /** Whether this is the last page (no more results) */
-  isDone: v.boolean(),
+	/** Array of content type documents for this page */
+	page: v.array(contentTypeDoc),
+	/** Cursor for fetching the next page (pass to next query's paginationOpts.cursor) */
+	continueCursor: v.union(v.string(), v.null()),
+	/** Whether this is the last page (no more results) */
+	isDone: v.boolean(),
 });
 
 /**
@@ -254,92 +254,92 @@ const paginatedContentTypesResponse = v.object({
  * ```
  */
 export const list = query({
-  args: listContentTypesArgs.fields,
-  returns: paginatedContentTypesResponse,
-  handler: async (ctx, args) => {
-    const {
-      isActive,
-      includeDeleted = false,
-      sortBy = "name",
-      sortDirection,
-      paginationOpts,
-    } = args;
+	args: listContentTypesArgs.fields,
+	returns: paginatedContentTypesResponse,
+	handler: async (ctx, args) => {
+		const {
+			isActive,
+			includeDeleted = false,
+			sortBy = "name",
+			sortDirection,
+			paginationOpts,
+		} = args;
 
-    // Determine default sort direction based on sortBy field
-    // For name sorting, ascending (A-Z) is most intuitive
-    // For date sorting, descending (newest first) is most intuitive
-    const resolvedSortDirection =
-      sortDirection ?? (sortBy === "name" ? "asc" : "desc");
+		// Determine default sort direction based on sortBy field
+		// For name sorting, ascending (A-Z) is most intuitive
+		// For date sorting, descending (newest first) is most intuitive
+		const resolvedSortDirection =
+			sortDirection ?? (sortBy === "name" ? "asc" : "desc");
 
-    // Clamp numItems to valid range if pagination is requested
-    const numItems = paginationOpts
-      ? Math.min(
-          Math.max(1, paginationOpts.numItems ?? DEFAULT_NUM_ITEMS),
-          MAX_NUM_ITEMS
-        )
-      : MAX_NUM_ITEMS; // When not paginating, fetch up to max
+		// Clamp numItems to valid range if pagination is requested
+		const numItems = paginationOpts
+			? Math.min(
+					Math.max(1, paginationOpts.numItems ?? DEFAULT_NUM_ITEMS),
+					MAX_NUM_ITEMS,
+			  )
+			: MAX_NUM_ITEMS; // When not paginating, fetch up to max
 
-    // Build and execute query - choose strategy based on isActive filter
-    let results;
+		// Build and execute query - choose strategy based on isActive filter
+		let results;
 
-    if (isActive !== undefined) {
-      // Use by_active index for efficient filtering by active status
-      results = await ctx.db
-        .query("content_types")
-        .withIndex("by_active", (q) => q.eq("isActive", isActive))
-        .collect();
-    } else {
-      // Fetch all content types (no filter)
-      results = await ctx.db.query("content_types").collect();
-    }
+		if (isActive !== undefined) {
+			// Use by_active index for efficient filtering by active status
+			results = await ctx.db
+				.query("contentTypes")
+				.withIndex("by_active", (q) => q.eq("isActive", isActive))
+				.collect();
+		} else {
+			// Fetch all content types (no filter)
+			results = await ctx.db.query("contentTypes").collect();
+		}
 
-    // Filter out soft-deleted types unless explicitly requested
-    if (!includeDeleted) {
-      results = results.filter((ct) => ct.deletedAt === undefined);
-    }
+		// Filter out soft-deleted types unless explicitly requested
+		if (!includeDeleted) {
+			results = results.filter((ct) => ct.deletedAt === undefined);
+		}
 
-    // Apply sorting based on sortBy parameter
-    if (sortBy === "name") {
-      // Sort alphabetically by name (case-insensitive)
-      results.sort((a, b) => {
-        const nameA = a.name.toLowerCase();
-        const nameB = b.name.toLowerCase();
-        const comparison = nameA.localeCompare(nameB);
-        return resolvedSortDirection === "asc" ? comparison : -comparison;
-      });
-    } else {
-      // Sort by creation time
-      results.sort((a, b) => {
-        const comparison = a._creationTime - b._creationTime;
-        return resolvedSortDirection === "asc" ? comparison : -comparison;
-      });
-    }
+		// Apply sorting based on sortBy parameter
+		if (sortBy === "name") {
+			// Sort alphabetically by name (case-insensitive)
+			results.sort((a, b) => {
+				const nameA = a.name.toLowerCase();
+				const nameB = b.name.toLowerCase();
+				const comparison = nameA.localeCompare(nameB);
+				return resolvedSortDirection === "asc" ? comparison : -comparison;
+			});
+		} else {
+			// Sort by creation time
+			results.sort((a, b) => {
+				const comparison = a._creationTime - b._creationTime;
+				return resolvedSortDirection === "asc" ? comparison : -comparison;
+			});
+		}
 
-    // Handle cursor-based pagination
-    let startIndex = 0;
-    const cursor = paginationOpts?.cursor;
+		// Handle cursor-based pagination
+		let startIndex = 0;
+		const cursor = paginationOpts?.cursor;
 
-    if (cursor) {
-      // Find the index of the cursor in results
-      const cursorIndex = results.findIndex((ct) => ct._id === cursor);
-      if (cursorIndex !== -1) {
-        startIndex = cursorIndex + 1;
-      }
-    }
+		if (cursor) {
+			// Find the index of the cursor in results
+			const cursorIndex = results.findIndex((ct) => ct._id === cursor);
+			if (cursorIndex !== -1) {
+				startIndex = cursorIndex + 1;
+			}
+		}
 
-    // Get the page of results (fetch one extra to determine if there's more)
-    const pageResults = results.slice(startIndex, startIndex + numItems + 1);
-    const isDone = pageResults.length <= numItems;
-    const page = isDone ? pageResults : pageResults.slice(0, numItems);
+		// Get the page of results (fetch one extra to determine if there's more)
+		const pageResults = results.slice(startIndex, startIndex + numItems + 1);
+		const isDone = pageResults.length <= numItems;
+		const page = isDone ? pageResults : pageResults.slice(0, numItems);
 
-    // Calculate continuation cursor
-    const continueCursor =
-      !isDone && page.length > 0 ? page[page.length - 1]._id : null;
+		// Calculate continuation cursor
+		const continueCursor =
+			!isDone && page.length > 0 ? page[page.length - 1]._id : null;
 
-    return {
-      page,
-      continueCursor,
-      isDone,
-    };
-  },
+		return {
+			page,
+			continueCursor,
+			isDone,
+		};
+	},
 });

@@ -40,17 +40,17 @@ export const roleNames = ["admin", "editor", "author", "viewer"] as const;
  * Type representing a built-in role name.
  * Use `string` for custom roles, or extend this type.
  */
-export type RoleName = (typeof roleNames)[number];
+export type RoleName = typeof roleNames[number];
 
 /**
  * Convex validator for role names.
  * Use this in function arguments to validate role input.
  */
 export const roleNameValidator = v.union(
-  v.literal("admin"),
-  v.literal("editor"),
-  v.literal("author"),
-  v.literal("viewer")
+	v.literal("admin"),
+	v.literal("editor"),
+	v.literal("author"),
+	v.literal("viewer"),
 );
 
 // =============================================================================
@@ -61,54 +61,54 @@ export const roleNameValidator = v.union(
  * All resources that can be protected by RBAC.
  */
 export const resources = [
-  "contentTypes",
-  "contentEntries",
-  "mediaAssets",
-  "mediaFolders",
-  "settings",
+	"contentTypes",
+	"contentEntries",
+	"mediaAssets",
+	"mediaFolders",
+	"settings",
 ] as const;
 
-export type Resource = (typeof resources)[number];
+export type Resource = typeof resources[number];
 
 /**
  * Convex validator for resources.
  */
 export const resourceValidator = v.union(
-  v.literal("contentTypes"),
-  v.literal("contentEntries"),
-  v.literal("mediaAssets"),
-  v.literal("mediaFolders"),
-  v.literal("settings")
+	v.literal("contentTypes"),
+	v.literal("contentEntries"),
+	v.literal("mediaAssets"),
+	v.literal("mediaFolders"),
+	v.literal("settings"),
 );
 
 /**
  * All actions that can be performed on resources.
  */
 export const actions = [
-  "create",
-  "read",
-  "update",
-  "delete",
-  "publish",
-  "unpublish",
-  "restore",
-  "manage", // Special action for full control (e.g., settings)
+	"create",
+	"read",
+	"update",
+	"delete",
+	"publish",
+	"unpublish",
+	"restore",
+	"manage", // Special action for full control (e.g., settings)
 ] as const;
 
-export type Action = (typeof actions)[number];
+export type Action = typeof actions[number];
 
 /**
  * Convex validator for actions.
  */
 export const actionValidator = v.union(
-  v.literal("create"),
-  v.literal("read"),
-  v.literal("update"),
-  v.literal("delete"),
-  v.literal("publish"),
-  v.literal("unpublish"),
-  v.literal("restore"),
-  v.literal("manage")
+	v.literal("create"),
+	v.literal("read"),
+	v.literal("update"),
+	v.literal("delete"),
+	v.literal("publish"),
+	v.literal("unpublish"),
+	v.literal("restore"),
+	v.literal("manage"),
 );
 
 // =============================================================================
@@ -127,40 +127,40 @@ export type OwnershipScope = "all" | "own";
  * Defines what action can be performed on which resource, with optional ownership scope.
  */
 export interface Permission {
-  /** The resource this permission applies to */
-  resource: Resource;
-  /** The action being granted */
-  action: Action;
-  /**
-   * Ownership scope (defaults to "all" if not specified).
-   * Only relevant for resources that have ownership (contentEntries, mediaAssets).
-   */
-  scope?: OwnershipScope;
+	/** The resource this permission applies to */
+	resource: Resource;
+	/** The action being granted */
+	action: Action;
+	/**
+	 * Ownership scope (defaults to "all" if not specified).
+	 * Only relevant for resources that have ownership (contentEntries, mediaAssets).
+	 */
+	scope?: OwnershipScope;
 }
 
 /**
  * Convex validator for a permission object.
  */
 export const permissionValidator = v.object({
-  resource: resourceValidator,
-  action: actionValidator,
-  scope: v.optional(v.union(v.literal("all"), v.literal("own"))),
+	resource: resourceValidator,
+	action: actionValidator,
+	scope: v.optional(v.union(v.literal("all"), v.literal("own"))),
 });
 
 /**
  * Complete role definition including metadata and permissions.
  */
 export interface RoleDefinition {
-  /** Unique role identifier */
-  name: RoleName | string;
-  /** Human-readable display name */
-  displayName: string;
-  /** Description of the role's purpose */
-  description: string;
-  /** List of permissions granted to this role */
-  permissions: Permission[];
-  /** Whether this is a system role that cannot be deleted */
-  isSystem: boolean;
+	/** Unique role identifier */
+	name: RoleName | string;
+	/** Human-readable display name */
+	displayName: string;
+	/** Description of the role's purpose */
+	description: string;
+	/** List of permissions granted to this role */
+	permissions: Permission[];
+	/** Whether this is a system role that cannot be deleted */
+	isSystem: boolean;
 }
 
 // =============================================================================
@@ -170,30 +170,36 @@ export interface RoleDefinition {
 /**
  * Helper to create a full CRUD permission set for a resource.
  */
-function fullCrud(resource: Resource, scope: OwnershipScope = "all"): Permission[] {
-  return [
-    { resource, action: "create", scope },
-    { resource, action: "read", scope },
-    { resource, action: "update", scope },
-    { resource, action: "delete", scope },
-  ];
+function fullCrud(
+	resource: Resource,
+	scope: OwnershipScope = "all",
+): Permission[] {
+	return [
+		{ resource, action: "create", scope },
+		{ resource, action: "read", scope },
+		{ resource, action: "update", scope },
+		{ resource, action: "delete", scope },
+	];
 }
 
 /**
  * Helper to create read-only permission for a resource.
  */
-function readOnly(resource: Resource, scope: OwnershipScope = "all"): Permission[] {
-  return [{ resource, action: "read", scope }];
+function readOnly(
+	resource: Resource,
+	scope: OwnershipScope = "all",
+): Permission[] {
+	return [{ resource, action: "read", scope }];
 }
 
 /**
  * Helper to create publish permissions for content.
  */
 function publishPermissions(scope: OwnershipScope = "all"): Permission[] {
-  return [
-    { resource: "contentEntries", action: "publish", scope },
-    { resource: "contentEntries", action: "unpublish", scope },
-  ];
+	return [
+		{ resource: "contentEntries", action: "publish", scope },
+		{ resource: "contentEntries", action: "unpublish", scope },
+	];
 }
 
 // =============================================================================
@@ -211,27 +217,28 @@ function publishPermissions(scope: OwnershipScope = "all"): Permission[] {
  * - Access and modify CMS settings
  */
 export const ADMIN_ROLE: RoleDefinition = {
-  name: "admin",
-  displayName: "Administrator",
-  description: "Full access to all CMS features including settings and content type management",
-  isSystem: true,
-  permissions: [
-    // Content types - full management
-    ...fullCrud("contentTypes"),
+	name: "admin",
+	displayName: "Administrator",
+	description:
+		"Full access to all CMS features including settings and content type management",
+	isSystem: true,
+	permissions: [
+		// Content types - full management
+		...fullCrud("contentTypes"),
 
-    // Content entries - full CRUD + publish
-    ...fullCrud("contentEntries"),
-    ...publishPermissions(),
-    { resource: "contentEntries", action: "restore" },
+		// Content entries - full CRUD + publish
+		...fullCrud("contentEntries"),
+		...publishPermissions(),
+		{ resource: "contentEntries", action: "restore" },
 
-    // Media - full management
-    ...fullCrud("mediaAssets"),
-    ...fullCrud("mediaFolders"),
+		// Media - full management
+		...fullCrud("mediaAssets"),
+		...fullCrud("mediaFolders"),
 
-    // Settings - full access
-    { resource: "settings", action: "manage" },
-    ...readOnly("settings"),
-  ],
+		// Settings - full access
+		{ resource: "settings", action: "manage" },
+		...readOnly("settings"),
+	],
 };
 
 /**
@@ -245,23 +252,24 @@ export const ADMIN_ROLE: RoleDefinition = {
  * - Cannot modify CMS settings or content type schemas
  */
 export const EDITOR_ROLE: RoleDefinition = {
-  name: "editor",
-  displayName: "Editor",
-  description: "Can manage all content and media, but cannot modify settings or content types",
-  isSystem: true,
-  permissions: [
-    // Content types - read only
-    ...readOnly("contentTypes"),
+	name: "editor",
+	displayName: "Editor",
+	description:
+		"Can manage all content and media, but cannot modify settings or content types",
+	isSystem: true,
+	permissions: [
+		// Content types - read only
+		...readOnly("contentTypes"),
 
-    // Content entries - full CRUD + publish
-    ...fullCrud("contentEntries"),
-    ...publishPermissions(),
-    { resource: "contentEntries", action: "restore" },
+		// Content entries - full CRUD + publish
+		...fullCrud("contentEntries"),
+		...publishPermissions(),
+		{ resource: "contentEntries", action: "restore" },
 
-    // Media - full management
-    ...fullCrud("mediaAssets"),
-    ...fullCrud("mediaFolders"),
-  ],
+		// Media - full management
+		...fullCrud("mediaAssets"),
+		...fullCrud("mediaFolders"),
+	],
 };
 
 /**
@@ -277,32 +285,32 @@ export const EDITOR_ROLE: RoleDefinition = {
  * - Cannot manage other users' content or CMS settings
  */
 export const AUTHOR_ROLE: RoleDefinition = {
-  name: "author",
-  displayName: "Author",
-  description: "Can create and manage own content and media",
-  isSystem: true,
-  permissions: [
-    // Content types - read only
-    ...readOnly("contentTypes"),
+	name: "author",
+	displayName: "Author",
+	description: "Can create and manage own content and media",
+	isSystem: true,
+	permissions: [
+		// Content types - read only
+		...readOnly("contentTypes"),
 
-    // Content entries - own content only
-    { resource: "contentEntries", action: "create" },
-    { resource: "contentEntries", action: "read", scope: "own" },
-    { resource: "contentEntries", action: "update", scope: "own" },
-    { resource: "contentEntries", action: "delete", scope: "own" },
-    // Authors can publish/unpublish their own content
-    { resource: "contentEntries", action: "publish", scope: "own" },
-    { resource: "contentEntries", action: "unpublish", scope: "own" },
+		// Content entries - own content only
+		{ resource: "contentEntries", action: "create" },
+		{ resource: "contentEntries", action: "read", scope: "own" },
+		{ resource: "contentEntries", action: "update", scope: "own" },
+		{ resource: "contentEntries", action: "delete", scope: "own" },
+		// Authors can publish/unpublish their own content
+		{ resource: "contentEntries", action: "publish", scope: "own" },
+		{ resource: "contentEntries", action: "unpublish", scope: "own" },
 
-    // Media - can create and manage own, read all (for embedding)
-    { resource: "mediaAssets", action: "create" },
-    { resource: "mediaAssets", action: "read", scope: "all" }, // Can read all for embedding
-    { resource: "mediaAssets", action: "update", scope: "own" },
-    { resource: "mediaAssets", action: "delete", scope: "own" },
+		// Media - can create and manage own, read all (for embedding)
+		{ resource: "mediaAssets", action: "create" },
+		{ resource: "mediaAssets", action: "read", scope: "all" }, // Can read all for embedding
+		{ resource: "mediaAssets", action: "update", scope: "own" },
+		{ resource: "mediaAssets", action: "delete", scope: "own" },
 
-    // Media folders - read only (can place assets in folders but not manage folder structure)
-    ...readOnly("mediaFolders"),
-  ],
+		// Media folders - read only (can place assets in folders but not manage folder structure)
+		...readOnly("mediaFolders"),
+	],
 };
 
 /**
@@ -315,21 +323,21 @@ export const AUTHOR_ROLE: RoleDefinition = {
  * - Cannot create, update, delete, or publish any content
  */
 export const VIEWER_ROLE: RoleDefinition = {
-  name: "viewer",
-  displayName: "Viewer",
-  description: "Read-only access to published content and media",
-  isSystem: true,
-  permissions: [
-    // Content types - read only
-    ...readOnly("contentTypes"),
+	name: "viewer",
+	displayName: "Viewer",
+	description: "Read-only access to published content and media",
+	isSystem: true,
+	permissions: [
+		// Content types - read only
+		...readOnly("contentTypes"),
 
-    // Content entries - read published only (scope: "all" means all published)
-    ...readOnly("contentEntries"),
+		// Content entries - read published only (scope: "all" means all published)
+		...readOnly("contentEntries"),
 
-    // Media - read only
-    ...readOnly("mediaAssets"),
-    ...readOnly("mediaFolders"),
-  ],
+		// Media - read only
+		...readOnly("mediaAssets"),
+		...readOnly("mediaFolders"),
+	],
 };
 
 // =============================================================================
@@ -352,17 +360,19 @@ export const VIEWER_ROLE: RoleDefinition = {
  * ```
  */
 export const DEFAULT_ROLES: Record<RoleName, RoleDefinition> = {
-  admin: ADMIN_ROLE,
-  editor: EDITOR_ROLE,
-  author: AUTHOR_ROLE,
-  viewer: VIEWER_ROLE,
+	admin: ADMIN_ROLE,
+	editor: EDITOR_ROLE,
+	author: AUTHOR_ROLE,
+	viewer: VIEWER_ROLE,
 };
 
 /**
  * Array of all default role definitions.
  * Useful for UI rendering or iterating over roles.
  */
-export const DEFAULT_ROLES_LIST: RoleDefinition[] = Object.values(DEFAULT_ROLES);
+export const DEFAULT_ROLES_LIST: RoleDefinition[] = Object.values(
+	DEFAULT_ROLES,
+);
 
 // =============================================================================
 // Permission Check Utilities
@@ -377,26 +387,29 @@ export const DEFAULT_ROLES_LIST: RoleDefinition[] = Object.values(DEFAULT_ROLES)
  * @returns True if the granted permission satisfies the requested permission
  */
 export function permissionMatches(
-  granted: Permission,
-  requested: { resource: Resource; action: Action; scope?: OwnershipScope }
+	granted: Permission,
+	requested: { resource: Resource; action: Action; scope?: OwnershipScope },
 ): boolean {
-  // Resource and action must match
-  if (granted.resource !== requested.resource || granted.action !== requested.action) {
-    return false;
-  }
+	// Resource and action must match
+	if (
+		granted.resource !== requested.resource ||
+		granted.action !== requested.action
+	) {
+		return false;
+	}
 
-  // Scope matching:
-  // - If granted scope is "all" (or undefined), it covers both "all" and "own" requests
-  // - If granted scope is "own", it only covers "own" requests
-  const grantedScope = granted.scope ?? "all";
-  const requestedScope = requested.scope ?? "all";
+	// Scope matching:
+	// - If granted scope is "all" (or undefined), it covers both "all" and "own" requests
+	// - If granted scope is "own", it only covers "own" requests
+	const grantedScope = granted.scope ?? "all";
+	const requestedScope = requested.scope ?? "all";
 
-  if (grantedScope === "all") {
-    return true; // "all" scope covers everything
-  }
+	if (grantedScope === "all") {
+		return true; // "all" scope covers everything
+	}
 
-  // "own" scope only matches "own" requests
-  return requestedScope === "own";
+	// "own" scope only matches "own" requests
+	return requestedScope === "own";
 }
 
 /**
@@ -420,20 +433,19 @@ export function permissionMatches(
  * ```
  */
 export function hasPermission(
-  roleName: RoleName | string,
-  permission: { resource: Resource; action: Action; scope?: OwnershipScope },
-  customRoles?: Record<string, RoleDefinition>
+	roleName: RoleName | string,
+	permission: { resource: Resource; action: Action; scope?: OwnershipScope },
+	customRoles?: Record<string, RoleDefinition>,
 ): boolean {
-  // Look up role in default roles first, then custom roles
-  const role =
-    DEFAULT_ROLES[roleName as RoleName] ?? customRoles?.[roleName];
+	// Look up role in default roles first, then custom roles
+	const role = DEFAULT_ROLES[roleName as RoleName] ?? customRoles?.[roleName];
 
-  if (!role) {
-    return false; // Unknown role has no permissions
-  }
+	if (!role) {
+		return false; // Unknown role has no permissions
+	}
 
-  // Check if any granted permission matches the requested permission
-  return role.permissions.some((p) => permissionMatches(p, permission));
+	// Check if any granted permission matches the requested permission
+	return role.permissions.some((p) => permissionMatches(p, permission));
 }
 
 /**
@@ -450,13 +462,12 @@ export function hasPermission(
  * ```
  */
 export function getRolePermissions(
-  roleName: RoleName | string,
-  customRoles?: Record<string, RoleDefinition>
+	roleName: RoleName | string,
+	customRoles?: Record<string, RoleDefinition>,
 ): Permission[] {
-  const role =
-    DEFAULT_ROLES[roleName as RoleName] ?? customRoles?.[roleName];
+	const role = DEFAULT_ROLES[roleName as RoleName] ?? customRoles?.[roleName];
 
-  return role?.permissions ?? [];
+	return role?.permissions ?? [];
 }
 
 /**
@@ -467,10 +478,10 @@ export function getRolePermissions(
  * @returns The role definition, or undefined if not found
  */
 export function getRole(
-  roleName: RoleName | string,
-  customRoles?: Record<string, RoleDefinition>
+	roleName: RoleName | string,
+	customRoles?: Record<string, RoleDefinition>,
 ): RoleDefinition | undefined {
-  return DEFAULT_ROLES[roleName as RoleName] ?? customRoles?.[roleName];
+	return DEFAULT_ROLES[roleName as RoleName] ?? customRoles?.[roleName];
 }
 
 /**
@@ -480,7 +491,7 @@ export function getRole(
  * @returns True if it's a valid built-in role name
  */
 export function isBuiltInRole(name: string): name is RoleName {
-  return roleNames.includes(name as RoleName);
+	return roleNames.includes(name as RoleName);
 }
 
 /**
@@ -498,13 +509,13 @@ export function isBuiltInRole(name: string): name is RoleName {
  * ```
  */
 export function getResourcePermissions(
-  roleName: RoleName | string,
-  resource: Resource,
-  customRoles?: Record<string, RoleDefinition>
+	roleName: RoleName | string,
+	resource: Resource,
+	customRoles?: Record<string, RoleDefinition>,
 ): Permission[] {
-  return getRolePermissions(roleName, customRoles).filter(
-    (p) => p.resource === resource
-  );
+	return getRolePermissions(roleName, customRoles).filter(
+		(p) => p.resource === resource,
+	);
 }
 
 /**
@@ -513,14 +524,14 @@ export function getResourcePermissions(
  * @param roleName - The name of the role
  * @param resource - The resource to check
  * @param customRoles - Optional custom roles to check in addition to defaults
- * @returns True if the role has any permission on the resource
+ * @returns True if the role h permission on the resource
  */
 export function canAccessResource(
-  roleName: RoleName | string,
-  resource: Resource,
-  customRoles?: Record<string, RoleDefinition>
+	roleName: RoleName | string,
+	resource: Resource,
+	customRoles?: Record<string, RoleDefinition>,
 ): boolean {
-  return getResourcePermissions(roleName, resource, customRoles).length > 0;
+	return getResourcePermissions(roleName, resource, customRoles).length > 0;
 }
 
 // =============================================================================
@@ -549,19 +560,19 @@ export function canAccessResource(
  * ```
  */
 export interface ContentTypePermission extends Permission {
-  /**
-   * Whitelist of content type names this permission applies to.
-   * If specified, permission only grants access to these content types.
-   * Cannot be used with excludeContentTypes.
-   */
-  contentTypes?: string[];
+	/**
+	 * Whitelist of content type names this permission applies to.
+	 * If specified, permission only grants access to these content types.
+	 * Cannot be used with excludeContentTypes.
+	 */
+	contentTypes?: string[];
 
-  /**
-   * Blacklist of content type names this permission does NOT apply to.
-   * If specified, permission grants access to all content types except these.
-   * Cannot be used with contentTypes.
-   */
-  excludeContentTypes?: string[];
+	/**
+	 * Blacklist of content type names this permission does NOT apply to.
+	 * If specified, permission grants access to all content types except these.
+	 * Cannot be used with contentTypes.
+	 */
+	excludeContentTypes?: string[];
 }
 
 /**
@@ -584,16 +595,16 @@ export interface ContentTypePermission extends Permission {
  * ```
  */
 export interface CustomRoleConfig {
-  /** Unique identifier for the custom role */
-  name: string;
-  /** Human-readable display name */
-  displayName: string;
-  /** Description of the role's purpose */
-  description: string;
-  /** Permissions granted to this role */
-  permissions: ContentTypePermission[];
-  /** Whether this role should be treated as a system role (cannot be deleted) */
-  isSystem?: boolean;
+	/** Unique identifier for the custom role */
+	name: string;
+	/** Human-readable display name */
+	displayName: string;
+	/** Description of the role's purpose */
+	description: string;
+	/** Permissions granted to this role */
+	permissions: ContentTypePermission[];
+	/** Whether this role should be treated as a system role (cannot be deleted) */
+	isSystem?: boolean;
 }
 
 /**
@@ -627,28 +638,28 @@ export interface CustomRoleConfig {
  * ```
  */
 export interface ExtendRoleConfig {
-  /** Unique identifier for the extended role */
-  name: string;
-  /** Human-readable display name */
-  displayName: string;
-  /** Description of the role's purpose */
-  description: string;
-  /** Name of the role to extend (can be built-in or custom) */
-  extends: RoleName | string;
-  /** Additional permissions to add to the extended role */
-  addPermissions?: ContentTypePermission[];
-  /**
-   * Permissions to remove from the extended role.
-   * Matching is done by resource + action (scope is ignored for removal).
-   */
-  removePermissions?: Array<{ resource: Resource; action: Action }>;
-  /**
-   * Restrict all contentEntries permissions to these content types.
-   * If specified, all contentEntries permissions are limited to only these types.
-   */
-  restrictToContentTypes?: string[];
-  /** Whether this role should be treated as a system role */
-  isSystem?: boolean;
+	/** Unique identifier for the extended role */
+	name: string;
+	/** Human-readable display name */
+	displayName: string;
+	/** Description of the role's purpose */
+	description: string;
+	/** Name of the role to extend (can be built-in or custom) */
+	extends: RoleName | string;
+	/** Additional permissions to add to the extended role */
+	addPermissions?: ContentTypePermission[];
+	/**
+	 * Permissions to remove from the extended role.
+	 * Matching is done by resource + action (scope is ignored for removal).
+	 */
+	removePermissions?: Array<{ resource: Resource; action: Action }>;
+	/**
+	 * Restrict all contentEntries permissions to these content types.
+	 * If specified, all contentEntries permissions are limited to only these types.
+	 */
+	restrictToContentTypes?: string[];
+	/** Whether this role should be treated as a system role */
+	isSystem?: boolean;
 }
 
 /**
@@ -656,18 +667,18 @@ export interface ExtendRoleConfig {
  * This is the runtime representation of a role that may have per-content-type restrictions.
  */
 export interface ExtendedRoleDefinition {
-  /** Unique role identifier */
-  name: string;
-  /** Human-readable display name */
-  displayName: string;
-  /** Description of the role's purpose */
-  description: string;
-  /** List of permissions granted to this role (may include content-type restrictions) */
-  permissions: ContentTypePermission[];
-  /** Whether this is a system role that cannot be deleted */
-  isSystem: boolean;
-  /** If this role was extended from another, the source role name */
-  extendsRole?: string;
+	/** Unique role identifier */
+	name: string;
+	/** Human-readable display name */
+	displayName: string;
+	/** Description of the role's purpose */
+	description: string;
+	/** List of permissions granted to this role (may include content-type restrictions) */
+	permissions: ContentTypePermission[];
+	/** Whether this is a system role that cannot be deleted */
+	isSystem: boolean;
+	/** If this role was extended from another, the source role name */
+	extendsRole?: string;
 }
 
 // =============================================================================
@@ -698,26 +709,28 @@ export interface ExtendedRoleDefinition {
  * });
  * ```
  */
-export function createCustomRole(config: CustomRoleConfig): ExtendedRoleDefinition {
-  // Validate the configuration
-  if (!config.name || config.name.trim() === "") {
-    throw new Error("Custom role name is required");
-  }
+export function createCustomRole(
+	config: CustomRoleConfig,
+): ExtendedRoleDefinition {
+	// Validate the configuration
+	if (!config.name || config.name.trim() === "") {
+		throw new Error("Custom role name is required");
+	}
 
-  if (isBuiltInRole(config.name)) {
-    throw new Error(
-      `Cannot create custom role with built-in role name '${config.name}'. ` +
-        "Use extendRole() to extend a built-in role, or choose a different name."
-    );
-  }
+	if (isBuiltInRole(config.name)) {
+		throw new Error(
+			`Cannot create custom role with built-in role name '${config.name}'. ` +
+				"Use extendRole() to extend a built-in role, or choose a different name.",
+		);
+	}
 
-  return {
-    name: config.name,
-    displayName: config.displayName,
-    description: config.description,
-    permissions: config.permissions,
-    isSystem: config.isSystem ?? false,
-  };
+	return {
+		name: config.name,
+		displayName: config.displayName,
+		description: config.description,
+		permissions: config.permissions,
+		isSystem: config.isSystem ?? false,
+	};
 }
 
 /**
@@ -757,65 +770,70 @@ export function createCustomRole(config: CustomRoleConfig): ExtendedRoleDefiniti
  * ```
  */
 export function extendRole(
-  config: ExtendRoleConfig,
-  customRoles?: Record<string, RoleDefinition | ExtendedRoleDefinition>
+	config: ExtendRoleConfig,
+	customRoles?: Record<string, RoleDefinition | ExtendedRoleDefinition>,
 ): ExtendedRoleDefinition {
-  // Validate the configuration
-  if (!config.name || config.name.trim() === "") {
-    throw new Error("Extended role name is required");
-  }
+	// Validate the configuration
+	if (!config.name || config.name.trim() === "") {
+		throw new Error("Extended role name is required");
+	}
 
-  if (config.name === config.extends) {
-    throw new Error("Extended role name must be different from the base role name");
-  }
+	if (config.name === config.extends) {
+		throw new Error(
+			"Extended role name must be different from the base role name",
+		);
+	}
 
-  // Get the base role
-  const baseRole = getRole(config.extends, customRoles);
-  if (!baseRole) {
-    throw new Error(
-      `Cannot extend unknown role '${config.extends}'. ` +
-        "Ensure the role exists as a built-in role or is defined in customRoles."
-    );
-  }
+	// Get the base role
+	const baseRole = getRole(config.extends, customRoles);
+	if (!baseRole) {
+		throw new Error(
+			`Cannot extend unknown role '${config.extends}'. ` +
+				"Ensure the role exists as a built-in role or is defined in customRoles.",
+		);
+	}
 
-  // Start with base permissions
-  let permissions: ContentTypePermission[] = [...baseRole.permissions];
+	// Start with base permissions
+	let permissions: ContentTypePermission[] = [...baseRole.permissions];
 
-  // Remove specified permissions
-  if (config.removePermissions && config.removePermissions.length > 0) {
-    permissions = permissions.filter((p) => {
-      return !config.removePermissions!.some(
-        (r) => r.resource === p.resource && r.action === p.action
-      );
-    });
-  }
+	// Remove specified permissions
+	if (config.removePermissions && config.removePermissions.length > 0) {
+		permissions = permissions.filter((p) => {
+			return !config.removePermissions!.some(
+				(r) => r.resource === p.resource && r.action === p.action,
+			);
+		});
+	}
 
-  // Add new permissions
-  if (config.addPermissions && config.addPermissions.length > 0) {
-    permissions = [...permissions, ...config.addPermissions];
-  }
+	// Add new permissions
+	if (config.addPermissions && config.addPermissions.length > 0) {
+		permissions = [...permissions, ...config.addPermissions];
+	}
 
-  // Apply content type restrictions to all contentEntries permissions
-  if (config.restrictToContentTypes && config.restrictToContentTypes.length > 0) {
-    permissions = permissions.map((p) => {
-      if (p.resource === "contentEntries") {
-        return {
-          ...p,
-          contentTypes: config.restrictToContentTypes,
-        };
-      }
-      return p;
-    });
-  }
+	// Apply content type restrictions to all contentEntries permissions
+	if (
+		config.restrictToContentTypes &&
+		config.restrictToContentTypes.length > 0
+	) {
+		permissions = permissions.map((p) => {
+			if (p.resource === "contentEntries") {
+				return {
+					...p,
+					contentTypes: config.restrictToContentTypes,
+				};
+			}
+			return p;
+		});
+	}
 
-  return {
-    name: config.name,
-    displayName: config.displayName,
-    description: config.description,
-    permissions,
-    isSystem: config.isSystem ?? false,
-    extendsRole: config.extends,
-  };
+	return {
+		name: config.name,
+		displayName: config.displayName,
+		description: config.description,
+		permissions,
+		isSystem: config.isSystem ?? false,
+		extendsRole: config.extends,
+	};
 }
 
 /**
@@ -837,24 +855,24 @@ export function extendRole(
  * ```
  */
 export function mergeRolesWithDefaults(
-  customRoles: Array<RoleDefinition | ExtendedRoleDefinition>
+	customRoles: Array<RoleDefinition | ExtendedRoleDefinition>,
 ): Record<string, RoleDefinition | ExtendedRoleDefinition> {
-  const result: Record<string, RoleDefinition | ExtendedRoleDefinition> = {
-    ...DEFAULT_ROLES,
-  };
+	const result: Record<string, RoleDefinition | ExtendedRoleDefinition> = {
+		...DEFAULT_ROLES,
+	};
 
-  for (const role of customRoles) {
-    if (isBuiltInRole(role.name)) {
-      console.warn(
-        `Warning: Custom role '${role.name}' has the same name as a built-in role. ` +
-          "The built-in role will take precedence."
-      );
-      continue;
-    }
-    result[role.name] = role;
-  }
+	for (const role of customRoles) {
+		if (isBuiltInRole(role.name)) {
+			console.warn(
+				`Warning: Custom role '${role.name}' has the same name as a built-in role. ` +
+					"The built-in role will take precedence.",
+			);
+			continue;
+		}
+		result[role.name] = role;
+	}
 
-  return result;
+	return result;
 }
 
 /**
@@ -871,13 +889,13 @@ export function mergeRolesWithDefaults(
  * ```
  */
 export function buildCustomRolesRecord(
-  roles: Array<RoleDefinition | ExtendedRoleDefinition>
+	roles: Array<RoleDefinition | ExtendedRoleDefinition>,
 ): Record<string, RoleDefinition | ExtendedRoleDefinition> {
-  const result: Record<string, RoleDefinition | ExtendedRoleDefinition> = {};
-  for (const role of roles) {
-    result[role.name] = role;
-  }
-  return result;
+	const result: Record<string, RoleDefinition | ExtendedRoleDefinition> = {};
+	for (const role of roles) {
+		result[role.name] = role;
+	}
+	return result;
 }
 
 // =============================================================================
@@ -888,16 +906,16 @@ export function buildCustomRolesRecord(
  * Options for checking permissions with content-type awareness.
  */
 export interface ContentTypePermissionCheckOptions {
-  /**
-   * Custom roles to include when checking permissions.
-   */
-  customRoles?: Record<string, RoleDefinition | ExtendedRoleDefinition>;
+	/**
+	 * Custom roles to include when checking permissions.
+	 */
+	customRoles?: Record<string, RoleDefinition | ExtendedRoleDefinition>;
 
-  /**
-   * The content type name to check permissions for.
-   * Required when the permission may have content-type restrictions.
-   */
-  contentTypeName?: string;
+	/**
+	 * The content type name to check permissions for.
+	 * Required when the permission may have content-type restrictions.
+	 */
+	contentTypeName?: string;
 }
 
 /**
@@ -908,26 +926,29 @@ export interface ContentTypePermissionCheckOptions {
  * @returns True if the permission applies to this content type
  */
 function permissionAppliesToContentType(
-  permission: ContentTypePermission,
-  contentTypeName?: string
+	permission: ContentTypePermission,
+	contentTypeName?: string,
 ): boolean {
-  // If no content type specified, the permission applies
-  if (!contentTypeName) {
-    return true;
-  }
+	// If no content type specified, the permission applies
+	if (!contentTypeName) {
+		return true;
+	}
 
-  // If permission has a whitelist, check if content type is in it
-  if (permission.contentTypes && permission.contentTypes.length > 0) {
-    return permission.contentTypes.includes(contentTypeName);
-  }
+	// If permission has a whitelist, check if content type is in it
+	if (permission.contentTypes && permission.contentTypes.length > 0) {
+		return permission.contentTypes.includes(contentTypeName);
+	}
 
-  // If permission has a blacklist, check if content type is NOT in it
-  if (permission.excludeContentTypes && permission.excludeContentTypes.length > 0) {
-    return !permission.excludeContentTypes.includes(contentTypeName);
-  }
+	// If permission has a blacklist, check if content type is NOT in it
+	if (
+		permission.excludeContentTypes &&
+		permission.excludeContentTypes.length > 0
+	) {
+		return !permission.excludeContentTypes.includes(contentTypeName);
+	}
 
-  // No restrictions, permission applies
-  return true;
+	// No restrictions, permission applies
+	return true;
 }
 
 /**
@@ -963,28 +984,31 @@ function permissionAppliesToContentType(
  * ```
  */
 export function hasContentTypePermission(
-  roleName: RoleName | string,
-  permission: { resource: Resource; action: Action; scope?: OwnershipScope },
-  options?: ContentTypePermissionCheckOptions
+	roleName: RoleName | string,
+	permission: { resource: Resource; action: Action; scope?: OwnershipScope },
+	options?: ContentTypePermissionCheckOptions,
 ): boolean {
-  // Get the role definition
-  const role = getRole(roleName, options?.customRoles);
+	// Get the role definition
+	const role = getRole(roleName, options?.customRoles);
 
-  if (!role) {
-    return false;
-  }
+	if (!role) {
+		return false;
+	}
 
-  // Check if any granted permission matches
-  return role.permissions.some((p) => {
-    // Check basic permission match (resource, action, scope)
-    if (!permissionMatches(p, permission)) {
-      return false;
-    }
+	// Check if any granted permission matches
+	return role.permissions.some((p) => {
+		// Check basic permission match (resource, action, scope)
+		if (!permissionMatches(p, permission)) {
+			return false;
+		}
 
-    // Check content type restrictions
-    const extendedPerm = p as ContentTypePermission;
-    return permissionAppliesToContentType(extendedPerm, options?.contentTypeName);
-  });
+		// Check content type restrictions
+		const extendedPerm = p as ContentTypePermission;
+		return permissionAppliesToContentType(
+			extendedPerm,
+			options?.contentTypeName,
+		);
+	});
 }
 
 /**
@@ -1007,45 +1031,47 @@ export function hasContentTypePermission(
  * ```
  */
 export function getPermittedContentTypes(
-  roleName: RoleName | string,
-  action: Action,
-  options?: { customRoles?: Record<string, RoleDefinition | ExtendedRoleDefinition> }
+	roleName: RoleName | string,
+	action: Action,
+	options?: {
+		customRoles?: Record<string, RoleDefinition | ExtendedRoleDefinition>;
+	},
 ): string[] {
-  const role = getRole(roleName, options?.customRoles);
+	const role = getRole(roleName, options?.customRoles);
 
-  if (!role) {
-    return [];
-  }
+	if (!role) {
+		return [];
+	}
 
-  // Find all contentEntries permissions for this action
-  const contentPerms = role.permissions.filter(
-    (p) => p.resource === "contentEntries" && p.action === action
-  ) as ContentTypePermission[];
+	// Find all contentEntries permissions for this action
+	const contentPerms = role.permissions.filter(
+		(p) => p.resource === "contentEntries" && p.action === action,
+	) as ContentTypePermission[];
 
-  if (contentPerms.length === 0) {
-    return [];
-  }
+	if (contentPerms.length === 0) {
+		return [];
+	}
 
-  // Check if any permission is unrestricted
-  const hasUnrestricted = contentPerms.some(
-    (p) =>
-      (!p.contentTypes || p.contentTypes.length === 0) &&
-      (!p.excludeContentTypes || p.excludeContentTypes.length === 0)
-  );
+	// Check if any permission is unrestricted
+	const hasUnrestricted = contentPerms.some(
+		(p) =>
+			(!p.contentTypes || p.contentTypes.length === 0) &&
+			(!p.excludeContentTypes || p.excludeContentTypes.length === 0),
+	);
 
-  if (hasUnrestricted) {
-    return ["*"]; // Unrestricted access
-  }
+	if (hasUnrestricted) {
+		return ["*"]; // Unrestricted access
+	}
 
-  // Collect all permitted content types
-  const permitted = new Set<string>();
-  for (const perm of contentPerms) {
-    if (perm.contentTypes) {
-      perm.contentTypes.forEach((ct) => permitted.add(ct));
-    }
-  }
+	// Collect all permitted content types
+	const permitted = new Set<string>();
+	for (const perm of contentPerms) {
+		if (perm.contentTypes) {
+			perm.contentTypes.forEach((ct) => permitted.add(ct));
+		}
+	}
 
-  return Array.from(permitted);
+	return Array.from(permitted);
 }
 
 /**
@@ -1057,30 +1083,32 @@ export function getPermittedContentTypes(
  * @returns Array of excluded content type names, or [] if none
  */
 export function getExcludedContentTypes(
-  roleName: RoleName | string,
-  action: Action,
-  options?: { customRoles?: Record<string, RoleDefinition | ExtendedRoleDefinition> }
+	roleName: RoleName | string,
+	action: Action,
+	options?: {
+		customRoles?: Record<string, RoleDefinition | ExtendedRoleDefinition>;
+	},
 ): string[] {
-  const role = getRole(roleName, options?.customRoles);
+	const role = getRole(roleName, options?.customRoles);
 
-  if (!role) {
-    return [];
-  }
+	if (!role) {
+		return [];
+	}
 
-  // Find all contentEntries permissions for this action
-  const contentPerms = role.permissions.filter(
-    (p) => p.resource === "contentEntries" && p.action === action
-  ) as ContentTypePermission[];
+	// Find all contentEntries permissions for this action
+	const contentPerms = role.permissions.filter(
+		(p) => p.resource === "contentEntries" && p.action === action,
+	) as ContentTypePermission[];
 
-  // Collect all excluded content types
-  const excluded = new Set<string>();
-  for (const perm of contentPerms) {
-    if (perm.excludeContentTypes) {
-      perm.excludeContentTypes.forEach((ct) => excluded.add(ct));
-    }
-  }
+	// Collect all excluded content types
+	const excluded = new Set<string>();
+	for (const perm of contentPerms) {
+		if (perm.excludeContentTypes) {
+			perm.excludeContentTypes.forEach((ct) => excluded.add(ct));
+		}
+	}
 
-  return Array.from(excluded);
+	return Array.from(excluded);
 }
 
 // =============================================================================
@@ -1104,22 +1132,26 @@ export function getExcludedContentTypes(
  * ```
  */
 export function fullCrudForContentType(
-  resource: Resource,
-  options?: {
-    scope?: OwnershipScope;
-    contentTypes?: string[];
-    excludeContentTypes?: string[];
-  }
+	resource: Resource,
+	options?: {
+		scope?: OwnershipScope;
+		contentTypes?: string[];
+		excludeContentTypes?: string[];
+	},
 ): ContentTypePermission[] {
-  const scope = options?.scope ?? "all";
-  const base = { scope, contentTypes: options?.contentTypes, excludeContentTypes: options?.excludeContentTypes };
+	const scope = options?.scope ?? "all";
+	const base = {
+		scope,
+		contentTypes: options?.contentTypes,
+		excludeContentTypes: options?.excludeContentTypes,
+	};
 
-  return [
-    { resource, action: "create", ...base },
-    { resource, action: "read", ...base },
-    { resource, action: "update", ...base },
-    { resource, action: "delete", ...base },
-  ];
+	return [
+		{ resource, action: "create", ...base },
+		{ resource, action: "read", ...base },
+		{ resource, action: "update", ...base },
+		{ resource, action: "delete", ...base },
+	];
 }
 
 /**
@@ -1128,20 +1160,22 @@ export function fullCrudForContentType(
  * @param options - Optional scope and content type restrictions
  * @returns Array of publish/unpublish permissions
  */
-export function publishPermissionsForContentType(
-  options?: {
-    scope?: OwnershipScope;
-    contentTypes?: string[];
-    excludeContentTypes?: string[];
-  }
-): ContentTypePermission[] {
-  const scope = options?.scope ?? "all";
-  const base = { scope, contentTypes: options?.contentTypes, excludeContentTypes: options?.excludeContentTypes };
+export function publishPermissionsForContentType(options?: {
+	scope?: OwnershipScope;
+	contentTypes?: string[];
+	excludeContentTypes?: string[];
+}): ContentTypePermission[] {
+	const scope = options?.scope ?? "all";
+	const base = {
+		scope,
+		contentTypes: options?.contentTypes,
+		excludeContentTypes: options?.excludeContentTypes,
+	};
 
-  return [
-    { resource: "contentEntries", action: "publish", ...base },
-    { resource: "contentEntries", action: "unpublish", ...base },
-  ];
+	return [
+		{ resource: "contentEntries", action: "publish", ...base },
+		{ resource: "contentEntries", action: "unpublish", ...base },
+	];
 }
 
 /**
@@ -1152,22 +1186,22 @@ export function publishPermissionsForContentType(
  * @returns Array with single read permission
  */
 export function readOnlyForContentType(
-  resource: Resource,
-  options?: {
-    scope?: OwnershipScope;
-    contentTypes?: string[];
-    excludeContentTypes?: string[];
-  }
+	resource: Resource,
+	options?: {
+		scope?: OwnershipScope;
+		contentTypes?: string[];
+		excludeContentTypes?: string[];
+	},
 ): ContentTypePermission[] {
-  return [
-    {
-      resource,
-      action: "read",
-      scope: options?.scope ?? "all",
-      contentTypes: options?.contentTypes,
-      excludeContentTypes: options?.excludeContentTypes,
-    },
-  ];
+	return [
+		{
+			resource,
+			action: "read",
+			scope: options?.scope ?? "all",
+			contentTypes: options?.contentTypes,
+			excludeContentTypes: options?.excludeContentTypes,
+		},
+	];
 }
 
 // =============================================================================
@@ -1180,62 +1214,69 @@ export function readOnlyForContentType(
  * @param config - The custom role configuration to validate
  * @returns An object with isValid boolean and optional error messages
  */
-export function validateCustomRoleConfig(config: CustomRoleConfig): {
-  isValid: boolean;
-  errors: string[];
+export function validateCustomRoleConfig(
+	config: CustomRoleConfig,
+): {
+	isValid: boolean;
+	errors: string[];
 } {
-  const errors: string[] = [];
+	const errors: string[] = [];
 
-  // Check required fields
-  if (!config.name || config.name.trim() === "") {
-    errors.push("Role name is required");
-  }
+	// Check required fields
+	if (!config.name || config.name.trim() === "") {
+		errors.push("Role name is required");
+	}
 
-  if (!config.displayName || config.displayName.trim() === "") {
-    errors.push("Display name is required");
-  }
+	if (!config.displayName || config.displayName.trim() === "") {
+		errors.push("Display name is required");
+	}
 
-  if (!config.description || config.description.trim() === "") {
-    errors.push("Description is required");
-  }
+	if (!config.description || config.description.trim() === "") {
+		errors.push("Description is required");
+	}
 
-  // Check for built-in name conflict
-  if (config.name && isBuiltInRole(config.name)) {
-    errors.push(`Role name '${config.name}' conflicts with a built-in role`);
-  }
+	// Check for built-in name conflict
+	if (config.name && isBuiltInRole(config.name)) {
+		errors.push(`Role name '${config.name}' conflicts with a built-in role`);
+	}
 
-  // Validate permissions
-  if (!config.permissions || !Array.isArray(config.permissions)) {
-    errors.push("Permissions must be an array");
-  } else {
-    for (let i = 0; i < config.permissions.length; i++) {
-      const perm = config.permissions[i];
+	// Validate permissions
+	if (!config.permissions || !Array.isArray(config.permissions)) {
+		errors.push("Permissions must be an array");
+	} else {
+		for (let i = 0; i < config.permissions.length; i++) {
+			const perm = config.permissions[i];
 
-      if (!resources.includes(perm.resource)) {
-        errors.push(`Permission ${i}: Invalid resource '${perm.resource}'`);
-      }
+			if (!resources.includes(perm.resource)) {
+				errors.push(`Permission ${i}: Invalid resource '${perm.resource}'`);
+			}
 
-      if (!actions.includes(perm.action)) {
-        errors.push(`Permission ${i}: Invalid action '${perm.action}'`);
-      }
+			if (!actions.includes(perm.action)) {
+				errors.push(`Permission ${i}: Invalid action '${perm.action}'`);
+			}
 
-      if (perm.scope && perm.scope !== "all" && perm.scope !== "own") {
-        errors.push(`Permission ${i}: Invalid scope '${perm.scope}'`);
-      }
+			if (perm.scope && perm.scope !== "all" && perm.scope !== "own") {
+				errors.push(`Permission ${i}: Invalid scope '${perm.scope}'`);
+			}
 
-      // Check for conflicting content type restrictions
-      if (perm.contentTypes && perm.excludeContentTypes) {
-        if (perm.contentTypes.length > 0 && perm.excludeContentTypes.length > 0) {
-          errors.push(`Permission ${i}: Cannot specify both contentTypes and excludeContentTypes`);
-        }
-      }
-    }
-  }
+			// Check for conflicting content type restrictions
+			if (perm.contentTypes && perm.excludeContentTypes) {
+				if (
+					perm.contentTypes.length > 0 &&
+					perm.excludeContentTypes.length > 0
+				) {
+					errors.push(
+						`Permission ${i}: Cannot specify both contentTypes and excludeContentTypes`,
+					);
+				}
+			}
+		}
+	}
 
-  return {
-    isValid: errors.length === 0,
-    errors,
-  };
+	return {
+		isValid: errors.length === 0,
+		errors,
+	};
 }
 
 /**
@@ -1246,76 +1287,80 @@ export function validateCustomRoleConfig(config: CustomRoleConfig): {
  * @returns An object with isValid boolean and optional error messages
  */
 export function validateExtendRoleConfig(
-  config: ExtendRoleConfig,
-  customRoles?: Record<string, RoleDefinition | ExtendedRoleDefinition>
+	config: ExtendRoleConfig,
+	customRoles?: Record<string, RoleDefinition | ExtendedRoleDefinition>,
 ): {
-  isValid: boolean;
-  errors: string[];
+	isValid: boolean;
+	errors: string[];
 } {
-  const errors: string[] = [];
+	const errors: string[] = [];
 
-  // Check required fields
-  if (!config.name || config.name.trim() === "") {
-    errors.push("Role name is required");
-  }
+	// Check required fields
+	if (!config.name || config.name.trim() === "") {
+		errors.push("Role name is required");
+	}
 
-  if (!config.displayName || config.displayName.trim() === "") {
-    errors.push("Display name is required");
-  }
+	if (!config.displayName || config.displayName.trim() === "") {
+		errors.push("Display name is required");
+	}
 
-  if (!config.description || config.description.trim() === "") {
-    errors.push("Description is required");
-  }
+	if (!config.description || config.description.trim() === "") {
+		errors.push("Description is required");
+	}
 
-  if (!config.extends || config.extends.trim() === "") {
-    errors.push("Base role name (extends) is required");
-  }
+	if (!config.extends || config.extends.trim() === "") {
+		errors.push("Base role name (extends) is required");
+	}
 
-  // Check for self-reference
-  if (config.name === config.extends) {
-    errors.push("Cannot extend a role with itself");
-  }
+	// Check for self-reference
+	if (config.name === config.extends) {
+		errors.push("Cannot extend a role with itself");
+	}
 
-  // Check if base role exists
-  if (config.extends) {
-    const baseRole = getRole(config.extends, customRoles);
-    if (!baseRole) {
-      errors.push(`Base role '${config.extends}' does not exist`);
-    }
-  }
+	// Check if base role exists
+	if (config.extends) {
+		const baseRole = getRole(config.extends, customRoles);
+		if (!baseRole) {
+			errors.push(`Base role '${config.extends}' does not exist`);
+		}
+	}
 
-  // Validate addPermissions if provided
-  if (config.addPermissions) {
-    for (let i = 0; i < config.addPermissions.length; i++) {
-      const perm = config.addPermissions[i];
+	// Validate addPermissions if provided
+	if (config.addPermissions) {
+		for (let i = 0; i < config.addPermissions.length; i++) {
+			const perm = config.addPermissions[i];
 
-      if (!resources.includes(perm.resource)) {
-        errors.push(`addPermissions[${i}]: Invalid resource '${perm.resource}'`);
-      }
+			if (!resources.includes(perm.resource)) {
+				errors.push(
+					`addPermissions[${i}]: Invalid resource '${perm.resource}'`,
+				);
+			}
 
-      if (!actions.includes(perm.action)) {
-        errors.push(`addPermissions[${i}]: Invalid action '${perm.action}'`);
-      }
-    }
-  }
+			if (!actions.includes(perm.action)) {
+				errors.push(`addPermissions[${i}]: Invalid action '${perm.action}'`);
+			}
+		}
+	}
 
-  // Validate removePermissions if provided
-  if (config.removePermissions) {
-    for (let i = 0; i < config.removePermissions.length; i++) {
-      const perm = config.removePermissions[i];
+	// Validate removePermissions if provided
+	if (config.removePermissions) {
+		for (let i = 0; i < config.removePermissions.length; i++) {
+			const perm = config.removePermissions[i];
 
-      if (!resources.includes(perm.resource)) {
-        errors.push(`removePermissions[${i}]: Invalid resource '${perm.resource}'`);
-      }
+			if (!resources.includes(perm.resource)) {
+				errors.push(
+					`removePermissions[${i}]: Invalid resource '${perm.resource}'`,
+				);
+			}
 
-      if (!actions.includes(perm.action)) {
-        errors.push(`removePermissions[${i}]: Invalid action '${perm.action}'`);
-      }
-    }
-  }
+			if (!actions.includes(perm.action)) {
+				errors.push(`removePermissions[${i}]: Invalid action '${perm.action}'`);
+			}
+		}
+	}
 
-  return {
-    isValid: errors.length === 0,
-    errors,
-  };
+	return {
+		isValid: errors.length === 0,
+		errors,
+	};
 }
