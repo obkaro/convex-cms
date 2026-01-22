@@ -3,7 +3,8 @@
   "compilerOptions": {
     "outDir": "./dist",
     "declaration": true,
-    "declarationMap": true
+    "declarationMap": true,
+    "jsx": "react-jsx"
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "example", "**/*.test.ts", "**/_generated/**", "src/component/contentEntries.ts", "src/component/contentEntryMutations.ts", "src/component/contentTypeMutations.ts"]
