@@ -10,7 +10,7 @@ A developer-first headless CMS built as a [Convex Component](https://docs.convex
 - **Media management** - Upload, organize, and serve media with variants
 - **Role-based access control** - Fine-grained permissions with custom roles
 - **Multi-locale support** - Content localization with fallback chains
-- **Admin UI** - Ready-to-use React admin interface
+- **Admin UI** - Ready-to-use React admin interface (CLI or embeddable)
 
 ## Installation
 
@@ -32,7 +32,70 @@ app.use(convexCms);
 export default app;
 ```
 
-### 2. Create CMS Client
+### 2. Initialize Admin API
+
+```bash
+npx convex-cms init
+```
+
+This creates `convex/admin.ts` with all the admin functions the UI needs.
+
+### 3. Start Development
+
+```bash
+npx convex dev
+```
+
+### 4. Access Admin UI
+
+```bash
+npx convex-cms admin
+```
+
+This opens the CMS admin interface at http://localhost:3000.
+
+## Admin UI Options
+
+### Option 1: Standalone CLI (Development)
+
+Perfect for quick access during development:
+
+```bash
+npx convex-cms admin
+npx convex-cms admin --port 4000      # Custom port
+npx convex-cms admin --demo           # Demo mode with mock data
+```
+
+### Option 2: Embed in Your App (Production)
+
+For production deployments, embed the admin UI in your application:
+
+```tsx
+import { CmsAdmin } from "convex-cms-admin";
+
+function AdminPage() {
+  return (
+    <CmsAdmin
+      convexUrl={process.env.VITE_CONVEX_URL}
+      auth={{
+        getUser: () => yourAuthProvider.getUser(),
+        getUserRole: (id) => yourAuthProvider.getRole(id),
+        onLogout: () => yourAuthProvider.signOut(),
+      }}
+      config={{
+        branding: {
+          appName: "My CMS",
+          logoUrl: "/logo.svg",
+        },
+      }}
+    />
+  );
+}
+```
+
+## Using the CMS Client
+
+For programmatic access in your Convex functions:
 
 ```typescript
 // convex/cms.ts
@@ -41,11 +104,12 @@ import { components } from "./_generated/api";
 
 export const cms = createCmsClient(components.convexCms, {
   defaultLocale: "en",
-  permissiveMode: true, // For development only
+  features: {
+    versioning: true,
+    localization: true,
+  },
 });
 ```
-
-### 3. Use in Your Functions
 
 ```typescript
 // convex/blog.ts
@@ -73,6 +137,46 @@ export const createPost = mutation({
 });
 ```
 
+## Auth Integration
+
+The admin UI is auth-agnostic - integrate with any provider:
+
+### Frontend Auth Config
+
+```typescript
+<CmsAdmin
+  auth={{
+    // Return current user for display
+    getUser: () => ({
+      id: currentUser.id,
+      name: currentUser.name,
+      email: currentUser.email,
+    }),
+    // Map user ID to CMS role
+    getUserRole: (userId) => userRoles[userId] ?? null,
+    // Handle logout
+    onLogout: () => signOut(),
+  }}
+/>
+```
+
+### Backend Auth (Optional)
+
+Add auth validation to admin operations:
+
+```typescript
+// convex/admin.ts
+export const { ... } = defineAdminAPI(components.convexCms, {
+  auth: async (ctx, operation) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthorized");
+
+    // Optionally check operation.type for fine-grained access
+    return identity.subject;
+  },
+});
+```
+
 ## Documentation
 
 - [Getting Started Guide](./docs/guides/getting-started.md)
@@ -80,14 +184,6 @@ export const createPost = mutation({
 - [Media Management](./docs/guides/media.md)
 - [Authorization](./docs/guides/authorization.md)
 - [API Reference](./docs/api/client-api.md)
-
-## Admin UI
-
-Convex CMS includes a ready-to-use admin interface:
-
-```bash
-npx convex-cms admin
-```
 
 ## Requirements
 

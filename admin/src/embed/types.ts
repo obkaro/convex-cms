@@ -1,4 +1,5 @@
 import type { AdminConfig } from "../lib/admin-config";
+import type { CmsAdminApi } from "./contexts/ApiContext";
 
 export interface CmsAdminUser {
   id: string;
@@ -14,6 +15,7 @@ export interface CmsAdminAuthConfig {
 }
 
 export interface CmsAdminProps {
+  api: CmsAdminApi;
   convexUrl: string;
   config?: Partial<AdminConfig>;
   auth: CmsAdminAuthConfig;

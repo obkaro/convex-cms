@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { Command } from "commander";
 import { adminCommand } from "./commands/admin.js";
+import { initCommand } from "./commands/init.js";
 
 const program = new Command();
 
@@ -8,6 +9,12 @@ program
   .name("convex-cms")
   .description("Convex CMS CLI - Headless CMS built on Convex")
   .version("0.0.1");
+
+program
+  .command("init")
+  .description("Initialize CMS admin API in your Convex project")
+  .option("-f, --force", "Overwrite existing convex/admin.ts")
+  .action(initCommand);
 
 program
   .command("admin")

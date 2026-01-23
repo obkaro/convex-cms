@@ -41,6 +41,7 @@ import { ThemeProvider } from "../contexts/ThemeContext";
 import { RouteGuard } from "../components/RouteGuard";
 import { resolveAdminConfig } from "../lib/admin-config";
 import type { CmsAdminProps, CmsAdminAuthConfig } from "./types";
+import { ApiProvider } from "./contexts/ApiContext";
 import {
   EmbedNavigationProvider,
   useEmbedNavigation,
@@ -125,6 +126,7 @@ function EmbedRouter() {
 }
 
 export function CmsAdmin({
+  api,
   convexUrl,
   config,
   auth,
@@ -141,34 +143,37 @@ export function CmsAdmin({
 
   return (
     <div className={className}>
-      <ThemeProvider>
-        <AdminConfigProvider config={adminConfig}>
-          <ConvexProviderWrapper convexUrl={convexUrl}>
-            <AuthProvider
-              getUser={authConfig.getUser}
-              getUserRole={authConfig.getUserRole}
-              onLogout={authConfig.onLogout}
-            >
-              <EmbedNavigationProvider
-                initialRoute={initialRoute}
-                basePath={basePath}
-                onNavigate={onNavigate}
+      <ApiProvider api={api}>
+        <ThemeProvider>
+          <AdminConfigProvider config={adminConfig}>
+            <ConvexProviderWrapper convexUrl={convexUrl}>
+              <AuthProvider
+                getUser={authConfig.getUser}
+                getUserRole={authConfig.getUserRole}
+                onLogout={authConfig.onLogout}
               >
-                <RouteGuard>
-                  <div className="min-h-screen">
-                    <EmbedRouter />
-                  </div>
-                </RouteGuard>
-              </EmbedNavigationProvider>
-            </AuthProvider>
-          </ConvexProviderWrapper>
-        </AdminConfigProvider>
-      </ThemeProvider>
+                <EmbedNavigationProvider
+                  initialRoute={initialRoute}
+                  basePath={basePath}
+                  onNavigate={onNavigate}
+                >
+                  <RouteGuard>
+                    <div className="min-h-screen">
+                      <EmbedRouter />
+                    </div>
+                  </RouteGuard>
+                </EmbedNavigationProvider>
+              </AuthProvider>
+            </ConvexProviderWrapper>
+          </AdminConfigProvider>
+        </ThemeProvider>
+      </ApiProvider>
     </div>
   );
 }
 
 export type { CmsAdminProps, CmsAdminAuthConfig, CmsAdminUser } from "./types";
+export type { CmsAdminApi } from "./contexts/ApiContext";
 export type { AdminConfig, NavItem } from "../lib/admin-config";
 export { resolveAdminConfig, defineAdminConfig } from "../lib/admin-config";
 export type { EmbedRoute, EmbedRouteState } from "./navigation";

@@ -6,10 +6,18 @@
 
 import { useQuery } from "convex/react";
 import { Loader2, Upload, Image, File, Film, Music } from "lucide-react";
-import { api } from "../../convex/_generated/api";
 import { CmsPageHeader } from "~/components/cmsds/CmsPageHeader";
 import { CmsEmptyState } from "~/components/cmsds/CmsEmptyState";
 import { CmsButton } from "~/components/cmsds/CmsButton";
+import { useApi } from "../contexts/ApiContext";
+
+type MediaAsset = {
+  _id: string;
+  filename: string;
+  mimeType: string;
+  size: number;
+  url?: string;
+};
 
 function getMediaIcon(mimeType: string) {
   if (mimeType.startsWith("image/")) return Image;
@@ -25,7 +33,8 @@ function formatFileSize(bytes: number): string {
 }
 
 export function EmbedMedia() {
-  const assets = useQuery(api.media.listAssets, {
+  const api = useApi();
+  const assets = useQuery(api.admin.listMediaAssets as any, {
     paginationOpts: { numItems: 50, cursor: null },
   });
 
@@ -50,7 +59,7 @@ export function EmbedMedia() {
         </div>
       ) : assets && assets.page.length > 0 ? (
         <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-          {assets.page.map((asset) => {
+          {assets.page.map((asset: MediaAsset) => {
             const IconComponent = getMediaIcon(asset.mimeType);
             const isImage = asset.mimeType.startsWith("image/");
 
