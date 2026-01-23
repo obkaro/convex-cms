@@ -25,7 +25,7 @@ import type { ContentTypeDefinition } from "./types.js";
 import type { ContentSchemaInstance } from "./defineContentType.js";
 import { toFieldDefinitions, type DatabaseFieldDefinition } from "./defineContentType.js";
 import type { ConvexContext } from "../wrapper.js";
-import type { EnhancedCmsClient } from "../wrapper.js";
+import type { CmsClient } from "../wrapper.js";
 import type { ContentType, FieldDefinition } from "../types.js";
 
 // =============================================================================
@@ -222,7 +222,7 @@ export async function detectSchemaDrift<
   TSchema extends ContentSchemaInstance<Record<string, ContentTypeDefinition>>
 >(
   ctx: ConvexContext,
-  cmsClient: EnhancedCmsClient,
+  cmsClient: CmsClient,
   schema: TSchema,
   options: DetectDriftOptions = {}
 ): Promise<SchemaDriftReport> {
