@@ -77,6 +77,37 @@ export const getAsset = query({
 	},
 });
 
+/**
+ * Count trashed media assets and folders for the trash badge.
+ */
+export const getTrashCount = query({
+	args: {},
+	returns: v.object({
+		assets: v.number(),
+		folders: v.number(),
+		total: v.number(),
+	}),
+	handler: async (ctx) => {
+		const [assetsResult, folders] = await Promise.all([
+			ctx.runQuery(components.convexCms.mediaAssets.list, {
+				deletedOnly: true,
+				paginationOpts: { numItems: 1000, cursor: null },
+			}),
+			ctx.runQuery(
+				components.convexCms.mediaFolderMutations.listMediaFolders,
+				{ deletedOnly: true },
+			),
+		]);
+		const assetCount = assetsResult.page.length;
+		const folderCount = folders.length;
+		return {
+			assets: assetCount,
+			folders: folderCount,
+			total: assetCount + folderCount,
+		};
+	},
+});
+
 // =============================================================================
 // Media Folder Queries
 // =============================================================================
@@ -296,6 +327,79 @@ export const restoreAsset = mutation({
 				id: args.id,
 			},
 		);
+	},
+});
+
+/**
+ * Permanently delete a media asset (bypasses soft delete).
+ */
+export const permanentDeleteAsset = mutation({
+	args: {
+		id: v.string(),
+		deletedBy: v.optional(v.string()),
+	},
+	handler: async (ctx, args) => {
+		return await ctx.runMutation(
+			components.convexCms.mediaAssetMutations.deleteMediaAsset,
+			{
+				id: args.id,
+				deletedBy: args.deletedBy,
+				hardDelete: true,
+				forceDelete: false,
+			},
+		);
+	},
+});
+
+/**
+ * Permanently delete multiple media assets.
+ * Returns success/failure status for each asset.
+ */
+export const bulkPermanentDeleteAssets = mutation({
+	args: {
+		ids: v.array(v.string()),
+		deletedBy: v.optional(v.string()),
+	},
+	returns: v.object({
+		total: v.number(),
+		succeeded: v.number(),
+		failed: v.number(),
+		results: v.array(
+			v.object({
+				id: v.string(),
+				success: v.boolean(),
+				error: v.optional(v.string()),
+			}),
+		),
+	}),
+	handler: async (ctx, args) => {
+		const results: { id: string; success: boolean; error?: string }[] = [];
+		for (const id of args.ids) {
+			try {
+				await ctx.runMutation(
+					components.convexCms.mediaAssetMutations.deleteMediaAsset,
+					{
+						id,
+						deletedBy: args.deletedBy,
+						hardDelete: true,
+						forceDelete: false,
+					},
+				);
+				results.push({ id, success: true });
+			} catch (error) {
+				results.push({
+					id,
+					success: false,
+					error: error instanceof Error ? error.message : "Unknown error",
+				});
+			}
+		}
+		return {
+			total: args.ids.length,
+			succeeded: results.filter((r) => r.success).length,
+			failed: results.filter((r) => !r.success).length,
+			results,
+		};
 	},
 });
 

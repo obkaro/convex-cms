@@ -153,7 +153,7 @@ export function EntryDetail({ entryId, onNavigate }: Props) {
             <label style={{ display: "block", marginBottom: "0.25rem" }}>
               Version
             </label>
-            <span>{entry.currentVersion}</span>
+            <span>{(entry as { currentVersion?: number }).currentVersion ?? 1}</span>
           </div>
           <div>
             <label style={{ display: "block", marginBottom: "0.25rem" }}>

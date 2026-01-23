@@ -10,6 +10,7 @@ import { CmsToolbar } from '~/components/cmsds/CmsToolbar'
 import { CmsEmptyState } from '~/components/cmsds/CmsEmptyState'
 import { CmsSurface } from '~/components/cmsds/CmsSurface'
 import { CmsButton } from '~/components/cmsds/CmsButton'
+import { TaxonomyFilter } from '~/components/filters/TaxonomyFilter'
 import {
   Dialog,
   DialogContent,
@@ -59,8 +60,13 @@ import {
 import { MediaAssetActions } from '~/components/media/MediaAssetActions'
 import { MediaFolderActions } from '~/components/media/MediaFolderActions'
 import { MediaBulkActionBar } from '~/components/media/MediaBulkActionBar'
+import { MediaTrashBulkActionBar } from '~/components/media/MediaTrashBulkActionBar'
 import { MediaMoveModal } from '~/components/media/MediaMoveModal'
 import { CmsConfirmDialog } from '~/components/cmsds/CmsDialog'
+import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs'
+import { Badge } from '~/components/ui/badge'
+
+type MediaView = 'library' | 'trash'
 
 export const Route = createFileRoute('/media')({
   component: MediaPage,
@@ -132,6 +138,7 @@ function MediaPage() {
   >(undefined)
   const [searchQuery, setSearchQuery] = useState('')
   const [typeFilter, setTypeFilter] = useState<MediaType | ''>('')
+  const [selectedTermIds, setSelectedTermIds] = useState<string[]>([])
   const [selectedAssets, setSelectedAssets] = useState<Set<Id<'media_assets'>>>(
     new Set()
   )
@@ -153,20 +160,55 @@ function MediaPage() {
   const [showMoveModal, setShowMoveModal] = useState(false)
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false)
   const [isBulkDeleting, setIsBulkDeleting] = useState(false)
-  const [showTrash, setShowTrash] = useState(false)
+  const [activeView, setActiveView] = useState<MediaView>('library')
   const [isRestoring, setIsRestoring] = useState(false)
+  const [isPermanentlyDeleting, setIsPermanentlyDeleting] = useState(false)
+  const [showPermanentDeleteConfirm, setShowPermanentDeleteConfirm] = useState(false)
+  const [permanentDeleteTarget, setPermanentDeleteTarget] = useState<string | 'bulk' | null>(null)
+
+  const isTrashView = activeView === 'trash'
 
   const assetsResult = useQuery(api.media.listAssets, {
-    folderId: showTrash ? undefined : currentFolderId,
+    folderId: isTrashView ? undefined : currentFolderId,
     type: typeFilter || undefined,
     search: searchQuery || undefined,
-    deletedOnly: showTrash ? true : undefined,
+    deletedOnly: isTrashView ? true : undefined,
     paginationOpts: { numItems: 100, cursor: null },
   })
 
+  const trashCount = useQuery(api.media.getTrashCount, {})
+
+  const mediaByTermResult0 = useQuery(
+    api.taxonomies.getMediaByTerm,
+    selectedTermIds[0] ? { termId: selectedTermIds[0] } : 'skip'
+  )
+  const mediaByTermResult1 = useQuery(
+    api.taxonomies.getMediaByTerm,
+    selectedTermIds[1] ? { termId: selectedTermIds[1] } : 'skip'
+  )
+  const mediaByTermResult2 = useQuery(
+    api.taxonomies.getMediaByTerm,
+    selectedTermIds[2] ? { termId: selectedTermIds[2] } : 'skip'
+  )
+
+  const termFilteredMediaIds = useMemo(() => {
+    if (selectedTermIds.length === 0) return null
+    const ids = new Set<string>()
+    const results = [mediaByTermResult0, mediaByTermResult1, mediaByTermResult2]
+    for (let i = 0; i < selectedTermIds.length && i < 3; i++) {
+      const result = results[i]
+      if (result?.page) {
+        for (const media of result.page) {
+          ids.add(media._id)
+        }
+      }
+    }
+    return ids
+  }, [selectedTermIds, mediaByTermResult0, mediaByTermResult1, mediaByTermResult2])
+
   const folders = useQuery(api.media.listFolders, {
-    parentId: showTrash ? undefined : currentFolderId,
-    deletedOnly: showTrash || undefined,
+    parentId: isTrashView ? undefined : currentFolderId,
+    deletedOnly: isTrashView || undefined,
   })
 
   const currentFolder = useQuery(
@@ -181,6 +223,8 @@ function MediaPage() {
   const deleteFolder = useMutation(api.media.deleteFolder)
   const restoreAsset = useMutation(api.media.restoreAsset)
   const restoreFolder = useMutation(api.media.restoreFolder)
+  const permanentDeleteAsset = useMutation(api.media.permanentDeleteAsset)
+  const bulkPermanentDeleteAssets = useMutation(api.media.bulkPermanentDeleteAssets)
 
   const breadcrumbPath = useMemo(() => {
     if (!currentFolderId || !folderTree) return []
@@ -239,6 +283,12 @@ function MediaPage() {
 
   const handleDeselectAll = useCallback(() => {
     setSelectedAssets(new Set())
+  }, [])
+
+  const handleViewChange = useCallback((view: MediaView) => {
+    setActiveView(view)
+    setSelectedAssets(new Set())
+    setIsSelectionMode(false)
   }, [])
 
   const handleAssetClick = useCallback(
@@ -347,6 +397,27 @@ function MediaPage() {
     [restoreFolder]
   )
 
+  const handlePermanentDelete = useCallback(async () => {
+    if (!permanentDeleteTarget) return
+
+    setIsPermanentlyDeleting(true)
+    try {
+      if (permanentDeleteTarget === 'bulk') {
+        await bulkPermanentDeleteAssets({ ids: Array.from(selectedAssets) })
+        setSelectedAssets(new Set())
+        setIsSelectionMode(false)
+      } else {
+        await permanentDeleteAsset({ id: permanentDeleteTarget })
+      }
+      setShowPermanentDeleteConfirm(false)
+      setPermanentDeleteTarget(null)
+    } catch (err) {
+      console.error('Permanent delete failed:', err)
+    } finally {
+      setIsPermanentlyDeleting(false)
+    }
+  }, [permanentDeleteTarget, permanentDeleteAsset, bulkPermanentDeleteAssets, selectedAssets])
+
   const handleCreateFolder = useCallback(async () => {
     if (!newFolderName.trim()) {
       setFolderError('Folder name is required')
@@ -379,21 +450,39 @@ function MediaPage() {
   const isLoading = assetsResult === undefined || folders === undefined
 
   const displayedAssets = useMemo(() => {
-    return assetsResult?.page ?? []
-  }, [assetsResult?.page])
+    const assets = assetsResult?.page ?? []
+    if (termFilteredMediaIds === null) {
+      return assets
+    }
+    return assets.filter((asset) => termFilteredMediaIds.has(asset._id))
+  }, [assetsResult?.page, termFilteredMediaIds])
 
   return (
     <div className="space-y-6 p-6">
       <CmsPageHeader
-        title={showTrash ? 'Trash' : 'Media Library'}
-        description={
-          showTrash
-            ? 'Deleted files can be restored or permanently deleted.'
-            : 'Upload, organize, and manage media assets for your content.'
-        }
+        title="Media Library"
+        description="Upload, organize, and manage media assets for your content."
       />
 
-      {!showTrash && (
+      <Tabs value={activeView} onValueChange={(v) => handleViewChange(v as MediaView)}>
+        <TabsList>
+          <TabsTrigger value="library">
+            <Image className="mr-1.5 size-4" />
+            Library
+          </TabsTrigger>
+          <TabsTrigger value="trash">
+            <Trash2 className="mr-1.5 size-4" />
+            Trash
+            {trashCount && trashCount.total > 0 && (
+              <Badge variant="secondary" className="ml-1.5">
+                {trashCount.total}
+              </Badge>
+            )}
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+
+      {!isTrashView && (
         <nav className="flex items-center gap-1" aria-label="Folder navigation">
           <button
             className={cn(
@@ -466,6 +555,12 @@ function MediaPage() {
               </SelectContent>
             </Select>
 
+            <TaxonomyFilter
+              selectedTermIds={selectedTermIds}
+              onChange={setSelectedTermIds}
+              placeholder="Tags"
+            />
+
             {assetsResult?.page && assetsResult.page.length > 0 && (
               <label className="flex cursor-pointer items-center gap-2 text-sm">
                 <Checkbox
@@ -501,26 +596,14 @@ function MediaPage() {
               </>
             )}
 
-            {currentFolderId && !showTrash && (
+            {currentFolderId && !isTrashView && (
               <CmsButton variant="secondary" onClick={handleNavigateUp}>
                 <ChevronLeft className="size-4" />
                 Up
               </CmsButton>
             )}
 
-            <CmsButton
-              variant={showTrash ? 'default' : 'secondary'}
-              onClick={() => {
-                setShowTrash(!showTrash)
-                setSelectedAssets(new Set())
-                setIsSelectionMode(false)
-              }}
-            >
-              <Trash2 className="size-4" />
-              {showTrash ? 'Exit Trash' : 'Trash'}
-            </CmsButton>
-
-            {!showTrash && (
+            {!isTrashView && (
               <>
                 <CmsButton
                   variant="secondary"
@@ -536,13 +619,6 @@ function MediaPage() {
                 </CmsButton>
               </>
             )}
-
-            {showTrash && isSelectionMode && selectedAssets.size > 0 && (
-              <CmsButton onClick={handleBulkRestore} loading={isRestoring}>
-                <RotateCcw className="size-4" />
-                Restore Selected
-              </CmsButton>
-            )}
           </div>
         }
       />
@@ -556,7 +632,7 @@ function MediaPage() {
         </div>
       ) : (
         <>
-          {!showTrash && folders && folders.length > 0 && !searchQuery && (
+          {!isTrashView && folders && folders.length > 0 && !searchQuery && (
             <section>
               <h3 className="mb-3 text-sm font-medium text-muted-foreground">
                 Folders
@@ -599,7 +675,7 @@ function MediaPage() {
             </section>
           )}
 
-          {showTrash && folders && folders.length > 0 && (
+          {isTrashView && folders && folders.length > 0 && (
             <section>
               <h3 className="mb-3 text-sm font-medium text-muted-foreground">
                 Deleted Folders ({folders.length})
@@ -631,12 +707,12 @@ function MediaPage() {
 
           {displayedAssets.length > 0 ? (
             <section>
-              {!showTrash && folders && folders.length > 0 && !searchQuery && (
+              {!isTrashView && folders && folders.length > 0 && !searchQuery && (
                 <h3 className="mb-3 text-sm font-medium text-muted-foreground">
                   Files
                 </h3>
               )}
-              {showTrash && (
+              {isTrashView && (
                 <h3 className="mb-3 text-sm font-medium text-muted-foreground">
                   Deleted Files ({displayedAssets.length})
                 </h3>
@@ -667,7 +743,7 @@ function MediaPage() {
                         </div>
                       )}
 
-                      {!isSelectionMode && !showTrash && (
+                      {!isSelectionMode && !isTrashView && (
                         <div className="absolute right-2 top-2 z-10">
                           <MediaAssetActions
                             asset={{
@@ -702,12 +778,11 @@ function MediaPage() {
                         </div>
                       )}
 
-                      {!isSelectionMode && showTrash && (
-                        <div className="absolute right-2 top-2 z-10">
+                      {!isSelectionMode && isTrashView && (
+                        <div className="absolute right-2 top-2 z-10 flex gap-1 opacity-0 group-hover:opacity-100">
                           <CmsButton
                             variant="secondary"
                             size="icon-sm"
-                            className="opacity-0 group-hover:opacity-100"
                             onClick={(e) => {
                               e.stopPropagation()
                               handleRestore(asset._id)
@@ -715,6 +790,18 @@ function MediaPage() {
                             title="Restore"
                           >
                             <RotateCcw className="size-4" />
+                          </CmsButton>
+                          <CmsButton
+                            variant="danger"
+                            size="icon-sm"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setPermanentDeleteTarget(asset._id)
+                              setShowPermanentDeleteConfirm(true)
+                            }}
+                            title="Delete Forever"
+                          >
+                            <Trash2 className="size-4" />
                           </CmsButton>
                         </div>
                       )}
@@ -760,7 +847,7 @@ function MediaPage() {
                 </p>
               )}
             </section>
-          ) : showTrash ? (
+          ) : isTrashView ? (
             <CmsEmptyState
               icon={<Trash2 className="size-8" />}
               title="Trash is empty"
@@ -780,7 +867,7 @@ function MediaPage() {
             )
           )}
 
-          {searchQuery && displayedAssets.length === 0 && !showTrash && (
+          {searchQuery && displayedAssets.length === 0 && !isTrashView && (
             <CmsEmptyState
               icon={<Search className="size-8" />}
               title="No results found"
@@ -880,7 +967,7 @@ function MediaPage() {
         }}
         onNavigate={handlePreviewNavigate}
         onEdit={
-          showTrash
+          isTrashView
             ? undefined
             : (asset) =>
                 setEditingAsset({
@@ -893,7 +980,7 @@ function MediaPage() {
                 })
         }
         onDelete={
-          showTrash
+          isTrashView
             ? undefined
             : (asset) =>
                 setDeleteTarget({
@@ -948,6 +1035,27 @@ function MediaPage() {
         loading={isBulkDeleting}
       />
 
+      {/* Permanent Delete Confirmation Dialog */}
+      <CmsConfirmDialog
+        open={showPermanentDeleteConfirm}
+        onOpenChange={(open) => {
+          setShowPermanentDeleteConfirm(open)
+          if (!open) setPermanentDeleteTarget(null)
+        }}
+        title={permanentDeleteTarget === 'bulk'
+          ? `Delete ${selectedAssets.size} ${selectedAssets.size === 1 ? 'File' : 'Files'} Forever?`
+          : 'Delete Forever?'
+        }
+        description={permanentDeleteTarget === 'bulk'
+          ? `This will permanently delete ${selectedAssets.size} ${selectedAssets.size === 1 ? 'file' : 'files'}. This action cannot be undone.`
+          : 'This will permanently delete this file. This action cannot be undone.'
+        }
+        confirmLabel="Delete Forever"
+        onConfirm={handlePermanentDelete}
+        variant="danger"
+        loading={isPermanentlyDeleting}
+      />
+
       {/* Move Modal */}
       <MediaMoveModal
         open={showMoveModal}
@@ -957,14 +1065,29 @@ function MediaPage() {
         onMoved={handleBulkMoveComplete}
       />
 
-      {/* Bulk Action Bar */}
-      {isSelectionMode && (
+      {/* Bulk Action Bar - Library View */}
+      {isSelectionMode && !isTrashView && (
         <MediaBulkActionBar
           selectedCount={selectedAssets.size}
           onClear={handleDeselectAll}
           onMove={() => setShowMoveModal(true)}
           onDelete={() => setShowBulkDeleteConfirm(true)}
           isDeleting={isBulkDeleting}
+        />
+      )}
+
+      {/* Bulk Action Bar - Trash View */}
+      {isSelectionMode && isTrashView && (
+        <MediaTrashBulkActionBar
+          selectedCount={selectedAssets.size}
+          onClear={handleDeselectAll}
+          onRestore={handleBulkRestore}
+          onPermanentDelete={() => {
+            setPermanentDeleteTarget('bulk')
+            setShowPermanentDeleteConfirm(true)
+          }}
+          isRestoring={isRestoring}
+          isDeleting={isPermanentlyDeleting}
         />
       )}
     </div>
