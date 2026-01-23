@@ -17,7 +17,7 @@ export interface CmsDialogProps {
   description?: string
   children: React.ReactNode
   footer?: React.ReactNode
-  size?: 'sm' | 'md' | 'lg' | 'xl'
+  size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl'
   className?: string
 }
 
@@ -26,6 +26,7 @@ const sizeClasses = {
   md: 'max-w-md',
   lg: 'max-w-lg',
   xl: 'max-w-xl',
+  '2xl': 'max-w-2xl',
 } as const
 
 export function CmsDialog({
@@ -40,13 +41,21 @@ export function CmsDialog({
 }: CmsDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={cn(sizeClasses[size], className)}>
-        <DialogHeader>
+      <DialogContent
+        className={cn(
+          'flex max-h-[85vh] flex-col overflow-hidden',
+          sizeClasses[size],
+          className
+        )}
+      >
+        <DialogHeader className="shrink-0">
           <DialogTitle>{title}</DialogTitle>
           {description && <DialogDescription>{description}</DialogDescription>}
         </DialogHeader>
-        <div className="py-4">{children}</div>
-        {footer && <DialogFooter>{footer}</DialogFooter>}
+        <div className="min-h-0 flex-1 py-4 scrollbar-none">
+          {children}
+        </div>
+        {footer && <DialogFooter className="shrink-0 border-t pt-4">{footer}</DialogFooter>}
       </DialogContent>
     </Dialog>
   )
@@ -61,8 +70,10 @@ export interface CmsConfirmDialogProps {
   cancelLabel?: string
   onConfirm: () => void
   onCancel?: () => void
-  variant?: 'default' | 'danger'
+  variant?: 'default' | 'danger' | 'primary' | 'warning'
+  isLoading?: boolean
   loading?: boolean
+  error?: string | null
 }
 
 export function CmsConfirmDialog({
@@ -76,7 +87,11 @@ export function CmsConfirmDialog({
   onCancel,
   variant = 'default',
   loading,
+  isLoading,
+  error,
 }: CmsConfirmDialogProps) {
+  const isLoadingState = loading ?? isLoading ?? false
+
   const handleCancel = () => {
     onCancel?.()
     onOpenChange(false)
@@ -86,29 +101,39 @@ export function CmsConfirmDialog({
     onConfirm()
   }
 
+  const getButtonVariant = () => {
+    if (variant === 'danger') return 'danger'
+    if (variant === 'warning') return 'warning'
+    return 'primary'
+  }
+
   return (
     <CmsDialog
       open={open}
       onOpenChange={onOpenChange}
       title={title}
-      description={description}
       size="sm"
       footer={
         <>
-          <CmsButton variant="outline" onClick={handleCancel} disabled={loading}>
+          <CmsButton variant="outline" onClick={handleCancel} disabled={isLoadingState}>
             {cancelLabel}
           </CmsButton>
           <CmsButton
-            variant={variant === 'danger' ? 'danger' : 'primary'}
+            variant={getButtonVariant()}
             onClick={handleConfirm}
-            loading={loading}
+            loading={isLoadingState}
           >
             {confirmLabel}
           </CmsButton>
         </>
       }
     >
-      {null}
+      <div className="space-y-3">
+        <p className="text-sm text-muted-foreground">{description}</p>
+        {error && (
+          <p className="text-sm text-destructive">{error}</p>
+        )}
+      </div>
     </CmsDialog>
   )
 }
