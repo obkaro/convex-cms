@@ -6,8 +6,28 @@
  */
 
 import { v } from "convex/values";
+import { omit } from "convex-helpers";
 import { query, mutation } from "./_generated/server";
 import { components } from "./_generated/api";
+import {
+	mediaTypeValidator,
+	variantTypeValidator,
+	variantStatusValidator,
+} from "../../src/component/schema.js";
+import {
+	createMediaAssetArgs,
+	updateMediaAssetArgs,
+	deleteMediaAssetArgs,
+	createMediaFolderArgs,
+	updateMediaFolderArgs,
+	deleteMediaFolderArgs,
+	moveMediaAssetsArgs,
+	moveFolderArgs,
+	createMediaVariantArgs,
+	requestVariantGenerationArgs,
+	deleteMediaVariantArgs,
+	deleteAssetVariantsArgs,
+} from "../../src/component/validators.js";
 
 // =============================================================================
 // Media Asset Queries
@@ -22,15 +42,7 @@ import { components } from "./_generated/api";
 export const listAssets = query({
 	args: {
 		folderId: v.optional(v.string()),
-		type: v.optional(
-			v.union(
-				v.literal("image"),
-				v.literal("video"),
-				v.literal("audio"),
-				v.literal("document"),
-				v.literal("other"),
-			),
-		),
+		type: v.optional(mediaTypeValidator),
 		search: v.optional(v.string()),
 		paginationOpts: v.object({
 			numItems: v.number(),
@@ -118,84 +130,70 @@ export const getFolder = query({
 
 /**
  * Create a new folder.
+ * Derives args from component validator with string IDs.
  */
-// export const createFolder = mutation({
-//   args: {
-//     name: v.string(),
-//     parentId: v.optional(v.string()),
-//     description: v.optional(v.string()),
-//   },
-//   handler: async (ctx, args) => {
-//     return await ctx.runMutation(components.convexCms.mediaFolderMutations.createMediaFolder, {
-//       name: args.name,
-//       parentId: args.parentId,
-//       description: args.description,
-//     });
-//   },
-// });
+export const createFolder = mutation({
+	args: {
+		...omit(createMediaFolderArgs.fields, ["parentId"]),
+		parentId: v.optional(v.string()),
+	},
+	handler: async (ctx, args) => {
+		return await ctx.runMutation(
+			components.convexCms.mediaFolderMutations.createMediaFolder,
+			args,
+		);
+	},
+});
 
 /**
  * Update a folder's name, description, or sort order.
- * If the name is changed, paths are automatically updated for this folder and all descendants.
+ * Derives args from component validator with string IDs.
  */
 export const updateFolder = mutation({
 	args: {
+		...omit(updateMediaFolderArgs.fields, ["id", "parentId"]),
 		id: v.string(),
-		name: v.optional(v.string()),
-		description: v.optional(v.string()),
-		sortOrder: v.optional(v.number()),
+		parentId: v.optional(v.string()),
 	},
 	handler: async (ctx, args) => {
 		return await ctx.runMutation(
 			components.convexCms.mediaFolderMutations.updateMediaFolder,
-			{
-				id: args.id,
-				name: args.name,
-				description: args.description,
-				sortOrder: args.sortOrder,
-			},
+			args,
 		);
 	},
 });
 
 /**
  * Move a folder to a different parent.
- * This moves the folder and all its contents to the new location.
- * Paths are automatically updated for the folder and all descendants.
+ * Derives args from component validator with string IDs.
  */
 export const moveFolder = mutation({
 	args: {
+		...omit(moveFolderArgs.fields, ["id", "newParentId"]),
 		id: v.string(),
 		newParentId: v.optional(v.string()),
 	},
 	handler: async (ctx, args) => {
 		return await ctx.runMutation(
 			components.convexCms.mediaFolderMutations.moveMediaFolder,
-			{
-				id: args.id,
-				newParentId: args.newParentId,
-			},
+			args,
 		);
 	},
 });
 
 /**
  * Delete a folder.
+ * Derives args from component validator with string ID.
  */
 export const deleteFolder = mutation({
 	args: {
+		...omit(deleteMediaFolderArgs.fields, ["id"]),
 		id: v.string(),
-		recursive: v.optional(v.boolean()),
-		hardDelete: v.optional(v.boolean()),
 	},
 	handler: async (ctx, args) => {
 		return await ctx.runMutation(
 			components.convexCms.mediaFolderMutations.deleteMediaFolder,
-			{
-				id: args.id,
-				recursive: args.recursive,
-				hardDelete: args.hardDelete,
-			},
+			args,
 		);
 	},
 });
@@ -226,129 +224,92 @@ export const restoreFolder = mutation({
 
 /**
  * Create a new media asset.
- *
- * Note: storageId uses v.string() because _storage IDs from the component
- * also become strings when crossing the boundary.
+ * Derives args from component validator with string IDs.
  */
-// export const createAsset = mutation({
-//   args: {
-//     storageId: v.string(),
-//     filename: v.string(),
-//     mimeType: v.string(),
-//     size: v.number(),
-//     type: v.union(
-//       v.literal("image"),
-//       v.literal("video"),
-//       v.literal("audio"),
-//       v.literal("document"),
-//       v.literal("other")
-//     ),
-//     folderId: v.optional(v.string()),
-//     width: v.optional(v.number()),
-//     height: v.optional(v.number()),
-//     title: v.optional(v.string()),
-//     description: v.optional(v.string()),
-//     altText: v.optional(v.string()),
-//   },
-//   handler: async (ctx, args) => {
-//     return await ctx.runMutation(components.convexCms.mediaAssetMutations.createMediaAsset, {
-//       storageId: args.storageId,
-//       filename: args.filename,
-//       mimeType: args.mimeType,
-//       size: args.size,
-//       type: args.type,
-//       folderId: args.folderId,
-//       width: args.width,
-//       height: args.height,
-//       title: args.title,
-//       description: args.description,
-//       altText: args.altText,
-//     });
-//   },
-// });
+export const createAsset = mutation({
+	args: {
+		...omit(createMediaAssetArgs.fields, ["storageId", "parentId"]),
+		storageId: v.string(),
+		parentId: v.optional(v.string()),
+	},
+	handler: async (ctx, args) => {
+		return await ctx.runMutation(
+			components.convexCms.mediaAssetMutations.createMediaAsset,
+			args,
+		);
+	},
+});
 
 /**
  * Update a media asset's metadata.
- * This updates metadata fields without modifying the underlying storage file.
+ * Derives args from component validator with string IDs.
  */
-// export const updateAsset = mutation({
-//   args: {
-//     id: v.string(),
-//     filename: v.optional(v.string()),
-//     title: v.optional(v.string()),
-//     description: v.optional(v.string()),
-//     altText: v.optional(v.string()),
-//     folderId: v.optional(v.string()),
-//     tags: v.optional(v.array(v.string())),
-//   },
-//   handler: async (ctx, args) => {
-//     return await ctx.runMutation(components.convexCms.mediaAssetMutations.updateMediaAsset, {
-//       id: args.id,
-//       filename: args.filename,
-//       title: args.title,
-//       description: args.description,
-//       altText: args.altText,
-//       folderId: args.folderId,
-//       tags: args.tags,
-//     });
-//   },
-// });
+export const updateAsset = mutation({
+	args: {
+		...omit(updateMediaAssetArgs.fields, ["id", "parentId"]),
+		id: v.string(),
+		parentId: v.optional(v.string()),
+	},
+	handler: async (ctx, args) => {
+		return await ctx.runMutation(
+			components.convexCms.mediaAssetMutations.updateMediaAsset,
+			args,
+		);
+	},
+});
 
 /**
  * Delete a media asset.
+ * Derives args from component validator with string ID.
  */
-// export const deleteAsset = mutation({
-// 	args: {
-// 		id: v.string(),
-// 		hardDelete: v.optional(v.boolean()),
-// 	},
-// 	handler: async (ctx, args) => {
-// 		return await ctx.runMutation(
-// 			components.convexCms.mediaAssetMutations.deleteMediaAsset,
-// 			{
-// 				id: args.id,
-// 				hardDelete: args.hardDelete,
-// 			},
-// 		);
-// 	},
-// });
+export const deleteAsset = mutation({
+	args: {
+		...omit(deleteMediaAssetArgs.fields, ["id"]),
+		id: v.string(),
+	},
+	handler: async (ctx, args) => {
+		return await ctx.runMutation(
+			components.convexCms.mediaAssetMutations.deleteMediaAsset,
+			args,
+		);
+	},
+});
 
 /**
  * Restore a soft-deleted media asset.
  */
-// export const restoreAsset = mutation({
-// 	args: {
-// 		id: v.string(),
-// 	},
-// 	handler: async (ctx, args) => {
-// 		return await ctx.runMutation(
-// 			components.convexCms.mediaAssetMutations.restoreMediaAsset,
-// 			{
-// 				id: args.id,
-// 			},
-// 		);
-// 	},
-// });
+export const restoreAsset = mutation({
+	args: {
+		id: v.string(),
+	},
+	handler: async (ctx, args) => {
+		return await ctx.runMutation(
+			components.convexCms.mediaAssetMutations.restoreMediaAsset,
+			{
+				id: args.id,
+			},
+		);
+	},
+});
 
 /**
  * Move multiple media assets to a different folder.
  * Supports bulk operations up to 100 assets at a time.
+ * Derives args from component validator with string IDs.
  */
-// export const moveAssets = mutation({
-// 	args: {
-// 		assetIds: v.array(v.string()),
-// 		targetFolderId: v.optional(v.string()),
-// 	},
-// 	handler: async (ctx, args) => {
-// 		return await ctx.runMutation(
-// 			components.convexCms.mediaAssetMutations.moveMediaAssets,
-// 			{
-// 				assetIds: args.assetIds,
-// 				targetFolderId: args.targetFolderId,
-// 			},
-// 		);
-// 	},
-// });
+export const moveAssets = mutation({
+	args: {
+		...omit(moveMediaAssetsArgs.fields, ["assetIds", "targetFolderId"]),
+		assetIds: v.array(v.string()),
+		targetFolderId: v.optional(v.string()),
+	},
+	handler: async (ctx, args) => {
+		return await ctx.runMutation(
+			components.convexCms.mediaAssetMutations.moveMediaAssets,
+			args,
+		);
+	},
+});
 
 /**
  * Generate an upload URL for file uploads.
@@ -357,5 +318,238 @@ export const generateUploadUrl = mutation({
 	args: {},
 	handler: async (ctx) => {
 		return await ctx.storage.generateUploadUrl();
+	},
+});
+
+// =============================================================================
+// Media Variant Queries
+// =============================================================================
+
+/**
+ * List variants for a media asset with optional filtering.
+ */
+export const listVariants = query({
+	args: {
+		assetId: v.string(),
+		variantType: v.optional(variantTypeValidator),
+		format: v.optional(v.string()),
+		preset: v.optional(v.string()),
+		status: v.optional(variantStatusValidator),
+		includeDeleted: v.optional(v.boolean()),
+	},
+	handler: async (ctx, args) => {
+		return await ctx.runQuery(components.convexCms.mediaVariants.list, {
+			assetId: args.assetId,
+			variantType: args.variantType,
+			format: args.format,
+			preset: args.preset,
+			status: args.status,
+			includeDeleted: args.includeDeleted,
+		});
+	},
+});
+
+/**
+ * Get a single variant by ID.
+ */
+export const getVariant = query({
+	args: {
+		id: v.string(),
+		includeDeleted: v.optional(v.boolean()),
+	},
+	handler: async (ctx, args) => {
+		return await ctx.runQuery(components.convexCms.mediaVariants.get, {
+			id: args.id,
+			includeDeleted: args.includeDeleted,
+		});
+	},
+});
+
+/**
+ * Get the best matching variant for target dimensions.
+ * Useful for serving appropriately sized images.
+ */
+export const getBestVariant = query({
+	args: {
+		assetId: v.string(),
+		targetWidth: v.optional(v.number()),
+		targetHeight: v.optional(v.number()),
+		preferredFormat: v.optional(v.string()),
+		fallbackToOriginal: v.optional(v.boolean()),
+	},
+	handler: async (ctx, args) => {
+		return await ctx.runQuery(
+			components.convexCms.mediaVariants.getBestVariant,
+			{
+				assetId: args.assetId,
+				targetWidth: args.targetWidth,
+				targetHeight: args.targetHeight,
+				preferredFormat: args.preferredFormat,
+				fallbackToOriginal: args.fallbackToOriginal,
+			},
+		);
+	},
+});
+
+/**
+ * Get responsive srcset data for HTML img/picture tags.
+ */
+export const getResponsiveSrcset = query({
+	args: {
+		assetId: v.string(),
+		format: v.optional(v.string()),
+	},
+	handler: async (ctx, args) => {
+		return await ctx.runQuery(
+			components.convexCms.mediaVariants.getResponsiveSrcset,
+			{
+				assetId: args.assetId,
+				format: args.format,
+			},
+		);
+	},
+});
+
+/**
+ * Get available variant presets (thumbnail, small, medium, large, etc.).
+ */
+export const getVariantPresets = query({
+	args: {},
+	handler: async (ctx) => {
+		return await ctx.runQuery(
+			components.convexCms.mediaVariants.getPresets,
+			{},
+		);
+	},
+});
+
+/**
+ * Get a media asset with all its completed variants.
+ */
+export const getAssetWithVariants = query({
+	args: {
+		assetId: v.string(),
+	},
+	handler: async (ctx, args) => {
+		return await ctx.runQuery(
+			components.convexCms.mediaVariants.getAssetWithVariants,
+			{
+				assetId: args.assetId,
+			},
+		);
+	},
+});
+
+// =============================================================================
+// Media Variant Mutations
+// =============================================================================
+
+/**
+ * Create a completed variant (after external processing).
+ * Derives args from component validator with string IDs.
+ */
+export const createVariant = mutation({
+	args: {
+		...omit(createMediaVariantArgs.fields, ["assetId", "storageId"]),
+		assetId: v.string(),
+		storageId: v.string(),
+	},
+	handler: async (ctx, args) => {
+		return await ctx.runMutation(
+			components.convexCms.mediaVariantMutations.createMediaVariant,
+			args,
+		);
+	},
+});
+
+/**
+ * Request async generation of a variant.
+ * Derives args from component validator with string ID.
+ */
+export const requestVariantGeneration = mutation({
+	args: {
+		...omit(requestVariantGenerationArgs.fields, ["assetId"]),
+		assetId: v.string(),
+	},
+	handler: async (ctx, args) => {
+		return await ctx.runMutation(
+			components.convexCms.mediaVariantMutations.requestVariantGeneration,
+			args,
+		);
+	},
+});
+
+/**
+ * Delete a media variant.
+ * Derives args from component validator with string ID.
+ */
+export const deleteVariant = mutation({
+	args: {
+		...omit(deleteMediaVariantArgs.fields, ["id"]),
+		id: v.string(),
+	},
+	handler: async (ctx, args) => {
+		return await ctx.runMutation(
+			components.convexCms.mediaVariantMutations.deleteMediaVariant,
+			args,
+		);
+	},
+});
+
+/**
+ * Delete all variants for a media asset.
+ * Derives args from component validator with string ID.
+ */
+export const deleteAssetVariants = mutation({
+	args: {
+		...omit(deleteAssetVariantsArgs.fields, ["assetId"]),
+		assetId: v.string(),
+	},
+	handler: async (ctx, args) => {
+		return await ctx.runMutation(
+			components.convexCms.mediaVariantMutations.deleteAssetVariants,
+			args,
+		);
+	},
+});
+
+/**
+ * Generate multiple variants from presets.
+ * Queues pending variants for external processing.
+ */
+export const generateVariantsFromPresets = mutation({
+	args: {
+		assetId: v.string(),
+		presets: v.array(v.string()),
+		requestedBy: v.optional(v.string()),
+	},
+	handler: async (ctx, args) => {
+		return await ctx.runMutation(
+			components.convexCms.mediaVariantMutations.generateFromPresets,
+			{
+				assetId: args.assetId,
+				presets: args.presets,
+				requestedBy: args.requestedBy,
+			},
+		);
+	},
+});
+
+/**
+ * Restore a soft-deleted variant.
+ */
+export const restoreVariant = mutation({
+	args: {
+		id: v.string(),
+		restoredBy: v.optional(v.string()),
+	},
+	handler: async (ctx, args) => {
+		return await ctx.runMutation(
+			components.convexCms.mediaVariantMutations.restoreMediaVariant,
+			{
+				id: args.id,
+				restoredBy: args.restoredBy,
+			},
+		);
 	},
 });

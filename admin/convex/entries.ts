@@ -3,16 +3,22 @@
  *
  * These functions wrap the internal CMS component functions to expose
  * them as public API for the admin UI.
- *
- * Note: Status validators used here are duplicates of contentStatusValidator
- * from the component schema. They're maintained inline because Convex component
- * validators are not directly importable through the component API.
- * These must be kept in sync with src/component/schema.ts.
  */
 
 import { v } from "convex/values";
+import { omit } from "convex-helpers";
 import { query, mutation } from "./_generated/server";
 import { components } from "./_generated/api";
+import { contentStatusValidator } from "../../src/component/schema.js";
+import {
+	createContentEntryArgs,
+	updateContentEntryArgs,
+	publishEntryArgs,
+	unpublishEntryArgs,
+	deleteContentEntryArgs,
+	duplicateContentEntryArgs,
+	scheduleEntryArgs,
+} from "../../src/component/validators.js";
 
 // =============================================================================
 // Queries
@@ -26,12 +32,7 @@ export const list = query({
 		contentTypeId: v.optional(v.string()),
 		contentTypeName: v.optional(v.string()),
 		status: v.optional(
-			v.union(
-				v.literal("draft"),
-				v.literal("published"),
-				v.literal("scheduled"),
-				v.literal("archived"),
-			),
+			contentStatusValidator,
 		),
 		search: v.optional(v.string()),
 		paginationOpts: v.object({
@@ -89,117 +90,86 @@ export const get = query({
 
 /**
  * Create a new content entry.
+ * Derives args from component validator with string IDs.
  */
-// export const create = mutation({
-// 	args: {
-// 		contentTypeId: v.string(),
-// 		data: v.any(),
-// 		slug: v.optional(v.string()),
-// 		status: v.optional(
-// 			v.union(
-// 				v.literal("draft"),
-// 				v.literal("published"),
-// 				v.literal("scheduled"),
-// 				v.literal("archived"),
-// 			),
-// 		),
-// 	},
-// 	handler: async (ctx, args) => {
-// 		return await ctx.runMutation(
-// 			components.convexCms.contentEntryMutations.createEntry,
-// 			{
-// 				contentTypeId: args.contentTypeId,
-// 				data: args.data,
-// 				slug: args.slug,
-// 				status: args.status,
-// 			},
-// 		);
-// 	},
-// });
+export const create = mutation({
+	args: {
+		...omit(createContentEntryArgs.fields, ["contentTypeId", "primaryEntryId"]),
+		contentTypeId: v.string(),
+		primaryEntryId: v.optional(v.string()),
+	},
+	handler: async (ctx, args) => {
+		return await ctx.runMutation(
+			components.convexCms.contentEntryMutations.createEntry,
+			args,
+		);
+	},
+});
 
 /**
  * Update an existing content entry.
+ * Uses omit to derive args from component validator, replacing ID with string.
  */
 export const update = mutation({
 	args: {
+		...omit(updateContentEntryArgs.fields, ["id"]),
 		id: v.string(),
-		data: v.optional(v.any()),
-		slug: v.optional(v.string()),
-		status: v.optional(
-			v.union(
-				v.literal("draft"),
-				v.literal("published"),
-				v.literal("scheduled"),
-				v.literal("archived"),
-			),
-		),
-		regenerateSlug: v.optional(v.boolean()),
 	},
 	handler: async (ctx, args) => {
 		return await ctx.runMutation(
 			components.convexCms.contentEntryMutations.updateEntry,
-			{
-				id: args.id,
-				data: args.data,
-				slug: args.slug,
-				status: args.status,
-				regenerateSlug: args.regenerateSlug,
-			},
+			args,
 		);
 	},
 });
 
 /**
  * Publish a content entry.
+ * Derives args from component validator with string ID.
  */
 export const publish = mutation({
 	args: {
+		...omit(publishEntryArgs.fields, ["id"]),
 		id: v.string(),
-		changeDescription: v.optional(v.string()),
 	},
 	handler: async (ctx, args) => {
 		return await ctx.runMutation(
 			components.convexCms.contentEntryMutations.publishEntry,
-			{
-				id: args.id,
-				changeDescription: args.changeDescription,
-			},
+			args,
 		);
 	},
 });
 
 /**
  * Unpublish a content entry.
+ * Derives args from component validator with string ID.
  */
 export const unpublish = mutation({
 	args: {
+		...omit(unpublishEntryArgs.fields, ["id"]),
 		id: v.string(),
 	},
 	handler: async (ctx, args) => {
 		return await ctx.runMutation(
 			components.convexCms.contentEntryMutations.unpublishEntry,
-			{
-				id: args.id,
-			},
+			args,
 		);
 	},
 });
 
 /**
  * Delete a content entry.
+ * Derives args from component validator with string ID.
  */
 export const remove = mutation({
 	args: {
+		...omit(deleteContentEntryArgs.fields, ["id"]),
 		id: v.string(),
-		hardDelete: v.optional(v.boolean()),
 	},
 	handler: async (ctx, args) => {
 		return await ctx.runMutation(
 			components.convexCms.contentEntryMutations.deleteEntry,
-			{
-				id: args.id,
-				hardDelete: args.hardDelete,
-			},
+			args,
 		);
 	},
 });
@@ -207,23 +177,17 @@ export const remove = mutation({
 /**
  * Duplicate a content entry.
  * Creates a copy with a new unique slug, useful for templating workflows.
+ * Derives args from component validator with string ID.
  */
 export const duplicate = mutation({
 	args: {
+		...omit(duplicateContentEntryArgs.fields, ["sourceEntryId"]),
 		sourceEntryId: v.string(),
-		slug: v.optional(v.string()),
-		copyMediaReferences: v.optional(v.boolean()),
-		locale: v.optional(v.string()),
 	},
 	handler: async (ctx, args) => {
 		return await ctx.runMutation(
 			components.convexCms.contentEntryMutations.duplicateEntry,
-			{
-				sourceEntryId: args.sourceEntryId,
-				slug: args.slug,
-				copyMediaReferences: args.copyMediaReferences,
-				locale: args.locale,
-			},
+			args,
 		);
 	},
 });
@@ -235,19 +199,17 @@ export const duplicate = mutation({
 /**
  * Schedule a content entry for future publication.
  * Creates a Convex scheduled function that will automatically publish at the specified time.
+ * Derives args from component validator with string ID.
  */
 export const schedule = mutation({
 	args: {
+		...omit(scheduleEntryArgs.fields, ["id"]),
 		id: v.string(),
-		publishAt: v.number(),
 	},
 	handler: async (ctx, args) => {
 		return await ctx.runMutation(
 			components.convexCms.scheduledPublish.scheduleEntry,
-			{
-				id: args.id,
-				publishAt: args.publishAt,
-			},
+			args,
 		);
 	},
 });
@@ -286,6 +248,68 @@ export const getScheduled = query({
 				to: args.to,
 				contentTypeId: args.contentTypeId,
 			},
+		);
+	},
+});
+
+// =============================================================================
+// Entry Restoration
+// =============================================================================
+
+/**
+ * Restore a soft-deleted content entry from trash.
+ */
+export const restore = mutation({
+	args: {
+		id: v.string(),
+		restoredBy: v.optional(v.string()),
+	},
+	handler: async (ctx, args) => {
+		return await ctx.runMutation(
+			components.convexCms.contentEntryMutations.restoreEntry,
+			args,
+		);
+	},
+});
+
+// =============================================================================
+// Slug-based Queries
+// =============================================================================
+
+/**
+ * Get a content entry by slug and content type ID.
+ * More efficient than getBySlugAndTypeName if you have the content type ID.
+ */
+export const getBySlug = query({
+	args: {
+		contentTypeId: v.string(),
+		slug: v.string(),
+		status: v.optional(contentStatusValidator),
+		includeDeleted: v.optional(v.boolean()),
+	},
+	handler: async (ctx, args) => {
+		return await ctx.runQuery(
+			components.convexCms.contentEntries.getBySlug,
+			args,
+		);
+	},
+});
+
+/**
+ * Get a content entry by slug and content type name.
+ * Useful when you know the type name but not the ID.
+ */
+export const getBySlugAndTypeName = query({
+	args: {
+		contentTypeName: v.string(),
+		slug: v.string(),
+		status: v.optional(contentStatusValidator),
+		includeDeleted: v.optional(v.boolean()),
+	},
+	handler: async (ctx, args) => {
+		return await ctx.runQuery(
+			components.convexCms.contentEntries.getBySlugAndTypeName,
+			args,
 		);
 	},
 });
