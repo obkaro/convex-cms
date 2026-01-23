@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { useQuery, useMutation } from 'convex/react';
+import { useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import type { Id } from '../../../convex/_generated/dataModel';
 import { FieldWrapper } from './FieldWrapper';
@@ -109,10 +109,6 @@ export function MediaField({
       paginationOpts: { numItems: 50, cursor: null },
     } : 'skip'
   );
-
-  // Mutations for upload
-  const generateUploadUrl = useMutation(api.media.generateUploadUrl);
-  const createAsset = useMutation(api.media.createAsset);
 
   // Handle selecting a media asset
   const handleSelect = useCallback((assetId: string) => {
@@ -362,8 +358,8 @@ export function MediaField({
                 /* Upload Tab */
                 <div className="media-picker-upload">
                   <UploadDropzone
-                    generateUploadUrl={generateUploadUrl}
-                    createAsset={createAsset}
+                    generateUploadUrl={api.media.generateUploadUrl}
+                    createAsset={api.media.createAsset}
                     onUploadComplete={handleUploadComplete}
                     allowedMimeTypes={allowedMimeTypes}
                     maxFileSize={field.options?.maxFileSize}

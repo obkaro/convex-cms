@@ -93,56 +93,56 @@ const baseFieldDefinition = {
 export const textFieldDefinitionValidator = v.object({
 	...baseFieldDefinition,
 	type: v.literal("text"),
-	options: v.object({
+	options: v.optional(v.object({
 		minLength: v.optional(v.number()),
 		maxLength: v.optional(v.number()),
 		pattern: v.optional(v.string()),
-	}),
+	})),
 });
 
 export const numberFieldDefinitionValidator = v.object({
 	...baseFieldDefinition,
 	type: v.literal("number"),
-	options: v.object({
+	options: v.optional(v.object({
 		min: v.optional(v.number()),
 		max: v.optional(v.number()),
 		step: v.optional(v.number()),
 		precision: v.optional(v.number()),
-	}),
+	})),
 });
 
 export const booleanFieldDefinitionValidator = v.object({
 	...baseFieldDefinition,
 	type: v.literal("boolean"),
-	options: v.object({
+	options: v.optional(v.object({
 		trueLabel: v.optional(v.string()),
 		falseLabel: v.optional(v.string()),
-	}),
+	})),
 });
 
 export const richTextFieldDefinitionValidator = v.object({
 	...baseFieldDefinition,
 	type: v.literal("richText"),
-	options: v.object({
+	options: v.optional(v.object({
 		allowedBlocks: v.optional(v.array(v.string())),
 		allowedMarks: v.optional(v.array(v.string())),
-	}),
+	})),
 });
 
 export const mediaFieldDefinitionValidator = v.object({
 	...baseFieldDefinition,
 	type: v.literal("media"),
-	options: v.object({
+	options: v.optional(v.object({
 		mediaType: v.optional(mediaTypeValidator),
 		allowedMimeTypes: v.optional(v.array(v.string())),
 		maxFileSize: v.optional(v.number()),
-	}),
+	})),
 });
 
 export const selectFieldDefinitionValidator = v.object({
 	...baseFieldDefinition,
 	type: v.literal("select"),
-	options: v.object({
+	options: v.optional(v.object({
 		options: v.optional(
 			v.array(
 				v.object({
@@ -151,50 +151,50 @@ export const selectFieldDefinitionValidator = v.object({
 				}),
 			),
 		),
-	}),
+	})),
 });
 
 export const tagsFieldDefinitionValidator = v.object({
 	...baseFieldDefinition,
 	type: v.literal("tags"),
-	options: v.object({
+	options: v.optional(v.object({
 		taxonomyId: v.optional(v.id("taxonomies")),
 		allowCreate: v.optional(v.boolean()),
 		maxTags: v.optional(v.number()),
 		minTags: v.optional(v.number()),
-	}),
+	})),
 });
 
 export const categoryFieldDefinitionValidator = v.object({
 	...baseFieldDefinition,
 	type: v.literal("category"),
-	options: v.object({
+	options: v.optional(v.object({
 		allowMultiple: v.optional(v.boolean()),
-	}),
+	})),
 });
 
 export const jsonFieldDefinitionValidator = v.object({
 	...baseFieldDefinition,
 	type: v.literal("json"),
-	options: v.object({
+	options: v.optional(v.object({
 		schema: v.optional(v.any()),
-	}),
+	})),
 });
 
 export const referenceFieldDefinitionValidator = v.object({
 	...baseFieldDefinition,
 	type: v.literal("reference"),
-	options: v.object({
+	options: v.optional(v.object({
 		allowedContentTypes: v.optional(v.array(v.string())),
 		multiple: v.optional(v.boolean()),
 		minItems: v.optional(v.number()),
-	}),
+	})),
 });
 
 export const multiSelectFieldDefinitionValidator = v.object({
 	...baseFieldDefinition,
 	type: v.literal("multiSelect"),
-	options: v.object({
+	options: v.optional(v.object({
 		options: v.optional(
 			v.array(
 				v.object({
@@ -203,25 +203,25 @@ export const multiSelectFieldDefinitionValidator = v.object({
 				}),
 			),
 		),
-	}),
+	})),
 });
 
 export const dateFieldDefinitionValidator = v.object({
 	...baseFieldDefinition,
 	type: v.literal("date"),
-	options: v.object({
+	options: v.optional(v.object({
 		min: v.optional(v.number()),
 		max: v.optional(v.number()),
-	}),
+	})),
 });
 
 export const datetimeFieldDefinitionValidator = v.object({
 	...baseFieldDefinition,
 	type: v.literal("datetime"),
-	options: v.object({
+	options: v.optional(v.object({
 		min: v.optional(v.number()),
 		max: v.optional(v.number()),
-	}),
+	})),
 });
 
 export const fieldDefinitionValidator = v.union(

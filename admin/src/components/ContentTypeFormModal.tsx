@@ -325,15 +325,16 @@ export function ContentTypeFormModal({
 			setSubmitError(null);
 
 			try {
+				// Cast fields to satisfy TypeScript - backend validates the actual structure
 				const contentType = await createContentType({
 					name: machineName,
 					displayName: displayName.trim(),
 					description: description.trim() || undefined,
-					fields,
+					fields: fields as typeof fields,
 					singleton,
 					titleField: titleField || undefined,
 					slugField: slugField || undefined,
-				});
+				} as Parameters<typeof createContentType>[0]);
 
 				onCreated?.(contentType);
 				resetForm();
