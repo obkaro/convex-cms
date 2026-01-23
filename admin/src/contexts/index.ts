@@ -14,3 +14,5 @@ export {
 export { ThemeProvider, useTheme } from './ThemeContext';
 
 export { AdminConfigProvider, useAdminConfig } from './AdminConfigContext';
+
+export { BreadcrumbProvider, useBreadcrumbContext } from './BreadcrumbContext';

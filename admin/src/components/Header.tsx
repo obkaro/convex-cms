@@ -1,5 +1,5 @@
 import { useRouterState, useNavigate, Link } from '@tanstack/react-router'
-import { useAuth, useAdminConfig } from '~/contexts'
+import { useAuth, useAdminConfig, useBreadcrumbContext } from '~/contexts'
 import { getRole } from '../../../src/component/roles'
 import {
   Breadcrumb,
@@ -65,11 +65,17 @@ const routeLabels: Record<string, string> = {
   '/content-types': 'Content Types',
   '/settings': 'Settings',
   '/taxonomies': 'Taxonomies',
-  '/audit-logs': 'Audit Logs',
   '/trash': 'Trash',
+  '/entries': 'Entries',
+  '/entries/type': 'Content Types',
+  '/entries/new': 'New Entry',
 }
 
-function getBreadcrumbs(pathname: string, appName = "Home"): BreadcrumbData[] {
+function getBreadcrumbs(
+  pathname: string,
+  appName: string,
+  overrides: Map<string, string>
+): BreadcrumbData[] {
   const breadcrumbs: BreadcrumbData[] = [{ label: appName, to: '/' }]
 
   if (pathname === '/') {
@@ -81,9 +87,15 @@ function getBreadcrumbs(pathname: string, appName = "Home"): BreadcrumbData[] {
 
   segments.forEach((segment, index) => {
     currentPath += `/${segment}`
-    const label = routeLabels[currentPath] || segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' ')
+    const isLast = index === segments.length - 1
 
-    if (index === segments.length - 1) {
+    // Check for dynamic overrides first, then static labels, then fallback
+    let label = overrides.get(currentPath) ?? routeLabels[currentPath]
+    if (!label) {
+      label = segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' ')
+    }
+
+    if (isLast) {
       breadcrumbs.push({ label })
     } else {
       breadcrumbs.push({ label, to: currentPath })
@@ -97,7 +109,16 @@ export function Header() {
   const routerState = useRouterState()
   const navigate = useNavigate()
   const { branding } = useAdminConfig()
-  const breadcrumbs = getBreadcrumbs(routerState.location.pathname, branding.appName)
+
+  let overrides = new Map<string, string>()
+  try {
+    const breadcrumbContext = useBreadcrumbContext()
+    overrides = breadcrumbContext.overrides
+  } catch {
+    // BreadcrumbProvider not available, use empty overrides
+  }
+
+  const breadcrumbs = getBreadcrumbs(routerState.location.pathname, branding.appName, overrides)
 
   let user = null
   let role = null

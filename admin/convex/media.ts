@@ -44,6 +44,8 @@ export const listAssets = query({
 		folderId: v.optional(v.string()),
 		type: v.optional(mediaTypeValidator),
 		search: v.optional(v.string()),
+		includeDeleted: v.optional(v.boolean()),
+		deletedOnly: v.optional(v.boolean()),
 		paginationOpts: v.object({
 			numItems: v.number(),
 			cursor: v.union(v.string(), v.null()),
@@ -54,6 +56,8 @@ export const listAssets = query({
 			folderId: args.folderId,
 			type: args.type,
 			search: args.search,
+			includeDeleted: args.includeDeleted,
+			deletedOnly: args.deletedOnly,
 			paginationOpts: args.paginationOpts,
 		});
 	},
@@ -313,11 +317,16 @@ export const moveAssets = mutation({
 
 /**
  * Generate an upload URL for file uploads.
+ * Delegates to the CMS component so files are stored in the component's storage namespace.
  */
 export const generateUploadUrl = mutation({
 	args: {},
 	handler: async (ctx) => {
-		return await ctx.storage.generateUploadUrl();
+		const result = await ctx.runMutation(
+			components.convexCms.mediaUploadMutations.generateUploadUrl,
+			{},
+		);
+		return result.uploadUrl;
 	},
 });
 
