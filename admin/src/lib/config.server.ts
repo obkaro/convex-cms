@@ -1,15 +1,27 @@
 import { createServerFn } from "@tanstack/react-start";
 import type { AdminConfig } from "./admin-config";
+import { loadAdminConfig } from "./loadAdminConfig";
 
 /**
  * Server function to retrieve runtime configuration.
  *
- * This allows the admin UI to read environment variables at runtime
- * rather than at build time, enabling a single build to work with
- * any Convex deployment.
+ * Configuration is loaded from (in order of precedence):
+ * 1. Environment variable CONVEX_CMS_ADMIN_CONFIG (JSON string)
+ * 2. Config file (cms-admin.config.ts/js/mjs) in project root
  *
- * When running via `npx convex-cms admin`, the CLI sets these env vars
- * before starting the server.
+ * This code-first approach allows configuration to be:
+ * - Committed to git and reviewed in PRs
+ * - Type-safe with TypeScript
+ * - Consistent across dev/staging/production
+ *
+ * @example
+ * // cms-admin.config.ts
+ * import { defineAdminConfig } from "@convex-cms/core";
+ *
+ * export default defineAdminConfig({
+ *   branding: { appName: "My CMS" },
+ *   navigation: { showTaxonomies: false },
+ * });
  */
 export const getServerConfig = createServerFn({ method: "GET" }).handler(
   async () => {
@@ -21,6 +33,12 @@ export const getServerConfig = createServerFn({ method: "GET" }).handler(
         adminConfig = JSON.parse(configEnv) as Partial<AdminConfig>;
       } catch {
         console.warn("Failed to parse CONVEX_CMS_ADMIN_CONFIG as JSON");
+      }
+    } else {
+      try {
+        adminConfig = await loadAdminConfig();
+      } catch (error) {
+        console.warn("Failed to load admin config from file:", error);
       }
     }
 

@@ -841,11 +841,6 @@ export {
   listTrashArgs,
   emptyTrashArgs,
 
-  // Audit log validators
-  listAuditLogsArgs,
-  getResourceAuditLogsArgs,
-  getUserAuditLogsArgs,
-
   // Inferred types from validators
   type CreateContentTypeArgs,
   type UpdateContentTypeArgs,
@@ -1295,3 +1290,12 @@ export {
   type WorkflowState,
   type WorkflowStateColor,
 } from "./workflows.js";
+
+// --- Admin UI Configuration ---
+export {
+  defineAdminConfig,
+  resolveAdminConfig,
+  adminConfigSchema,
+  type AdminConfig,
+  type NavItem,
+} from "./admin-config.js";
