@@ -6,88 +6,14 @@
  */
 
 import { v } from "convex/values";
-import {
-	query,
-	// mutation
-} from "./_generated/server";
+import { omit } from "convex-helpers";
+import { query, mutation } from "./_generated/server";
 import { components } from "./_generated/api";
-
-// =============================================================================
-// Field Type Validators
-// =============================================================================
-
-// Note: These validators are duplicates of what's defined in the component's schema.
-// They're maintained locally because Convex component validators are not directly
-// importable - the component exposes functions via the API, not raw validators.
-// These must be kept in sync with src/component/schema.ts field definitions.
-// See: https://docs.convex.dev/components/overview
-
-/**
- * Validator for field types supported by the CMS.
- */
-// const fieldTypeValidator = v.union(
-// 	v.literal("text"),
-// 	v.literal("richText"),
-// 	v.literal("number"),
-// 	v.literal("boolean"),
-// 	v.literal("date"),
-// 	v.literal("datetime"),
-// 	v.literal("reference"),
-// 	v.literal("media"),
-// 	v.literal("json"),
-// 	v.literal("select"),
-// 	v.literal("multiSelect"),
-// );
-
-/**
- * Validator for select options.
- */
-// const selectOptionValidator = v.object({
-// 	value: v.string(),
-// 	label: v.string(),
-// });
-
-/**
- * Validator for field options.
- */
-// const fieldOptionsValidator = v.object({
-// 	// Text fields
-// 	minLength: v.optional(v.number()),
-// 	maxLength: v.optional(v.number()),
-// 	pattern: v.optional(v.string()),
-// 	// Number fields
-// 	min: v.optional(v.number()),
-// 	max: v.optional(v.number()),
-// 	step: v.optional(v.number()),
-// 	precision: v.optional(v.number()),
-// 	// Reference fields
-// 	allowedContentTypes: v.optional(v.array(v.string())),
-// 	multiple: v.optional(v.boolean()),
-// 	minItems: v.optional(v.number()),
-// 	// Media fields
-// 	allowedMimeTypes: v.optional(v.array(v.string())),
-// 	maxFileSize: v.optional(v.number()),
-// 	// Select fields
-// 	options: v.optional(v.array(selectOptionValidator)),
-// 	// Rich text fields
-// 	allowedBlocks: v.optional(v.array(v.string())),
-// 	allowedMarks: v.optional(v.array(v.string())),
-// });
-
-/**
- * Validator for a field definition.
- */
-// const fieldDefinitionValidator = v.object({
-// 	name: v.string(),
-// 	label: v.string(),
-// 	type: fieldTypeValidator,
-// 	required: v.boolean(),
-// 	searchable: v.optional(v.boolean()),
-// 	localized: v.optional(v.boolean()),
-// 	description: v.optional(v.string()),
-// 	defaultValue: v.optional(v.any()),
-// 	options: v.optional(fieldOptionsValidator),
-// });
+import {
+	createContentTypeArgs,
+	updateContentTypeArgs,
+	deleteContentTypeArgs,
+} from "../../src/component/validators.js";
 
 // =============================================================================
 // Queries
@@ -182,33 +108,55 @@ export const get = query({
 
 /**
  * Create a new content type.
+ * Derives args from component validator, making createdBy optional with default.
  */
-// export const create = mutation({
-// 	args: {
-// 		name: v.string(),
-// 		displayName: v.string(),
-// 		description: v.optional(v.string()),
-// 		fields: v.array(fieldDefinitionValidator),
-// 		icon: v.optional(v.string()),
-// 		singleton: v.optional(v.boolean()),
-// 		slugField: v.optional(v.string()),
-// 		titleField: v.optional(v.string()),
-// 		sortOrder: v.optional(v.number()),
-// 	},
-// 	handler: async (ctx, args) => {
-// 		return await ctx.runMutation(
-// 			components.convexCms.contentTypeMutations.createContentType,
-// 			{
-// 				name: args.name,
-// 				displayName: args.displayName,
-// 				description: args.description,
-// 				fields: args.fields,
-// 				icon: args.icon,
-// 				singleton: args.singleton,
-// 				slugField: args.slugField,
-// 				titleField: args.titleField,
-// 				sortOrder: args.sortOrder,
-// 			},
-// 		);
-// 	},
-// });
+export const create = mutation({
+	args: {
+		...omit(createContentTypeArgs.fields, ["createdBy"]),
+		createdBy: v.optional(v.string()),
+	},
+	handler: async (ctx, args) => {
+		return await ctx.runMutation(
+			components.convexCms.contentTypeMutations.createContentType,
+			{
+				...args,
+				createdBy: args.createdBy ?? "system",
+			},
+		);
+	},
+});
+
+/**
+ * Update an existing content type.
+ * Derives args from component validator with string ID.
+ */
+export const update = mutation({
+	args: {
+		...omit(updateContentTypeArgs.fields, ["id"]),
+		id: v.string(),
+	},
+	handler: async (ctx, args) => {
+		return await ctx.runMutation(
+			components.convexCms.contentTypeMutations.updateContentType,
+			args,
+		);
+	},
+});
+
+/**
+ * Delete a content type.
+ * Supports soft delete (default), hard delete, and cascade options.
+ * Derives args from component validator with string ID.
+ */
+export const remove = mutation({
+	args: {
+		...omit(deleteContentTypeArgs.fields, ["id"]),
+		id: v.string(),
+	},
+	handler: async (ctx, args) => {
+		return await ctx.runMutation(
+			components.convexCms.contentTypeMutations.deleteContentType,
+			args,
+		);
+	},
+});
