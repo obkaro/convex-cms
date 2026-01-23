@@ -5,30 +5,44 @@
  */
 
 import { useQuery } from "convex/react";
-import { Loader2, Plus, Search } from "lucide-react";
+import { Loader2, Search } from "lucide-react";
 import { useState } from "react";
-import { api } from "../../convex/_generated/api";
 import { CmsPageHeader } from "~/components/cmsds/CmsPageHeader";
 import { CmsToolbar } from "~/components/cmsds/CmsToolbar";
 import { CmsEmptyState } from "~/components/cmsds/CmsEmptyState";
 import { CmsStatusBadge } from "~/components/cmsds/CmsStatusBadge";
+import { useApi } from "../contexts/ApiContext";
 import { useEmbedNavigation } from "../navigation";
 
+type Entry = {
+  _id: string;
+  contentTypeId: string;
+  slug?: string;
+  status: string;
+  updatedAt: number;
+  data: Record<string, unknown>;
+};
+
+type ContentType = {
+  _id: string;
+  displayName: string;
+};
+
 export function EmbedContent() {
-  const { navigate, navigateToEntry, navigateToContentType } = useEmbedNavigation();
+  const api = useApi();
+  const { navigateToEntry, navigateToContentType } = useEmbedNavigation();
   const [search, setSearch] = useState("");
 
-  const contentTypes = useQuery(api.contentTypes.list);
-  const entries = useQuery(api.entries.list, {
+  const contentTypes = useQuery(api.admin.listContentTypes as any);
+  const entries = useQuery(api.admin.listEntries as any, {
     paginationOpts: { numItems: 50, cursor: null },
   });
 
   const isLoading = contentTypes === undefined || entries === undefined;
 
-  const filteredEntries = entries?.page.filter((entry) => {
+  const filteredEntries = entries?.page.filter((entry: Entry) => {
     if (!search) return true;
-    const data = entry.data as Record<string, unknown>;
-    const title = (data.title as string) || entry.slug || "";
+    const title = (entry.data.title as string) || entry.slug || "";
     return title.toLowerCase().includes(search.toLowerCase());
   });
 
@@ -78,11 +92,10 @@ export function EmbedContent() {
               </tr>
             </thead>
             <tbody>
-              {filteredEntries.map((entry) => {
-                const data = entry.data as Record<string, unknown>;
-                const title = (data.title as string) || entry.slug || "Untitled";
-                const contentType = contentTypes?.find(
-                  (ct) => ct._id === entry.contentTypeId
+              {filteredEntries.map((entry: Entry) => {
+                const title = (entry.data.title as string) || entry.slug || "Untitled";
+                const contentType = contentTypes?.page?.find(
+                  (ct: ContentType) => ct._id === entry.contentTypeId
                 );
 
                 return (

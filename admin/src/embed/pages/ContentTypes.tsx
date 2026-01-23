@@ -6,15 +6,23 @@
 
 import { useQuery } from "convex/react";
 import { Loader2, Plus, Layers } from "lucide-react";
-import { api } from "../../convex/_generated/api";
 import { CmsPageHeader } from "~/components/cmsds/CmsPageHeader";
 import { CmsEmptyState } from "~/components/cmsds/CmsEmptyState";
 import { CmsButton } from "~/components/cmsds/CmsButton";
+import { useApi } from "../contexts/ApiContext";
 import { useEmbedNavigation } from "../navigation";
 
+type ContentTypeItem = {
+  _id: string;
+  name: string;
+  displayName: string;
+  fields?: unknown[];
+};
+
 export function EmbedContentTypes() {
+  const api = useApi();
   const { navigateToContentType } = useEmbedNavigation();
-  const contentTypes = useQuery(api.contentTypes.list);
+  const contentTypes = useQuery(api.admin.listContentTypes as any);
 
   const isLoading = contentTypes === undefined;
 
@@ -35,9 +43,9 @@ export function EmbedContentTypes() {
         <div className="flex items-center justify-center py-12">
           <Loader2 className="size-8 animate-spin text-muted-foreground" />
         </div>
-      ) : contentTypes && contentTypes.length > 0 ? (
+      ) : contentTypes?.page && contentTypes.page.length > 0 ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {contentTypes.map((type) => (
+          {contentTypes.page.map((type: ContentTypeItem) => (
             <button
               key={type._id}
               type="button"
