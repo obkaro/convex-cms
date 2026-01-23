@@ -88,6 +88,17 @@
   .focus-ring {
     @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
   }
+
+  /* Hidden scrollbar - scroll functionality without visible scrollbar */
+  .scrollbar-none {
+    overflow-y: auto;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+  }
+
+  .scrollbar-none::-webkit-scrollbar {
+    display: none; /* Chrome/Safari/Opera */
+  }
 }
 
 /* Runtime theme colors - these change when .dark class is toggled */
