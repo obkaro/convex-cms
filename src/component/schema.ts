@@ -494,6 +494,17 @@ const schema = defineSchema({
 		.index("by_taxonomy", ["taxonomyId"])
 		.index("by_entry_and_field", ["entryId", "fieldName"])
 		.index("by_taxonomy_and_term", ["taxonomyId", "termId"]),
+	mediaAssetTags: defineTable({
+		mediaId: v.id("mediaItems"),
+		termId: v.id("taxonomyTerms"),
+		taxonomyId: v.id("taxonomies"),
+		sortOrder: v.optional(v.number()),
+	})
+		.index("by_media", ["mediaId"])
+		.index("by_term", ["termId"])
+		.index("by_taxonomy", ["taxonomyId"])
+		.index("by_media_and_taxonomy", ["mediaId", "taxonomyId"])
+		.index("by_taxonomy_and_term", ["taxonomyId", "termId"]),
 	trashConfig: defineTable({
 		retentionDays: v.number(),
 		autoCleanupEnabled: v.boolean(),
@@ -599,6 +610,7 @@ export const {
 	taxonomies,
 	taxonomyTerms,
 	contentEntryTags,
+	mediaAssetTags,
 	cmsEvents,
 	webhookConfigs,
 	webhookDeliveries,

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is `@convex-cms/core` - a headless CMS built as a Convex Component. It provides content management with typed fields, versioning, publishing workflows, media management, RBAC, and AI-agent integration. Always use context7 mcp to get up to date docs on convex component authoring, convex patterns, tanstack start, react, and any other library in use.
+This is `@convex-cms/core` - a headless CMS built as a Convex Component. It provides content management with typed fields, versioning, publishing workflows, media management, RBAC, and AI-agent integration. Always use context7 mcp to get up to date docs on convex component authoring, convex patterns, tanstack start, react, and any other library in use. Use the skills available to you always. Consult the design system docs and the frontend-design skill for all frontend changes.
 
 **Key architectural concept**: This is a Convex Component, meaning it runs in an isolated sandbox with its own database tables. The component takes a developer first approach to a CMS.
 

@@ -516,3 +516,129 @@ export const createTermAndAddToEntry = mutation({
     );
   },
 });
+
+// =============================================================================
+// Media Asset Term Operations
+// =============================================================================
+
+/**
+ * Get all terms associated with a media asset.
+ */
+export const getTermsByMedia = query({
+  args: {
+    mediaId: v.string(),
+    taxonomyId: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.runQuery(components.convexCms.taxonomies.getTermsByMedia, {
+      mediaId: args.mediaId,
+      taxonomyId: args.taxonomyId,
+    });
+  },
+});
+
+/**
+ * Get media assets that have a specific term.
+ */
+export const getMediaByTerm = query({
+  args: {
+    termId: v.string(),
+    includeDeleted: v.optional(v.boolean()),
+    paginationOpts: v.optional(
+      v.object({
+        numItems: v.number(),
+        cursor: v.union(v.string(), v.null()),
+      })
+    ),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.runQuery(components.convexCms.taxonomies.getMediaByTerm, {
+      termId: args.termId,
+      includeDeleted: args.includeDeleted,
+      paginationOpts: args.paginationOpts,
+    });
+  },
+});
+
+/**
+ * Set terms for a media asset in a taxonomy (replaces all existing).
+ */
+export const setMediaTerms = mutation({
+  args: {
+    mediaId: v.string(),
+    taxonomyId: v.string(),
+    termIds: v.array(v.string()),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.runMutation(
+      components.convexCms.taxonomyMutations.setMediaTerms,
+      {
+        mediaId: args.mediaId,
+        taxonomyId: args.taxonomyId,
+        termIds: args.termIds,
+      }
+    );
+  },
+});
+
+/**
+ * Add a single term to a media asset.
+ */
+export const addTermToMedia = mutation({
+  args: {
+    mediaId: v.string(),
+    termId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.runMutation(
+      components.convexCms.taxonomyMutations.addTermToMedia,
+      {
+        mediaId: args.mediaId,
+        termId: args.termId,
+      }
+    );
+  },
+});
+
+/**
+ * Remove a single term from a media asset.
+ */
+export const removeTermFromMedia = mutation({
+  args: {
+    mediaId: v.string(),
+    termId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.runMutation(
+      components.convexCms.taxonomyMutations.removeTermFromMedia,
+      {
+        mediaId: args.mediaId,
+        termId: args.termId,
+      }
+    );
+  },
+});
+
+/**
+ * Create a term and add it to a media asset in one operation.
+ * Useful for inline tag creation in the media library.
+ */
+export const createTermAndAddToMedia = mutation({
+  args: {
+    taxonomyId: v.string(),
+    name: v.string(),
+    mediaId: v.string(),
+    userId: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.runMutation(
+      components.convexCms.taxonomyMutations.createTermAndAddToMedia,
+      {
+        taxonomyId: args.taxonomyId,
+        name: args.name,
+        mediaId: args.mediaId,
+        userId: args.userId,
+      }
+    );
+  },
+});

@@ -799,3 +799,151 @@ export const countTerms = query({
 		return { count: filteredTerms.length };
 	},
 });
+
+// =============================================================================
+// Media Asset Taxonomy Queries
+// =============================================================================
+
+/**
+ * Query to get all taxonomy terms associated with a media asset.
+ *
+ * @param mediaId - The media asset ID
+ * @param taxonomyId - Optional taxonomy filter
+ *
+ * @returns Array of terms associated with the media asset
+ *
+ * @example
+ * ```typescript
+ * // Get all terms for a media asset
+ * const mediaTags = await ctx.runQuery(api.taxonomies.getTermsByMedia, {
+ *   mediaId: imageId,
+ * });
+ *
+ * // Get only terms from a specific taxonomy
+ * const categories = await ctx.runQuery(api.taxonomies.getTermsByMedia, {
+ *   mediaId: imageId,
+ *   taxonomyId: categoriesTaxonomyId,
+ * });
+ * ```
+ */
+export const getTermsByMedia = query({
+	args: {
+		mediaId: v.id("mediaItems"),
+		taxonomyId: v.optional(v.id("taxonomies")),
+	},
+	returns: v.array(
+		v.object({
+			...taxonomyTermDoc.fields,
+			sortOrder: v.optional(v.number()),
+		}),
+	),
+	handler: async (ctx, args) => {
+		const { mediaId, taxonomyId } = args;
+
+		const junctionEntries = await ctx.db
+			.query("mediaAssetTags")
+			.withIndex("by_media", (q) => q.eq("mediaId", mediaId))
+			.collect();
+
+		let filtered = junctionEntries;
+		if (taxonomyId) {
+			filtered = filtered.filter((j) => j.taxonomyId === taxonomyId);
+		}
+
+		filtered.sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+
+		const results = [];
+		for (const junction of filtered) {
+			const term = await ctx.db.get(junction.termId);
+			if (term && !isDeleted(term)) {
+				results.push({
+					...term,
+					sortOrder: junction.sortOrder,
+				});
+			}
+		}
+
+		return results;
+	},
+});
+
+/**
+ * Query to get media assets that have a specific term.
+ *
+ * @param termId - The term ID to search for
+ * @param includeDeleted - Whether to include soft-deleted media
+ * @param paginationOpts - Standard Convex pagination options
+ *
+ * @returns Paginated list of media asset IDs with the term
+ *
+ * @example
+ * ```typescript
+ * // Get all media with a specific category
+ * const mediaWithCategory = await ctx.runQuery(api.taxonomies.getMediaByTerm, {
+ *   termId: landscapeCategoryId,
+ *   paginationOpts: { numItems: 20 },
+ * });
+ * ```
+ */
+export const getMediaByTerm = query({
+	args: {
+		termId: v.id("taxonomyTerms"),
+		includeDeleted: v.optional(v.boolean()),
+		paginationOpts: v.optional(paginationOptsValidator),
+	},
+	returns: v.object({
+		page: v.array(v.id("mediaItems")),
+		continueCursor: v.union(v.string(), v.null()),
+		isDone: v.boolean(),
+	}),
+	handler: async (ctx, args) => {
+		const { termId, includeDeleted = false, paginationOpts } = args;
+
+		const numItems = paginationOpts
+			? Math.min(
+					Math.max(1, paginationOpts.numItems ?? DEFAULT_NUM_ITEMS),
+					MAX_NUM_ITEMS,
+			  )
+			: DEFAULT_NUM_ITEMS;
+
+		const junctionEntries = await ctx.db
+			.query("mediaAssetTags")
+			.withIndex("by_term", (q) => q.eq("termId", termId))
+			.collect();
+
+		const mediaIds = [...new Set(junctionEntries.map((j) => j.mediaId))];
+
+		let filteredMediaIds = mediaIds;
+		if (!includeDeleted) {
+			const validMediaIds: typeof mediaIds = [];
+			for (const mediaId of mediaIds) {
+				const media = await ctx.db.get(mediaId);
+				if (media && !isDeleted(media)) {
+					validMediaIds.push(mediaId);
+				}
+			}
+			filteredMediaIds = validMediaIds;
+		}
+
+		let startIndex = 0;
+		if (paginationOpts?.cursor) {
+			const cursorIndex = filteredMediaIds.findIndex(
+				(id) => id === paginationOpts.cursor,
+			);
+			if (cursorIndex !== -1) {
+				startIndex = cursorIndex + 1;
+			}
+		}
+
+		const pageResults = filteredMediaIds.slice(
+			startIndex,
+			startIndex + numItems + 1,
+		);
+		const isDone = pageResults.length <= numItems;
+		const page = isDone ? pageResults : pageResults.slice(0, numItems);
+		const continueCursor =
+			!isDone && page.length > 0 ? page[page.length - 1] : null;
+
+		return { page, continueCursor, isDone };
+	},
+});

@@ -1,0 +1,81 @@
+import { AlertTriangle } from 'lucide-react'
+import { CmsDialog } from '~/components/cmsds/CmsDialog'
+import { CmsButton } from '~/components/cmsds/CmsButton'
+
+interface BreakingChangesWarningDialogProps {
+  isOpen: boolean
+  onClose: () => void
+  breakingChanges: string[]
+  onForceUpdate: () => void
+  onCancel: () => void
+  isLoading: boolean
+}
+
+export function BreakingChangesWarningDialog({
+  isOpen,
+  onClose,
+  breakingChanges,
+  onForceUpdate,
+  onCancel,
+  isLoading,
+}: BreakingChangesWarningDialogProps) {
+  const handleCancel = () => {
+    onCancel()
+    onClose()
+  }
+
+  return (
+    <CmsDialog
+      open={isOpen}
+      onOpenChange={(open) => !open && !isLoading && handleCancel()}
+      title="Breaking Changes Detected"
+      size="lg"
+      footer={
+        <>
+          <CmsButton variant="outline" onClick={handleCancel} disabled={isLoading}>
+            Cancel
+          </CmsButton>
+          <CmsButton variant="danger" onClick={onForceUpdate} loading={isLoading}>
+            Force Update
+          </CmsButton>
+        </>
+      }
+    >
+      <div className="space-y-4">
+        <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
+          <AlertTriangle className="mt-0.5 size-5 shrink-0 text-amber-600" />
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-amber-800">
+              These changes may affect existing content
+            </p>
+            <p className="text-sm text-amber-700">
+              The following changes could cause data loss or validation errors for existing entries.
+              Review carefully before proceeding.
+            </p>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <p className="text-sm font-medium text-foreground">
+            {breakingChanges.length} breaking change{breakingChanges.length !== 1 ? 's' : ''} detected:
+          </p>
+          <ul className="space-y-2">
+            {breakingChanges.map((change, index) => (
+              <li
+                key={index}
+                className="flex items-start gap-2 rounded-md border bg-muted/30 px-3 py-2 text-sm"
+              >
+                <span className="mt-0.5 size-1.5 shrink-0 rounded-full bg-amber-500" />
+                <span className="text-muted-foreground">{change}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <p className="text-xs text-muted-foreground">
+          Click "Force Update" to apply these changes anyway, or "Cancel" to go back and modify your changes.
+        </p>
+      </div>
+    </CmsDialog>
+  )
+}

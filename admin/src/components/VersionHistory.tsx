@@ -25,6 +25,7 @@ interface VersionItem {
   _creationTime: number
   status: string
   data: Record<string, unknown>
+  wasPublished?: boolean
 }
 
 export function VersionHistory({
@@ -99,18 +100,34 @@ export function VersionHistory({
     })
   }
 
+  // Render compare view or history list - keep outer container stable to avoid DOM issues
   if (selectedVersions) {
     return (
-      <VersionCompare
-        entryId={entryId}
-        fromVersion={selectedVersions[0]}
-        toVersion={selectedVersions[1]}
-        onClose={() => setSelectedVersions(null)}
-        onRollback={(version) => {
-          setSelectedVersions(null)
-          handleRollback(version)
-        }}
-      />
+      <div className="flex h-full flex-col border-l bg-background">
+        <VersionCompare
+          entryId={entryId}
+          fromVersion={selectedVersions[0]}
+          toVersion={selectedVersions[1]}
+          onClose={() => setSelectedVersions(null)}
+          onRollback={(version) => {
+            setSelectedVersions(null)
+            handleRollback(version)
+          }}
+        />
+        {rollbackTarget !== null && (
+          <VersionRollbackModal
+            targetVersion={rollbackTarget}
+            currentVersion={currentVersion}
+            isLoading={isRollingBack}
+            error={rollbackError}
+            onConfirm={handleConfirmRollback}
+            onCancel={() => {
+              setRollbackTarget(null)
+              setRollbackError(null)
+            }}
+          />
+        )}
+      </div>
     )
   }
 
@@ -138,7 +155,7 @@ export function VersionHistory({
         </div>
       )}
 
-      <ScrollArea className="flex-1">
+      <ScrollArea className="min-h-0 flex-1">
         <div className="p-4">
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-8">
@@ -149,7 +166,7 @@ export function VersionHistory({
             </div>
           ) : versions.length === 0 ? (
             <div className="py-8 text-center text-sm text-muted-foreground">
-              No version history available
+              Save changes to start building version history
             </div>
           ) : (
             <div className="space-y-3">
@@ -176,6 +193,14 @@ export function VersionHistory({
                             className="border-primary/50 text-primary"
                           >
                             Current
+                          </Badge>
+                        )}
+                        {version.wasPublished && (
+                          <Badge
+                            variant="outline"
+                            className="border-emerald-500/50 text-emerald-600"
+                          >
+                            Published
                           </Badge>
                         )}
                       </div>

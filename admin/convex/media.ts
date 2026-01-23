@@ -83,16 +83,19 @@ export const getAsset = query({
 
 /**
  * List folders in a parent folder (or root if no parent specified).
+ * When deletedOnly is true, shows all deleted folders regardless of parent.
  */
 export const listFolders = query({
 	args: {
 		parentId: v.optional(v.string()),
+		deletedOnly: v.optional(v.boolean()),
 	},
 	handler: async (ctx, args) => {
 		return await ctx.runQuery(
 			components.convexCms.mediaFolderMutations.listMediaFolders,
 			{
 				parentId: args.parentId,
+				deletedOnly: args.deletedOnly,
 			},
 		);
 	},

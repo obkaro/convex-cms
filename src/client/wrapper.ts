@@ -2363,6 +2363,151 @@ export class MediaAssetsApi {
       { mediaAssetId: args.id, limit: args.limit }
     );
   }
+
+  // ===========================================================================
+  // Taxonomy Methods
+  // ===========================================================================
+
+  /**
+   * Get taxonomy terms associated with a media asset.
+   *
+   * @param ctx - Convex query context
+   * @param args - Query arguments
+   * @returns Array of terms associated with the media asset
+   *
+   * @example
+   * ```typescript
+   * const tags = await cms.mediaAssets.getTerms(ctx, {
+   *   mediaId: imageId,
+   * });
+   * ```
+   */
+  async getTerms(
+    ctx: ConvexContext,
+    args: { mediaId: string; taxonomyId?: string }
+  ): Promise<unknown[]> {
+    if (!this.config.features.mediaManagement) {
+      throw new Error("Media management feature is not enabled");
+    }
+    return callQuery(ctx, this.api.taxonomies.getTermsByMedia, args);
+  }
+
+  /**
+   * Set terms for a media asset in a taxonomy (replaces existing terms).
+   *
+   * @param ctx - Convex mutation context
+   * @param args - Mutation arguments
+   *
+   * @example
+   * ```typescript
+   * await cms.mediaAssets.setTerms(ctx, {
+   *   mediaId: imageId,
+   *   taxonomyId: categoriesTaxonomyId,
+   *   termIds: [landscapeId, natureId],
+   *   userId: currentUserId,
+   * });
+   * ```
+   */
+  async setTerms(
+    ctx: ConvexContext,
+    args: { mediaId: string; taxonomyId: string; termIds: string[]; userId?: string }
+  ): Promise<void> {
+    if (!this.config.features.mediaManagement) {
+      throw new Error("Media management feature is not enabled");
+    }
+    await this.authorize(ctx, "mediaItems.update", args.userId, args.mediaId);
+    await ctx.runMutation(this.api.taxonomyMutations.setMediaTerms, {
+      mediaId: args.mediaId,
+      taxonomyId: args.taxonomyId,
+      termIds: args.termIds,
+    });
+  }
+
+  /**
+   * Add a single term to a media asset.
+   *
+   * @param ctx - Convex mutation context
+   * @param args - Mutation arguments
+   *
+   * @example
+   * ```typescript
+   * await cms.mediaAssets.addTerm(ctx, {
+   *   mediaId: imageId,
+   *   termId: landscapeId,
+   *   userId: currentUserId,
+   * });
+   * ```
+   */
+  async addTerm(
+    ctx: ConvexContext,
+    args: { mediaId: string; termId: string; userId?: string }
+  ): Promise<void> {
+    if (!this.config.features.mediaManagement) {
+      throw new Error("Media management feature is not enabled");
+    }
+    await this.authorize(ctx, "mediaItems.update", args.userId, args.mediaId);
+    await ctx.runMutation(this.api.taxonomyMutations.addTermToMedia, {
+      mediaId: args.mediaId,
+      termId: args.termId,
+    });
+  }
+
+  /**
+   * Remove a term from a media asset.
+   *
+   * @param ctx - Convex mutation context
+   * @param args - Mutation arguments
+   *
+   * @example
+   * ```typescript
+   * await cms.mediaAssets.removeTerm(ctx, {
+   *   mediaId: imageId,
+   *   termId: landscapeId,
+   *   userId: currentUserId,
+   * });
+   * ```
+   */
+  async removeTerm(
+    ctx: ConvexContext,
+    args: { mediaId: string; termId: string; userId?: string }
+  ): Promise<void> {
+    if (!this.config.features.mediaManagement) {
+      throw new Error("Media management feature is not enabled");
+    }
+    await this.authorize(ctx, "mediaItems.update", args.userId, args.mediaId);
+    await ctx.runMutation(this.api.taxonomyMutations.removeTermFromMedia, {
+      mediaId: args.mediaId,
+      termId: args.termId,
+    });
+  }
+
+  /**
+   * Create a term inline and add it to a media asset.
+   *
+   * @param ctx - Convex mutation context
+   * @param args - Mutation arguments
+   * @returns The created or existing term ID
+   *
+   * @example
+   * ```typescript
+   * const termId = await cms.mediaAssets.createAndAddTerm(ctx, {
+   *   taxonomyId: tagsTaxonomyId,
+   *   name: "Nature",
+   *   mediaId: imageId,
+   *   userId: currentUserId,
+   * });
+   * ```
+   */
+  async createAndAddTerm(
+    ctx: ConvexContext,
+    args: { taxonomyId: string; name: string; mediaId: string; userId?: string }
+  ): Promise<string> {
+    if (!this.config.features.mediaManagement) {
+      throw new Error("Media management feature is not enabled");
+    }
+    await this.authorize(ctx, "mediaItems.update", args.userId, args.mediaId);
+    return ctx.runMutation(this.api.taxonomyMutations.createTermAndAddToMedia, args);
+  }
 }
 
 // =============================================================================

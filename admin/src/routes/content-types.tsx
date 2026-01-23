@@ -29,6 +29,7 @@ import {
   Tag,
   FolderOpen,
   AlignLeft,
+  Pencil,
 } from 'lucide-react'
 
 export const Route = createFileRoute('/content-types')({
@@ -58,10 +59,15 @@ function ContentTypesPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('grid')
   const [showActiveOnly, setShowActiveOnly] = useState(true)
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [editingContentType, setEditingContentType] = useState<ContentTypeWithCount | null>(null)
   const [dismissedError, setDismissedError] = useState(false)
 
   const handleContentTypeCreated = useCallback(() => {
     setShowCreateModal(false)
+  }, [])
+
+  const handleContentTypeUpdated = useCallback(() => {
+    setEditingContentType(null)
   }, [])
 
   const contentTypesResult = useQuery(api.contentTypes.list, {
@@ -238,10 +244,8 @@ function ContentTypesPage() {
       ) : viewMode === 'grid' ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filteredContentTypes.map((contentType) => (
-            <Link
+            <div
               key={contentType._id}
-              to="/entries/type/$contentTypeId"
-              params={{ contentTypeId: contentType._id }}
               className="group flex flex-col rounded-lg border bg-card p-4 transition-all hover:border-primary/50 hover:shadow-md"
             >
               <div className="mb-3 flex items-center justify-between">
@@ -262,57 +266,71 @@ function ContentTypesPage() {
                       Singleton
                     </Badge>
                   )}
-                </div>
-              </div>
-
-              <h3 className="text-base font-semibold text-foreground">
-                {contentType.displayName}
-              </h3>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                {contentType.name}
-              </p>
-
-              <div className="mt-3 flex items-center gap-4">
-                <div className="text-center">
-                  <p className="text-lg font-semibold text-foreground">
-                    {contentType.fields.length}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {contentType.fields.length === 1 ? 'Field' : 'Fields'}
-                  </p>
-                </div>
-                <div className="text-center">
-                  <p className="text-lg font-semibold text-foreground">
-                    {contentType.entryCount ?? 0}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {contentType.entryCount === 1 ? 'Entry' : 'Entries'}
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-3 flex flex-wrap gap-1.5">
-                {contentType.fields.slice(0, 4).map((field) => (
-                  <span
-                    key={field.name}
-                    className="flex items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 text-xs text-muted-foreground"
-                    title={field.label}
+                  <button
+                    onClick={() => setEditingContentType(contentType)}
+                    className="rounded p-1.5 text-muted-foreground opacity-0 transition-all hover:bg-muted hover:text-foreground group-hover:opacity-100"
+                    title="Edit content type"
+                    aria-label="Edit content type"
                   >
-                    {FIELD_ICONS[field.type] || <AlignLeft className="size-3" />}
-                    <span className="truncate">{field.label}</span>
-                  </span>
-                ))}
-                {contentType.fields.length > 4 && (
-                  <span className="rounded-md bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
-                    +{contentType.fields.length - 4} more
-                  </span>
-                )}
+                    <Pencil className="size-4" />
+                  </button>
+                </div>
               </div>
 
-              <p className="mt-auto pt-3 text-xs text-muted-foreground">
-                Updated {getRelativeTime(contentType._creationTime)}
-              </p>
-            </Link>
+              <Link
+                to="/entries/type/$contentTypeId"
+                params={{ contentTypeId: contentType._id }}
+                className="flex flex-1 flex-col"
+              >
+                <h3 className="text-base font-semibold text-foreground">
+                  {contentType.displayName}
+                </h3>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  {contentType.name}
+                </p>
+
+                <div className="mt-3 flex items-center gap-4">
+                  <div className="text-center">
+                    <p className="text-lg font-semibold text-foreground">
+                      {contentType.fields.length}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {contentType.fields.length === 1 ? 'Field' : 'Fields'}
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-lg font-semibold text-foreground">
+                      {contentType.entryCount ?? 0}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {contentType.entryCount === 1 ? 'Entry' : 'Entries'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {contentType.fields.slice(0, 4).map((field) => (
+                    <span
+                      key={field.name}
+                      className="flex items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 text-xs text-muted-foreground"
+                      title={field.label}
+                    >
+                      {FIELD_ICONS[field.type] || <AlignLeft className="size-3" />}
+                      <span className="truncate">{field.label}</span>
+                    </span>
+                  ))}
+                  {contentType.fields.length > 4 && (
+                    <span className="rounded-md bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
+                      +{contentType.fields.length - 4} more
+                    </span>
+                  )}
+                </div>
+
+                <p className="mt-auto pt-3 text-xs text-muted-foreground">
+                  Updated {getRelativeTime(contentType._creationTime)}
+                </p>
+              </Link>
+            </div>
           ))}
         </div>
       ) : (
@@ -386,14 +404,24 @@ function ContentTypesPage() {
                     {formatDate(contentType._creationTime)}
                   </td>
                   <td className="p-3">
-                    <CmsButton variant="outline" size="sm" asChild>
-                      <Link
-                        to="/entries/type/$contentTypeId"
-                        params={{ contentTypeId: contentType._id }}
+                    <div className="flex items-center gap-2">
+                      <CmsButton
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setEditingContentType(contentType)}
                       >
-                        View Entries
-                      </Link>
-                    </CmsButton>
+                        <Pencil className="size-3.5" />
+                        Edit
+                      </CmsButton>
+                      <CmsButton variant="outline" size="sm" asChild>
+                        <Link
+                          to="/entries/type/$contentTypeId"
+                          params={{ contentTypeId: contentType._id }}
+                        >
+                          View Entries
+                        </Link>
+                      </CmsButton>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -410,9 +438,14 @@ function ContentTypesPage() {
       )}
 
       <ContentTypeFormModal
-        isOpen={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
+        isOpen={showCreateModal || !!editingContentType}
+        onClose={() => {
+          setShowCreateModal(false)
+          setEditingContentType(null)
+        }}
+        contentType={editingContentType}
         onCreated={handleContentTypeCreated}
+        onUpdated={handleContentTypeUpdated}
       />
     </div>
   )

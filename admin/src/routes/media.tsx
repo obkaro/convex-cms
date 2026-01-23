@@ -1,7 +1,8 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '../../convex/_generated/api'
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
+import { useSettingsConfig } from '~/contexts'
 import type { Id } from '../../convex/_generated/dataModel'
 import { UploadDropzone, type UploadedFile } from '../components/UploadDropzone'
 import { CmsPageHeader } from '~/components/cmsds/CmsPageHeader'
@@ -117,6 +118,15 @@ function getMediaTypeFromMimeType(mimeType?: string): MediaType {
 }
 
 function MediaPage() {
+  const { settings } = useSettingsConfig()
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    if (settings && !settings.features.mediaManagement) {
+      navigate({ to: '/' })
+    }
+  }, [settings, navigate])
+
   const [currentFolderId, setCurrentFolderId] = useState<
     Id<'media_folders'> | undefined
   >(undefined)
@@ -155,7 +165,8 @@ function MediaPage() {
   })
 
   const folders = useQuery(api.media.listFolders, {
-    parentId: currentFolderId,
+    parentId: showTrash ? undefined : currentFolderId,
+    deletedOnly: showTrash || undefined,
   })
 
   const currentFolder = useQuery(
@@ -169,6 +180,7 @@ function MediaPage() {
   const deleteAsset = useMutation(api.media.deleteAsset)
   const deleteFolder = useMutation(api.media.deleteFolder)
   const restoreAsset = useMutation(api.media.restoreAsset)
+  const restoreFolder = useMutation(api.media.restoreFolder)
 
   const breadcrumbPath = useMemo(() => {
     if (!currentFolderId || !folderTree) return []
@@ -320,6 +332,20 @@ function MediaPage() {
       setIsRestoring(false)
     }
   }, [selectedAssets, restoreAsset])
+
+  const handleRestoreFolder = useCallback(
+    async (folderId: string) => {
+      setIsRestoring(true)
+      try {
+        await restoreFolder({ id: folderId })
+      } catch (err) {
+        console.error('Restore folder failed:', err)
+      } finally {
+        setIsRestoring(false)
+      }
+    },
+    [restoreFolder]
+  )
 
   const handleCreateFolder = useCallback(async () => {
     if (!newFolderName.trim()) {
@@ -567,6 +593,36 @@ function MediaPage() {
                     <span className="truncate text-sm font-medium">
                       {folder.name}
                     </span>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {showTrash && folders && folders.length > 0 && (
+            <section>
+              <h3 className="mb-3 text-sm font-medium text-muted-foreground">
+                Deleted Folders ({folders.length})
+              </h3>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 md:grid-cols-6">
+                {folders.map((folder) => (
+                  <div
+                    key={folder._id}
+                    className="group relative flex flex-col items-center gap-2 rounded-lg border border-destructive/20 bg-card p-4 text-center opacity-60"
+                  >
+                    <Folder className="size-10 text-amber-500/50" />
+                    <span className="truncate text-sm font-medium">
+                      {folder.name}
+                    </span>
+                    <CmsButton
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => handleRestoreFolder(folder._id)}
+                      disabled={isRestoring}
+                    >
+                      <RotateCcw className="mr-1 size-3" />
+                      Restore
+                    </CmsButton>
                   </div>
                 ))}
               </div>

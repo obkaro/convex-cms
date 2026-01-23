@@ -4,7 +4,7 @@ import { useQuery, useMutation } from 'convex/react'
 import { api } from '../../convex/_generated/api'
 import { RouteGuard } from '~/components'
 import { usePermissions } from '~/hooks'
-import { useTheme } from '~/contexts'
+import { useSettingsConfig, useTheme } from '~/contexts'
 import { CmsPageHeader } from '~/components/cmsds/CmsPageHeader'
 import { CmsSurface } from '~/components/cmsds/CmsSurface'
 import { CmsButton } from '~/components/cmsds/CmsButton'
@@ -102,6 +102,7 @@ function AppearanceSection() {
 function SettingsPage() {
   const { canManageSettings } = usePermissions()
   const canEdit = canManageSettings()
+  const { baseConfig } = useSettingsConfig()
 
   const settings = useQuery(api.settings.get)
   const updateSettings = useMutation(api.settings.update)
@@ -297,35 +298,39 @@ function SettingsPage() {
         <div className="space-y-6">
           <AppearanceSection />
 
-          <CmsSurface elevation="base" className="p-6">
-            <h2 className="mb-4 text-lg font-semibold text-foreground">General</h2>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-sm font-medium">Default Locale</Label>
-                  <p className="text-sm text-muted-foreground">
-                    The default language for new content entries.
-                  </p>
+          {formData?.features.localization && (
+            <CmsSurface elevation="base" className="p-6">
+              <h2 className="mb-4 text-lg font-semibold text-foreground">
+                General
+              </h2>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-sm font-medium">Default Locale</Label>
+                    <p className="text-sm text-muted-foreground">
+                      The default language for new content entries.
+                    </p>
+                  </div>
+                  <Select
+                    value={formData?.defaultLocale || 'en'}
+                    onValueChange={handleLocaleChange}
+                    disabled={!canEdit || feedbackStatus === 'saving'}
+                  >
+                    <SelectTrigger className="w-48">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {LOCALE_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-                <Select
-                  value={formData?.defaultLocale || 'en'}
-                  onValueChange={handleLocaleChange}
-                  disabled={!canEdit || feedbackStatus === 'saving'}
-                >
-                  <SelectTrigger className="w-48">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {LOCALE_OPTIONS.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
               </div>
-            </div>
-          </CmsSurface>
+            </CmsSurface>
+          )}
 
           <CmsSurface elevation="base" className="p-6">
             <h2 className="mb-4 text-lg font-semibold text-foreground">Features</h2>
@@ -372,19 +377,21 @@ function SettingsPage() {
                 />
               </div>
 
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-sm font-medium">Enable Media Management</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Use the built-in media library for image and file uploads
-                  </p>
+              {baseConfig.navigation.showMedia && (
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-sm font-medium">Enable Media Management</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Use the built-in media library for image and file uploads
+                    </p>
+                  </div>
+                  <Switch
+                    checked={formData?.features.mediaManagement ?? true}
+                    onCheckedChange={() => handleFeatureChange('mediaManagement')}
+                    disabled={!canEdit || feedbackStatus === 'saving'}
+                  />
                 </div>
-                <Switch
-                  checked={formData?.features.mediaManagement ?? true}
-                  onCheckedChange={() => handleFeatureChange('mediaManagement')}
-                  disabled={!canEdit || feedbackStatus === 'saving'}
-                />
-              </div>
+              )}
             </div>
           </CmsSurface>
 

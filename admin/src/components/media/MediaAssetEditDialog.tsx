@@ -1,11 +1,12 @@
 import { useState, useCallback, useEffect } from 'react'
-import { useMutation } from 'convex/react'
+import { useMutation, useQuery } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
 import { CmsDialog } from '~/components/cmsds/CmsDialog'
 import { CmsButton } from '~/components/cmsds/CmsButton'
 import { CmsField } from '~/components/cmsds/CmsField'
 import { Input } from '~/components/ui/input'
 import { Textarea } from '~/components/ui/textarea'
+import { MediaTaxonomyPicker } from './MediaTaxonomyPicker'
 
 export interface MediaAssetForEdit {
   _id: string
@@ -38,6 +39,12 @@ export function MediaAssetEditDialog({
   const [error, setError] = useState('')
 
   const updateAsset = useMutation(api.media.updateAsset)
+
+  const taxonomiesResult = useQuery(api.taxonomies.list, {
+    isActive: true,
+    paginationOpts: { numItems: 50, cursor: null },
+  })
+  const taxonomies = taxonomiesResult?.page ?? []
 
   useEffect(() => {
     if (asset) {
@@ -175,8 +182,8 @@ export function MediaAssetEditDialog({
         </CmsField>
 
         <CmsField
-          label="Tags"
-          description="Comma-separated tags for organization"
+          label="Quick Tags"
+          description="Comma-separated tags for simple organization"
           htmlFor="asset-tags"
         >
           <Input
@@ -186,6 +193,24 @@ export function MediaAssetEditDialog({
             placeholder="e.g., hero, blog, product"
           />
         </CmsField>
+
+        {taxonomies.length > 0 && asset && (
+          <div className="space-y-4 pt-2 border-t">
+            <p className="text-sm text-muted-foreground">
+              Organize with taxonomy terms
+            </p>
+            {taxonomies.map((taxonomy) => (
+              <MediaTaxonomyPicker
+                key={taxonomy._id}
+                mediaId={asset._id}
+                taxonomyId={taxonomy._id}
+                taxonomyName={taxonomy.displayName}
+                allowCreate={taxonomy.allowInlineCreation}
+                disabled={isSaving}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </CmsDialog>
   )

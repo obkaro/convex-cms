@@ -638,6 +638,98 @@ async function handleSearchQuery(
  * Internal helper to handle index-based queries using convex-helpers stream.
  * Selects the optimal index based on provided filters.
  */
+// =============================================================================
+// Count Media Assets Query
+// =============================================================================
+
+/**
+ * Query to count media assets.
+ * Efficiently counts all assets without pagination limits.
+ *
+ * @param folderId - Filter to assets in this folder (optional)
+ * @param mimeType - Filter by exact MIME type (optional)
+ * @param mimeTypePrefix - Filter by MIME type prefix e.g. "image/" (optional)
+ * @param includeDeleted - Include soft-deleted assets (default: false)
+ * @param deletedOnly - Count only deleted assets (default: false)
+ * @returns Object with count property
+ *
+ * @example
+ * ```typescript
+ * // Count all active media assets
+ * const result = await ctx.runQuery(api.mediaAssets.count, {});
+ *
+ * // Count images only
+ * const imageCount = await ctx.runQuery(api.mediaAssets.count, {
+ *   mimeTypePrefix: "image/",
+ * });
+ * ```
+ */
+export const count = query({
+  args: {
+    folderId: v.optional(v.id("mediaItems")),
+    mimeType: v.optional(v.string()),
+    mimeTypePrefix: v.optional(v.string()),
+    includeDeleted: v.optional(v.boolean()),
+    deletedOnly: v.optional(v.boolean()),
+  },
+  returns: v.object({
+    count: v.number(),
+  }),
+  handler: async (ctx, args) => {
+    const {
+      folderId,
+      mimeType,
+      mimeTypePrefix,
+      includeDeleted = false,
+      deletedOnly = false,
+    } = args;
+
+    const parentId = folderId as Id<"mediaItems"> | undefined;
+
+    // Select optimal index based on filters
+    let queryBuilder;
+    if (deletedOnly) {
+      queryBuilder = ctx.db
+        .query("mediaItems")
+        .withIndex("by_deleted", (q) => q.gte("deletedAt", null as unknown as number));
+    } else if (mimeType) {
+      queryBuilder = ctx.db
+        .query("mediaItems")
+        .withIndex("by_mime_type", (q) => q.eq("mimeType", mimeType));
+    } else if (parentId) {
+      queryBuilder = ctx.db
+        .query("mediaItems")
+        .withIndex("by_kind_and_parent", (q) =>
+          q.eq("kind", "asset").eq("parentId", parentId)
+        );
+    } else {
+      queryBuilder = ctx.db
+        .query("mediaItems")
+        .withIndex("by_kind", (q) => q.eq("kind", "asset"));
+    }
+
+    let count = 0;
+    for await (const item of queryBuilder) {
+      if (item.kind !== "asset") continue;
+
+      // Exclude soft-deleted items by default
+      if (!deletedOnly && !includeDeleted && isDeleted(item)) {
+        continue;
+      }
+
+      if (parentId && item.parentId !== parentId) continue;
+      if (mimeTypePrefix && !item.mimeType.startsWith(mimeTypePrefix)) continue;
+      count++;
+    }
+
+    return { count };
+  },
+});
+
+// =============================================================================
+// List Media Assets Helper Functions
+// =============================================================================
+
 async function handleIndexQuery(
   ctx: QueryCtx,
   args: {
@@ -684,7 +776,14 @@ async function handleIndexQuery(
   // Always need to filter for kind: "asset"
   // Note: `type` filtering is now done post-query since type is derived from mimeType
   let baseQuery;
-  if (mimeType) {
+  if (deletedOnly) {
+    // Use by_deleted index to efficiently query only deleted items
+    // q.gte("deletedAt", null) matches all items where deletedAt has a timestamp value
+    // In Convex type ordering: undefined < null < numbers, so gte(null) gets all timestamps
+    baseQuery = streamDb
+      .query("mediaItems")
+      .withIndex("by_deleted", (q: any) => q.gte("deletedAt", null as any));
+  } else if (mimeType) {
     // Use by_mime_type index for exact MIME type match (assets only)
     baseQuery = streamDb
       .query("mediaItems")
@@ -707,19 +806,16 @@ async function handleIndexQuery(
 
   // Apply filterWith for post-processing filters
   const filteredQuery = orderedQuery.filterWith(async (item: any) => {
-    // Ensure this is an asset (in case the query didn't filter by kind)
+    // Ensure this is an asset (required since by_deleted index doesn't filter by kind)
     if (item.kind !== "asset") {
       return false;
     }
 
     // Filter by soft-delete status
-    if (deletedOnly) {
-      // Only show deleted items
-      if (!isDeleted(item)) {
-        return false;
-      }
-    } else if (!includeDeleted && isDeleted(item)) {
-      // Exclude deleted items unless includeDeleted is true
+    // When deletedOnly is true, we're using the by_deleted index which already
+    // filters to only items with deletedAt defined - no additional check needed
+    if (!deletedOnly && !includeDeleted && isDeleted(item)) {
+      // Exclude deleted items unless includeDeleted is true or deletedOnly is true
       return false;
     }
 
