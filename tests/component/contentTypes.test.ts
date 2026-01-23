@@ -32,12 +32,14 @@ describe("Content Types Queries", () => {
 					name: "blog_post",
 					displayName: "Blog Post",
 					description: "A blog post content type",
+					createdBy: "test-user",
 					fields: [
 						{
 							name: "title",
 							label: "Title",
 							type: "text",
 							required: true,
+							options: {},
 						},
 					],
 					isActive: true,
@@ -62,12 +64,14 @@ describe("Content Types Queries", () => {
 				return await ctx.db.insert("contentTypes", {
 					name: "product",
 					displayName: "Product",
+					createdBy: "test-user",
 					fields: [
 						{
 							name: "name",
 							label: "Product Name",
 							type: "text",
 							required: true,
+							options: {},
 						},
 					],
 					isActive: true,
@@ -90,6 +94,7 @@ describe("Content Types Queries", () => {
 				return await ctx.db.insert("contentTypes", {
 					name: "existing_type",
 					displayName: "Existing Type",
+					createdBy: "test-user",
 					fields: [],
 					isActive: true,
 				});
@@ -123,6 +128,7 @@ describe("Content Types Queries", () => {
 				return await ctx.db.insert("contentTypes", {
 					name: "deleted_type",
 					displayName: "Deleted Type",
+					createdBy: "test-user",
 					fields: [],
 					isActive: true,
 					deletedAt: Date.now(),
@@ -150,6 +156,7 @@ describe("Content Types Queries", () => {
 				return await ctx.db.insert("contentTypes", {
 					name: "recoverable_type",
 					displayName: "Recoverable Type",
+					createdBy: "test-user",
 					fields: [],
 					isActive: true,
 					deletedAt: Date.now(),
@@ -176,6 +183,7 @@ describe("Content Types Queries", () => {
 					name: "article",
 					displayName: "Article",
 					description: "An article with rich content",
+					createdBy: "test-user",
 					fields: [
 						{
 							name: "title",
@@ -194,6 +202,7 @@ describe("Content Types Queries", () => {
 							type: "richText",
 							required: true,
 							localized: true,
+							options: {},
 						},
 						{
 							name: "author",
@@ -268,12 +277,14 @@ describe("Content Types Queries", () => {
 				await ctx.db.insert("contentTypes", {
 					name: "active_type",
 					displayName: "Active Type",
+					createdBy: "test-user",
 					fields: [],
 					isActive: true,
 				});
 				await ctx.db.insert("contentTypes", {
 					name: "inactive_type",
 					displayName: "Inactive Type",
+					createdBy: "test-user",
 					fields: [],
 					isActive: false,
 				});
@@ -292,12 +303,14 @@ describe("Content Types Queries", () => {
 				await ctx.db.insert("contentTypes", {
 					name: "active_type",
 					displayName: "Active Type",
+					createdBy: "test-user",
 					fields: [],
 					isActive: true,
 				});
 				await ctx.db.insert("contentTypes", {
 					name: "inactive_type",
 					displayName: "Inactive Type",
+					createdBy: "test-user",
 					fields: [],
 					isActive: false,
 				});
@@ -325,12 +338,14 @@ describe("Content Types Queries", () => {
 				await ctx.db.insert("contentTypes", {
 					name: "normal_type",
 					displayName: "Normal Type",
+					createdBy: "test-user",
 					fields: [],
 					isActive: true,
 				});
 				await ctx.db.insert("contentTypes", {
 					name: "deleted_type",
 					displayName: "Deleted Type",
+					createdBy: "test-user",
 					fields: [],
 					isActive: true,
 					deletedAt: Date.now(),
@@ -350,12 +365,14 @@ describe("Content Types Queries", () => {
 				await ctx.db.insert("contentTypes", {
 					name: "normal_type",
 					displayName: "Normal Type",
+					createdBy: "test-user",
 					fields: [],
 					isActive: true,
 				});
 				await ctx.db.insert("contentTypes", {
 					name: "deleted_type",
 					displayName: "Deleted Type",
+					createdBy: "test-user",
 					fields: [],
 					isActive: true,
 					deletedAt: Date.now(),
@@ -376,18 +393,21 @@ describe("Content Types Queries", () => {
 				await ctx.db.insert("contentTypes", {
 					name: "zebra",
 					displayName: "Zebra",
+					createdBy: "test-user",
 					fields: [],
 					isActive: true,
 				});
 				await ctx.db.insert("contentTypes", {
 					name: "apple",
 					displayName: "Apple",
+					createdBy: "test-user",
 					fields: [],
 					isActive: true,
 				});
 				await ctx.db.insert("contentTypes", {
 					name: "banana",
 					displayName: "Banana",
+					createdBy: "test-user",
 					fields: [],
 					isActive: true,
 				});
@@ -408,12 +428,14 @@ describe("Content Types Queries", () => {
 				await ctx.db.insert("contentTypes", {
 					name: "zebra",
 					displayName: "Zebra",
+					createdBy: "test-user",
 					fields: [],
 					isActive: true,
 				});
 				await ctx.db.insert("contentTypes", {
 					name: "apple",
 					displayName: "Apple",
+					createdBy: "test-user",
 					fields: [],
 					isActive: true,
 				});
@@ -437,6 +459,7 @@ describe("Content Types Queries", () => {
 				await ctx.db.insert("contentTypes", {
 					name: "first",
 					displayName: "First",
+					createdBy: "test-user",
 					fields: [],
 					isActive: true,
 				});
@@ -446,6 +469,7 @@ describe("Content Types Queries", () => {
 				await ctx.db.insert("contentTypes", {
 					name: "second",
 					displayName: "Second",
+					createdBy: "test-user",
 					fields: [],
 					isActive: true,
 				});
@@ -469,24 +493,28 @@ describe("Content Types Queries", () => {
 				await ctx.db.insert("contentTypes", {
 					name: "alpha",
 					displayName: "Alpha",
+					createdBy: "test-user",
 					fields: [],
 					isActive: true,
 				});
 				await ctx.db.insert("contentTypes", {
 					name: "beta",
 					displayName: "Beta",
+					createdBy: "test-user",
 					fields: [],
 					isActive: true,
 				});
 				await ctx.db.insert("contentTypes", {
 					name: "gamma",
 					displayName: "Gamma",
+					createdBy: "test-user",
 					fields: [],
 					isActive: true,
 				});
 				await ctx.db.insert("contentTypes", {
 					name: "delta",
 					displayName: "Delta",
+					createdBy: "test-user",
 					fields: [],
 					isActive: true,
 				});

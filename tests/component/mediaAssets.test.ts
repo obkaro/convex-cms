@@ -10,7 +10,8 @@
 
 import { describe, it, expect } from "vitest";
 import {
-  mediaAssetDoc,
+  mediaItemDoc,
+  mediaAssetItemValidator,
   mediaTypeValidator,
   listMediaAssetsArgs,
   mediaSortFieldValidator,
@@ -22,66 +23,61 @@ describe("Media Assets Get Query", () => {
   // Validator Structure Tests
   // =============================================================================
 
-  describe("mediaAssetDoc structure for response", () => {
-    it("should have _id field for asset identification", () => {
-      const docFields = Object.keys(mediaAssetDoc.fields);
-      expect(docFields).toContain("_id");
+  describe("mediaItemDoc structure for response", () => {
+    it("should have kind field to distinguish assets from folders", () => {
+      const assetFields = Object.keys(mediaAssetItemValidator.fields);
+      expect(assetFields).toContain("kind");
     });
 
-    it("should have storageId field for Convex file storage reference", () => {
-      const docFields = Object.keys(mediaAssetDoc.fields);
-      expect(docFields).toContain("storageId");
+    it("should have storageId field for Convex file storage reference (asset-specific)", () => {
+      const assetFields = Object.keys(mediaAssetItemValidator.fields);
+      expect(assetFields).toContain("storageId");
     });
 
-    it("should have filename field for original file name", () => {
-      const docFields = Object.keys(mediaAssetDoc.fields);
-      expect(docFields).toContain("filename");
+    it("should have name field for file name", () => {
+      const assetFields = Object.keys(mediaAssetItemValidator.fields);
+      expect(assetFields).toContain("name");
     });
 
-    it("should have mimeType field for content type", () => {
-      const docFields = Object.keys(mediaAssetDoc.fields);
-      expect(docFields).toContain("mimeType");
+    it("should have mimeType field for content type (asset-specific)", () => {
+      const assetFields = Object.keys(mediaAssetItemValidator.fields);
+      expect(assetFields).toContain("mimeType");
     });
 
     it("should have size field for file size in bytes", () => {
-      const docFields = Object.keys(mediaAssetDoc.fields);
-      expect(docFields).toContain("size");
+      const assetFields = Object.keys(mediaAssetItemValidator.fields);
+      expect(assetFields).toContain("size");
     });
 
-    it("should have type field for media classification", () => {
-      const docFields = Object.keys(mediaAssetDoc.fields);
-      expect(docFields).toContain("type");
+    it("should have width and height fields for image dimensions (asset-specific)", () => {
+      const assetFields = Object.keys(mediaAssetItemValidator.fields);
+      expect(assetFields).toContain("width");
+      expect(assetFields).toContain("height");
     });
 
-    it("should have width and height fields for image dimensions", () => {
-      const docFields = Object.keys(mediaAssetDoc.fields);
-      expect(docFields).toContain("width");
-      expect(docFields).toContain("height");
-    });
-
-    it("should have duration field for video/audio length", () => {
-      const docFields = Object.keys(mediaAssetDoc.fields);
-      expect(docFields).toContain("duration");
+    it("should have duration field for video/audio length (asset-specific)", () => {
+      const assetFields = Object.keys(mediaAssetItemValidator.fields);
+      expect(assetFields).toContain("duration");
     });
 
     it("should have deletedAt field for soft delete filtering", () => {
-      const docFields = Object.keys(mediaAssetDoc.fields);
-      expect(docFields).toContain("deletedAt");
+      const assetFields = Object.keys(mediaAssetItemValidator.fields);
+      expect(assetFields).toContain("deletedAt");
     });
 
     it("should have metadata field for custom data", () => {
-      const docFields = Object.keys(mediaAssetDoc.fields);
-      expect(docFields).toContain("metadata");
+      const assetFields = Object.keys(mediaAssetItemValidator.fields);
+      expect(assetFields).toContain("metadata");
     });
 
     it("should have tags field for organization", () => {
-      const docFields = Object.keys(mediaAssetDoc.fields);
-      expect(docFields).toContain("tags");
+      const assetFields = Object.keys(mediaAssetItemValidator.fields);
+      expect(assetFields).toContain("tags");
     });
 
-    it("should have altText field for accessibility", () => {
-      const docFields = Object.keys(mediaAssetDoc.fields);
-      expect(docFields).toContain("altText");
+    it("should have altText field for accessibility (asset-specific)", () => {
+      const assetFields = Object.keys(mediaAssetItemValidator.fields);
+      expect(assetFields).toContain("altText");
     });
   });
 

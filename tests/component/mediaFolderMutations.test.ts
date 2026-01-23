@@ -17,7 +17,8 @@ import {
 	createMediaFolderArgs,
 	updateMediaFolderArgs,
 	moveFolderArgs,
-	mediaFolderDoc,
+	mediaItemDoc,
+	mediaFolderItemValidator,
 	deleteMediaFolderArgs,
 	restoreMediaFolderArgs,
 } from "../../src/component/validators.js";
@@ -157,50 +158,45 @@ describe("Media Folder Mutations", () => {
 	// Response Structure Tests
 	// =============================================================================
 
-	describe("mediaFolderDoc structure", () => {
-		it("should have _id field for document identification", () => {
-			const docFields = Object.keys(mediaFolderDoc.fields);
-			expect(docFields).toContain("_id");
-		});
-
-		it("should have _creationTime field for timestamp", () => {
-			const docFields = Object.keys(mediaFolderDoc.fields);
-			expect(docFields).toContain("_creationTime");
+	describe("mediaFolderItemValidator structure for folders", () => {
+		it("should have kind field to distinguish folders from assets", () => {
+			const folderFields = Object.keys(mediaFolderItemValidator.fields);
+			expect(folderFields).toContain("kind");
 		});
 
 		it("should have name field", () => {
-			const docFields = Object.keys(mediaFolderDoc.fields);
-			expect(docFields).toContain("name");
+			const folderFields = Object.keys(mediaFolderItemValidator.fields);
+			expect(folderFields).toContain("name");
 		});
 
 		it("should have parentId field for hierarchy", () => {
-			const docFields = Object.keys(mediaFolderDoc.fields);
-			expect(docFields).toContain("parentId");
+			const folderFields = Object.keys(mediaFolderItemValidator.fields);
+			expect(folderFields).toContain("parentId");
 		});
 
 		it("should have path field for full path", () => {
-			const docFields = Object.keys(mediaFolderDoc.fields);
-			expect(docFields).toContain("path");
+			const folderFields = Object.keys(mediaFolderItemValidator.fields);
+			expect(folderFields).toContain("path");
 		});
 
 		it("should have description field", () => {
-			const docFields = Object.keys(mediaFolderDoc.fields);
-			expect(docFields).toContain("description");
+			const folderFields = Object.keys(mediaFolderItemValidator.fields);
+			expect(folderFields).toContain("description");
 		});
 
-		it("should have sortOrder field", () => {
-			const docFields = Object.keys(mediaFolderDoc.fields);
-			expect(docFields).toContain("sortOrder");
+		it("should have sortOrder field for folders", () => {
+			const folderFields = Object.keys(mediaFolderItemValidator.fields);
+			expect(folderFields).toContain("sortOrder");
 		});
 
 		it("should have deletedAt field for soft delete", () => {
-			const docFields = Object.keys(mediaFolderDoc.fields);
-			expect(docFields).toContain("deletedAt");
+			const folderFields = Object.keys(mediaFolderItemValidator.fields);
+			expect(folderFields).toContain("deletedAt");
 		});
 
 		it("should have createdBy field for audit trail", () => {
-			const docFields = Object.keys(mediaFolderDoc.fields);
-			expect(docFields).toContain("createdBy");
+			const folderFields = Object.keys(mediaFolderItemValidator.fields);
+			expect(folderFields).toContain("createdBy");
 		});
 	});
 

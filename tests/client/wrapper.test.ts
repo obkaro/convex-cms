@@ -572,12 +572,15 @@ describe("CMS Client Wrapper", () => {
   });
 
   describe("VersionsApi", () => {
-    it("calls list query when versioning enabled", async () => {
+    it("calls getHistory query when versioning enabled", async () => {
       const cms = createCmsClient(mockApi, {
         features: { versioning: true },
       });
 
-      await cms.versions.list(mockCtx, { entryId: "entry-id" });
+      await cms.versions.getHistory(mockCtx, {
+        entryId: "entry-id",
+        paginationOpts: { numItems: 10, cursor: null },
+      });
 
       expect(mockCtx.runQuery).toHaveBeenCalled();
     });
@@ -588,7 +591,10 @@ describe("CMS Client Wrapper", () => {
       });
 
       await expect(
-        cms.versions.list(mockCtx, { entryId: "entry-id" })
+        cms.versions.getHistory(mockCtx, {
+          entryId: "entry-id",
+          paginationOpts: { numItems: 10, cursor: null },
+        })
       ).rejects.toThrow("Versioning feature is not enabled");
     });
 

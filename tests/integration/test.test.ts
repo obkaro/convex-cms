@@ -504,7 +504,8 @@ describe("mediaAssetFactory", () => {
 			const asset = mediaAssetFactory.minimal(fakeStorageId);
 
 			expect(asset.storageId).toBe(fakeStorageId);
-			expect(asset.type).toBe("other");
+			expect(asset.kind).toBe("asset");
+			expect(asset.mimeType).toBe("application/octet-stream");
 			expect(asset.size).toBe(1024);
 		});
 	});
@@ -513,7 +514,7 @@ describe("mediaAssetFactory", () => {
 		it("creates an image asset with dimensions", () => {
 			const asset = mediaAssetFactory.image(fakeStorageId);
 
-			expect(asset.type).toBe("image");
+			expect(asset.kind).toBe("asset");
 			expect(asset.mimeType).toBe("image/jpeg");
 			expect(asset.width).toBe(1920);
 			expect(asset.height).toBe(1080);
@@ -526,7 +527,7 @@ describe("mediaAssetFactory", () => {
 			const asset = mediaAssetFactory.png(fakeStorageId);
 
 			expect(asset.mimeType).toBe("image/png");
-			expect(asset.filename).toContain(".png");
+			expect(asset.name).toContain(".png");
 		});
 	});
 
@@ -534,7 +535,7 @@ describe("mediaAssetFactory", () => {
 		it("creates a video asset with duration", () => {
 			const asset = mediaAssetFactory.video(fakeStorageId);
 
-			expect(asset.type).toBe("video");
+			expect(asset.kind).toBe("asset");
 			expect(asset.mimeType).toBe("video/mp4");
 			expect(asset.duration).toBe(120);
 			expect(asset.width).toBeDefined();
@@ -546,7 +547,7 @@ describe("mediaAssetFactory", () => {
 		it("creates an audio asset", () => {
 			const asset = mediaAssetFactory.audio(fakeStorageId);
 
-			expect(asset.type).toBe("audio");
+			expect(asset.kind).toBe("asset");
 			expect(asset.mimeType).toBe("audio/mpeg");
 			expect(asset.duration).toBe(180);
 		});
@@ -556,7 +557,7 @@ describe("mediaAssetFactory", () => {
 		it("creates a PDF document asset", () => {
 			const asset = mediaAssetFactory.document(fakeStorageId);
 
-			expect(asset.type).toBe("document");
+			expect(asset.kind).toBe("asset");
 			expect(asset.mimeType).toBe("application/pdf");
 		});
 	});

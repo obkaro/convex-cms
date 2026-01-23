@@ -31,18 +31,21 @@ describe("Scheduled Publish", () => {
 			return await ctx.db.insert("contentTypes", {
 				name: "blog_post",
 				displayName: "Blog Post",
+				createdBy: "test-user",
 				fields: [
 					{
 						name: "title",
 						label: "Title",
 						type: "text",
 						required: true,
+						options: {},
 					},
 					{
 						name: "content",
 						label: "Content",
 						type: "richText",
 						required: false,
+						options: {},
 					},
 				],
 				isActive: true,
@@ -463,8 +466,15 @@ describe("Scheduled Publish", () => {
 				return await ctx.db.insert("contentTypes", {
 					name: "page",
 					displayName: "Page",
+					createdBy: "test-user",
 					fields: [
-						{ name: "title", label: "Title", type: "text", required: true },
+						{
+							name: "title",
+							label: "Title",
+							type: "text",
+							required: true,
+							options: {},
+						},
 					],
 					isActive: true,
 				});
