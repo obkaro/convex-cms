@@ -1,25 +1,16 @@
-import { useState, useCallback, useEffect } from 'react';
-import { FieldWrapper } from './FieldWrapper';
-import type { BaseFieldProps } from './types';
+import { useState, useCallback, useEffect, useId } from 'react'
+import { FieldWrapper } from './FieldWrapper'
+import type { BaseFieldProps } from './types'
+import { Textarea } from '~/components/ui/textarea'
+import { Button } from '~/components/ui/button'
+import { cn } from '~/lib/cn'
+import { Check, AlertCircle } from 'lucide-react'
 
-/**
- * Props for the JsonField component.
- */
 export interface JsonFieldProps extends BaseFieldProps<unknown> {
-  /** Placeholder text for the textarea */
-  placeholder?: string;
-  /** Number of visible rows */
-  rows?: number;
+  placeholder?: string
+  rows?: number
 }
 
-/**
- * JsonField renders a textarea for editing JSON data.
- *
- * Features:
- * - Real-time JSON validation
- * - Pretty-print formatting
- * - Syntax error display
- */
 export function JsonField({
   field,
   value,
@@ -32,120 +23,119 @@ export function JsonField({
   placeholder = '{\n  \n}',
   rows = 8,
 }: JsonFieldProps) {
-  const fieldId = id || `field-${field.name}`;
+  const generatedId = useId()
+  const fieldId = id ?? `field-${field.name}-${generatedId}`
 
-  // Store the raw text representation
   const [textValue, setTextValue] = useState(() => {
-    if (value === null || value === undefined) {
-      return '';
-    }
+    if (value === null || value === undefined) return ''
     try {
-      return JSON.stringify(value, null, 2);
+      return JSON.stringify(value, null, 2)
     } catch {
-      return '';
+      return ''
     }
-  });
+  })
 
-  // Syntax error state
-  const [syntaxError, setSyntaxError] = useState<string | null>(null);
+  const [syntaxError, setSyntaxError] = useState<string | null>(null)
 
-  // Update text value when external value changes
   useEffect(() => {
     if (value === null || value === undefined) {
-      setTextValue('');
-      return;
+      setTextValue('')
+      return
     }
     try {
-      const formatted = JSON.stringify(value, null, 2);
-      // Only update if the parsed value is different
-      // This prevents cursor jumping during editing
-      const currentParsed = textValue ? JSON.parse(textValue) : null;
+      const formatted = JSON.stringify(value, null, 2)
+      const currentParsed = textValue ? JSON.parse(textValue) : null
       if (JSON.stringify(currentParsed) !== JSON.stringify(value)) {
-        setTextValue(formatted);
+        setTextValue(formatted)
       }
     } catch {
-      // Keep current text if external value is invalid
+      // Keep current text
     }
-  }, [value]);
+  }, [value])
 
-  const handleChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newText = e.target.value;
-    setTextValue(newText);
+  const handleChange = useCallback(
+    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      const newText = e.target.value
+      setTextValue(newText)
 
-    // Validate JSON and update value if valid
-    if (newText.trim() === '') {
-      setSyntaxError(null);
-      onChange(null);
-      return;
-    }
+      if (newText.trim() === '') {
+        setSyntaxError(null)
+        onChange(null)
+        return
+      }
 
-    try {
-      const parsed = JSON.parse(newText);
-      setSyntaxError(null);
-      onChange(parsed);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Invalid JSON';
-      setSyntaxError(message);
-      // Don't update the value on syntax error - keep the last valid value
-    }
-  }, [onChange]);
+      try {
+        const parsed = JSON.parse(newText)
+        setSyntaxError(null)
+        onChange(parsed)
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Invalid JSON'
+        setSyntaxError(message)
+      }
+    },
+    [onChange]
+  )
 
   const handleFormat = useCallback(() => {
-    if (textValue.trim() === '') return;
-
+    if (textValue.trim() === '') return
     try {
-      const parsed = JSON.parse(textValue);
-      const formatted = JSON.stringify(parsed, null, 2);
-      setTextValue(formatted);
-      setSyntaxError(null);
+      const parsed = JSON.parse(textValue)
+      const formatted = JSON.stringify(parsed, null, 2)
+      setTextValue(formatted)
+      setSyntaxError(null)
     } catch {
       // Can't format invalid JSON
     }
-  }, [textValue]);
+  }, [textValue])
 
   const handleMinify = useCallback(() => {
-    if (textValue.trim() === '') return;
-
+    if (textValue.trim() === '') return
     try {
-      const parsed = JSON.parse(textValue);
-      const minified = JSON.stringify(parsed);
-      setTextValue(minified);
-      setSyntaxError(null);
+      const parsed = JSON.parse(textValue)
+      const minified = JSON.stringify(parsed)
+      setTextValue(minified)
+      setSyntaxError(null)
     } catch {
       // Can't minify invalid JSON
     }
-  }, [textValue]);
+  }, [textValue])
 
-  // Combine syntax error with field error
   const displayError = syntaxError
     ? { message: `JSON syntax error: ${syntaxError}`, code: 'SYNTAX_ERROR' }
-    : error;
+    : error
 
   return (
     <FieldWrapper field={field} error={displayError} className={className} id={fieldId}>
-      <div className="field-json-container">
-        <div className="field-json-toolbar">
-          <button
+      <div
+        className={cn(
+          'overflow-hidden rounded-md border border-input',
+          displayError && 'border-destructive'
+        )}
+      >
+        <div className="flex items-center gap-1 border-b bg-muted/50 px-2 py-1.5">
+          <Button
             type="button"
-            className="field-json-toolbar-btn"
+            variant="ghost"
+            size="sm"
+            className="h-7 px-2 text-xs"
             onClick={handleFormat}
             disabled={disabled || readOnly || !!syntaxError}
-            title="Format JSON"
           >
             Format
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
-            className="field-json-toolbar-btn"
+            variant="ghost"
+            size="sm"
+            className="h-7 px-2 text-xs"
             onClick={handleMinify}
             disabled={disabled || readOnly || !!syntaxError}
-            title="Minify JSON"
           >
             Minify
-          </button>
+          </Button>
         </div>
 
-        <textarea
+        <Textarea
           id={fieldId}
           name={field.name}
           value={textValue}
@@ -157,20 +147,26 @@ export function JsonField({
           required={field.required}
           aria-invalid={!!displayError}
           aria-describedby={displayError ? `${fieldId}-error` : undefined}
-          className={`field-textarea field-textarea--json ${displayError ? 'field-textarea--error' : ''} ${syntaxError ? 'field-textarea--syntax-error' : ''}`}
+          className="resize-none rounded-none border-0 font-mono text-sm focus-visible:ring-0"
           spellCheck={false}
         />
 
-        <div className="field-json-footer">
-          <span className="field-json-hint">Enter valid JSON data</span>
+        <div className="flex items-center justify-between border-t bg-muted/30 px-3 py-1.5 text-xs text-muted-foreground">
+          <span>Enter valid JSON data</span>
           {syntaxError && (
-            <span className="field-json-status field-json-status--error">Invalid</span>
+            <span className="flex items-center gap-1 text-destructive">
+              <AlertCircle className="size-3" />
+              Invalid
+            </span>
           )}
           {!syntaxError && textValue.trim() !== '' && (
-            <span className="field-json-status field-json-status--valid">Valid JSON</span>
+            <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+              <Check className="size-3" />
+              Valid JSON
+            </span>
           )}
         </div>
       </div>
     </FieldWrapper>
-  );
+  )
 }

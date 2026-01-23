@@ -168,13 +168,16 @@ export function FieldRenderer({
         />
       );
 
-    default:
+    default: {
       // TypeScript exhaustiveness check
-      const _exhaustiveCheck: never = field.type;
+      const _exhaustiveCheck: never = field.type
       return (
-        <div className="field-wrapper field-wrapper--error">
-          <p className="field-error">Unknown field type: {_exhaustiveCheck}</p>
+        <div className="rounded-md border border-destructive bg-destructive/10 p-3">
+          <p className="text-sm text-destructive">
+            Unknown field type: {_exhaustiveCheck}
+          </p>
         </div>
-      );
+      )
+    }
   }
 }

@@ -71,25 +71,25 @@
   },
   "devDependencies": {
     "@convex-dev/agent": "^0.3.2",
-    "@eslint/js": "^9.17.0",
+    "@eslint/js": "^9.39.2",
     "@playwright/test": "^1.57.0",
-    "@types/node": "^20.11.0",
-    "@types/react": "^19.0.0",
+    "@types/node": "^25.0.10",
+    "@types/react": "^19.2.9",
     "chokidar-cli": "^3.0.0",
-    "convex": "^1.17.0",
-    "convex-test": "^0.0.35",
-    "eslint": "^9.17.0",
-    "npm-run-all2": "^7.0.0",
-    "pkg-pr-new": "^0.0.40",
-    "prettier": "^3.4.0",
-    "typescript": "^5.3.3",
-    "typescript-eslint": "^8.18.0",
-    "vitest": "^1.2.0",
-    "zod": "^4.3.5"
+    "convex": "^1.31.6",
+    "convex-test": "^0.0.41",
+    "eslint": "^9.39.2",
+    "npm-run-all2": "^8.0.4",
+    "pkg-pr-new": "^0.0.62",
+    "prettier": "^3.8.1",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.53.1",
+    "vitest": "^4.0.18",
+    "zod": "^4.3.6"
   },
   "dependencies": {
-    "commander": "^12.0.0",
-    "convex-helpers": "^0.1.66",
-    "open": "^10.0.0"
+    "commander": "^14.0.2",
+    "convex-helpers": "^0.1.111",
+    "open": "^11.0.0"
   }
 }

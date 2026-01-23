@@ -1,15 +1,9 @@
-import { useId, ChangeEvent } from 'react';
-import { FieldWrapper } from './FieldWrapper';
-import type { TextFieldProps } from './types';
+import { useId, type ChangeEvent } from 'react'
+import { FieldWrapper } from './FieldWrapper'
+import type { TextFieldProps } from './types'
+import { Input } from '~/components/ui/input'
+import { cn } from '~/lib/cn'
 
-/**
- * TextField renders a single-line text input.
- *
- * Supports:
- * - Text validation (minLength, maxLength, pattern)
- * - Input types (text, email, url, tel)
- * - Required field validation
- */
 export function TextField({
   field,
   value,
@@ -22,19 +16,18 @@ export function TextField({
   placeholder,
   inputType = 'text',
 }: TextFieldProps) {
-  const generatedId = useId();
-  const id = providedId ?? `field-${field.name}-${generatedId}`;
+  const generatedId = useId()
+  const id = providedId ?? `field-${field.name}-${generatedId}`
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    onChange(e.target.value);
-  };
+    onChange(e.target.value)
+  }
 
-  // Extract options for validation attributes
-  const { minLength, maxLength, pattern } = field.options ?? {};
+  const { minLength, maxLength, pattern } = field.options ?? {}
 
   return (
     <FieldWrapper field={field} error={error} className={className} id={id}>
-      <input
+      <Input
         type={inputType}
         id={id}
         name={field.name}
@@ -47,15 +40,17 @@ export function TextField({
         maxLength={maxLength}
         pattern={pattern}
         placeholder={placeholder}
-        className={`field-input ${error ? 'field-input--error' : ''}`}
+        className={cn(error && 'border-destructive focus-visible:ring-destructive')}
         aria-invalid={!!error}
-        aria-describedby={error ? `${id}-error` : field.description ? `${id}-description` : undefined}
+        aria-describedby={
+          error ? `${id}-error` : field.description ? `${id}-description` : undefined
+        }
       />
       {maxLength && (
-        <span className="field-char-count">
+        <span className="mt-1 block text-right text-xs text-muted-foreground">
           {(value ?? '').length} / {maxLength}
         </span>
       )}
     </FieldWrapper>
-  );
+  )
 }

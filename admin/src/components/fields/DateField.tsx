@@ -1,17 +1,11 @@
-import { useId, ChangeEvent } from 'react';
-import { FieldWrapper } from './FieldWrapper';
-import type { DateFieldProps } from './types';
+import { useId, type ChangeEvent } from 'react'
+import { FieldWrapper } from './FieldWrapper'
+import type { DateFieldProps } from './types'
+import { Input } from '~/components/ui/input'
+import { Button } from '~/components/ui/button'
+import { cn } from '~/lib/cn'
+import { X } from 'lucide-react'
 
-/**
- * DateField renders a date or datetime picker.
- *
- * Uses native HTML date/datetime-local inputs for
- * cross-browser compatibility and mobile support.
- *
- * Value format:
- * - date: "YYYY-MM-DD"
- * - datetime: "YYYY-MM-DDTHH:mm"
- */
 export function DateField({
   field,
   value,
@@ -24,63 +18,45 @@ export function DateField({
   includeTime = false,
   placeholder,
 }: DateFieldProps) {
-  const generatedId = useId();
-  const id = providedId ?? `field-${field.name}-${generatedId}`;
-
-  // Determine if we should include time based on field type or prop
-  const showTime = includeTime || field.type === 'datetime';
+  const generatedId = useId()
+  const id = providedId ?? `field-${field.name}-${generatedId}`
+  const showTime = includeTime || field.type === 'datetime'
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const inputValue = e.target.value;
-    onChange(inputValue || null);
-  };
+    const inputValue = e.target.value
+    onChange(inputValue || null)
+  }
 
-  // Format the value for the input
   const formatValue = (val: string | null): string => {
-    if (!val) return '';
+    if (!val) return ''
+    if (!showTime && val.includes('T')) return val.split('T')[0]
+    if (showTime && !val.includes('T')) return `${val}T00:00`
+    return val
+  }
 
-    // If we have a datetime and only need date, extract the date part
-    if (!showTime && val.includes('T')) {
-      return val.split('T')[0];
-    }
-
-    // If we need datetime and only have date, append time
-    if (showTime && !val.includes('T')) {
-      return `${val}T00:00`;
-    }
-
-    return val;
-  };
-
-  // Format for display (human-readable)
   const formatDisplayValue = (val: string | null): string | null => {
-    if (!val) return null;
-
+    if (!val) return null
     try {
-      const date = new Date(val);
-      if (isNaN(date.getTime())) return null;
-
+      const date = new Date(val)
+      if (isNaN(date.getTime())) return null
       if (showTime) {
         return date.toLocaleString(undefined, {
           dateStyle: 'medium',
           timeStyle: 'short',
-        });
+        })
       }
-
-      return date.toLocaleDateString(undefined, {
-        dateStyle: 'medium',
-      });
+      return date.toLocaleDateString(undefined, { dateStyle: 'medium' })
     } catch {
-      return null;
+      return null
     }
-  };
+  }
 
-  const displayValue = formatDisplayValue(value);
+  const displayValue = formatDisplayValue(value)
 
   return (
     <FieldWrapper field={field} error={error} className={className} id={id}>
-      <div className="field-date-container">
-        <input
+      <div className="relative">
+        <Input
           type={showTime ? 'datetime-local' : 'date'}
           id={id}
           name={field.name}
@@ -90,26 +66,33 @@ export function DateField({
           readOnly={readOnly}
           required={field.required}
           placeholder={placeholder}
-          className={`field-input field-input--date ${error ? 'field-input--error' : ''}`}
+          className={cn(
+            'pr-8',
+            error && 'border-destructive focus-visible:ring-destructive'
+          )}
           aria-invalid={!!error}
-          aria-describedby={error ? `${id}-error` : field.description ? `${id}-description` : undefined}
+          aria-describedby={
+            error ? `${id}-error` : field.description ? `${id}-description` : undefined
+          }
         />
-        {value && displayValue && (
-          <span className="field-date-preview">
-            {displayValue}
-          </span>
-        )}
         {value && !readOnly && !disabled && (
-          <button
+          <Button
             type="button"
-            className="field-date-clear"
+            variant="ghost"
+            size="icon"
+            className="absolute right-1 top-1/2 size-6 -translate-y-1/2"
             onClick={() => onChange(null)}
             aria-label="Clear date"
           >
-            &times;
-          </button>
+            <X className="size-3.5" />
+          </Button>
         )}
       </div>
+      {value && displayValue && (
+        <span className="mt-1 block text-xs text-muted-foreground">
+          {displayValue}
+        </span>
+      )}
     </FieldWrapper>
-  );
+  )
 }

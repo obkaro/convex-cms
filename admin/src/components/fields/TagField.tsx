@@ -1,40 +1,28 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
-import { useQuery, useMutation } from 'convex/react';
-import { api } from '../../../convex/_generated/api';
-import { FieldWrapper } from './FieldWrapper';
-import type { BaseFieldProps } from './types';
-import { asTaxonomyId, asTaxonomyTermIds } from '../../types';
+import { useState, useCallback, useRef, useEffect, useId } from 'react'
+import { useQuery, useMutation } from 'convex/react'
+import { api } from '../../../convex/_generated/api'
+import { FieldWrapper } from './FieldWrapper'
+import type { BaseFieldProps } from './types'
+import { asTaxonomyId, asTaxonomyTermIds } from '../../types'
+import { Badge } from '~/components/ui/badge'
+import { Input } from '~/components/ui/input'
+import { Button } from '~/components/ui/button'
+import { cn } from '~/lib/cn'
+import { X, Plus, Loader2 } from 'lucide-react'
 
-/**
- * Term data from the taxonomy system (UI display subset).
- */
 interface TaxonomyTermDisplay {
-  _id: string;
-  name: string;
-  slug: string;
-  color?: string;
-  icon?: string;
-  usageCount: number;
+  _id: string
+  name: string
+  slug: string
+  color?: string
+  icon?: string
+  usageCount: number
 }
 
-/**
- * Props for the TagField component.
- */
 export interface TagFieldProps extends BaseFieldProps<string[]> {
-  /** Placeholder text when no tags are selected */
-  placeholder?: string;
+  placeholder?: string
 }
 
-/**
- * TagField renders an autocomplete tag input for selecting taxonomy terms.
- *
- * Features:
- * - Type-ahead suggestions from taxonomy terms
- * - Inline tag creation (if allowCreate is enabled)
- * - Color-coded tag pills
- * - Drag-to-reorder support
- * - Min/max tag limits
- */
 export function TagField({
   field,
   value,
@@ -46,23 +34,22 @@ export function TagField({
   id,
   placeholder = 'Add tags...',
 }: TagFieldProps) {
-  const fieldId = id || `field-${field.name}`;
-  const taxonomyId = field.options?.taxonomyId;
-  const allowCreate = field.options?.allowCreate ?? false;
-  const maxTags = field.options?.maxTags;
-  const minTags = field.options?.minTags;
+  const generatedId = useId()
+  const fieldId = id ?? `field-${field.name}-${generatedId}`
+  const taxonomyId = field.options?.taxonomyId
+  const allowCreate = field.options?.allowCreate ?? false
+  const maxTags = field.options?.maxTags
+  const minTags = field.options?.minTags
 
-  // Local state for the autocomplete input
-  const [inputValue, setInputValue] = useState('');
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(0);
-  const [isCreating, setIsCreating] = useState(false);
+  const [inputValue, setInputValue] = useState('')
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(0)
+  const [isCreating, setIsCreating] = useState(false)
 
-  const inputRef = useRef<HTMLInputElement>(null);
-  const suggestionsRef = useRef<HTMLDivElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null)
+  const suggestionsRef = useRef<HTMLDivElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
 
-  // Query for suggestions
   const suggestionsResult = useQuery(
     api.taxonomies.suggestTerms,
     taxonomyId
@@ -73,10 +60,9 @@ export function TagField({
           excludeIds: asTaxonomyTermIds(value || []),
         }
       : 'skip'
-  );
-  const suggestions = suggestionsResult ?? [];
+  )
+  const suggestions = suggestionsResult ?? []
 
-  // Query for the currently selected terms (to display names/colors)
   const selectedTermsResult = useQuery(
     api.taxonomies.listTerms,
     taxonomyId && value && value.length > 0
@@ -85,205 +71,182 @@ export function TagField({
           paginationOpts: { numItems: 100, cursor: null },
         }
       : 'skip'
-  );
+  )
 
-  // Build a map of selected term IDs to their data
-  const selectedTermsMap = new Map<string, TaxonomyTermDisplay>();
+  const selectedTermsMap = new Map<string, TaxonomyTermDisplay>()
   if (selectedTermsResult?.page) {
     for (const term of selectedTermsResult.page) {
       if (value?.includes(term._id)) {
-        selectedTermsMap.set(term._id, term as TaxonomyTermDisplay);
+        selectedTermsMap.set(term._id, term as TaxonomyTermDisplay)
       }
     }
   }
 
-  // Mutation for creating new tags inline
-  const createTermMutation = useMutation(api.taxonomies.createTerm);
+  const createTermMutation = useMutation(api.taxonomies.createTerm)
 
-  // Handle click outside to close suggestions
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setShowSuggestions(false);
+        setShowSuggestions(false)
       }
     }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  // Add a tag by ID
   const addTag = useCallback(
     (termId: string) => {
       if (!value?.includes(termId)) {
-        if (maxTags && (value?.length ?? 0) >= maxTags) {
-          return; // Max tags reached
-        }
-        onChange([...(value || []), termId]);
+        if (maxTags && (value?.length ?? 0) >= maxTags) return
+        onChange([...(value || []), termId])
       }
-      setInputValue('');
-      setShowSuggestions(false);
-      setActiveSuggestionIndex(0);
-      inputRef.current?.focus();
+      setInputValue('')
+      setShowSuggestions(false)
+      setActiveSuggestionIndex(0)
+      inputRef.current?.focus()
     },
     [value, onChange, maxTags]
-  );
+  )
 
-  // Remove a tag by ID
   const removeTag = useCallback(
     (termId: string) => {
-      onChange((value || []).filter((id) => id !== termId));
+      onChange((value || []).filter((id) => id !== termId))
     },
     [value, onChange]
-  );
+  )
 
-  // Create a new tag from the input value
   const createTag = useCallback(async () => {
-    if (!inputValue.trim() || !taxonomyId || !allowCreate) return;
-
-    setIsCreating(true);
+    if (!inputValue.trim() || !taxonomyId || !allowCreate) return
+    setIsCreating(true)
     try {
       const termId = await createTermMutation({
         taxonomyId: asTaxonomyId(taxonomyId),
         name: inputValue.trim(),
-      });
-      addTag(termId);
+      })
+      addTag(termId)
     } catch (err) {
-      console.error('Failed to create tag:', err);
+      console.error('Failed to create tag:', err)
     } finally {
-      setIsCreating(false);
+      setIsCreating(false)
     }
-  }, [inputValue, taxonomyId, allowCreate, createTermMutation, addTag]);
+  }, [inputValue, taxonomyId, allowCreate, createTermMutation, addTag])
 
-  // Handle input change
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInputValue(e.target.value);
-    setShowSuggestions(true);
-    setActiveSuggestionIndex(0);
-  };
+    setInputValue(e.target.value)
+    setShowSuggestions(true)
+    setActiveSuggestionIndex(0)
+  }
 
-  // Handle input focus
   const handleInputFocus = () => {
-    setShowSuggestions(true);
-  };
+    setShowSuggestions(true)
+  }
 
-  // Handle keyboard navigation
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (disabled || readOnly) return;
+    if (disabled || readOnly) return
 
     switch (e.key) {
       case 'ArrowDown':
-        e.preventDefault();
+        e.preventDefault()
         setActiveSuggestionIndex((prev) =>
           prev < suggestions.length - 1 ? prev + 1 : prev
-        );
-        break;
-
+        )
+        break
       case 'ArrowUp':
-        e.preventDefault();
-        setActiveSuggestionIndex((prev) => (prev > 0 ? prev - 1 : 0));
-        break;
-
+        e.preventDefault()
+        setActiveSuggestionIndex((prev) => (prev > 0 ? prev - 1 : 0))
+        break
       case 'Enter':
-        e.preventDefault();
+        e.preventDefault()
         if (suggestions.length > 0 && activeSuggestionIndex < suggestions.length) {
-          addTag(suggestions[activeSuggestionIndex]._id);
+          addTag(suggestions[activeSuggestionIndex]._id)
         } else if (inputValue.trim() && allowCreate) {
-          createTag();
+          createTag()
         }
-        break;
-
+        break
       case 'Escape':
-        setShowSuggestions(false);
-        setActiveSuggestionIndex(0);
-        break;
-
+        setShowSuggestions(false)
+        setActiveSuggestionIndex(0)
+        break
       case 'Backspace':
         if (inputValue === '' && value && value.length > 0) {
-          // Remove the last tag when backspacing on empty input
-          removeTag(value[value.length - 1]);
+          removeTag(value[value.length - 1])
         }
-        break;
-
+        break
       case 'Tab':
-        // Select the highlighted suggestion on Tab
         if (showSuggestions && suggestions.length > 0) {
-          e.preventDefault();
-          addTag(suggestions[activeSuggestionIndex]._id);
+          e.preventDefault()
+          addTag(suggestions[activeSuggestionIndex]._id)
         }
-        break;
+        break
     }
-  };
+  }
 
-  // Scroll the active suggestion into view
   useEffect(() => {
     if (suggestionsRef.current && showSuggestions) {
       const activeElement = suggestionsRef.current.querySelector(
         `[data-index="${activeSuggestionIndex}"]`
-      );
+      )
       if (activeElement) {
-        activeElement.scrollIntoView({ block: 'nearest' });
+        activeElement.scrollIntoView({ block: 'nearest' })
       }
     }
-  }, [activeSuggestionIndex, showSuggestions]);
+  }, [activeSuggestionIndex, showSuggestions])
 
-  // Check if we can add more tags
-  const canAddMore = !maxTags || (value?.length ?? 0) < maxTags;
-
-  // Filter suggestions that match input and aren't already selected
-  const filteredSuggestions = suggestions.filter(
-    (term) => !value?.includes(term._id)
-  );
-
-  // Show "Create tag" option if no exact match exists
+  const canAddMore = !maxTags || (value?.length ?? 0) < maxTags
+  const filteredSuggestions = suggestions.filter((term) => !value?.includes(term._id))
   const showCreateOption =
     allowCreate &&
     inputValue.trim() &&
     !filteredSuggestions.some(
       (s) => s.name.toLowerCase() === inputValue.trim().toLowerCase()
-    );
+    )
 
   return (
     <FieldWrapper field={field} error={error} className={className} id={fieldId}>
       <div
         ref={containerRef}
-        className={`field-tags ${error ? 'field-tags--error' : ''} ${disabled ? 'field-tags--disabled' : ''}`}
+        className={cn(
+          'relative rounded-md border border-input bg-background',
+          error && 'border-destructive',
+          disabled && 'opacity-50'
+        )}
       >
-        {/* Selected tags display */}
-        <div className="field-tags-selected">
+        <div className="flex flex-wrap items-center gap-1.5 p-2">
           {(value || []).map((termId) => {
-            const term = selectedTermsMap.get(termId);
-            const tagName = term?.name ?? 'Loading...';
-            const tagColor = term?.color;
+            const term = selectedTermsMap.get(termId)
+            const tagName = term?.name ?? 'Loading...'
+            const tagColor = term?.color
 
             return (
-              <span
+              <Badge
                 key={termId}
-                className="field-tag-pill"
-                style={tagColor ? { backgroundColor: tagColor, borderColor: tagColor } : undefined}
+                variant="secondary"
+                className="gap-1 pr-1"
+                style={tagColor ? { backgroundColor: tagColor, color: '#fff' } : undefined}
               >
-                <span className="field-tag-name">{tagName}</span>
+                {tagName}
                 {!disabled && !readOnly && (
-                  <button
+                  <Button
                     type="button"
-                    className="field-tag-remove"
+                    variant="ghost"
+                    size="icon"
+                    className="size-4 hover:bg-transparent"
                     onClick={() => removeTag(termId)}
                     aria-label={`Remove ${tagName}`}
                   >
-                    ×
-                  </button>
+                    <X className="size-3" />
+                  </Button>
                 )}
-              </span>
-            );
+              </Badge>
+            )
           })}
 
-          {/* Input for adding tags */}
           {canAddMore && !disabled && !readOnly && (
-            <input
+            <Input
               ref={inputRef}
               type="text"
               id={fieldId}
-              className="field-tags-input"
+              className="h-7 min-w-[120px] flex-1 border-0 bg-transparent px-1 shadow-none focus-visible:ring-0"
               value={inputValue}
               onChange={handleInputChange}
               onFocus={handleInputFocus}
@@ -293,65 +256,70 @@ export function TagField({
               aria-autocomplete="list"
               aria-controls={`${fieldId}-suggestions`}
               aria-expanded={showSuggestions}
-              data-testid="tag-input"
             />
           )}
         </div>
 
-        {/* Suggestions dropdown */}
         {showSuggestions && (filteredSuggestions.length > 0 || showCreateOption) && (
           <div
             ref={suggestionsRef}
             id={`${fieldId}-suggestions`}
-            className="field-tags-suggestions"
+            className="absolute left-0 right-0 top-full z-50 mt-1 max-h-60 overflow-auto rounded-md border bg-popover shadow-lg"
             role="listbox"
           >
             {filteredSuggestions.map((term, index) => (
               <div
                 key={term._id}
                 data-index={index}
-                className={`field-tags-suggestion ${index === activeSuggestionIndex ? 'field-tags-suggestion--active' : ''}`}
+                className={cn(
+                  'flex cursor-pointer items-center gap-2 px-3 py-2 text-sm',
+                  index === activeSuggestionIndex && 'bg-accent'
+                )}
                 onClick={() => addTag(term._id)}
                 role="option"
                 aria-selected={index === activeSuggestionIndex}
               >
                 {term.color && (
                   <span
-                    className="field-tag-color-dot"
+                    className="size-2.5 rounded-full"
                     style={{ backgroundColor: term.color }}
                   />
                 )}
-                <span className="field-tags-suggestion-name">{term.name}</span>
-                <span className="field-tags-suggestion-count">{term.usageCount} uses</span>
+                <span className="flex-1">{term.name}</span>
+                <span className="text-xs text-muted-foreground">{term.usageCount} uses</span>
               </div>
             ))}
 
             {showCreateOption && (
               <div
                 data-index={filteredSuggestions.length}
-                className={`field-tags-suggestion field-tags-suggestion--create ${filteredSuggestions.length === activeSuggestionIndex ? 'field-tags-suggestion--active' : ''}`}
+                className={cn(
+                  'flex cursor-pointer items-center gap-2 px-3 py-2 text-sm',
+                  filteredSuggestions.length === activeSuggestionIndex && 'bg-accent'
+                )}
                 onClick={createTag}
                 role="option"
                 aria-selected={filteredSuggestions.length === activeSuggestionIndex}
               >
-                <span className="field-tags-suggestion-create-icon">+</span>
+                {isCreating ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <Plus className="size-4" />
+                )}
                 <span>Create "{inputValue.trim()}"</span>
               </div>
             )}
           </div>
         )}
 
-        {/* Tag count display */}
-        <div className="field-tags-count">
+        <div className="border-t px-3 py-1.5 text-xs text-muted-foreground">
           {value?.length ?? 0} tag{(value?.length ?? 0) !== 1 ? 's' : ''}
           {minTags && (value?.length ?? 0) < minTags && (
-            <span className="field-tags-count-min"> (minimum {minTags})</span>
+            <span className="text-amber-600"> (minimum {minTags})</span>
           )}
-          {maxTags && (
-            <span className="field-tags-count-max"> / {maxTags} max</span>
-          )}
+          {maxTags && <span> / {maxTags} max</span>}
         </div>
       </div>
     </FieldWrapper>
-  );
+  )
 }

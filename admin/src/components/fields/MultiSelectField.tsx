@@ -1,19 +1,15 @@
-import { FieldWrapper } from './FieldWrapper';
-import type { BaseFieldProps } from './types';
+import { useId } from 'react'
+import { FieldWrapper } from './FieldWrapper'
+import type { BaseFieldProps } from './types'
+import { Checkbox } from '~/components/ui/checkbox'
+import { Button } from '~/components/ui/button'
+import { Label } from '~/components/ui/label'
+import { cn } from '~/lib/cn'
 
-/**
- * Props for the MultiSelectField component.
- */
 export interface MultiSelectFieldProps extends BaseFieldProps<string[]> {
-  /** Placeholder text when no options are selected */
-  placeholder?: string;
+  placeholder?: string
 }
 
-/**
- * MultiSelectField renders a checkbox group for selecting multiple options.
- *
- * The available options are defined in the field's options.options array.
- */
 export function MultiSelectField({
   field,
   value,
@@ -24,88 +20,99 @@ export function MultiSelectField({
   className = '',
   id,
 }: MultiSelectFieldProps) {
-  const fieldId = id || `field-${field.name}`;
-  const options = field.options?.options ?? [];
-  const selectedValues = value ?? [];
+  const generatedId = useId()
+  const fieldId = id ?? `field-${field.name}-${generatedId}`
+  const options = field.options?.options ?? []
+  const selectedValues = value ?? []
 
   const handleChange = (optionValue: string, checked: boolean) => {
     if (checked) {
-      onChange([...selectedValues, optionValue]);
+      onChange([...selectedValues, optionValue])
     } else {
-      onChange(selectedValues.filter((v) => v !== optionValue));
+      onChange(selectedValues.filter((v) => v !== optionValue))
     }
-  };
+  }
 
   const handleSelectAll = () => {
-    const allValues = options.map((o) => o.value);
-    onChange(allValues);
-  };
+    const allValues = options.map((o) => o.value)
+    onChange(allValues)
+  }
 
   const handleClearAll = () => {
-    onChange([]);
-  };
+    onChange([])
+  }
 
   return (
     <FieldWrapper field={field} error={error} className={className} id={fieldId}>
       <div
-        className={`field-multiselect ${error ? 'field-multiselect--error' : ''}`}
+        className={cn(
+          'rounded-md border border-input p-3',
+          error && 'border-destructive'
+        )}
         role="group"
         aria-labelledby={`${fieldId}-label`}
       >
         {options.length > 3 && (
-          <div className="field-multiselect-actions">
-            <button
+          <div className="mb-3 flex gap-2">
+            <Button
               type="button"
-              className="field-multiselect-action"
+              variant="outline"
+              size="sm"
               onClick={handleSelectAll}
               disabled={disabled || readOnly}
             >
               Select all
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
-              className="field-multiselect-action"
+              variant="outline"
+              size="sm"
               onClick={handleClearAll}
               disabled={disabled || readOnly || selectedValues.length === 0}
             >
               Clear
-            </button>
+            </Button>
           </div>
         )}
 
-        <div className="field-multiselect-options">
+        <div className="space-y-2">
           {options.map((option) => {
-            const optionId = `${fieldId}-${option.value}`;
-            const isChecked = selectedValues.includes(option.value);
+            const optionId = `${fieldId}-${option.value}`
+            const isChecked = selectedValues.includes(option.value)
 
             return (
-              <label
+              <div
                 key={option.value}
-                className={`field-multiselect-option ${isChecked ? 'field-multiselect-option--selected' : ''}`}
-                htmlFor={optionId}
+                className={cn(
+                  'flex items-center space-x-2 rounded-md p-2',
+                  isChecked && 'bg-accent'
+                )}
               >
-                <input
-                  type="checkbox"
+                <Checkbox
                   id={optionId}
-                  name={`${field.name}[]`}
-                  value={option.value}
                   checked={isChecked}
-                  onChange={(e) => handleChange(option.value, e.target.checked)}
+                  onCheckedChange={(checked) =>
+                    handleChange(option.value, checked === true)
+                  }
                   disabled={disabled || readOnly}
-                  className="field-multiselect-checkbox"
                 />
-                <span className="field-multiselect-label">{option.label}</span>
-              </label>
-            );
+                <Label
+                  htmlFor={optionId}
+                  className="cursor-pointer text-sm font-normal"
+                >
+                  {option.label}
+                </Label>
+              </div>
+            )
           })}
         </div>
 
         {selectedValues.length > 0 && (
-          <div className="field-multiselect-count">
+          <div className="mt-2 text-xs text-muted-foreground">
             {selectedValues.length} of {options.length} selected
           </div>
         )}
       </div>
     </FieldWrapper>
-  );
+  )
 }

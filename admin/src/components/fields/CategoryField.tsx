@@ -1,42 +1,35 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
-import { useQuery } from 'convex/react';
-import { api } from '../../../convex/_generated/api';
-import { FieldWrapper } from './FieldWrapper';
-import type { BaseFieldProps } from './types';
-import { asTaxonomyId } from '../../types';
+import { useState, useCallback, useRef, useEffect } from 'react'
+import { useQuery } from 'convex/react'
+import { api } from '../../../convex/_generated/api'
+import { FieldWrapper } from './FieldWrapper'
+import type { BaseFieldProps } from './types'
+import { asTaxonomyId } from '../../types'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '~/components/ui/popover'
+import { Checkbox } from '~/components/ui/checkbox'
+import { Badge } from '~/components/ui/badge'
+import { ScrollArea } from '~/components/ui/scroll-area'
+import { cn } from '~/lib/cn'
+import { ChevronDown, ChevronRight, X, Check, Tag } from 'lucide-react'
 
-/**
- * Category term with children for hierarchical display.
- */
 interface CategoryTerm {
-  _id: string;
-  name: string;
-  slug: string;
-  color?: string;
-  icon?: string;
-  depth: number;
-  parentId?: string;
-  children: CategoryTerm[];
+  _id: string
+  name: string
+  slug: string
+  color?: string
+  icon?: string
+  depth: number
+  parentId?: string
+  children: CategoryTerm[]
 }
 
-/**
- * Props for the CategoryField component.
- */
 export interface CategoryFieldProps extends BaseFieldProps<string | string[] | null> {
-  /** Placeholder text when no category is selected */
-  placeholder?: string;
+  placeholder?: string
 }
 
-/**
- * CategoryField renders a hierarchical category selector.
- *
- * Features:
- * - Tree view of hierarchical categories
- * - Single or multiple selection support
- * - Collapsible category branches
- * - Visual depth indicators
- * - Keyboard navigation
- */
 export function CategoryField({
   field,
   value,
@@ -48,389 +41,354 @@ export function CategoryField({
   id,
   placeholder = 'Select category...',
 }: CategoryFieldProps) {
-  const fieldId = id || `field-${field.name}`;
-  const taxonomyId = field.options?.taxonomyId;
-  const allowMultiple = field.options?.allowMultiple ?? false;
+  const fieldId = id || `field-${field.name}`
+  const taxonomyId = field.options?.taxonomyId
+  const allowMultiple = field.options?.allowMultiple ?? false
 
-  // Local state
-  const [isOpen, setIsOpen] = useState(false);
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
-  const [highlightedId, setHighlightedId] = useState<string | null>(null);
+  const [isOpen, setIsOpen] = useState(false)
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set())
+  const [highlightedId, setHighlightedId] = useState<string | null>(null)
 
-  const containerRef = useRef<HTMLDivElement>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null)
 
-  // Fetch hierarchical categories
   const hierarchyResult = useQuery(
     api.taxonomies.getTermsHierarchy,
-    taxonomyId
-      ? { taxonomyId: asTaxonomyId(taxonomyId) }
-      : 'skip'
-  );
-  const categoryTree = hierarchyResult ?? [];
+    taxonomyId ? { taxonomyId: asTaxonomyId(taxonomyId) } : 'skip'
+  )
+  const categoryTree = (hierarchyResult ?? []) as CategoryTerm[]
 
-  // Flatten the tree for keyboard navigation
-  const flattenTree = useCallback((
-    nodes: CategoryTerm[],
-    result: CategoryTerm[] = []
-  ): CategoryTerm[] => {
-    for (const node of nodes) {
-      result.push(node);
-      if (expandedCategories.has(node._id) && node.children.length > 0) {
-        flattenTree(node.children, result);
+  const flattenTree = useCallback(
+    (nodes: CategoryTerm[], result: CategoryTerm[] = []): CategoryTerm[] => {
+      for (const node of nodes) {
+        result.push(node)
+        if (expandedCategories.has(node._id) && node.children.length > 0) {
+          flattenTree(node.children, result)
+        }
       }
-    }
-    return result;
-  }, [expandedCategories]);
+      return result
+    },
+    [expandedCategories]
+  )
 
-  const flatCategories = flattenTree(categoryTree as CategoryTerm[]);
+  const flatCategories = flattenTree(categoryTree)
 
-  // Get selected category names for display
   const getSelectedDisplayText = useCallback(() => {
-    if (!value) return null;
+    if (!value) return null
 
-    const ids = Array.isArray(value) ? value : [value];
-    if (ids.length === 0) return null;
+    const ids = Array.isArray(value) ? value : [value]
+    if (ids.length === 0) return null
 
-    // Find category names from the flat list
-    const names: string[] = [];
-    for (const id of ids) {
-      const cat = flatCategories.find((c) => c._id === id);
+    const names: string[] = []
+    for (const categoryId of ids) {
+      const cat = flatCategories.find((c) => c._id === categoryId)
       if (cat) {
-        names.push(cat.name);
+        names.push(cat.name)
       }
     }
 
-    if (names.length === 0) return 'Loading...';
-    if (names.length === 1) return names[0];
-    return `${names.length} categories selected`;
-  }, [value, flatCategories]);
+    if (names.length === 0) return 'Loading...'
+    if (names.length === 1) return names[0]
+    return `${names.length} categories selected`
+  }, [value, flatCategories])
 
-  // Handle click outside to close dropdown
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  // Toggle a category selection
   const toggleCategory = useCallback(
     (categoryId: string) => {
-      if (disabled || readOnly) return;
+      if (disabled || readOnly) return
 
       if (allowMultiple) {
-        const currentIds = Array.isArray(value) ? value : value ? [value] : [];
+        const currentIds = Array.isArray(value) ? value : value ? [value] : []
         if (currentIds.includes(categoryId)) {
-          onChange(currentIds.filter((id) => id !== categoryId));
+          onChange(currentIds.filter((catId) => catId !== categoryId))
         } else {
-          onChange([...currentIds, categoryId]);
+          onChange([...currentIds, categoryId])
         }
       } else {
-        // Single selection - close dropdown after selection
-        onChange(categoryId);
-        setIsOpen(false);
+        onChange(categoryId)
+        setIsOpen(false)
       }
     },
     [disabled, readOnly, allowMultiple, value, onChange]
-  );
+  )
 
-  // Toggle expanded state of a category branch
   const toggleExpanded = useCallback((categoryId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
+    e.stopPropagation()
     setExpandedCategories((prev) => {
-      const next = new Set(prev);
+      const next = new Set(prev)
       if (next.has(categoryId)) {
-        next.delete(categoryId);
+        next.delete(categoryId)
       } else {
-        next.add(categoryId);
+        next.add(categoryId)
       }
-      return next;
-    });
-  }, []);
+      return next
+    })
+  }, [])
 
-  // Check if a category is selected
   const isSelected = useCallback(
     (categoryId: string) => {
-      if (!value) return false;
-      const ids = Array.isArray(value) ? value : [value];
-      return ids.includes(categoryId);
+      if (!value) return false
+      const ids = Array.isArray(value) ? value : [value]
+      return ids.includes(categoryId)
     },
     [value]
-  );
+  )
 
-  // Handle keyboard navigation
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (disabled || readOnly) return;
+    if (disabled || readOnly) return
 
     switch (e.key) {
       case 'Enter':
-      case ' ':
-        e.preventDefault();
+      case ' ': {
+        e.preventDefault()
         if (!isOpen) {
-          setIsOpen(true);
+          setIsOpen(true)
           if (flatCategories.length > 0) {
-            setHighlightedId(flatCategories[0]._id);
+            setHighlightedId(flatCategories[0]._id)
           }
         } else if (highlightedId) {
-          toggleCategory(highlightedId);
+          toggleCategory(highlightedId)
         }
-        break;
-
-      case 'Escape':
-        setIsOpen(false);
-        setHighlightedId(null);
-        break;
-
-      case 'ArrowDown':
-        e.preventDefault();
+        break
+      }
+      case 'Escape': {
+        setIsOpen(false)
+        setHighlightedId(null)
+        break
+      }
+      case 'ArrowDown': {
+        e.preventDefault()
         if (!isOpen) {
-          setIsOpen(true);
+          setIsOpen(true)
           if (flatCategories.length > 0) {
-            setHighlightedId(flatCategories[0]._id);
+            setHighlightedId(flatCategories[0]._id)
           }
         } else {
-          const currentIndex = flatCategories.findIndex((c) => c._id === highlightedId);
+          const currentIndex = flatCategories.findIndex((c) => c._id === highlightedId)
           if (currentIndex < flatCategories.length - 1) {
-            setHighlightedId(flatCategories[currentIndex + 1]._id);
+            setHighlightedId(flatCategories[currentIndex + 1]._id)
           }
         }
-        break;
-
-      case 'ArrowUp':
-        e.preventDefault();
+        break
+      }
+      case 'ArrowUp': {
+        e.preventDefault()
         if (isOpen) {
-          const currentIndex = flatCategories.findIndex((c) => c._id === highlightedId);
+          const currentIndex = flatCategories.findIndex((c) => c._id === highlightedId)
           if (currentIndex > 0) {
-            setHighlightedId(flatCategories[currentIndex - 1]._id);
+            setHighlightedId(flatCategories[currentIndex - 1]._id)
           }
         }
-        break;
-
-      case 'ArrowRight':
-        e.preventDefault();
+        break
+      }
+      case 'ArrowRight': {
+        e.preventDefault()
         if (highlightedId) {
-          const cat = flatCategories.find((c) => c._id === highlightedId);
+          const cat = flatCategories.find((c) => c._id === highlightedId)
           if (cat && cat.children.length > 0 && !expandedCategories.has(highlightedId)) {
-            setExpandedCategories((prev) => new Set([...prev, highlightedId]));
+            setExpandedCategories((prev) => new Set([...prev, highlightedId]))
           }
         }
-        break;
-
-      case 'ArrowLeft':
-        e.preventDefault();
+        break
+      }
+      case 'ArrowLeft': {
+        e.preventDefault()
         if (highlightedId) {
-          const cat = flatCategories.find((c) => c._id === highlightedId);
+          const cat = flatCategories.find((c) => c._id === highlightedId)
           if (cat) {
             if (expandedCategories.has(highlightedId)) {
-              // Collapse current category
               setExpandedCategories((prev) => {
-                const next = new Set(prev);
-                next.delete(highlightedId);
-                return next;
-              });
+                const next = new Set(prev)
+                next.delete(highlightedId)
+                return next
+              })
             } else if (cat.parentId) {
-              // Move to parent category
-              setHighlightedId(cat.parentId);
+              setHighlightedId(cat.parentId)
             }
           }
         }
-        break;
-    }
-  };
-
-  // Scroll highlighted item into view
-  useEffect(() => {
-    if (dropdownRef.current && highlightedId) {
-      const highlighted = dropdownRef.current.querySelector(
-        `[data-category-id="${highlightedId}"]`
-      );
-      if (highlighted) {
-        highlighted.scrollIntoView({ block: 'nearest' });
+        break
       }
     }
-  }, [highlightedId]);
+  }
 
-  // Render a category item recursively
+  useEffect(() => {
+    if (containerRef.current && highlightedId) {
+      const highlighted = containerRef.current.querySelector(
+        `[data-category-id="${highlightedId}"]`
+      )
+      if (highlighted) {
+        highlighted.scrollIntoView({ block: 'nearest' })
+      }
+    }
+  }, [highlightedId])
+
   const renderCategory = (category: CategoryTerm, depth: number = 0) => {
-    const hasChildren = category.children && category.children.length > 0;
-    const isExpanded = expandedCategories.has(category._id);
-    const isHighlighted = highlightedId === category._id;
-    const selected = isSelected(category._id);
+    const hasChildren = category.children && category.children.length > 0
+    const isExpanded = expandedCategories.has(category._id)
+    const isHighlighted = highlightedId === category._id
+    const selected = isSelected(category._id)
 
     return (
-      <div key={category._id} className="field-category-tree-branch">
+      <div key={category._id}>
         <div
           data-category-id={category._id}
-          className={`field-category-item ${selected ? 'field-category-item--selected' : ''} ${isHighlighted ? 'field-category-item--highlighted' : ''}`}
-          style={{ paddingLeft: `${depth * 20 + 8}px` }}
+          className={cn(
+            'flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors',
+            'hover:bg-accent',
+            isHighlighted && 'bg-accent',
+            selected && 'font-medium'
+          )}
+          style={{ paddingLeft: `${depth * 16 + 8}px` }}
           onClick={() => toggleCategory(category._id)}
           onMouseEnter={() => setHighlightedId(category._id)}
           role="option"
           aria-selected={selected}
         >
-          {/* Expand/collapse toggle */}
-          {hasChildren && (
+          {hasChildren ? (
             <button
               type="button"
-              className={`field-category-toggle ${isExpanded ? 'field-category-toggle--expanded' : ''}`}
+              className="flex size-4 items-center justify-center rounded hover:bg-muted"
               onClick={(e) => toggleExpanded(category._id, e)}
               aria-label={isExpanded ? 'Collapse' : 'Expand'}
             >
-              <svg viewBox="0 0 20 20" width="16" height="16">
-                <path
-                  fill="currentColor"
-                  d={isExpanded ? 'M5 8l5 5 5-5z' : 'M8 5l5 5-5 5z'}
-                />
-              </svg>
-            </button>
-          )}
-          {!hasChildren && <span className="field-category-toggle-spacer" />}
-
-          {/* Checkbox for multi-select */}
-          {allowMultiple && (
-            <span className={`field-category-checkbox ${selected ? 'field-category-checkbox--checked' : ''}`}>
-              {selected && (
-                <svg viewBox="0 0 20 20" width="14" height="14">
-                  <path
-                    fill="currentColor"
-                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                  />
-                </svg>
+              {isExpanded ? (
+                <ChevronDown className="size-3" />
+              ) : (
+                <ChevronRight className="size-3" />
               )}
-            </span>
+            </button>
+          ) : (
+            <span className="size-4" />
           )}
 
-          {/* Color indicator */}
+          {allowMultiple && (
+            <Checkbox
+              checked={selected}
+              className="pointer-events-none size-4"
+            />
+          )}
+
           {category.color && (
             <span
-              className="field-category-color"
+              className="size-2.5 shrink-0 rounded-full"
               style={{ backgroundColor: category.color }}
             />
           )}
 
-          {/* Category name */}
-          <span className="field-category-name">{category.name}</span>
+          <span className="flex-1 truncate">{category.name}</span>
 
-          {/* Selection indicator for single-select */}
-          {!allowMultiple && selected && (
-            <span className="field-category-selected-indicator">✓</span>
-          )}
+          {!allowMultiple && selected && <Check className="size-4 text-primary" />}
         </div>
 
-        {/* Children */}
         {hasChildren && isExpanded && (
-          <div className="field-category-children">
+          <div>
             {category.children.map((child) => renderCategory(child, depth + 1))}
           </div>
         )}
       </div>
-    );
-  };
+    )
+  }
 
-  // Clear selection
   const handleClear = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onChange(allowMultiple ? [] : null);
-  };
+    e.stopPropagation()
+    onChange(allowMultiple ? [] : null)
+  }
 
-  const displayText = getSelectedDisplayText();
-  const hasSelection = displayText !== null;
+  const displayText = getSelectedDisplayText()
+  const hasSelection = displayText !== null
 
   return (
     <FieldWrapper field={field} error={error} className={className} id={fieldId}>
-      <div
-        ref={containerRef}
-        className={`field-category ${error ? 'field-category--error' : ''} ${disabled ? 'field-category--disabled' : ''} ${isOpen ? 'field-category--open' : ''}`}
-      >
-        {/* Dropdown trigger */}
-        <button
-          type="button"
-          id={fieldId}
-          className="field-category-trigger"
-          onClick={() => !disabled && !readOnly && setIsOpen(!isOpen)}
-          onKeyDown={handleKeyDown}
-          disabled={disabled}
-          aria-haspopup="listbox"
-          aria-expanded={isOpen}
-          data-testid="category-trigger"
-        >
-          <span className={`field-category-value ${!hasSelection ? 'field-category-value--placeholder' : ''}`}>
-            {displayText || placeholder}
-          </span>
-
-          <div className="field-category-actions">
-            {hasSelection && !disabled && !readOnly && (
-              <button
-                type="button"
-                className="field-category-clear"
-                onClick={handleClear}
-                aria-label="Clear selection"
-              >
-                ×
-              </button>
-            )}
-            <span className="field-category-arrow">
-              <svg viewBox="0 0 20 20" width="16" height="16">
-                <path
-                  fill="currentColor"
-                  d={isOpen ? 'M15 12l-5-5-5 5z' : 'M5 8l5 5 5-5z'}
-                />
-              </svg>
-            </span>
-          </div>
-        </button>
-
-        {/* Dropdown content */}
-        {isOpen && (
-          <div
-            ref={dropdownRef}
-            className="field-category-dropdown"
-            role="listbox"
-            aria-multiselectable={allowMultiple}
-          >
-            {categoryTree.length === 0 ? (
-              <div className="field-category-empty">
-                No categories available
-              </div>
-            ) : (
-              <div className="field-category-tree">
-                {(categoryTree as CategoryTerm[]).map((category) =>
-                  renderCategory(category)
+      <div ref={containerRef}>
+        <Popover open={isOpen} onOpenChange={setIsOpen}>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              id={fieldId}
+              className={cn(
+                'flex w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                'disabled:cursor-not-allowed disabled:opacity-50',
+                error && 'border-destructive',
+                !hasSelection && 'text-muted-foreground'
+              )}
+              onKeyDown={handleKeyDown}
+              disabled={disabled}
+              aria-haspopup="listbox"
+              aria-expanded={isOpen}
+              data-testid="category-trigger"
+            >
+              <span className="truncate">{displayText || placeholder}</span>
+              <div className="flex items-center gap-1">
+                {hasSelection && !disabled && !readOnly && (
+                  <button
+                    type="button"
+                    className="rounded p-0.5 hover:bg-muted"
+                    onClick={handleClear}
+                    aria-label="Clear selection"
+                  >
+                    <X className="size-3" />
+                  </button>
                 )}
+                <ChevronDown
+                  className={cn(
+                    'size-4 text-muted-foreground transition-transform',
+                    isOpen && 'rotate-180'
+                  )}
+                />
               </div>
-            )}
-          </div>
-        )}
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+            <ScrollArea className="max-h-[280px]">
+              {categoryTree.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-6 text-center">
+                  <Tag className="mb-2 size-6 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">
+                    No categories available
+                  </p>
+                </div>
+              ) : (
+                <div className="p-1" role="listbox" aria-multiselectable={allowMultiple}>
+                  {categoryTree.map((category) => renderCategory(category))}
+                </div>
+              )}
+            </ScrollArea>
+          </PopoverContent>
+        </Popover>
 
-        {/* Multi-select selected items display */}
         {allowMultiple && Array.isArray(value) && value.length > 0 && (
-          <div className="field-category-selected-list">
+          <div className="mt-2 flex flex-wrap gap-1">
             {value.map((catId) => {
-              const cat = flatCategories.find((c) => c._id === catId);
+              const cat = flatCategories.find((c) => c._id === catId)
               return (
-                <span key={catId} className="field-category-pill">
+                <Badge
+                  key={catId}
+                  variant="secondary"
+                  className="gap-1 pr-1"
+                >
+                  {cat?.color && (
+                    <span
+                      className="size-2 rounded-full"
+                      style={{ backgroundColor: cat.color }}
+                    />
+                  )}
                   {cat?.name ?? 'Loading...'}
                   {!disabled && !readOnly && (
                     <button
                       type="button"
-                      className="field-category-pill-remove"
+                      className="ml-0.5 rounded-full p-0.5 hover:bg-muted"
                       onClick={() => toggleCategory(catId)}
                       aria-label={`Remove ${cat?.name}`}
                     >
-                      ×
+                      <X className="size-3" />
                     </button>
                   )}
-                </span>
-              );
+                </Badge>
+              )
             })}
           </div>
         )}
       </div>
     </FieldWrapper>
-  );
+  )
 }

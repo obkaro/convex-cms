@@ -1,28 +1,16 @@
-import { ReactNode } from 'react';
-import type { FieldDefinition, FieldError } from './types';
+import type { ReactNode } from 'react'
+import type { FieldDefinition, FieldError } from './types'
+import { Label } from '~/components/ui/label'
+import { cn } from '~/lib/cn'
 
 interface FieldWrapperProps {
-  /** The field definition */
-  field: FieldDefinition;
-  /** The form control element(s) to wrap */
-  children: ReactNode;
-  /** Validation error to display */
-  error?: FieldError;
-  /** Optional CSS class name */
-  className?: string;
-  /** Unique ID for the field */
-  id: string;
+  field: FieldDefinition
+  children: ReactNode
+  error?: FieldError
+  className?: string
+  id: string
 }
 
-/**
- * FieldWrapper provides consistent layout and styling for all field types.
- *
- * It renders:
- * - Label with required indicator
- * - The field input (children)
- * - Description/help text
- * - Validation error message
- */
 export function FieldWrapper({
   field,
   children,
@@ -30,26 +18,38 @@ export function FieldWrapper({
   className = '',
   id,
 }: FieldWrapperProps) {
-  const hasError = !!error;
+  const hasError = !!error
 
   return (
-    <div className={`field-wrapper ${hasError ? 'field-wrapper--error' : ''} ${className}`}>
-      <label htmlFor={id} className="field-label">
+    <div className={cn('space-y-2', className)}>
+      <Label
+        htmlFor={id}
+        className={cn(
+          'text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70',
+          hasError && 'text-destructive'
+        )}
+      >
         {field.label}
-        {field.required && <span className="field-required">*</span>}
-      </label>
+        {field.required && <span className="ml-1 text-destructive">*</span>}
+      </Label>
 
-      <div className="field-control">{children}</div>
+      <div className="relative">{children}</div>
 
       {field.description && !hasError && (
-        <p className="field-description">{field.description}</p>
+        <p id={`${id}-description`} className="text-[13px] text-muted-foreground">
+          {field.description}
+        </p>
       )}
 
       {hasError && (
-        <p className="field-error" role="alert">
+        <p
+          id={`${id}-error`}
+          className="text-[13px] font-medium text-destructive"
+          role="alert"
+        >
           {error.message}
         </p>
       )}
     </div>
-  );
+  )
 }

@@ -1,10 +1,14 @@
+import { CmsDialog } from '~/components/cmsds/CmsDialog'
+import { CmsButton } from '~/components/cmsds/CmsButton'
+import { AlertTriangle } from 'lucide-react'
+
 interface VersionRollbackModalProps {
-  targetVersion: number;
-  currentVersion: number;
-  isLoading: boolean;
-  error: string | null;
-  onConfirm: () => void;
-  onCancel: () => void;
+  targetVersion: number
+  currentVersion: number
+  isLoading: boolean
+  error: string | null
+  onConfirm: () => void
+  onCancel: () => void
 }
 
 export function VersionRollbackModal({
@@ -16,68 +20,60 @@ export function VersionRollbackModal({
   onCancel,
 }: VersionRollbackModalProps) {
   return (
-    <div className="modal-overlay" onClick={onCancel}>
-      <div
-        className="modal"
-        onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-labelledby="rollback-title"
-        aria-describedby="rollback-description"
-      >
-        <div className="modal-header">
-          <h3 id="rollback-title">Confirm Rollback</h3>
-          <button
-            type="button"
-            className="modal-close"
-            onClick={onCancel}
-            disabled={isLoading}
-            aria-label="Close modal"
-          >
-            &times;
-          </button>
-        </div>
-
-        <div className="modal-body">
-          <p id="rollback-description">
-            You are about to rollback from <strong>version {currentVersion}</strong> to{' '}
-            <strong>version {targetVersion}</strong>.
-          </p>
-
-          <div className="rollback-warning">
-            <strong>This action will:</strong>
-            <ul>
-              <li>Create a new version with the content from version {targetVersion}</li>
-              <li>The current version will be preserved in history</li>
-              <li>Any unsaved changes will be lost</li>
-            </ul>
-          </div>
-
-          {error && (
-            <div className="rollback-error" role="alert">
-              <strong>Error:</strong> {error}
-            </div>
-          )}
-        </div>
-
-        <div className="modal-footer">
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={onCancel}
-            disabled={isLoading}
-          >
+    <CmsDialog
+      open={true}
+      onOpenChange={(open) => !open && !isLoading && onCancel()}
+      title="Confirm Rollback"
+      size="sm"
+      footer={
+        <>
+          <CmsButton variant="outline" onClick={onCancel} disabled={isLoading}>
             Cancel
-          </button>
-          <button
-            type="button"
-            className="btn btn-warning"
-            onClick={onConfirm}
-            disabled={isLoading}
-          >
-            {isLoading ? 'Rolling back...' : `Rollback to v${targetVersion}`}
-          </button>
+          </CmsButton>
+          <CmsButton variant="warning" onClick={onConfirm} loading={isLoading}>
+            Rollback to v{targetVersion}
+          </CmsButton>
+        </>
+      }
+    >
+      <div className="space-y-4">
+        <p className="text-sm text-muted-foreground">
+          You are about to rollback from{' '}
+          <span className="font-semibold text-foreground">
+            version {currentVersion}
+          </span>{' '}
+          to{' '}
+          <span className="font-semibold text-foreground">
+            version {targetVersion}
+          </span>
+          .
+        </p>
+
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+          <div className="flex gap-2">
+            <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-600" />
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-amber-800">
+                This action will:
+              </p>
+              <ul className="space-y-1 text-sm text-amber-700">
+                <li>
+                  • Create a new version with the content from version{' '}
+                  {targetVersion}
+                </li>
+                <li>• The current version will be preserved in history</li>
+                <li>• Any unsaved changes will be lost</li>
+              </ul>
+            </div>
+          </div>
         </div>
+
+        {error && (
+          <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+            <span className="font-medium">Error:</span> {error}
+          </div>
+        )}
       </div>
-    </div>
-  );
+    </CmsDialog>
+  )
 }

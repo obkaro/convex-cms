@@ -1,15 +1,9 @@
-import { useId, ChangeEvent, useRef, useEffect } from 'react';
-import { FieldWrapper } from './FieldWrapper';
-import type { TextAreaFieldProps } from './types';
+import { useId, type ChangeEvent, useRef, useEffect } from 'react'
+import { FieldWrapper } from './FieldWrapper'
+import type { TextAreaFieldProps } from './types'
+import { Textarea } from '~/components/ui/textarea'
+import { cn } from '~/lib/cn'
 
-/**
- * TextAreaField renders a multi-line text input.
- *
- * Supports:
- * - Text validation (minLength, maxLength)
- * - Configurable row count
- * - Auto-resize based on content
- */
 export function TextAreaField({
   field,
   value,
@@ -23,31 +17,26 @@ export function TextAreaField({
   rows = 4,
   autoResize = false,
 }: TextAreaFieldProps) {
-  const generatedId = useId();
-  const id = providedId ?? `field-${field.name}-${generatedId}`;
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const generatedId = useId()
+  const id = providedId ?? `field-${field.name}-${generatedId}`
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   const handleChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
-    onChange(e.target.value);
-  };
+    onChange(e.target.value)
+  }
 
-  // Auto-resize logic
   useEffect(() => {
     if (autoResize && textareaRef.current) {
-      const textarea = textareaRef.current;
-      // Reset height to auto to get the correct scrollHeight
-      textarea.style.height = 'auto';
-      // Set the height to the scroll height
-      textarea.style.height = `${textarea.scrollHeight}px`;
+      textareaRef.current.style.height = 'auto'
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`
     }
-  }, [value, autoResize]);
+  }, [value, autoResize])
 
-  // Extract options for validation attributes
-  const { minLength, maxLength } = field.options ?? {};
+  const { minLength, maxLength } = field.options ?? {}
 
   return (
     <FieldWrapper field={field} error={error} className={className} id={id}>
-      <textarea
+      <Textarea
         ref={textareaRef}
         id={id}
         name={field.name}
@@ -60,15 +49,20 @@ export function TextAreaField({
         maxLength={maxLength}
         placeholder={placeholder}
         rows={rows}
-        className={`field-textarea ${error ? 'field-textarea--error' : ''} ${autoResize ? 'field-textarea--auto-resize' : ''}`}
+        className={cn(
+          autoResize && 'resize-none overflow-hidden',
+          error && 'border-destructive focus-visible:ring-destructive'
+        )}
         aria-invalid={!!error}
-        aria-describedby={error ? `${id}-error` : field.description ? `${id}-description` : undefined}
+        aria-describedby={
+          error ? `${id}-error` : field.description ? `${id}-description` : undefined
+        }
       />
       {maxLength && (
-        <span className="field-char-count">
+        <span className="mt-1 block text-right text-xs text-muted-foreground">
           {(value ?? '').length} / {maxLength}
         </span>
       )}
     </FieldWrapper>
-  );
+  )
 }
