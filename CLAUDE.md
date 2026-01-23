@@ -10,6 +10,8 @@ This is `@convex-cms/core` - a headless CMS built as a Convex Component. It prov
 
 **Target users**: Solo developers, agencies, startups, enterprise teams, and AI/agent developers. See `.automaker/context/user-types-and-use-cases.md` for detailed personas and use cases. See docs for additional documentation.
 
+IMPORTANT: Avoid excessive and unneccessary comnmenting. Let your code be readable enough on its own.
+
 ## Common Commands
 
 ```bash
@@ -111,6 +113,7 @@ npm test          # Tests must pass
 ### Import Best Practices
 
 - **Type-only imports**: Use `import type { X }` for types not used at runtime
+- **Avoid Type Duplication** Avoid manually recreating types. Import infer and extend existing ones where needed instead.
 - **Unused parameters**: Prefix with underscore (e.g., `_ctx`, `_args`)
 - **Remove unused imports**: Delete imports that are no longer used
 - **Internal vs public API**: Use `internal` object for internal functions, `api` for public functions

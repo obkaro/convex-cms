@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "description": "A developer-first Convex Component for content management with flexible RBAC and AI-ready architecture",
   "type": "module",
+  "workspaces": ["admin"],
   "main": "./dist/client/index.js",
   "types": "./dist/client/index.d.ts",
   "exports": {
@@ -40,7 +41,7 @@
     "dev:build": "tsc --project tsconfig.build.json --watch",
     "dev:example": "cd example && npx convex dev",
     "dev:watch": "chokidar 'src/**/*.ts' -c 'npm run build:component' --silent",
-    "test": "vitest",
+    "test": "vitest --once",
     "lint": "eslint src/",
     "typecheck": "tsc --noEmit",
     "alpha": "npm version prerelease --preid=alpha && npm publish --tag alpha",
