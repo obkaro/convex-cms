@@ -3,11 +3,12 @@ import { useQuery, useMutation } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import { FieldWrapper } from './FieldWrapper';
 import type { BaseFieldProps } from './types';
+import { asTaxonomyId, asTaxonomyTermIds } from '../../types';
 
 /**
- * Term data from the taxonomy system.
+ * Term data from the taxonomy system (UI display subset).
  */
-interface TaxonomyTerm {
+interface TaxonomyTermDisplay {
   _id: string;
   name: string;
   slug: string;
@@ -66,10 +67,10 @@ export function TagField({
     api.taxonomies.suggestTerms,
     taxonomyId
       ? {
-          taxonomyId: taxonomyId as any,
+          taxonomyId: asTaxonomyId(taxonomyId),
           query: inputValue,
           limit: 10,
-          excludeIds: (value || []) as any[],
+          excludeIds: asTaxonomyTermIds(value || []),
         }
       : 'skip'
   );
@@ -80,24 +81,24 @@ export function TagField({
     api.taxonomies.listTerms,
     taxonomyId && value && value.length > 0
       ? {
-          taxonomyId: taxonomyId as any,
+          taxonomyId: asTaxonomyId(taxonomyId),
           paginationOpts: { numItems: 100, cursor: null },
         }
       : 'skip'
   );
 
   // Build a map of selected term IDs to their data
-  const selectedTermsMap = new Map<string, TaxonomyTerm>();
+  const selectedTermsMap = new Map<string, TaxonomyTermDisplay>();
   if (selectedTermsResult?.page) {
     for (const term of selectedTermsResult.page) {
       if (value?.includes(term._id)) {
-        selectedTermsMap.set(term._id, term as TaxonomyTerm);
+        selectedTermsMap.set(term._id, term as TaxonomyTermDisplay);
       }
     }
   }
 
   // Mutation for creating new tags inline
-  const createTermMutation = useMutation(api.taxonomyMutations.createTerm);
+  const createTermMutation = useMutation(api.taxonomies.createTerm);
 
   // Handle click outside to close suggestions
   useEffect(() => {
@@ -143,7 +144,7 @@ export function TagField({
     setIsCreating(true);
     try {
       const termId = await createTermMutation({
-        taxonomyId: taxonomyId as any,
+        taxonomyId: asTaxonomyId(taxonomyId),
         name: inputValue.trim(),
       });
       addTag(termId);

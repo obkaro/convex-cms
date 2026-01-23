@@ -1,5 +1,4 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
-import type { Id } from '../../convex/_generated/dataModel'
 
 // LocalStorage key for persistent retry queue
 const UPLOAD_RETRY_STORAGE_KEY = 'convex-cms-upload-retry-queue'
@@ -26,20 +25,19 @@ interface PersistedUpload {
   mimeType: string
   error: string
   timestamp: number
-  folderId?: string
+  parentId?: string
 }
 
 export interface UploadDropzoneProps {
   onUploadComplete: (files: UploadedFile[]) => void
-  currentFolderId?: Id<'media_folders'>
+  currentFolderId?: string
   generateUploadUrl: () => Promise<string>
   createAsset: (data: {
-    storageId: Id<'_storage'>
-    filename: string
+    storageId: string
+    name: string
     mimeType: string
-    size: number
-    type: 'image' | 'video' | 'audio' | 'document' | 'other'
-    folderId?: Id<'media_folders'>
+    size?: number
+    parentId?: string
     width?: number
     height?: number
   }) => Promise<unknown>
@@ -57,21 +55,6 @@ export interface UploadedFile {
   success: boolean
   error?: string
   warning?: string // Non-critical warnings
-}
-
-// Get media type from MIME type
-function getMediaType(mimeType: string): 'image' | 'video' | 'audio' | 'document' | 'other' {
-  if (mimeType.startsWith('image/')) return 'image'
-  if (mimeType.startsWith('video/')) return 'video'
-  if (mimeType.startsWith('audio/')) return 'audio'
-  if (
-    mimeType.includes('pdf') ||
-    mimeType.includes('document') ||
-    mimeType.includes('text') ||
-    mimeType.includes('spreadsheet') ||
-    mimeType.includes('presentation')
-  ) return 'document'
-  return 'other'
 }
 
 // Format file size
@@ -372,12 +355,11 @@ export function UploadDropzone({
 
       // Create asset record
       await createAsset({
-        storageId: storageId as Id<'_storage'>,
-        filename: file.name,
+        storageId,
+        name: file.name,
         mimeType: file.type,
         size: file.size,
-        type: getMediaType(file.type),
-        folderId: currentFolderId,
+        parentId: currentFolderId,
         width,
         height,
       })
@@ -444,7 +426,7 @@ export function UploadDropzone({
           mimeType: file.type,
           error: errorMessage,
           timestamp: Date.now(),
-          folderId: currentFolderId,
+          parentId: currentFolderId,
         })
         setPersistedFailures(loadPersistedUploads())
       }

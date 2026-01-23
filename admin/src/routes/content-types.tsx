@@ -4,6 +4,7 @@ import { useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { ContentTypeFormModal } from '../components/ContentTypeFormModal';
 import { ErrorState, ErrorAlert } from '~/components';
+import type { ContentTypeWithCount } from '../types';
 
 export const Route = createFileRoute('/content-types')({
   component: ContentTypesPage,
@@ -29,7 +30,7 @@ function ContentTypesPage() {
     includeEntryCounts: true,
   });
 
-  const contentTypes = contentTypesResult?.page ?? [];
+  const contentTypes = (contentTypesResult?.page ?? []) as ContentTypeWithCount[];
   const isLoading = contentTypesResult === undefined;
   const error = contentTypesResult?.error;
   const [dismissedError, setDismissedError] = useState(false);
@@ -266,10 +267,10 @@ function ContentTypesPage() {
                 </div>
                 <div className="content-type-stat">
                   <span className="stat-value">
-                    {(contentType as any).entryCount ?? 0}
+                    {contentType.entryCount ?? 0}
                   </span>
                   <span className="stat-label">
-                    {(contentType as any).entryCount === 1 ? 'Entry' : 'Entries'}
+                    {contentType.entryCount === 1 ? 'Entry' : 'Entries'}
                   </span>
                 </div>
               </div>
@@ -325,7 +326,7 @@ function ContentTypesPage() {
                   </td>
                   <td>
                     <span className="entry-count">
-                      {(contentType as any).entryCount ?? 0}
+                      {contentType.entryCount ?? 0}
                     </span>
                   </td>
                   <td>

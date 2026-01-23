@@ -105,7 +105,7 @@ function generateMachineName(displayName: string): string {
 }
 
 /**
- * Validates machine name format.
+ * Validates system name format.
  * Must start with a letter, contain only lowercase letters, numbers, underscores.
  */
 function isValidMachineName(name: string): boolean {
@@ -167,7 +167,7 @@ export function ContentTypeFormModal({
 		setShowFieldEditor(false);
 	}, []);
 
-	// Auto-generate machine name from display name
+	// Auto-generate system name from display name
 	const handleDisplayNameChange = useCallback(
 		(value: string) => {
 			setDisplayName(value);
@@ -178,7 +178,7 @@ export function ContentTypeFormModal({
 		[machineNameManuallyEdited],
 	);
 
-	// Handle machine name manual edit
+	// Handle system name manual edit
 	const handleMachineNameChange = useCallback((value: string) => {
 		setMachineNameManuallyEdited(true);
 		setMachineName(value.toLowerCase().replace(/[^a-z0-9_]/g, ""));
@@ -259,10 +259,10 @@ export function ContentTypeFormModal({
 		}
 
 		if (!machineName.trim()) {
-			errors.push("Machine name is required");
+			errors.push("System Name is required");
 		} else if (!isValidMachineName(machineName)) {
 			errors.push(
-				"Machine name must start with a letter and contain only lowercase letters, numbers, and underscores",
+				"System Name must start with a letter and contain only lowercase letters, numbers, and underscores",
 			);
 		}
 
@@ -419,7 +419,7 @@ export function ContentTypeFormModal({
 							</div>
 
 							<div className="form-group">
-								<label htmlFor="machineName">Machine Name *</label>
+								<label htmlFor="machineName">System Name *</label>
 								<input
 									id="machineName"
 									type="text"

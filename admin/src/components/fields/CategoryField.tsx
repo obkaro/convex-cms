@@ -3,6 +3,7 @@ import { useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import { FieldWrapper } from './FieldWrapper';
 import type { BaseFieldProps } from './types';
+import { asTaxonomyId } from '../../types';
 
 /**
  * Category term with children for hierarchical display.
@@ -63,7 +64,7 @@ export function CategoryField({
   const hierarchyResult = useQuery(
     api.taxonomies.getTermsHierarchy,
     taxonomyId
-      ? { taxonomyId: taxonomyId as any }
+      ? { taxonomyId: asTaxonomyId(taxonomyId) }
       : 'skip'
   );
   const categoryTree = hierarchyResult ?? [];
