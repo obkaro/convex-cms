@@ -121,23 +121,6 @@ export {
   getResourceEventsArgs,
   markEventsProcessedArgs,
   cleanupEventsArgs,
-
-  // Audit log validators
-  auditResourceTypes,
-  type AuditResourceType,
-  auditActions,
-  type AuditAction,
-  auditResourceTypeValidator,
-  auditActionValidator,
-  auditLogDoc,
-  getResourceAuditLogsArgs,
-  getUserAuditLogsArgs,
-  listAuditLogsArgs,
-  getAuditLogStatsArgs,
-  cleanupAuditLogsArgs,
-  listAuditLogsResult,
-  auditLogStatsResult,
-  auditLogDiffResult,
 } from "./validators.js";
 
 // Runtime validation functions
@@ -493,21 +476,6 @@ export {
   // Default variant presets (thumbnail, small, medium, large, xlarge, webp, avif)
   DEFAULT_VARIANT_PRESETS,
 } from "./mediaVariants.js";
-
-// Audit Log
-export {
-  type LogAuditEntryParams,
-  type AuditLogEntry,
-  type AuditLogFilters,
-  auditLogDocValidator,
-  logAuditEntry,
-  detectChangedFields,
-  generateChangeSummary,
-  logContentEntryAudit,
-  logContentTypeAudit,
-  logMediaAssetAudit,
-  logMediaFolderAudit,
-} from "./auditLog.js";
 
 // RAG Content Indexer
 export {

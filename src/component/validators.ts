@@ -542,6 +542,7 @@ export const listMediaAssetsArgs = v.object({
 	search: v.optional(v.string()),
 	tags: v.optional(v.array(v.string())),
 	includeDeleted: v.optional(v.boolean()),
+	deletedOnly: v.optional(v.boolean()),
 	sortField: v.optional(mediaSortFieldValidator),
 	sortDirection: v.optional(mediaSortDirectionValidator),
 	paginationOpts: paginationOptsValidator,
@@ -796,123 +797,6 @@ export const cleanupEventsArgs = v.object({
 });
 
 // =============================================================================
-// Audit Log Validators
-// =============================================================================
-
-export const auditResourceTypes = [
-	"contentEntry",
-	"contentType",
-	"mediaAsset",
-	"mediaFolder",
-	"settings",
-] as const;
-
-export type AuditResourceType = typeof auditResourceTypes[number];
-
-export const auditActions = [
-	"created",
-	"updated",
-	"published",
-	"unpublished",
-	"deleted",
-	"restored",
-	"duplicated",
-	"scheduled",
-	"locked",
-	"unlocked",
-	"rolledBack",
-	"migrated",
-] as const;
-
-export type AuditAction = typeof auditActions[number];
-
-export const auditResourceTypeValidator = v.union(
-	v.literal("contentEntry"),
-	v.literal("contentType"),
-	v.literal("mediaAsset"),
-	v.literal("mediaFolder"),
-	v.literal("settings"),
-);
-
-export const auditActionValidator = v.union(
-	v.literal("created"),
-	v.literal("updated"),
-	v.literal("published"),
-	v.literal("unpublished"),
-	v.literal("deleted"),
-	v.literal("restored"),
-	v.literal("duplicated"),
-	v.literal("scheduled"),
-	v.literal("locked"),
-	v.literal("unlocked"),
-	v.literal("rolledBack"),
-	v.literal("migrated"),
-);
-
-export const auditLogDoc = doc(schema, "auditLogs");
-
-export const getResourceAuditLogsArgs = v.object({
-	resourceType: auditResourceTypeValidator,
-	resourceId: v.string(),
-	limit: v.optional(v.number()),
-});
-
-export const getUserAuditLogsArgs = v.object({
-	userId: v.string(),
-	limit: v.optional(v.number()),
-});
-
-export const listAuditLogsArgs = v.object({
-	resourceType: v.optional(auditResourceTypeValidator),
-	action: v.optional(auditActionValidator),
-	userId: v.optional(v.string()),
-	contentTypeName: v.optional(v.string()),
-	startDate: v.optional(v.number()),
-	endDate: v.optional(v.number()),
-	limit: v.optional(v.number()),
-	cursor: v.optional(v.string()),
-});
-
-export const getAuditLogStatsArgs = v.object({
-	resourceType: v.optional(auditResourceTypeValidator),
-	startDate: v.optional(v.number()),
-	endDate: v.optional(v.number()),
-});
-
-export const cleanupAuditLogsArgs = v.object({
-	retentionDays: v.optional(v.number()),
-});
-
-export const listAuditLogsResult = v.object({
-	logs: v.array(auditLogDoc),
-	hasMore: v.boolean(),
-	nextCursor: v.optional(v.string()),
-});
-
-export const auditLogStatsResult = v.object({
-	totalCount: v.number(),
-	actionCounts: v.any(),
-	topUsers: v.array(
-		v.object({
-			userId: v.string(),
-			count: v.number(),
-		}),
-	),
-});
-
-export const auditLogDiffResult = v.object({
-	hasChanges: v.boolean(),
-	changedFields: v.array(v.string()),
-	fieldDiffs: v.array(
-		v.object({
-			field: v.string(),
-			previousValue: v.optional(v.any()),
-			newValue: v.optional(v.any()),
-		}),
-	),
-});
-
-// =============================================================================
 // Mutation Authorization Context
 // =============================================================================
 
@@ -962,7 +846,6 @@ export type ContentEntryTagDoc = Infer<typeof contentEntryTagDoc>;
 export type WebhookConfigDoc = Infer<typeof webhookConfigDoc>;
 export type WebhookDeliveryDoc = Infer<typeof webhookDeliveryDoc>;
 export type CmsEventDoc = Infer<typeof cmsEventDoc>;
-export type AuditLogDoc = Infer<typeof auditLogDoc>;
 export type TrashConfigDoc = Infer<typeof trashConfigDoc>;
 
 // Media item types
@@ -1061,16 +944,6 @@ export type ListEventsArgs = Infer<typeof listEventsArgs>;
 export type GetResourceEventsArgs = Infer<typeof getResourceEventsArgs>;
 export type MarkEventsProcessedArgs = Infer<typeof markEventsProcessedArgs>;
 export type CleanupEventsArgs = Infer<typeof cleanupEventsArgs>;
-
-// Audit log args
-export type GetResourceAuditLogsArgs = Infer<typeof getResourceAuditLogsArgs>;
-export type GetUserAuditLogsArgs = Infer<typeof getUserAuditLogsArgs>;
-export type ListAuditLogsArgs = Infer<typeof listAuditLogsArgs>;
-export type GetAuditLogStatsArgs = Infer<typeof getAuditLogStatsArgs>;
-export type CleanupAuditLogsArgs = Infer<typeof cleanupAuditLogsArgs>;
-export type ListAuditLogsResult = Infer<typeof listAuditLogsResult>;
-export type AuditLogStatsResult = Infer<typeof auditLogStatsResult>;
-export type AuditLogDiffResult = Infer<typeof auditLogDiffResult>;
 
 // Media asset reference
 export type MediaAssetReference = Infer<typeof mediaAssetReference>;

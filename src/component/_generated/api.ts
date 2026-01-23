@@ -8,7 +8,6 @@
  * @module
  */
 
-import type * as auditLog from "../auditLog.js";
 import type * as authorization from "../authorization.js";
 import type * as authorizationHooks from "../authorizationHooks.js";
 import type * as bulkOperations from "../bulkOperations.js";
@@ -64,7 +63,6 @@ import type {
 import { anyApi, componentsGeneric } from "convex/server";
 
 const fullApi: ApiFromModules<{
-  auditLog: typeof auditLog;
   authorization: typeof authorization;
   authorizationHooks: typeof authorizationHooks;
   bulkOperations: typeof bulkOperations;
