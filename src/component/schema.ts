@@ -33,6 +33,10 @@ export const fieldTypeValidator = v.union(
 	v.literal("category"),
 );
 
+/**
+ * Default content statuses for the built-in workflow.
+ * Custom workflows can define additional statuses via defineWorkflow().
+ */
 export const contentStatuses = [
 	"draft",
 	"published",
@@ -40,12 +44,17 @@ export const contentStatuses = [
 	"scheduled",
 ] as const;
 
-export const contentStatusValidator = v.union(
-	v.literal("draft"),
-	v.literal("published"),
-	v.literal("archived"),
-	v.literal("scheduled"),
-);
+/**
+ * Content status validator.
+ *
+ * Uses v.string() instead of a literal union to support custom workflow states.
+ * Validation of allowed transitions happens at the application layer via
+ * the WorkflowConfig (see src/client/workflows.ts).
+ *
+ * Built-in statuses: "draft", "published", "archived", "scheduled"
+ * Custom statuses: Defined via defineWorkflow() in CMS config
+ */
+export const contentStatusValidator = v.string();
 
 export const mediaTypes = [
 	"image",
@@ -136,6 +145,7 @@ export const mediaFieldDefinitionValidator = v.object({
 		mediaType: v.optional(mediaTypeValidator),
 		allowedMimeTypes: v.optional(v.array(v.string())),
 		maxFileSize: v.optional(v.number()),
+		multiple: v.optional(v.boolean()),
 	})),
 });
 
@@ -522,50 +532,6 @@ const schema = defineSchema({
 		.index("by_processed", ["processed"])
 		.index("by_user", ["userId"])
 		.index("by_correlation_id", ["correlationId"]),
-	auditLogs: defineTable({
-		resourceType: v.union(
-			v.literal("contentEntry"),
-			v.literal("contentType"),
-			v.literal("mediaAsset"),
-			v.literal("mediaFolder"),
-			v.literal("settings"),
-		),
-		resourceId: v.string(),
-		action: v.union(
-			v.literal("created"),
-			v.literal("updated"),
-			v.literal("published"),
-			v.literal("unpublished"),
-			v.literal("deleted"),
-			v.literal("restored"),
-			v.literal("duplicated"),
-			v.literal("scheduled"),
-			v.literal("locked"),
-			v.literal("unlocked"),
-			v.literal("rolledBack"),
-			v.literal("migrated"),
-		),
-		userId: v.optional(v.string()),
-		userDisplayName: v.optional(v.string()),
-		previousState: v.optional(v.any()),
-		newState: v.optional(v.any()),
-		changeSummary: v.optional(v.string()),
-		changedFields: v.optional(v.array(v.string())),
-		ipAddress: v.optional(v.string()),
-		userAgent: v.optional(v.string()),
-		sessionId: v.optional(v.string()),
-		requestId: v.optional(v.string()),
-		metadata: v.optional(v.any()),
-		contentTypeName: v.optional(v.string()),
-		entrySlug: v.optional(v.string()),
-	})
-		.index("by_resource", ["resourceType", "resourceId"])
-		.index("by_user", ["userId"])
-		.index("by_action", ["action"])
-		.index("by_resource_type", ["resourceType"])
-		.index("by_content_type", ["contentTypeName"])
-		.index("by_resource_type_and_action", ["resourceType", "action"])
-		.index("by_user_and_action", ["userId", "action"]),
 	webhookConfigs: defineTable({
 		name: v.string(),
 		description: v.optional(v.string()),
@@ -634,7 +600,6 @@ export const {
 	taxonomyTerms,
 	contentEntryTags,
 	cmsEvents,
-	auditLogs,
 	webhookConfigs,
 	webhookDeliveries,
 } = schema.tables;

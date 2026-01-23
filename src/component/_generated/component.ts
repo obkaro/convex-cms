@@ -23,261 +23,6 @@ import type { FunctionReference } from "convex/server";
  */
 export type ComponentApi<Name extends string | undefined = string | undefined> =
   {
-    auditLog: {
-      cleanupOldAuditLogs: FunctionReference<
-        "mutation",
-        "internal",
-        { retentionDays?: number },
-        { deletedCount: number },
-        Name
-      >;
-      getAuditLog: FunctionReference<
-        "query",
-        "internal",
-        { id: string },
-        {
-          _creationTime: number;
-          _id: string;
-          action:
-            | "created"
-            | "updated"
-            | "published"
-            | "unpublished"
-            | "deleted"
-            | "restored"
-            | "duplicated"
-            | "scheduled"
-            | "locked"
-            | "unlocked"
-            | "rolledBack"
-            | "migrated";
-          changeSummary?: string;
-          changedFields?: Array<string>;
-          contentTypeName?: string;
-          entrySlug?: string;
-          ipAddress?: string;
-          metadata?: any;
-          newState?: any;
-          previousState?: any;
-          requestId?: string;
-          resourceId: string;
-          resourceType:
-            | "contentEntry"
-            | "contentType"
-            | "mediaAsset"
-            | "mediaFolder"
-            | "settings";
-          sessionId?: string;
-          userAgent?: string;
-          userDisplayName?: string;
-          userId?: string;
-        } | null,
-        Name
-      >;
-      getAuditLogDiff: FunctionReference<
-        "query",
-        "internal",
-        { id: string },
-        {
-          changedFields: Array<string>;
-          fieldDiffs: Array<{
-            field: string;
-            newValue?: any;
-            previousValue?: any;
-          }>;
-          hasChanges: boolean;
-        },
-        Name
-      >;
-      getAuditLogStats: FunctionReference<
-        "query",
-        "internal",
-        {
-          endDate?: number;
-          resourceType?:
-            | "contentEntry"
-            | "contentType"
-            | "mediaAsset"
-            | "mediaFolder"
-            | "settings";
-          startDate?: number;
-        },
-        {
-          actionCounts: any;
-          topUsers: Array<{ count: number; userId: string }>;
-          totalCount: number;
-        },
-        Name
-      >;
-      getResourceAuditLogs: FunctionReference<
-        "query",
-        "internal",
-        {
-          limit?: number;
-          resourceId: string;
-          resourceType:
-            | "contentEntry"
-            | "contentType"
-            | "mediaAsset"
-            | "mediaFolder"
-            | "settings";
-        },
-        Array<{
-          _creationTime: number;
-          _id: string;
-          action:
-            | "created"
-            | "updated"
-            | "published"
-            | "unpublished"
-            | "deleted"
-            | "restored"
-            | "duplicated"
-            | "scheduled"
-            | "locked"
-            | "unlocked"
-            | "rolledBack"
-            | "migrated";
-          changeSummary?: string;
-          changedFields?: Array<string>;
-          contentTypeName?: string;
-          entrySlug?: string;
-          ipAddress?: string;
-          metadata?: any;
-          newState?: any;
-          previousState?: any;
-          requestId?: string;
-          resourceId: string;
-          resourceType:
-            | "contentEntry"
-            | "contentType"
-            | "mediaAsset"
-            | "mediaFolder"
-            | "settings";
-          sessionId?: string;
-          userAgent?: string;
-          userDisplayName?: string;
-          userId?: string;
-        }>,
-        Name
-      >;
-      getUserAuditLogs: FunctionReference<
-        "query",
-        "internal",
-        { limit?: number; userId: string },
-        Array<{
-          _creationTime: number;
-          _id: string;
-          action:
-            | "created"
-            | "updated"
-            | "published"
-            | "unpublished"
-            | "deleted"
-            | "restored"
-            | "duplicated"
-            | "scheduled"
-            | "locked"
-            | "unlocked"
-            | "rolledBack"
-            | "migrated";
-          changeSummary?: string;
-          changedFields?: Array<string>;
-          contentTypeName?: string;
-          entrySlug?: string;
-          ipAddress?: string;
-          metadata?: any;
-          newState?: any;
-          previousState?: any;
-          requestId?: string;
-          resourceId: string;
-          resourceType:
-            | "contentEntry"
-            | "contentType"
-            | "mediaAsset"
-            | "mediaFolder"
-            | "settings";
-          sessionId?: string;
-          userAgent?: string;
-          userDisplayName?: string;
-          userId?: string;
-        }>,
-        Name
-      >;
-      listAuditLogs: FunctionReference<
-        "query",
-        "internal",
-        {
-          action?:
-            | "created"
-            | "updated"
-            | "published"
-            | "unpublished"
-            | "deleted"
-            | "restored"
-            | "duplicated"
-            | "scheduled"
-            | "locked"
-            | "unlocked"
-            | "rolledBack"
-            | "migrated";
-          contentTypeName?: string;
-          cursor?: string;
-          endDate?: number;
-          limit?: number;
-          resourceType?:
-            | "contentEntry"
-            | "contentType"
-            | "mediaAsset"
-            | "mediaFolder"
-            | "settings";
-          startDate?: number;
-          userId?: string;
-        },
-        {
-          hasMore: boolean;
-          logs: Array<{
-            _creationTime: number;
-            _id: string;
-            action:
-              | "created"
-              | "updated"
-              | "published"
-              | "unpublished"
-              | "deleted"
-              | "restored"
-              | "duplicated"
-              | "scheduled"
-              | "locked"
-              | "unlocked"
-              | "rolledBack"
-              | "migrated";
-            changeSummary?: string;
-            changedFields?: Array<string>;
-            contentTypeName?: string;
-            entrySlug?: string;
-            ipAddress?: string;
-            metadata?: any;
-            newState?: any;
-            previousState?: any;
-            requestId?: string;
-            resourceId: string;
-            resourceType:
-              | "contentEntry"
-              | "contentType"
-              | "mediaAsset"
-              | "mediaFolder"
-              | "settings";
-            sessionId?: string;
-            userAgent?: string;
-            userDisplayName?: string;
-            userId?: string;
-          }>;
-          nextCursor?: string;
-        },
-        Name
-      >;
-    };
     bulkOperations: {
       bulkDelete: FunctionReference<
         "mutation",
@@ -330,12 +75,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
       bulkUpdate: FunctionReference<
         "mutation",
         "internal",
-        {
-          data?: any;
-          ids: Array<string>;
-          status?: "draft" | "published" | "archived" | "scheduled";
-          updatedBy?: string;
-        },
+        { data?: any; ids: Array<string>; status?: string; updatedBy?: string },
         {
           failed: number;
           results: Array<{ error?: string; id: string; success: boolean }>;
@@ -362,7 +102,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           fromVersion: {
             createdAt: number;
             slug: string;
-            status: "draft" | "published" | "archived" | "scheduled";
+            status: string;
             versionNumber: number;
             wasPublished: boolean;
           };
@@ -372,7 +112,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           toVersion: {
             createdAt: number;
             slug: string;
-            status: "draft" | "published" | "archived" | "scheduled";
+            status: string;
             versionNumber: number;
             wasPublished: boolean;
           };
@@ -386,8 +126,8 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           contentTypeId?: string;
           contentTypeName?: string;
           includeDeleted?: boolean;
-          status?: "draft" | "published" | "archived" | "scheduled";
-          statusIn?: Array<"draft" | "published" | "archived" | "scheduled">;
+          status?: string;
+          statusIn?: Array<string>;
         },
         { count: number },
         Name
@@ -414,7 +154,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             entryId: string;
             publishedAt?: number;
             slug: string;
-            status: "draft" | "published" | "archived" | "scheduled";
+            status: string;
             versionNumber: number;
             wasPublished: boolean;
           };
@@ -425,7 +165,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           scheduledPublishAt?: number;
           searchText?: string;
           slug: string;
-          status: "draft" | "published" | "archived" | "scheduled";
+          status: string;
           updatedBy?: string;
           version: number;
         } | null,
@@ -438,7 +178,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           contentTypeId: string;
           includeDeleted?: boolean;
           slug: string;
-          status?: "draft" | "published" | "archived" | "scheduled";
+          status?: string;
         },
         {
           _creationTime: number;
@@ -456,7 +196,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           scheduledPublishAt?: number;
           searchText?: string;
           slug: string;
-          status: "draft" | "published" | "archived" | "scheduled";
+          status: string;
           updatedBy?: string;
           version: number;
         } | null,
@@ -469,7 +209,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           contentTypeName: string;
           includeDeleted?: boolean;
           slug: string;
-          status?: "draft" | "published" | "archived" | "scheduled";
+          status?: string;
         },
         {
           _creationTime: number;
@@ -487,7 +227,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           scheduledPublishAt?: number;
           searchText?: string;
           slug: string;
-          status: "draft" | "published" | "archived" | "scheduled";
+          status: string;
           updatedBy?: string;
           version: number;
         } | null,
@@ -506,7 +246,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           entryId: string;
           publishedAt?: number;
           slug: string;
-          status: "draft" | "published" | "archived" | "scheduled";
+          status: string;
           versionNumber: number;
           wasPublished: boolean;
         } | null,
@@ -538,7 +278,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             entryId: string;
             publishedAt?: number;
             slug: string;
-            status: "draft" | "published" | "archived" | "scheduled";
+            status: string;
             versionNumber: number;
             wasPublished: boolean;
           }>;
@@ -580,8 +320,8 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           search?: string;
           sortDirection?: "asc" | "desc";
           sortField?: string;
-          status?: "draft" | "published" | "archived" | "scheduled";
-          statusIn?: Array<"draft" | "published" | "archived" | "scheduled">;
+          status?: string;
+          statusIn?: Array<string>;
         },
         {
           continueCursor: string | null;
@@ -602,7 +342,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             scheduledPublishAt?: number;
             searchText?: string;
             slug: string;
-            status: "draft" | "published" | "archived" | "scheduled";
+            status: string;
             updatedBy?: string;
             version: number;
           }>;
@@ -627,7 +367,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           primaryEntryId?: string;
           scheduledPublishAt?: number;
           slug?: string;
-          status?: "draft" | "published" | "archived" | "scheduled";
+          status?: string;
         },
         {
           _creationTime: number;
@@ -645,7 +385,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           scheduledPublishAt?: number;
           searchText?: string;
           slug: string;
-          status: "draft" | "published" | "archived" | "scheduled";
+          status: string;
           updatedBy?: string;
           version: number;
         },
@@ -681,7 +421,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           scheduledPublishAt?: number;
           searchText?: string;
           slug: string;
-          status: "draft" | "published" | "archived" | "scheduled";
+          status: string;
           updatedBy?: string;
           version: number;
         },
@@ -718,7 +458,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           scheduledPublishAt?: number;
           searchText?: string;
           slug: string;
-          status: "draft" | "published" | "archived" | "scheduled";
+          status: string;
           updatedBy?: string;
           version: number;
         },
@@ -753,7 +493,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           scheduledPublishAt?: number;
           searchText?: string;
           slug: string;
-          status: "draft" | "published" | "archived" | "scheduled";
+          status: string;
           updatedBy?: string;
           version: number;
         },
@@ -787,7 +527,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           scheduledPublishAt?: number;
           searchText?: string;
           slug: string;
-          status: "draft" | "published" | "archived" | "scheduled";
+          status: string;
           updatedBy?: string;
           version: number;
         },
@@ -821,7 +561,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           scheduledPublishAt?: number;
           searchText?: string;
           slug: string;
-          status: "draft" | "published" | "archived" | "scheduled";
+          status: string;
           updatedBy?: string;
           version: number;
         },
@@ -841,7 +581,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           regenerateSlug?: boolean;
           scheduledPublishAt?: number;
           slug?: string;
-          status?: "draft" | "published" | "archived" | "scheduled";
+          status?: string;
           updatedBy?: string;
         },
         {
@@ -860,7 +600,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           scheduledPublishAt?: number;
           searchText?: string;
           slug: string;
-          status: "draft" | "published" | "archived" | "scheduled";
+          status: string;
           updatedBy?: string;
           version: number;
         },
@@ -910,7 +650,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             scheduledPublishAt?: number;
             searchText?: string;
             slug: string;
-            status: "draft" | "published" | "archived" | "scheduled";
+            status: string;
             updatedBy?: string;
             version: number;
           };
@@ -952,7 +692,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           scheduledPublishAt?: number;
           searchText?: string;
           slug: string;
-          status: "draft" | "published" | "archived" | "scheduled";
+          status: string;
           updatedBy?: string;
           version: number;
         },
@@ -992,7 +732,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             scheduledPublishAt?: number;
             searchText?: string;
             slug: string;
-            status: "draft" | "published" | "archived" | "scheduled";
+            status: string;
             timeRemaining?: number;
             updatedBy?: string;
             version: number;
@@ -1020,7 +760,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           scheduledPublishAt?: number;
           searchText?: string;
           slug: string;
-          status: "draft" | "published" | "archived" | "scheduled";
+          status: string;
           updatedBy?: string;
           version: number;
         },
@@ -1046,7 +786,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           scheduledPublishAt?: number;
           searchText?: string;
           slug: string;
-          status: "draft" | "published" | "archived" | "scheduled";
+          status: string;
           updatedBy?: string;
           version: number;
         },
@@ -1286,6 +1026,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                     | "audio"
                     | "document"
                     | "other";
+                  multiple?: boolean;
                 };
                 required: boolean;
                 searchable?: boolean;
@@ -1475,6 +1216,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                     | "audio"
                     | "document"
                     | "other";
+                  multiple?: boolean;
                 };
                 required: boolean;
                 searchable?: boolean;
@@ -1695,6 +1437,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                     | "audio"
                     | "document"
                     | "other";
+                  multiple?: boolean;
                 };
                 required: boolean;
                 searchable?: boolean;
@@ -1899,6 +1642,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                     | "audio"
                     | "document"
                     | "other";
+                  multiple?: boolean;
                 };
                 required: boolean;
                 searchable?: boolean;
@@ -2098,6 +1842,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                     | "audio"
                     | "document"
                     | "other";
+                  multiple?: boolean;
                 };
                 required: boolean;
                 searchable?: boolean;
@@ -2311,6 +2056,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                       | "audio"
                       | "document"
                       | "other";
+                    multiple?: boolean;
                   };
                   required: boolean;
                   searchable?: boolean;
@@ -2585,8 +2331,8 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           limit?: number;
           locale?: string;
           source?: string;
-          status?: "draft" | "published" | "archived" | "scheduled";
-          statusIn?: Array<"draft" | "published" | "archived" | "scheduled">;
+          status?: string;
+          statusIn?: Array<string>;
         },
         {
           contentTypes?: Array<{
@@ -2654,7 +2400,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             locale?: string;
             scheduledPublishAt?: number;
             slug: string;
-            status: "draft" | "published" | "archived" | "scheduled";
+            status: string;
             version: number;
           }>;
           exportedAt: number;
@@ -2676,8 +2422,8 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           contentTypeName?: string;
           includeDeleted?: boolean;
           locale?: string;
-          status?: "draft" | "published" | "archived" | "scheduled";
-          statusIn?: Array<"draft" | "published" | "archived" | "scheduled">;
+          status?: string;
+          statusIn?: Array<string>;
         },
         {
           contentTypes: Array<string>;
@@ -2758,7 +2504,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
               locale?: string;
               scheduledPublishAt?: number;
               slug: string;
-              status: "draft" | "published" | "archived" | "scheduled";
+              status: string;
               version: number;
             }>;
             exportedAt: number;
@@ -2866,7 +2612,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
               locale?: string;
               scheduledPublishAt?: number;
               slug: string;
-              status: "draft" | "published" | "archived" | "scheduled";
+              status: string;
               version: number;
             }>;
             exportedAt: number;
@@ -3206,6 +2952,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         "query",
         "internal",
         {
+          deletedOnly?: boolean;
           folderId?: string;
           includeDeleted?: boolean;
           includeRootLevel?: boolean;
@@ -4368,7 +4115,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           scheduledPublishAt?: number;
           searchText?: string;
           slug: string;
-          status: "draft" | "published" | "archived" | "scheduled";
+          status: string;
           updatedBy?: string;
           version: number;
         },
@@ -4401,7 +4148,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           scheduledPublishAt?: number;
           searchText?: string;
           slug: string;
-          status: "draft" | "published" | "archived" | "scheduled";
+          status: string;
           updatedBy?: string;
           version: number;
         },
@@ -4855,7 +4602,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             scheduledPublishAt?: number;
             searchText?: string;
             slug: string;
-            status: "draft" | "published" | "archived" | "scheduled";
+            status: string;
             updatedBy?: string;
             version: number;
           }>;
@@ -4918,7 +4665,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           scheduledPublishAt?: number;
           searchText?: string;
           slug: string;
-          status: "draft" | "published" | "archived" | "scheduled";
+          status: string;
           updatedBy?: string;
           version: number;
         },
