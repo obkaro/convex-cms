@@ -332,6 +332,7 @@ export const list = query({
       search,
       tags,
       includeDeleted = false,
+      deletedOnly = false,
       sortField = "_creationTime",
       sortDirection = "desc",
       paginationOpts,
@@ -367,6 +368,7 @@ export const list = query({
         mimeTypePrefix,
         tags,
         includeDeleted,
+        deletedOnly,
         sortOptions,
         paginationOpts: clampedPaginationOpts,
       });
@@ -381,6 +383,7 @@ export const list = query({
       mimeTypePrefix,
       tags,
       includeDeleted,
+      deletedOnly,
       sortOptions,
       paginationOpts: clampedPaginationOpts,
     });
@@ -507,6 +510,7 @@ async function handleSearchQuery(
     mimeTypePrefix?: string;
     tags?: string[];
     includeDeleted: boolean;
+    deletedOnly: boolean;
     sortOptions: MediaSortOptions;
     paginationOpts: PaginationOpts;
   }
@@ -520,6 +524,7 @@ async function handleSearchQuery(
     mimeTypePrefix,
     tags,
     includeDeleted,
+    deletedOnly,
     sortOptions,
     paginationOpts,
   } = args;
@@ -556,7 +561,11 @@ async function handleSearchQuery(
   let filteredResults = results;
 
   // Filter by soft-delete status
-  if (!includeDeleted) {
+  if (deletedOnly) {
+    // Only show deleted items
+    filteredResults = filteredResults.filter((asset: any) => isDeleted(asset));
+  } else if (!includeDeleted) {
+    // Exclude deleted items
     filteredResults = filteredResults.filter(
       (asset: any) => !isDeleted(asset)
     );
@@ -639,6 +648,7 @@ async function handleIndexQuery(
     mimeTypePrefix?: string;
     tags?: string[];
     includeDeleted: boolean;
+    deletedOnly: boolean;
     sortOptions: MediaSortOptions;
     paginationOpts: PaginationOpts;
   }
@@ -651,6 +661,7 @@ async function handleIndexQuery(
     mimeTypePrefix,
     tags,
     includeDeleted,
+    deletedOnly,
     sortOptions,
     paginationOpts,
   } = args;
@@ -702,7 +713,13 @@ async function handleIndexQuery(
     }
 
     // Filter by soft-delete status
-    if (!includeDeleted && isDeleted(item)) {
+    if (deletedOnly) {
+      // Only show deleted items
+      if (!isDeleted(item)) {
+        return false;
+      }
+    } else if (!includeDeleted && isDeleted(item)) {
+      // Exclude deleted items unless includeDeleted is true
       return false;
     }
 

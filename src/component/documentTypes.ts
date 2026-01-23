@@ -105,11 +105,6 @@ export type ContentEntryTagInternal = Infer<
 export type CmsEventInternal = Infer<typeof validators.cmsEventDoc>;
 
 /**
- * Audit log document - internal use with typed IDs.
- */
-export type AuditLogInternal = Infer<typeof validators.auditLogDoc>;
-
-/**
  * Trash config document - internal use with typed IDs.
  */
 export type TrashConfigInternal = Infer<typeof validators.trashConfigDoc>;
@@ -186,11 +181,6 @@ export type ContentEntryTag = StringifyIds<ContentEntryTagInternal>;
  * CMS event - client-facing with string IDs.
  */
 export type CmsEvent = StringifyIds<CmsEventInternal>;
-
-/**
- * Audit log entry - client-facing with string IDs.
- */
-export type AuditLog = StringifyIds<AuditLogInternal>;
 
 /**
  * Trash config - client-facing with string IDs.
