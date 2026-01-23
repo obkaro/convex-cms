@@ -1,5 +1,5 @@
 {
-  "name": "@convex-cms/core",
+  "name": "convex-cms",
   "version": "0.0.1",
   "description": "A developer-first Convex Component for content management with flexible RBAC and AI-ready architecture",
   "type": "module",
@@ -26,7 +26,8 @@
   "files": [
     "dist",
     "src",
-    "admin-dist"
+    "admin-dist",
+    "README.md"
   ],
   "bin": {
     "convex-cms": "./dist/cli/index.js"
@@ -54,8 +55,16 @@
     "content-management",
     "convex-component"
   ],
-  "author": "",
-  "license": "MIT",
+  "author": "obkaro",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/obkaro/convex-cms.git"
+  },
+  "bugs": {
+    "url": "https://github.com/obkaro/convex-cms/issues"
+  },
+  "homepage": "https://github.com/obkaro/convex-cms#readme",
   "peerDependencies": {
     "@convex-dev/agent": "^0.3.0",
     "convex": "^1.17.0",
