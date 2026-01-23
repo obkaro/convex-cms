@@ -1,15 +1,50 @@
-import { useState, useRef, useEffect } from 'react'
-import { useRouterState, useNavigate } from '@tanstack/react-router'
-import { Link } from '@tanstack/react-router'
+import { useRouterState, useNavigate, Link } from '@tanstack/react-router'
 import { useAuth } from '../contexts/AuthContext'
 import { getRole } from '../../../src/component/roles'
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '~/components/ui/breadcrumb'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '~/components/ui/dropdown-menu'
+import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar'
+import { Button } from '~/components/ui/button'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '~/components/ui/popover'
+import {
+  Bell,
+  HelpCircle,
+  Home,
+  LogOut,
+  Settings,
+  User,
+  ChevronDown,
+  ExternalLink,
+  Book,
+  Code,
+  MessageSquare,
+} from 'lucide-react'
+import { cn } from '~/lib/cn'
+import { Fragment } from 'react'
 
-interface Breadcrumb {
+interface BreadcrumbData {
   label: string
   to?: string
 }
 
-// Keyboard shortcuts for the help panel
 const KEYBOARD_SHORTCUTS = [
   { keys: ['⌘', 'S'], description: 'Save entry' },
   { keys: ['⌘', '⇧', 'P'], description: 'Publish entry' },
@@ -17,24 +52,25 @@ const KEYBOARD_SHORTCUTS = [
   { keys: ['Esc'], description: 'Close modal/panel' },
 ]
 
-// Help resources
 const HELP_RESOURCES = [
-  { label: 'Documentation', url: 'https://docs.convex.dev', icon: 'book' },
-  { label: 'API Reference', url: 'https://docs.convex.dev/api', icon: 'code' },
-  { label: 'Community Discord', url: 'https://discord.gg/convex', icon: 'chat' },
+  { label: 'Documentation', url: 'https://docs.convex.dev', icon: Book },
+  { label: 'API Reference', url: 'https://docs.convex.dev/api', icon: Code },
+  { label: 'Community Discord', url: 'https://discord.gg/convex', icon: MessageSquare },
 ]
 
-// Map routes to readable names
 const routeLabels: Record<string, string> = {
   '/': 'Dashboard',
   '/content': 'Content',
   '/media': 'Media Library',
   '/content-types': 'Content Types',
   '/settings': 'Settings',
+  '/taxonomies': 'Taxonomies',
+  '/audit-logs': 'Audit Logs',
+  '/trash': 'Trash',
 }
 
-function getBreadcrumbs(pathname: string): Breadcrumb[] {
-  const breadcrumbs: Breadcrumb[] = [{ label: 'Home', to: '/' }]
+function getBreadcrumbs(pathname: string): BreadcrumbData[] {
+  const breadcrumbs: BreadcrumbData[] = [{ label: 'Home', to: '/' }]
 
   if (pathname === '/') {
     return breadcrumbs
@@ -47,7 +83,6 @@ function getBreadcrumbs(pathname: string): Breadcrumb[] {
     currentPath += `/${segment}`
     const label = routeLabels[currentPath] || segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' ')
 
-    // Last segment doesn't need a link
     if (index === segments.length - 1) {
       breadcrumbs.push({ label })
     } else {
@@ -62,14 +97,7 @@ export function Header() {
   const routerState = useRouterState()
   const navigate = useNavigate()
   const breadcrumbs = getBreadcrumbs(routerState.location.pathname)
-  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
-  const [isHelpPanelOpen, setIsHelpPanelOpen] = useState(false)
-  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
-  const userMenuRef = useRef<HTMLDivElement>(null)
-  const helpPanelRef = useRef<HTMLDivElement>(null)
-  const notificationsRef = useRef<HTMLDivElement>(null)
 
-  // Try to use auth context, but gracefully handle if not available
   let user = null
   let role = null
   let logout = async () => {}
@@ -82,17 +110,13 @@ export function Header() {
     logout = auth.logout
     isAuthenticated = auth.isAuthenticated
   } catch {
-    // AuthProvider not available, use defaults
+    // AuthProvider not available
   }
 
-  // Get role display name
   const roleDefinition = role ? getRole(role) : null
   const roleDisplayName = roleDefinition?.displayName ?? role ?? 'No Role'
-
-  // Get user display name
   const userDisplayName = user?.name ?? user?.email ?? 'User'
 
-  // Get user initials for avatar
   const getInitials = (name: string) => {
     const parts = name.split(' ')
     if (parts.length >= 2) {
@@ -103,271 +127,145 @@ export function Header() {
 
   const userInitials = user?.name ? getInitials(user.name) : 'U'
 
-  // Close menus when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
-        setIsUserMenuOpen(false)
-      }
-      if (helpPanelRef.current && !helpPanelRef.current.contains(event.target as Node)) {
-        setIsHelpPanelOpen(false)
-      }
-      if (notificationsRef.current && !notificationsRef.current.contains(event.target as Node)) {
-        setIsNotificationsOpen(false)
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
-
-  // Close help panel with Escape key
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setIsHelpPanelOpen(false)
-        setIsNotificationsOpen(false)
-        setIsUserMenuOpen(false)
-      }
-    }
-
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [])
-
-  // Handle logout
   const handleLogout = async () => {
-    setIsUserMenuOpen(false)
     await logout()
   }
 
   return (
-    <header className="admin-header">
-      <div className="header-left">
-        <nav className="breadcrumbs" aria-label="Breadcrumb">
-          <ol className="breadcrumb-list">
-            {breadcrumbs.map((crumb, index) => (
-              <li key={index} className="breadcrumb-item">
-                {index > 0 && (
-                  <span className="breadcrumb-separator" aria-hidden="true">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="9 18 15 12 9 6" />
-                    </svg>
-                  </span>
-                )}
+    <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b border-border bg-background/95 px-6 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <Breadcrumb>
+        <BreadcrumbList>
+          {breadcrumbs.map((crumb, index) => (
+            <Fragment key={index}>
+              {index > 0 && <BreadcrumbSeparator />}
+              <BreadcrumbItem>
                 {crumb.to ? (
-                  <Link to={crumb.to} className="breadcrumb-link">
-                    {index === 0 && (
-                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="home-icon">
-                        <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                        <polyline points="9 22 9 12 15 12 15 22" />
-                      </svg>
-                    )}
-                    <span>{crumb.label}</span>
-                  </Link>
+                  <BreadcrumbLink asChild>
+                    <Link to={crumb.to} className="flex items-center gap-1.5">
+                      {index === 0 && <Home className="size-3.5" />}
+                      <span>{crumb.label}</span>
+                    </Link>
+                  </BreadcrumbLink>
                 ) : (
-                  <span className="breadcrumb-current" aria-current="page">
-                    {crumb.label}
-                  </span>
+                  <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
                 )}
-              </li>
-            ))}
-          </ol>
-        </nav>
-      </div>
+              </BreadcrumbItem>
+            </Fragment>
+          ))}
+        </BreadcrumbList>
+      </Breadcrumb>
 
-      <div className="header-right">
-        {/* Notifications Dropdown */}
-        <div className="header-dropdown-container" ref={notificationsRef}>
-          <button
-            className="header-action"
-            title="Notifications"
-            aria-label="View notifications"
-            aria-expanded={isNotificationsOpen}
-            aria-haspopup="true"
-            onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-            data-testid="notifications-button"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
-              <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
-            </svg>
-          </button>
-
-          {isNotificationsOpen && (
-            <div className="header-dropdown notifications-dropdown" data-testid="notifications-dropdown">
-              <div className="header-dropdown-header">
-                <h3>Notifications</h3>
-              </div>
-              <div className="header-dropdown-divider" />
-              <div className="notifications-empty">
-                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
-                  <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
-                </svg>
-                <p>No notifications yet</p>
-                <span>You're all caught up!</span>
-              </div>
+      <div className="flex items-center gap-1">
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="ghost" size="icon" className="size-9">
+              <Bell className="size-4" />
+              <span className="sr-only">Notifications</span>
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent align="end" className="w-80">
+            <div className="flex items-center justify-between pb-2">
+              <h4 className="font-medium">Notifications</h4>
             </div>
-          )}
-        </div>
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <Bell className="size-8 text-muted-foreground/50" />
+              <p className="mt-2 text-sm font-medium">No notifications yet</p>
+              <p className="text-xs text-muted-foreground">You're all caught up!</p>
+            </div>
+          </PopoverContent>
+        </Popover>
 
-        {/* Help Panel */}
-        <div className="header-dropdown-container" ref={helpPanelRef}>
-          <button
-            className="header-action"
-            title="Help"
-            aria-label="Get help"
-            aria-expanded={isHelpPanelOpen}
-            aria-haspopup="true"
-            onClick={() => setIsHelpPanelOpen(!isHelpPanelOpen)}
-            data-testid="help-button"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10" />
-              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-              <line x1="12" y1="17" x2="12.01" y2="17" />
-            </svg>
-          </button>
-
-          {isHelpPanelOpen && (
-            <div className="header-dropdown help-dropdown" data-testid="help-dropdown">
-              <div className="header-dropdown-header">
-                <h3>Help & Resources</h3>
-              </div>
-              <div className="header-dropdown-divider" />
-
-              <div className="help-section">
-                <h4>Keyboard Shortcuts</h4>
-                <ul className="shortcuts-list">
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="ghost" size="icon" className="size-9">
+              <HelpCircle className="size-4" />
+              <span className="sr-only">Help</span>
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent align="end" className="w-72">
+            <div className="pb-2">
+              <h4 className="font-medium">Help & Resources</h4>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <h5 className="mb-2 text-xs font-medium text-muted-foreground">Keyboard Shortcuts</h5>
+                <div className="space-y-1">
                   {KEYBOARD_SHORTCUTS.map((shortcut, index) => (
-                    <li key={index} className="shortcut-item">
-                      <span className="shortcut-description">{shortcut.description}</span>
-                      <span className="shortcut-keys">
+                    <div key={index} className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">{shortcut.description}</span>
+                      <div className="flex gap-0.5">
                         {shortcut.keys.map((key, keyIndex) => (
-                          <kbd key={keyIndex}>{key}</kbd>
+                          <kbd
+                            key={keyIndex}
+                            className="rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-xs"
+                          >
+                            {key}
+                          </kbd>
                         ))}
-                      </span>
-                    </li>
+                      </div>
+                    </div>
                   ))}
-                </ul>
-              </div>
-
-              <div className="header-dropdown-divider" />
-
-              <div className="help-section">
-                <h4>Resources</h4>
-                <ul className="resources-list">
-                  {HELP_RESOURCES.map((resource, index) => (
-                    <li key={index}>
-                      <a
-                        href={resource.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="resource-link"
-                      >
-                        {resource.icon === 'book' && (
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-                          </svg>
-                        )}
-                        {resource.icon === 'code' && (
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <polyline points="16 18 22 12 16 6" />
-                            <polyline points="8 6 2 12 8 18" />
-                          </svg>
-                        )}
-                        {resource.icon === 'chat' && (
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                          </svg>
-                        )}
-                        <span>{resource.label}</span>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="external-link-icon">
-                          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                          <polyline points="15 3 21 3 21 9" />
-                          <line x1="10" y1="14" x2="21" y2="3" />
-                        </svg>
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div className="user-menu" ref={userMenuRef}>
-          <button
-            className="user-button"
-            aria-label="User menu"
-            aria-haspopup="true"
-            aria-expanded={isUserMenuOpen}
-            onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-          >
-            <div className="user-avatar" data-initials={userInitials}>
-              {user?.avatarUrl ? (
-                <img src={user.avatarUrl} alt={userDisplayName} className="user-avatar-img" />
-              ) : (
-                <span className="user-avatar-initials">{userInitials}</span>
-              )}
-            </div>
-            <span className="user-name">{userDisplayName}</span>
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`chevron-icon ${isUserMenuOpen ? 'rotated' : ''}`}>
-              <polyline points="6 9 12 15 18 9" />
-            </svg>
-          </button>
-
-          {isUserMenuOpen && (
-            <div className="user-dropdown">
-              <div className="user-dropdown-header">
-                <div className="user-dropdown-avatar" data-initials={userInitials}>
-                  {user?.avatarUrl ? (
-                    <img src={user.avatarUrl} alt={userDisplayName} className="user-avatar-img" />
-                  ) : (
-                    <span className="user-avatar-initials">{userInitials}</span>
-                  )}
-                </div>
-                <div className="user-dropdown-info">
-                  <span className="user-dropdown-name">{userDisplayName}</span>
-                  {user?.email && <span className="user-dropdown-email">{user.email}</span>}
-                  <span className="user-dropdown-role">{roleDisplayName}</span>
                 </div>
               </div>
+              <div>
+                <h5 className="mb-2 text-xs font-medium text-muted-foreground">Resources</h5>
+                <div className="space-y-1">
+                  {HELP_RESOURCES.map((resource) => (
+                    <a
+                      key={resource.label}
+                      href={resource.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent"
+                    >
+                      <resource.icon className="size-4 text-muted-foreground" />
+                      <span className="flex-1">{resource.label}</span>
+                      <ExternalLink className="size-3 text-muted-foreground" />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
 
-              <div className="user-dropdown-divider" />
-
-              <div className="user-dropdown-menu">
-                <button
-                  className="user-dropdown-item"
-                  onClick={() => {
-                    setIsUserMenuOpen(false)
-                    navigate({ to: '/settings' })
-                  }}
-                  data-testid="profile-button"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
-                    <circle cx="12" cy="7" r="4" />
-                  </svg>
-                  <span>Profile & Settings</span>
-                </button>
-
-                {isAuthenticated && (
-                  <button className="user-dropdown-item user-dropdown-item--danger" onClick={handleLogout}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                      <polyline points="16 17 21 12 16 7" />
-                      <line x1="21" y1="12" x2="9" y2="12" />
-                    </svg>
-                    <span>Logout</span>
-                  </button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="h-9 gap-2 pl-2 pr-3">
+              <Avatar className="size-6">
+                <AvatarImage src={user?.avatarUrl} alt={userDisplayName} />
+                <AvatarFallback className="text-xs">{userInitials}</AvatarFallback>
+              </Avatar>
+              <span className="text-sm font-medium">{userDisplayName}</span>
+              <ChevronDown className="size-3.5 text-muted-foreground" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel className="font-normal">
+              <div className="flex flex-col space-y-1">
+                <p className="text-sm font-medium">{userDisplayName}</p>
+                {user?.email && (
+                  <p className="text-xs text-muted-foreground">{user.email}</p>
                 )}
+                <p className="text-xs text-muted-foreground">{roleDisplayName}</p>
               </div>
-            </div>
-          )}
-        </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => navigate({ to: '/settings' })}>
+              <User className="mr-2 size-4" />
+              <span>Profile & Settings</span>
+            </DropdownMenuItem>
+            {isAuthenticated && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
+                  <LogOut className="mr-2 size-4" />
+                  <span>Logout</span>
+                </DropdownMenuItem>
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   )

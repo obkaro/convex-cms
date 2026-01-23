@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { Sidebar } from './Sidebar'
 import { Header } from './Header'
+import { cn } from '~/lib/cn'
 
 interface AdminLayoutProps {
   children: ReactNode
@@ -8,11 +9,14 @@ interface AdminLayoutProps {
 
 export function AdminLayout({ children }: AdminLayoutProps) {
   return (
-    <div className="admin-layout">
+    <div className="flex min-h-screen bg-background">
       <Sidebar />
-      <div className="admin-content">
+      <div className={cn(
+        'flex flex-1 flex-col',
+        'ml-64' // sidebar width
+      )}>
         <Header />
-        <main className="admin-main">
+        <main className="flex-1 overflow-auto p-6">
           {children}
         </main>
       </div>

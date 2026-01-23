@@ -10,3 +10,5 @@ export {
   type LogoutHook,
   type PermissionCheck,
 } from './AuthContext';
+
+export { ThemeProvider, useTheme } from './ThemeContext';

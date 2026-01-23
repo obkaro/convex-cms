@@ -6,10 +6,11 @@ import {
 } from "@tanstack/react-router";
 import { ConvexProvider, ConvexReactClient } from "convex/react";
 import { useMemo, type ReactNode } from "react";
-import appCss from "~/styles/app.css?url";
+import globalsCss from "~/styles/globals.css?url";
 import { AdminLayout, RouteGuard } from "~/components";
 import {
   AuthProvider,
+  ThemeProvider,
   type GetUserHook,
   type GetUserRoleHook,
   type LogoutHook,
@@ -119,7 +120,7 @@ export const Route = createRootRoute({
       },
     ],
     links: [
-      { rel: "stylesheet", href: appCss },
+      { rel: "stylesheet", href: globalsCss },
       { rel: "icon", href: "/favicon.ico" },
     ],
   }),
@@ -140,19 +141,21 @@ function RootComponent() {
 
   return (
     <RootDocument>
-      <ConvexProviderWrapper config={config}>
-        <AuthProvider
-          getUser={authConfig.getUser}
-          getUserRole={authConfig.getUserRole}
-          onLogout={authConfig.onLogout}
-        >
-          <RouteGuard>
-            <AdminLayout>
-              <Outlet />
-            </AdminLayout>
-          </RouteGuard>
-        </AuthProvider>
-      </ConvexProviderWrapper>
+      <ThemeProvider>
+        <ConvexProviderWrapper config={config}>
+          <AuthProvider
+            getUser={authConfig.getUser}
+            getUserRole={authConfig.getUserRole}
+            onLogout={authConfig.onLogout}
+          >
+            <RouteGuard>
+              <AdminLayout>
+                <Outlet />
+              </AdminLayout>
+            </RouteGuard>
+          </AuthProvider>
+        </ConvexProviderWrapper>
+      </ThemeProvider>
     </RootDocument>
   );
 }
@@ -173,26 +176,44 @@ function ConvexProviderWrapper({
 
   if (!convex) {
     return (
-      <div className="convex-error">
-        <h2>Convex Configuration Required</h2>
-        <p>
-          Please provide a Convex deployment URL to connect to your backend.
-        </p>
-        <p>Options:</p>
-        <ul>
-          <li>
-            Run with URL: <code>npx convex-cms admin --url YOUR_URL</code>
-          </li>
-          <li>
-            Set environment variable: <code>CONVEX_URL=YOUR_URL</code>
-          </li>
-          <li>
-            Add to <code>.env.local</code>: <code>CONVEX_URL=YOUR_URL</code>
-          </li>
-        </ul>
-        <p>
-          Run <code>npx convex dev</code> to start Convex and get your URL.
-        </p>
+      <div className="flex min-h-screen items-center justify-center bg-background p-6">
+        <div className="max-w-lg space-y-4 rounded-lg border border-amber-200 bg-amber-50 p-6 text-center">
+          <h2 className="text-xl font-semibold text-amber-900">
+            Convex Configuration Required
+          </h2>
+          <p className="text-sm text-amber-800">
+            Please provide a Convex deployment URL to connect to your backend.
+          </p>
+          <div className="space-y-2 text-left text-sm text-amber-700">
+            <p className="font-medium">Options:</p>
+            <ul className="list-inside list-disc space-y-1">
+              <li>
+                Run with URL:{" "}
+                <code className="rounded bg-amber-100 px-1">
+                  npx convex-cms admin --url YOUR_URL
+                </code>
+              </li>
+              <li>
+                Set environment variable:{" "}
+                <code className="rounded bg-amber-100 px-1">
+                  CONVEX_URL=YOUR_URL
+                </code>
+              </li>
+              <li>
+                Add to{" "}
+                <code className="rounded bg-amber-100 px-1">.env.local</code>:{" "}
+                <code className="rounded bg-amber-100 px-1">
+                  CONVEX_URL=YOUR_URL
+                </code>
+              </li>
+            </ul>
+          </div>
+          <p className="text-sm text-amber-700">
+            Run{" "}
+            <code className="rounded bg-amber-100 px-1">npx convex dev</code> to
+            start Convex and get your URL.
+          </p>
+        </div>
       </div>
     );
   }

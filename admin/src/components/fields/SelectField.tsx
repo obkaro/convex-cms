@@ -1,19 +1,19 @@
-import { FieldWrapper } from './FieldWrapper';
-import type { BaseFieldProps } from './types';
+import { useId } from 'react'
+import { FieldWrapper } from './FieldWrapper'
+import type { BaseFieldProps } from './types'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '~/components/ui/select'
+import { cn } from '~/lib/cn'
 
-/**
- * Props for the SelectField component.
- */
 export interface SelectFieldProps extends BaseFieldProps<string> {
-  /** Placeholder text for the select */
-  placeholder?: string;
+  placeholder?: string
 }
 
-/**
- * SelectField renders a dropdown select for choosing a single option.
- *
- * The available options are defined in the field's options.options array.
- */
 export function SelectField({
   field,
   value,
@@ -25,35 +25,38 @@ export function SelectField({
   id,
   placeholder = 'Select an option...',
 }: SelectFieldProps) {
-  const fieldId = id || `field-${field.name}`;
-  const options = field.options?.options ?? [];
+  const generatedId = useId()
+  const fieldId = id ?? `field-${field.name}-${generatedId}`
+  const options = field.options?.options ?? []
 
-  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    onChange(e.target.value);
-  };
+  const handleChange = (newValue: string) => {
+    onChange(newValue)
+  }
 
   return (
     <FieldWrapper field={field} error={error} className={className} id={fieldId}>
-      <select
-        id={fieldId}
-        name={field.name}
+      <Select
         value={value ?? ''}
-        onChange={handleChange}
+        onValueChange={handleChange}
         disabled={disabled || readOnly}
         required={field.required}
-        aria-invalid={!!error}
-        aria-describedby={error ? `${fieldId}-error` : undefined}
-        className={`field-select ${error ? 'field-select--error' : ''}`}
       >
-        <option value="" disabled={field.required}>
-          {placeholder}
-        </option>
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
+        <SelectTrigger
+          id={fieldId}
+          className={cn(error && 'border-destructive focus:ring-destructive')}
+          aria-invalid={!!error}
+          aria-describedby={error ? `${fieldId}-error` : undefined}
+        >
+          <SelectValue placeholder={placeholder} />
+        </SelectTrigger>
+        <SelectContent>
+          {options.map((option) => (
+            <SelectItem key={option.value} value={option.value}>
+              {option.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </FieldWrapper>
-  );
+  )
 }

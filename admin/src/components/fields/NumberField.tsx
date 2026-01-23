@@ -1,15 +1,9 @@
-import { useId, ChangeEvent } from 'react';
-import { FieldWrapper } from './FieldWrapper';
-import type { NumberFieldProps } from './types';
+import { useId, type ChangeEvent } from 'react'
+import { FieldWrapper } from './FieldWrapper'
+import type { NumberFieldProps } from './types'
+import { Input } from '~/components/ui/input'
+import { cn } from '~/lib/cn'
 
-/**
- * NumberField renders a numeric input.
- *
- * Supports:
- * - Min/max validation
- * - Step increments
- * - Precision (decimal places, 0 for integer)
- */
 export function NumberField({
   field,
   value,
@@ -21,42 +15,36 @@ export function NumberField({
   id: providedId,
   placeholder,
 }: NumberFieldProps) {
-  const generatedId = useId();
-  const id = providedId ?? `field-${field.name}-${generatedId}`;
+  const generatedId = useId()
+  const id = providedId ?? `field-${field.name}-${generatedId}`
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const inputValue = e.target.value;
+    const inputValue = e.target.value
 
-    // Handle empty input
     if (inputValue === '') {
-      onChange(null);
-      return;
+      onChange(null)
+      return
     }
 
-    // Parse the number
-    const numValue = parseFloat(inputValue);
+    const numValue = parseFloat(inputValue)
 
     if (!isNaN(numValue)) {
-      // Apply precision if specified
-      const { precision } = field.options ?? {};
+      const { precision } = field.options ?? {}
       if (precision !== undefined && precision >= 0) {
-        const factor = Math.pow(10, precision);
-        onChange(Math.round(numValue * factor) / factor);
+        const factor = Math.pow(10, precision)
+        onChange(Math.round(numValue * factor) / factor)
       } else {
-        onChange(numValue);
+        onChange(numValue)
       }
     }
-  };
+  }
 
-  // Extract options for validation attributes
-  const { min, max, step, precision } = field.options ?? {};
-
-  // Calculate step from precision if not explicitly set
-  const computedStep = step ?? (precision !== undefined ? Math.pow(10, -precision) : 'any');
+  const { min, max, step, precision } = field.options ?? {}
+  const computedStep = step ?? (precision !== undefined ? Math.pow(10, -precision) : 'any')
 
   return (
     <FieldWrapper field={field} error={error} className={className} id={id}>
-      <input
+      <Input
         type="number"
         id={id}
         name={field.name}
@@ -69,12 +57,14 @@ export function NumberField({
         max={max}
         step={computedStep}
         placeholder={placeholder}
-        className={`field-input field-input--number ${error ? 'field-input--error' : ''}`}
+        className={cn(error && 'border-destructive focus-visible:ring-destructive')}
         aria-invalid={!!error}
-        aria-describedby={error ? `${id}-error` : field.description ? `${id}-description` : undefined}
+        aria-describedby={
+          error ? `${id}-error` : field.description ? `${id}-description` : undefined
+        }
       />
       {(min !== undefined || max !== undefined) && (
-        <span className="field-range-hint">
+        <span className="mt-1 block text-xs text-muted-foreground">
           {min !== undefined && max !== undefined
             ? `Range: ${min} - ${max}`
             : min !== undefined
@@ -83,5 +73,5 @@ export function NumberField({
         </span>
       )}
     </FieldWrapper>
-  );
+  )
 }

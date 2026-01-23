@@ -1,12 +1,19 @@
 import { useState, useRef, useCallback } from 'react'
-import { useMediaUploadQueue, type UploadQueueFile, type UploadQueueFileStatus } from '@convex-cms/core/react'
+import {
+  useMediaUploadQueue,
+  type UploadQueueFile,
+  type UploadQueueFileStatus,
+} from '@convex-cms/core/react'
 import type { FunctionReference } from 'convex/server'
+import { CmsButton } from '~/components/cmsds/CmsButton'
+import { cn } from '~/lib/cn'
+import { Upload, Check, X, RefreshCw, AlertCircle } from 'lucide-react'
 
 export interface UploadDropzoneProps {
   onUploadComplete: (files: UploadedFile[]) => void
   currentFolderId?: string
-  generateUploadUrl: FunctionReference<"mutation">
-  createAsset: FunctionReference<"mutation">
+  generateUploadUrl: FunctionReference<'mutation'>
+  createAsset: FunctionReference<'mutation'>
   maxFileSize?: number
   allowedMimeTypes?: string[]
   maxConcurrentUploads?: number
@@ -31,7 +38,7 @@ function formatFileSize(bytes: number): string {
 
 function isMimeTypeAllowed(mimeType: string, allowedTypes: string[]): boolean {
   if (allowedTypes.length === 0) return true
-  return allowedTypes.some(allowed => {
+  return allowedTypes.some((allowed) => {
     if (allowed.endsWith('/*')) {
       const category = allowed.slice(0, -2)
       return mimeType.startsWith(category + '/')
@@ -60,7 +67,7 @@ export function UploadDropzone({
     maxConcurrent: maxConcurrentUploads,
     metadata: currentFolderId ? { parentId: currentFolderId } : undefined,
     onComplete: (results) => {
-      const uploadedFiles: UploadedFile[] = results.map(f => ({
+      const uploadedFiles: UploadedFile[] = results.map((f) => ({
         filename: f.file.name,
         storageId: f.result ? String((f.result as { _id?: string })._id || '') : '',
         success: f.status === 'complete',
@@ -73,35 +80,41 @@ export function UploadDropzone({
     },
   })
 
-  const validateFile = useCallback((file: File): string | null => {
-    if (maxFileSize && file.size > maxFileSize) {
-      return `File exceeds maximum size of ${formatFileSize(maxFileSize)}`
-    }
-    if (allowedMimeTypes.length > 0 && !isMimeTypeAllowed(file.type, allowedMimeTypes)) {
-      return `File type ${file.type || 'unknown'} is not allowed`
-    }
-    return null
-  }, [maxFileSize, allowedMimeTypes])
-
-  const addFiles = useCallback((files: FileList | File[]) => {
-    const fileArray = Array.from(files)
-    const errors = new Map<string, string>()
-    const validFiles: File[] = []
-
-    for (const file of fileArray) {
-      const error = validateFile(file)
-      if (error) {
-        errors.set(file.name, error)
-      } else {
-        validFiles.push(file)
+  const validateFile = useCallback(
+    (file: File): string | null => {
+      if (maxFileSize && file.size > maxFileSize) {
+        return `File exceeds maximum size of ${formatFileSize(maxFileSize)}`
       }
-    }
+      if (allowedMimeTypes.length > 0 && !isMimeTypeAllowed(file.type, allowedMimeTypes)) {
+        return `File type ${file.type || 'unknown'} is not allowed`
+      }
+      return null
+    },
+    [maxFileSize, allowedMimeTypes]
+  )
 
-    setValidationErrors(errors)
-    if (validFiles.length > 0) {
-      queue.addFiles(validFiles)
-    }
-  }, [validateFile, queue])
+  const addFiles = useCallback(
+    (files: FileList | File[]) => {
+      const fileArray = Array.from(files)
+      const errors = new Map<string, string>()
+      const validFiles: File[] = []
+
+      for (const file of fileArray) {
+        const error = validateFile(file)
+        if (error) {
+          errors.set(file.name, error)
+        } else {
+          validFiles.push(file)
+        }
+      }
+
+      setValidationErrors(errors)
+      if (validFiles.length > 0) {
+        queue.addFiles(validFiles)
+      }
+    },
+    [validateFile, queue]
+  )
 
   const handleDragEnter = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -120,246 +133,236 @@ export function UploadDropzone({
     e.stopPropagation()
   }, [])
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setIsDragActive(false)
-    if (e.dataTransfer.files?.length) {
-      addFiles(e.dataTransfer.files)
-    }
-  }, [addFiles])
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault()
+      e.stopPropagation()
+      setIsDragActive(false)
+      if (e.dataTransfer.files?.length) {
+        addFiles(e.dataTransfer.files)
+      }
+    },
+    [addFiles]
+  )
 
-  const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files?.length) {
-      addFiles(e.target.files)
-      e.target.value = ''
-    }
-  }, [addFiles])
+  const handleFileChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.files?.length) {
+        addFiles(e.target.files)
+        e.target.value = ''
+      }
+    },
+    [addFiles]
+  )
 
   const getStatusIcon = (status: UploadQueueFileStatus) => {
     switch (status) {
       case 'complete':
-        return (
-          <svg className="upload-status-icon upload-status-icon--success" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <polyline points="20 6 9 17 4 12" />
-          </svg>
-        )
+        return <Check className="size-4 text-emerald-500" />
       case 'error':
       case 'cancelled':
-        return (
-          <svg className="upload-status-icon upload-status-icon--error" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
-        )
+        return <X className="size-4 text-red-500" />
       case 'uploading':
         return (
-          <div className="upload-status-icon upload-status-icon--loading">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M21 12a9 9 0 11-6.219-8.56" />
-            </svg>
-          </div>
+          <div className="size-4 animate-spin rounded-full border-2 border-muted border-t-primary" />
         )
       default:
-        return (
-          <svg className="upload-status-icon upload-status-icon--pending" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="12" cy="12" r="10" />
-          </svg>
-        )
+        return <div className="size-4 rounded-full border-2 border-muted" />
     }
   }
 
-  const completedCount = queue.files.filter(f => f.status === 'complete').length
-  const errorCount = queue.files.filter(f => f.status === 'error' || f.status === 'cancelled').length
+  const completedCount = queue.files.filter((f) => f.status === 'complete').length
+  const errorCount = queue.files.filter(
+    (f) => f.status === 'error' || f.status === 'cancelled'
+  ).length
   const hasCompletedOrFailed = completedCount > 0 || errorCount > 0
 
   return (
-    <div className="upload-dropzone-container">
-      {/* Validation Errors */}
+    <div className="space-y-4">
       {validationErrors.size > 0 && (
-        <div className="upload-validation-errors">
-          {Array.from(validationErrors.entries()).map(([filename, error]) => (
-            <div key={filename} className="upload-validation-error">
-              <strong>{filename}:</strong> {error}
+        <div className="rounded-md border border-destructive/50 bg-destructive/10 p-3">
+          <div className="flex items-start gap-2">
+            <AlertCircle className="mt-0.5 size-4 shrink-0 text-destructive" />
+            <div className="flex-1 space-y-1">
+              {Array.from(validationErrors.entries()).map(([filename, error]) => (
+                <p key={filename} className="text-sm text-destructive">
+                  <span className="font-medium">{filename}:</span> {error}
+                </p>
+              ))}
             </div>
-          ))}
-          <button
-            type="button"
-            className="btn btn-secondary btn-small"
+          </div>
+          <CmsButton
+            variant="ghost"
+            size="sm"
+            className="mt-2"
             onClick={() => setValidationErrors(new Map())}
           >
             Dismiss
-          </button>
+          </CmsButton>
         </div>
       )}
 
-      {/* Dropzone Area */}
       {!queue.isUploading && queue.files.length === 0 && (
         <div
-          className={`upload-dropzone-area ${isDragActive ? 'upload-dropzone-area--active' : ''}`}
+          className={cn(
+            'flex cursor-pointer flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed p-8 text-center transition-colors',
+            isDragActive
+              ? 'border-primary bg-primary/5'
+              : 'border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/50'
+          )}
           onClick={() => fileInputRef.current?.click()}
           onDragEnter={handleDragEnter}
           onDragLeave={handleDragLeave}
           onDragOver={handleDragOver}
           onDrop={handleDrop}
         >
-          <div className="upload-dropzone-icon">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="17 8 12 3 7 8" />
-              <line x1="12" y1="3" x2="12" y2="15" />
-            </svg>
+          <div className="flex size-12 items-center justify-center rounded-full bg-muted">
+            <Upload className="size-6 text-muted-foreground" />
           </div>
-          <p className="upload-dropzone-text">
-            {isDragActive ? 'Drop files here' : 'Drag and drop files here'}
-          </p>
-          <span className="upload-dropzone-hint">or click to browse</span>
-          <span className="upload-dropzone-info">
+          <div>
+            <p className="text-sm font-medium text-foreground">
+              {isDragActive ? 'Drop files here' : 'Drag and drop files here'}
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">or click to browse</p>
+          </div>
+          <p className="text-xs text-muted-foreground">
             Supports images, videos, documents, and more
             {maxFileSize && ` (max ${formatFileSize(maxFileSize)} per file)`}
-          </span>
+          </p>
         </div>
       )}
 
-      {/* File Queue */}
       {queue.files.length > 0 && (
-        <div className="upload-queue">
-          {/* Queue Header */}
-          <div className="upload-queue-header">
-            <div className="upload-queue-summary">
-              <span className="upload-queue-count">
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm">
+              <span className="font-medium">
                 {queue.files.length} file{queue.files.length !== 1 ? 's' : ''}
               </span>
               {queue.isUploading && (
-                <span className="upload-queue-progress">
+                <span className="text-muted-foreground">
                   {queue.overallProgress}% complete
                 </span>
               )}
               {!queue.isUploading && hasCompletedOrFailed && (
-                <span className="upload-queue-stats">
-                  {completedCount > 0 && <span className="upload-stat upload-stat--success">{completedCount} completed</span>}
-                  {errorCount > 0 && <span className="upload-stat upload-stat--error">{errorCount} failed</span>}
-                </span>
+                <div className="flex items-center gap-2">
+                  {completedCount > 0 && (
+                    <span className="text-emerald-600">{completedCount} completed</span>
+                  )}
+                  {errorCount > 0 && (
+                    <span className="text-red-500">{errorCount} failed</span>
+                  )}
+                </div>
               )}
             </div>
-            <div className="upload-queue-actions">
+            <div className="flex items-center gap-2">
               {!queue.isUploading && (
-                <button
-                  type="button"
-                  className="btn btn-secondary btn-small"
+                <CmsButton
+                  variant="outline"
+                  size="sm"
                   onClick={() => fileInputRef.current?.click()}
                 >
                   Add More
-                </button>
+                </CmsButton>
               )}
               {queue.isUploading && (
-                <button
-                  type="button"
-                  className="btn btn-secondary btn-small"
-                  onClick={queue.cancelAll}
-                >
+                <CmsButton variant="outline" size="sm" onClick={queue.cancelAll}>
                   Cancel All
-                </button>
+                </CmsButton>
               )}
               {hasCompletedOrFailed && !queue.isUploading && (
-                <button
-                  type="button"
-                  className="btn btn-secondary btn-small"
-                  onClick={queue.clearCompleted}
-                >
+                <CmsButton variant="ghost" size="sm" onClick={queue.clearCompleted}>
                   Clear Done
-                </button>
+                </CmsButton>
               )}
             </div>
           </div>
 
-          {/* Overall Progress Bar */}
           {queue.isUploading && (
-            <div className="upload-overall-progress">
+            <div className="h-1.5 overflow-hidden rounded-full bg-muted">
               <div
-                className="upload-overall-progress-bar"
+                className="h-full bg-primary transition-all duration-300"
                 style={{ width: `${queue.overallProgress}%` }}
               />
             </div>
           )}
 
-          {/* File List */}
-          <div className="upload-file-list">
+          <div className="space-y-2">
             {queue.files.map((uploadFile: UploadQueueFile) => (
               <div
                 key={uploadFile.id}
-                className={`upload-file-item upload-file-item--${uploadFile.status}`}
+                className={cn(
+                  'flex items-center gap-3 rounded-lg border bg-card p-3',
+                  uploadFile.status === 'error' && 'border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/20',
+                  uploadFile.status === 'complete' && 'border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/20'
+                )}
               >
-                <div className="upload-file-icon">
-                  {getStatusIcon(uploadFile.status)}
-                </div>
+                <div className="shrink-0">{getStatusIcon(uploadFile.status)}</div>
 
-                <div className="upload-file-info">
-                  <span className="upload-file-name" title={uploadFile.file.name}>
+                <div className="min-w-0 flex-1">
+                  <p
+                    className="truncate text-sm font-medium"
+                    title={uploadFile.file.name}
+                  >
                     {uploadFile.file.name}
-                  </span>
-                  <span className="upload-file-size">
-                    {formatFileSize(uploadFile.file.size)}
-                  </span>
-                  {uploadFile.error && (
-                    <span className="upload-file-error">{uploadFile.error}</span>
-                  )}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">
+                      {formatFileSize(uploadFile.file.size)}
+                    </span>
+                    {uploadFile.error && (
+                      <span className="text-xs text-red-500">{uploadFile.error}</span>
+                    )}
+                  </div>
                 </div>
 
-                {/* Progress Bar */}
                 {uploadFile.status === 'uploading' && (
-                  <div className="upload-file-progress">
-                    <div
-                      className="upload-file-progress-bar"
-                      style={{ width: `${uploadFile.progress}%` }}
-                    />
-                    <span className="upload-file-progress-text">
+                  <div className="flex w-20 items-center gap-2">
+                    <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
+                      <div
+                        className="h-full bg-primary transition-all"
+                        style={{ width: `${uploadFile.progress}%` }}
+                      />
+                    </div>
+                    <span className="text-xs text-muted-foreground">
                       {uploadFile.progress}%
                     </span>
                   </div>
                 )}
 
-                {/* Actions */}
-                <div className="upload-file-actions">
+                <div className="shrink-0">
                   {uploadFile.status === 'pending' && !queue.isUploading && (
-                    <button
-                      type="button"
-                      className="upload-file-action"
+                    <CmsButton
+                      variant="ghost"
+                      size="icon-sm"
                       onClick={() => queue.cancelFile(uploadFile.id)}
                       title="Remove"
                     >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <line x1="18" y1="6" x2="6" y2="18" />
-                        <line x1="6" y1="6" x2="18" y2="18" />
-                      </svg>
-                    </button>
+                      <X className="size-4" />
+                    </CmsButton>
                   )}
-                  {(uploadFile.status === 'uploading' || uploadFile.status === 'pending') && queue.isUploading && (
-                    <button
-                      type="button"
-                      className="upload-file-action"
-                      onClick={() => queue.cancelFile(uploadFile.id)}
-                      title="Cancel"
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <line x1="18" y1="6" x2="6" y2="18" />
-                        <line x1="6" y1="6" x2="18" y2="18" />
-                      </svg>
-                    </button>
-                  )}
-                  {(uploadFile.status === 'error' || uploadFile.status === 'cancelled') && !queue.isUploading && (
-                    <button
-                      type="button"
-                      className="upload-file-action upload-file-action--retry"
-                      onClick={() => queue.retryFile(uploadFile.id)}
-                      title="Retry"
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <polyline points="1 4 1 10 7 10" />
-                        <path d="M3.51 15a9 9 0 102.13-9.36L1 10" />
-                      </svg>
-                    </button>
-                  )}
+                  {(uploadFile.status === 'uploading' || uploadFile.status === 'pending') &&
+                    queue.isUploading && (
+                      <CmsButton
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={() => queue.cancelFile(uploadFile.id)}
+                        title="Cancel"
+                      >
+                        <X className="size-4" />
+                      </CmsButton>
+                    )}
+                  {(uploadFile.status === 'error' || uploadFile.status === 'cancelled') &&
+                    !queue.isUploading && (
+                      <CmsButton
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={() => queue.retryFile(uploadFile.id)}
+                        title="Retry"
+                      >
+                        <RefreshCw className="size-4" />
+                      </CmsButton>
+                    )}
                 </div>
               </div>
             ))}
@@ -367,13 +370,12 @@ export function UploadDropzone({
         </div>
       )}
 
-      {/* Hidden File Input */}
       <input
         ref={fileInputRef}
         type="file"
         multiple
         onChange={handleFileChange}
-        style={{ display: 'none' }}
+        className="hidden"
         accept={allowedMimeTypes.length > 0 ? allowedMimeTypes.join(',') : undefined}
       />
     </div>

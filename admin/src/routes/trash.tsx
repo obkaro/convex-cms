@@ -1,109 +1,131 @@
-import { useState, useCallback } from 'react';
-import { createFileRoute } from '@tanstack/react-router';
-import { useQuery, useMutation } from 'convex/react';
-import { api } from '../../convex/_generated/api';
+import { useState, useCallback } from 'react'
+import { createFileRoute } from '@tanstack/react-router'
+import { useQuery, useMutation } from 'convex/react'
+import { api } from '../../convex/_generated/api'
+import { CmsPageHeader } from '~/components/cmsds/CmsPageHeader'
+import { CmsToolbar } from '~/components/cmsds/CmsToolbar'
+import { CmsEmptyState } from '~/components/cmsds/CmsEmptyState'
+import { CmsSurface } from '~/components/cmsds/CmsSurface'
+import { CmsButton } from '~/components/cmsds/CmsButton'
+import { CmsConfirmDialog } from '~/components/cmsds/CmsDialog'
+import { Input } from '~/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '~/components/ui/select'
+import { Checkbox } from '~/components/ui/checkbox'
+import { Badge } from '~/components/ui/badge'
+import { Alert, AlertDescription } from '~/components/ui/alert'
+import { cn } from '~/lib/cn'
+import { Search, Trash2, RotateCcw, AlertTriangle, X } from 'lucide-react'
 
 export const Route = createFileRoute('/trash')({
   component: TrashPage,
-});
+})
 
 interface TrashItem {
-  _id: string;
-  contentTypeId?: string;
-  contentTypeName?: string;
-  slug?: string;
-  name?: string;
-  title?: string;
-  status?: string;
-  deletedAt: number;
-  deletedBy?: string;
-  data?: Record<string, unknown>;
+  _id: string
+  contentTypeId?: string
+  contentTypeName?: string
+  slug?: string
+  name?: string
+  title?: string
+  status?: string
+  deletedAt: number
+  deletedBy?: string
+  data?: Record<string, unknown>
 }
 
 function TrashPage() {
-  const [selectedContentType, setSelectedContentType] = useState<string>('');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
-  const [restoreError, setRestoreError] = useState<string | null>(null);
-  const [isRestoring, setIsRestoring] = useState(false);
-  const [showEmptyConfirm, setShowEmptyConfirm] = useState(false);
-  const [isEmptying, setIsEmptying] = useState(false);
-  const [emptyError, setEmptyError] = useState<string | null>(null);
+  const [selectedContentType, setSelectedContentType] = useState<string>('')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set())
+  const [restoreError, setRestoreError] = useState<string | null>(null)
+  const [isRestoring, setIsRestoring] = useState(false)
+  const [showEmptyConfirm, setShowEmptyConfirm] = useState(false)
+  const [isEmptying, setIsEmptying] = useState(false)
+  const [emptyError, setEmptyError] = useState<string | null>(null)
 
   const trashQuery = useQuery(api.trash.list, {
     contentTypeId: selectedContentType || undefined,
     search: searchQuery || undefined,
     paginationOpts: { numItems: 50, cursor: null },
-  });
+  })
 
-  const configQuery = useQuery(api.trash.getConfig, {});
-  const statsQuery = useQuery(api.trash.getStats, {});
-  const contentTypesQuery = useQuery(api.contentTypes.list, {});
+  const configQuery = useQuery(api.trash.getConfig, {})
+  const statsQuery = useQuery(api.trash.getStats, {})
+  const contentTypesQuery = useQuery(api.contentTypes.list, {})
 
-  const contentTypes = contentTypesQuery?.page ?? [];
+  const contentTypes = contentTypesQuery?.page ?? []
 
-  const restoreMutation = useMutation(api.bulkOperations.bulkRestore);
-  const emptyMutation = useMutation(api.trash.empty);
+  const restoreMutation = useMutation(api.bulkOperations.bulkRestore)
+  const emptyMutation = useMutation(api.trash.empty)
 
-  const trashItems = (trashQuery?.page ?? []) as TrashItem[];
-  const isLoading = trashQuery === undefined;
-  const config = configQuery;
-  const stats = statsQuery;
+  const trashItems = (trashQuery?.page ?? []) as TrashItem[]
+  const isLoading = trashQuery === undefined
+  const config = configQuery
+  const stats = statsQuery
 
   const handleSelectItem = useCallback((itemId: string, selected: boolean) => {
     setSelectedItems((prev) => {
-      const next = new Set(prev);
+      const next = new Set(prev)
       if (selected) {
-        next.add(itemId);
+        next.add(itemId)
       } else {
-        next.delete(itemId);
+        next.delete(itemId)
       }
-      return next;
-    });
-  }, []);
+      return next
+    })
+  }, [])
 
   const handleSelectAll = useCallback(() => {
     if (selectedItems.size === trashItems.length) {
-      setSelectedItems(new Set());
+      setSelectedItems(new Set())
     } else {
-      setSelectedItems(new Set(trashItems.map((item) => item._id)));
+      setSelectedItems(new Set(trashItems.map((item) => item._id)))
     }
-  }, [selectedItems.size, trashItems]);
+  }, [selectedItems.size, trashItems])
 
-  const handleRestore = useCallback(async (ids: string[]) => {
-    setIsRestoring(true);
-    setRestoreError(null);
+  const handleRestore = useCallback(
+    async (ids: string[]) => {
+      setIsRestoring(true)
+      setRestoreError(null)
 
-    try {
-      await restoreMutation({ ids });
-      setSelectedItems((prev) => {
-        const next = new Set(prev);
-        ids.forEach((id) => next.delete(id));
-        return next;
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to restore';
-      setRestoreError(message);
-    } finally {
-      setIsRestoring(false);
-    }
-  }, [restoreMutation]);
+      try {
+        await restoreMutation({ ids })
+        setSelectedItems((prev) => {
+          const next = new Set(prev)
+          ids.forEach((id) => next.delete(id))
+          return next
+        })
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Failed to restore'
+        setRestoreError(message)
+      } finally {
+        setIsRestoring(false)
+      }
+    },
+    [restoreMutation]
+  )
 
   const handleEmptyTrash = useCallback(async () => {
-    setIsEmptying(true);
-    setEmptyError(null);
+    setIsEmptying(true)
+    setEmptyError(null)
 
     try {
-      await emptyMutation({});
-      setShowEmptyConfirm(false);
-      setSelectedItems(new Set());
+      await emptyMutation({})
+      setShowEmptyConfirm(false)
+      setSelectedItems(new Set())
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to empty trash';
-      setEmptyError(message);
+      const message = error instanceof Error ? error.message : 'Failed to empty trash'
+      setEmptyError(message)
     } finally {
-      setIsEmptying(false);
+      setIsEmptying(false)
     }
-  }, [emptyMutation]);
+  }, [emptyMutation])
 
   const formatDate = (timestamp: number) => {
     return new Date(timestamp).toLocaleString(undefined, {
@@ -112,263 +134,267 @@ function TrashPage() {
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
-    });
-  };
+    })
+  }
 
   const getDaysUntilDeletion = (deletedAt: number) => {
-    if (!config?.retentionDays) return null;
-    const expiresAt = deletedAt + config.retentionDays * 24 * 60 * 60 * 1000;
-    const daysLeft = Math.ceil((expiresAt - Date.now()) / (24 * 60 * 60 * 1000));
-    return Math.max(0, daysLeft);
-  };
+    if (!config?.retentionDays) return null
+    const expiresAt = deletedAt + config.retentionDays * 24 * 60 * 60 * 1000
+    const daysLeft = Math.ceil((expiresAt - Date.now()) / (24 * 60 * 60 * 1000))
+    return Math.max(0, daysLeft)
+  }
 
   const getItemTitle = (item: TrashItem) => {
-    if (item.title) return item.title;
-    if (item.name) return item.name;
+    if (item.title) return item.title
+    if (item.name) return item.name
     if (item.data) {
-      const titleField = item.data.title || item.data.name;
-      if (titleField && typeof titleField === 'string') return titleField;
+      const titleField = item.data.title || item.data.name
+      if (titleField && typeof titleField === 'string') return titleField
     }
-    return item.slug || item._id;
-  };
+    return item.slug || item._id
+  }
 
   return (
-    <div className="trash-page">
-      <div className="trash-header">
-        <div className="trash-title">
-          <h1>Trash</h1>
-          <p className="trash-subtitle">
-            Deleted items are kept for{' '}
-            {config?.retentionDays ?? 30} days before permanent deletion
-          </p>
-        </div>
+    <div className="space-y-6 p-6">
+      <div className="flex items-start justify-between">
+        <CmsPageHeader
+          title="Trash"
+          description={`Deleted items are kept for ${config?.retentionDays ?? 30} days before permanent deletion`}
+        />
         {trashItems.length > 0 && (
-          <button
-            type="button"
-            className="btn btn-danger"
-            onClick={() => setShowEmptyConfirm(true)}
-          >
+          <CmsButton variant="danger" onClick={() => setShowEmptyConfirm(true)}>
+            <Trash2 className="size-4" />
             Empty Trash
-          </button>
+          </CmsButton>
         )}
       </div>
 
       {stats && (
-        <div className="trash-stats">
-          <div className="trash-stat">
-            <span className="trash-stat-value">{stats.totalCount ?? 0}</span>
-            <span className="trash-stat-label">Items in Trash</span>
-          </div>
-          <div className="trash-stat">
-            <span className="trash-stat-value">{stats.expiredCount ?? 0}</span>
-            <span className="trash-stat-label">Expired</span>
-          </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <CmsSurface elevation="base" className="p-4">
+            <p className="text-2xl font-semibold text-foreground">
+              {stats.totalCount ?? 0}
+            </p>
+            <p className="text-sm text-muted-foreground">Items in Trash</p>
+          </CmsSurface>
+          <CmsSurface elevation="base" className="p-4">
+            <p className="text-2xl font-semibold text-foreground">
+              {stats.expiredCount ?? 0}
+            </p>
+            <p className="text-sm text-muted-foreground">Expired</p>
+          </CmsSurface>
         </div>
       )}
 
-      <div className="trash-filters">
-        <div className="filter-group">
-          <input
-            type="text"
-            placeholder="Search deleted items..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="trash-search"
-          />
-          <select
-            value={selectedContentType}
-            onChange={(e) => setSelectedContentType(e.target.value)}
-            className="trash-content-type-filter"
-          >
-            <option value="">All Content Types</option>
-            {contentTypes.map((type) => (
-              <option key={type._id} value={type._id}>
-                {type.displayName}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
+      <CmsToolbar
+        left={
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Search deleted items..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-64 pl-9"
+              />
+            </div>
+            <Select value={selectedContentType} onValueChange={setSelectedContentType}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="All Content Types" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">All Content Types</SelectItem>
+                {contentTypes.map((type) => (
+                  <SelectItem key={type._id} value={type._id}>
+                    {type.displayName}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        }
+      />
 
       {restoreError && (
-        <div className="trash-error" role="alert">
-          {restoreError}
-          <button type="button" onClick={() => setRestoreError(null)}>
-            &times;
-          </button>
-        </div>
+        <Alert variant="destructive">
+          <AlertTriangle className="size-4" />
+          <AlertDescription className="flex items-center justify-between">
+            {restoreError}
+            <CmsButton
+              variant="ghost"
+              size="icon-sm"
+              onClick={() => setRestoreError(null)}
+            >
+              <X className="size-4" />
+            </CmsButton>
+          </AlertDescription>
+        </Alert>
       )}
 
       {emptyError && (
-        <div className="trash-error" role="alert">
-          {emptyError}
-          <button type="button" onClick={() => setEmptyError(null)}>
-            &times;
-          </button>
-        </div>
+        <Alert variant="destructive">
+          <AlertTriangle className="size-4" />
+          <AlertDescription className="flex items-center justify-between">
+            {emptyError}
+            <CmsButton
+              variant="ghost"
+              size="icon-sm"
+              onClick={() => setEmptyError(null)}
+            >
+              <X className="size-4" />
+            </CmsButton>
+          </AlertDescription>
+        </Alert>
       )}
 
       {selectedItems.size > 0 && (
-        <div className="trash-bulk-bar">
-          <span>
-            {selectedItems.size} {selectedItems.size === 1 ? 'item' : 'items'}{' '}
-            selected
+        <div className="flex items-center gap-3 rounded-lg border border-primary/20 bg-primary/5 p-3">
+          <span className="text-sm font-medium">
+            {selectedItems.size} {selectedItems.size === 1 ? 'item' : 'items'} selected
           </span>
-          <button
-            type="button"
-            className="btn btn-sm btn-success"
+          <CmsButton
+            variant="primary"
+            size="sm"
             onClick={() => handleRestore(Array.from(selectedItems))}
-            disabled={isRestoring}
+            loading={isRestoring}
           >
-            {isRestoring ? 'Restoring...' : 'Restore Selected'}
-          </button>
-          <button
-            type="button"
-            className="btn btn-sm btn-secondary"
+            <RotateCcw className="size-4" />
+            Restore Selected
+          </CmsButton>
+          <CmsButton
+            variant="secondary"
+            size="sm"
             onClick={() => setSelectedItems(new Set())}
           >
             Clear Selection
-          </button>
+          </CmsButton>
         </div>
       )}
 
-      <div className="trash-content">
-        {isLoading ? (
-          <div className="trash-loading">Loading trash...</div>
-        ) : trashItems.length === 0 ? (
-          <div className="trash-empty">
-            <span className="trash-empty-icon">🗑️</span>
-            <p>Trash is empty</p>
-          </div>
-        ) : (
-          <table className="trash-table">
+      {isLoading ? (
+        <div className="flex flex-col items-center justify-center py-12">
+          <div className="size-8 animate-spin rounded-full border-2 border-muted border-t-primary" />
+          <p className="mt-4 text-sm text-muted-foreground">Loading trash...</p>
+        </div>
+      ) : trashItems.length === 0 ? (
+        <CmsEmptyState
+          icon={<Trash2 className="size-6" />}
+          title="Trash is empty"
+          description="Deleted items will appear here"
+        />
+      ) : (
+        <div className="rounded-lg border bg-card">
+          <table className="w-full">
             <thead>
-              <tr>
-                <th className="trash-col-checkbox">
-                  <input
-                    type="checkbox"
+              <tr className="border-b">
+                <th className="w-10 p-3 text-left">
+                  <Checkbox
                     checked={
-                      selectedItems.size === trashItems.length &&
-                      trashItems.length > 0
+                      selectedItems.size === trashItems.length && trashItems.length > 0
                     }
-                    onChange={handleSelectAll}
+                    onCheckedChange={handleSelectAll}
                   />
                 </th>
-                <th>Name</th>
-                <th>Type</th>
-                <th>Deleted</th>
-                <th>Expires In</th>
-                <th className="trash-col-actions">Actions</th>
+                <th className="p-3 text-left text-sm font-medium text-muted-foreground">
+                  Name
+                </th>
+                <th className="p-3 text-left text-sm font-medium text-muted-foreground">
+                  Type
+                </th>
+                <th className="p-3 text-left text-sm font-medium text-muted-foreground">
+                  Deleted
+                </th>
+                <th className="p-3 text-left text-sm font-medium text-muted-foreground">
+                  Expires In
+                </th>
+                <th className="p-3 text-left text-sm font-medium text-muted-foreground">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody>
               {trashItems.map((item) => {
-                const daysLeft = getDaysUntilDeletion(item.deletedAt);
+                const daysLeft = getDaysUntilDeletion(item.deletedAt)
 
                 return (
-                  <tr key={item._id}>
-                    <td className="trash-col-checkbox">
-                      <input
-                        type="checkbox"
+                  <tr
+                    key={item._id}
+                    className={cn(
+                      'border-b last:border-0 transition-colors hover:bg-muted/50',
+                      selectedItems.has(item._id) && 'bg-primary/5'
+                    )}
+                  >
+                    <td className="p-3">
+                      <Checkbox
                         checked={selectedItems.has(item._id)}
-                        onChange={(e) =>
-                          handleSelectItem(item._id, e.target.checked)
+                        onCheckedChange={(checked) =>
+                          handleSelectItem(item._id, checked as boolean)
                         }
                       />
                     </td>
-                    <td>
-                      <div className="trash-item-name">
-                        <span className="trash-item-title">
-                          {getItemTitle(item)}
-                        </span>
-                        {item.slug && (
-                          <span className="trash-item-slug">{item.slug}</span>
-                        )}
-                      </div>
-                    </td>
-                    <td>
-                      <span className="trash-item-type">
-                        {item.contentTypeName || 'Unknown'}
+                    <td className="p-3">
+                      <span className="font-medium text-foreground">
+                        {getItemTitle(item)}
                       </span>
+                      {item.slug && (
+                        <span className="block text-xs text-muted-foreground">
+                          {item.slug}
+                        </span>
+                      )}
                     </td>
-                    <td>
-                      <span className="trash-item-date">
+                    <td className="p-3 text-sm text-muted-foreground">
+                      {item.contentTypeName || 'Unknown'}
+                    </td>
+                    <td className="p-3">
+                      <span className="text-sm text-muted-foreground">
                         {formatDate(item.deletedAt)}
                       </span>
                       {item.deletedBy && (
-                        <span className="trash-item-by">
+                        <span className="block text-xs text-muted-foreground">
                           by {item.deletedBy}
                         </span>
                       )}
                     </td>
-                    <td>
+                    <td className="p-3">
                       {daysLeft !== null && (
-                        <span
-                          className={`trash-item-expires ${daysLeft <= 3 ? 'trash-item-expires--soon' : ''}`}
+                        <Badge
+                          variant={daysLeft <= 3 ? 'destructive' : 'secondary'}
+                          className="font-normal"
                         >
                           {daysLeft} {daysLeft === 1 ? 'day' : 'days'}
-                        </span>
+                        </Badge>
                       )}
                     </td>
-                    <td className="trash-col-actions">
-                      <button
-                        type="button"
-                        className="btn btn-sm btn-success"
+                    <td className="p-3">
+                      <CmsButton
+                        variant="outline"
+                        size="sm"
                         onClick={() => handleRestore([item._id])}
-                        disabled={isRestoring}
+                        loading={isRestoring}
                       >
+                        <RotateCcw className="size-4" />
                         Restore
-                      </button>
+                      </CmsButton>
                     </td>
                   </tr>
-                );
+                )
               })}
             </tbody>
           </table>
-        )}
-      </div>
-
-      {showEmptyConfirm && (
-        <div className="modal-overlay" onClick={() => setShowEmptyConfirm(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>Empty Trash</h3>
-              <button
-                type="button"
-                className="modal-close"
-                onClick={() => setShowEmptyConfirm(false)}
-                disabled={isEmptying}
-              >
-                &times;
-              </button>
-            </div>
-            <div className="modal-body">
-              <p>
-                <strong>Warning:</strong> This will permanently delete all items
-                in the trash. This action cannot be undone.
-              </p>
-            </div>
-            <div className="modal-footer">
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() => setShowEmptyConfirm(false)}
-                disabled={isEmptying}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="btn btn-danger"
-                onClick={handleEmptyTrash}
-                disabled={isEmptying}
-              >
-                {isEmptying ? 'Deleting...' : 'Empty Trash'}
-              </button>
-            </div>
-          </div>
         </div>
       )}
+
+      <CmsConfirmDialog
+        open={showEmptyConfirm}
+        onOpenChange={setShowEmptyConfirm}
+        title="Empty Trash"
+        description="This will permanently delete all items in the trash. This action cannot be undone."
+        confirmLabel={isEmptying ? 'Deleting...' : 'Empty Trash'}
+        onConfirm={handleEmptyTrash}
+        variant="danger"
+        loading={isEmptying}
+      />
     </div>
-  );
+  )
 }

@@ -1,6 +1,11 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { useQuery } from 'convex/react'
 import { api } from '../../convex/_generated/api'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card'
+import { Skeleton } from '~/components/ui/skeleton'
+import { CmsPageHeader } from '~/components/cmsds'
+import { FileText, Image, Layers, Settings, TrendingUp } from 'lucide-react'
+import { cn } from '~/lib/cn'
 
 export const Route = createFileRoute('/')({
   component: DashboardPage,
@@ -8,68 +13,67 @@ export const Route = createFileRoute('/')({
 
 function DashboardPage() {
   const stats = useQuery(api.stats.getDashboardStats)
-
-  // Determine loading and error states
   const isLoading = stats === undefined
   const hasError = stats === null
 
   return (
-    <div className="page dashboard-page">
-      <header className="page-header">
-        <h1>Dashboard</h1>
-        <p className="page-description">
-          Welcome to Convex CMS Admin. Manage your content, media, and publishing workflows.
-        </p>
-      </header>
+    <div className="space-y-8">
+      <CmsPageHeader
+        title="Dashboard"
+        description="Welcome to Convex CMS Admin. Manage your content, media, and publishing workflows."
+      />
 
-      <div className="dashboard-grid">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <DashboardCard
           title="Content Entries"
           description="Create and manage your content"
           href="/content"
-          icon="content"
+          icon={<FileText className="size-5" />}
         />
         <DashboardCard
           title="Media Library"
           description="Upload and organize media assets"
           href="/media"
-          icon="media"
+          icon={<Image className="size-5" />}
         />
         <DashboardCard
           title="Content Types"
           description="Define content schemas and fields"
           href="/content-types"
-          icon="types"
+          icon={<Layers className="size-5" />}
         />
         <DashboardCard
           title="Settings"
           description="Configure CMS settings"
           href="/settings"
-          icon="settings"
+          icon={<Settings className="size-5" />}
         />
       </div>
 
-      <section className="dashboard-section">
-        <h2>Quick Stats</h2>
-        <div className="stats-grid">
+      <section className="space-y-4">
+        <div className="flex items-center gap-2">
+          <TrendingUp className="size-5 text-muted-foreground" />
+          <h2 className="text-lg font-semibold">Quick Stats</h2>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard
             label="Content Types"
-            value={isLoading ? '...' : hasError ? '—' : String(stats.contentTypes)}
+            value={isLoading ? undefined : hasError ? '—' : String(stats.contentTypes)}
             isLoading={isLoading}
           />
           <StatCard
             label="Content Entries"
-            value={isLoading ? '...' : hasError ? '—' : String(stats.contentEntries)}
+            value={isLoading ? undefined : hasError ? '—' : String(stats.contentEntries)}
             isLoading={isLoading}
           />
           <StatCard
             label="Media Assets"
-            value={isLoading ? '...' : hasError ? '—' : String(stats.mediaAssets)}
+            value={isLoading ? undefined : hasError ? '—' : String(stats.mediaAssets)}
             isLoading={isLoading}
           />
           <StatCard
             label="Published"
-            value={isLoading ? '...' : hasError ? '—' : String(stats.published)}
+            value={isLoading ? undefined : hasError ? '—' : String(stats.published)}
             isLoading={isLoading}
           />
         </div>
@@ -87,14 +91,22 @@ function DashboardCard({
   title: string
   description: string
   href: string
-  icon: string
+  icon: React.ReactNode
 }) {
   return (
-    <a href={href} className="dashboard-card">
-      <div className={`card-icon icon-${icon}`} />
-      <h3>{title}</h3>
-      <p>{description}</p>
-    </a>
+    <Link to={href}>
+      <Card className="transition-colors hover:bg-accent/50">
+        <CardHeader className="pb-2">
+          <div className="mb-2 flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            {icon}
+          </div>
+          <CardTitle className="text-base">{title}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <CardDescription>{description}</CardDescription>
+        </CardContent>
+      </Card>
+    </Link>
   )
 }
 
@@ -104,13 +116,19 @@ function StatCard({
   isLoading = false,
 }: {
   label: string
-  value: string
+  value?: string
   isLoading?: boolean
 }) {
   return (
-    <div className={`stat-card${isLoading ? ' stat-card-loading' : ''}`}>
-      <span className="stat-value">{value}</span>
-      <span className="stat-label">{label}</span>
-    </div>
+    <Card>
+      <CardContent className="p-4">
+        {isLoading ? (
+          <Skeleton className="mb-1 h-8 w-16" />
+        ) : (
+          <div className="text-2xl font-bold">{value}</div>
+        )}
+        <div className="text-sm text-muted-foreground">{label}</div>
+      </CardContent>
+    </Card>
   )
 }

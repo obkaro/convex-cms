@@ -1,93 +1,74 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
-import { useMutation } from 'convex/react';
-import { api } from '../../convex/_generated/api';
-import { FieldRenderer } from './fields/FieldRenderer';
-import { VersionHistory } from './VersionHistory';
-import type { FieldDefinition, FieldError } from './fields/types';
-import { parseServerError, isRetryableError } from '~/utils';
+import { useState, useCallback, useEffect, useRef } from 'react'
+import { useMutation } from 'convex/react'
+import { api } from '../../convex/_generated/api'
+import { FieldRenderer } from './fields/FieldRenderer'
+import { VersionHistory } from './VersionHistory'
+import type { FieldDefinition, FieldError } from './fields/types'
+import { parseServerError, isRetryableError } from '~/utils'
+import { CmsButton } from '~/components/cmsds/CmsButton'
+import { CmsStatusBadge } from '~/components/cmsds/CmsStatusBadge'
+import { CmsDialog, CmsConfirmDialog } from '~/components/cmsds/CmsDialog'
+import { Badge } from '~/components/ui/badge'
+import { Input } from '~/components/ui/input'
+import {
+  CheckCircle,
+  AlertCircle,
+  Loader2,
+  RefreshCw,
+  History,
+  Clock,
+} from 'lucide-react'
+import { cn } from '~/lib/cn'
 
-/**
- * Format a timestamp as a datetime-local input value.
- */
 function formatDateTimeLocal(timestamp: number): string {
-  const date = new Date(timestamp);
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  return `${year}-${month}-${day}T${hours}:${minutes}`;
+  const date = new Date(timestamp)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+  return `${year}-${month}-${day}T${hours}:${minutes}`
 }
 
-/**
- * Parse a datetime-local input value to a timestamp.
- */
 function parseDateTimeLocal(value: string): number {
-  return new Date(value).getTime();
+  return new Date(value).getTime()
 }
 
-/**
- * Content type definition from the backend.
- */
 export interface ContentType {
-  _id: string;
-  name: string;
-  displayName: string;
-  description?: string;
-  fields: FieldDefinition[];
-  titleField?: string;
-  slugField?: string;
-  singleton?: boolean;
-  isActive: boolean;
+  _id: string
+  name: string
+  displayName: string
+  description?: string
+  fields: FieldDefinition[]
+  titleField?: string
+  slugField?: string
+  singleton?: boolean
+  isActive: boolean
 }
 
-/**
- * Content entry from the backend.
- */
 export interface ContentEntry {
-  _id: string;
-  contentTypeId: string;
-  slug: string;
-  status: 'draft' | 'published' | 'scheduled' | 'archived';
-  data: Record<string, unknown>;
-  version: number;
-  scheduledPublishAt?: number;
-  firstPublishedAt?: number;
-  lastPublishedAt?: number;
+  _id: string
+  contentTypeId: string
+  slug: string
+  status: 'draft' | 'published' | 'scheduled' | 'archived'
+  data: Record<string, unknown>
+  version: number
+  scheduledPublishAt?: number
+  firstPublishedAt?: number
+  lastPublishedAt?: number
 }
 
-/**
- * Props for the ContentEntryEditor component.
- */
 interface ContentEntryEditorProps {
-  /** The content type to create/edit entries for */
-  contentType: ContentType;
-  /** Optional existing entry to edit (undefined for new entries) */
-  entry?: ContentEntry;
-  /** Callback when the entry is saved successfully */
-  onSave?: (entry: ContentEntry) => void;
-  /** Callback when the user cancels editing */
-  onCancel?: () => void;
-  /** Callback when the entry is deleted successfully */
-  onDelete?: () => void;
-  /** Whether autosave is enabled (default: true) */
-  autosaveEnabled?: boolean;
-  /** Autosave interval in milliseconds (default: 30000 = 30 seconds) */
-  autosaveInterval?: number;
-  /** Whether the user can delete this entry */
-  canDelete?: boolean;
+  contentType: ContentType
+  entry?: ContentEntry
+  onSave?: (entry: ContentEntry) => void
+  onCancel?: () => void
+  onDelete?: () => void
+  autosaveEnabled?: boolean
+  autosaveInterval?: number
+  canDelete?: boolean
 }
 
-/**
- * ContentEntryEditor renders a dynamic form based on a content type schema.
- *
- * Features:
- * - Dynamic field rendering based on content type definition
- * - Real-time validation with error display
- * - Autosave draft functionality
- * - Form submission with validation
- * - Unsaved changes detection
- */
 export function ContentEntryEditor({
   contentType,
   entry,
@@ -98,664 +79,675 @@ export function ContentEntryEditor({
   autosaveInterval = 30000,
   canDelete: canDeleteProp = false,
 }: ContentEntryEditorProps) {
-  // Initialize form data from entry or defaults
   const getInitialData = useCallback(() => {
     if (entry) {
-      return { ...entry.data };
+      return { ...entry.data }
     }
 
-    // Build default values from field definitions
-    const defaults: Record<string, unknown> = {};
+    const defaults: Record<string, unknown> = {}
     for (const field of contentType.fields) {
       if (field.defaultValue !== undefined) {
-        defaults[field.name] = field.defaultValue;
+        defaults[field.name] = field.defaultValue
       } else {
-        // Set type-appropriate empty values
         switch (field.type) {
           case 'text':
           case 'richText':
-            defaults[field.name] = '';
-            break;
+            defaults[field.name] = ''
+            break
           case 'boolean':
-            defaults[field.name] = false;
-            break;
+            defaults[field.name] = false
+            break
           case 'number':
           case 'date':
           case 'datetime':
           case 'reference':
           case 'media':
           case 'json':
-            defaults[field.name] = null;
-            break;
+            defaults[field.name] = null
+            break
           case 'select':
-            defaults[field.name] = '';
-            break;
+            defaults[field.name] = ''
+            break
           case 'multiSelect':
-            defaults[field.name] = [];
-            break;
+            defaults[field.name] = []
+            break
         }
       }
     }
-    return defaults;
-  }, [contentType.fields, entry]);
+    return defaults
+  }, [contentType.fields, entry])
 
-  // Form state
-  const [formData, setFormData] = useState<Record<string, unknown>>(getInitialData);
-  const [fieldErrors, setFieldErrors] = useState<Record<string, FieldError>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isDirty, setIsDirty] = useState(false);
-  const [lastSavedData, setLastSavedData] = useState<Record<string, unknown> | null>(
-    entry ? { ...entry.data } : null
-  );
-  const [autosaveStatus, setAutosaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
-  const [autosaveError, setAutosaveError] = useState<string | null>(null);
-  const [autosaveRetryCount, setAutosaveRetryCount] = useState(0);
-  const [submitError, setSubmitError] = useState<string | null>(null);
-  const [saveSuccess, setSaveSuccess] = useState(false);
-  const maxAutosaveRetries = 3;
+  const [formData, setFormData] =
+    useState<Record<string, unknown>>(getInitialData)
+  const [fieldErrors, setFieldErrors] = useState<Record<string, FieldError>>({})
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isDirty, setIsDirty] = useState(false)
+  const [lastSavedData, setLastSavedData] = useState<Record<
+    string,
+    unknown
+  > | null>(entry ? { ...entry.data } : null)
+  const [autosaveStatus, setAutosaveStatus] = useState<
+    'idle' | 'saving' | 'saved' | 'error'
+  >('idle')
+  const [autosaveError, setAutosaveError] = useState<string | null>(null)
+  const [autosaveRetryCount, setAutosaveRetryCount] = useState(0)
+  const [submitError, setSubmitError] = useState<string | null>(null)
+  const [saveSuccess, setSaveSuccess] = useState(false)
+  const maxAutosaveRetries = 3
 
-  // Refs for autosave
-  const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const formDataRef = useRef(formData);
-  formDataRef.current = formData;
+  const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const formDataRef = useRef(formData)
+  formDataRef.current = formData
 
-  // Convex mutations (using wrapper functions)
-  const createEntry = useMutation(api.entries.create);
-  const updateEntry = useMutation(api.entries.update);
-  const publishEntry = useMutation(api.entries.publish);
-  const unpublishEntry = useMutation(api.entries.unpublish);
-  const scheduleEntry = useMutation(api.entries.schedule);
-  const cancelScheduleEntry = useMutation(api.entries.cancelSchedule);
-  const deleteEntryMutation = useMutation(api.entries.remove);
-  const duplicateEntryMutation = useMutation(api.entries.duplicate);
+  const createEntry = useMutation(api.entries.create)
+  const updateEntry = useMutation(api.entries.update)
+  const publishEntry = useMutation(api.entries.publish)
+  const unpublishEntry = useMutation(api.entries.unpublish)
+  const scheduleEntry = useMutation(api.entries.schedule)
+  const cancelScheduleEntry = useMutation(api.entries.cancelSchedule)
+  const deleteEntryMutation = useMutation(api.entries.remove)
+  const duplicateEntryMutation = useMutation(api.entries.duplicate)
 
-  // Schedule modal state
-  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [showScheduleModal, setShowScheduleModal] = useState(false)
   const [scheduleDateTime, setScheduleDateTime] = useState<string>(() => {
-    // Default to tomorrow at 9 AM
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(9, 0, 0, 0);
-    return formatDateTimeLocal(tomorrow.getTime());
-  });
-  const [isPublishing, setIsPublishing] = useState(false);
-  const [publishError, setPublishError] = useState<string | null>(null);
+    const tomorrow = new Date()
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    tomorrow.setHours(9, 0, 0, 0)
+    return formatDateTimeLocal(tomorrow.getTime())
+  })
+  const [isPublishing, setIsPublishing] = useState(false)
+  const [publishError, setPublishError] = useState<string | null>(null)
 
-  // Reset form when entry changes
   useEffect(() => {
-    const newData = getInitialData();
-    setFormData(newData);
-    setFieldErrors({});
-    setIsDirty(false);
-    setLastSavedData(entry ? { ...entry.data } : null);
-    setSubmitError(null);
-  }, [entry?._id, getInitialData]);
+    const newData = getInitialData()
+    setFormData(newData)
+    setFieldErrors({})
+    setIsDirty(false)
+    setLastSavedData(entry ? { ...entry.data } : null)
+    setSubmitError(null)
+  }, [entry?._id, getInitialData])
 
-  // Handle field value change
   const handleFieldChange = useCallback((fieldName: string, value: unknown) => {
-    setFormData(prev => {
-      const updated = { ...prev, [fieldName]: value };
-      return updated;
-    });
-    setIsDirty(true);
+    setFormData((prev) => {
+      const updated = { ...prev, [fieldName]: value }
+      return updated
+    })
+    setIsDirty(true)
 
-    // Clear field error when user modifies the field
-    setFieldErrors(prev => {
+    setFieldErrors((prev) => {
       if (prev[fieldName]) {
-        const { [fieldName]: removed, ...rest } = prev;
-        return rest;
+        const { [fieldName]: _removed, ...rest } = prev
+        return rest
       }
-      return prev;
-    });
-  }, []);
+      return prev
+    })
+  }, [])
 
-  // Validate form data against the content type schema
   const validateForm = useCallback(async (): Promise<boolean> => {
-    const errors: Record<string, FieldError> = {};
+    const errors: Record<string, FieldError> = {}
 
-    // Client-side validation for required fields and basic type checks
     for (const field of contentType.fields) {
-      const value = formData[field.name];
+      const value = formData[field.name]
 
-      // Required field check
       if (field.required) {
         const isEmpty =
           value === null ||
           value === undefined ||
           value === '' ||
-          (Array.isArray(value) && value.length === 0);
+          (Array.isArray(value) && value.length === 0)
 
         if (isEmpty) {
           errors[field.name] = {
             message: `${field.label} is required`,
             code: 'REQUIRED',
-          };
-          continue;
+          }
+          continue
         }
       }
 
-      // Type-specific validation
       if (value !== null && value !== undefined && value !== '') {
         switch (field.type) {
           case 'text': {
-            const strValue = String(value);
-            const opts = field.options;
+            const strValue = String(value)
+            const opts = field.options
             if (opts?.minLength && strValue.length < opts.minLength) {
               errors[field.name] = {
                 message: `Minimum ${opts.minLength} characters required`,
                 code: 'MIN_LENGTH',
-              };
+              }
             } else if (opts?.maxLength && strValue.length > opts.maxLength) {
               errors[field.name] = {
                 message: `Maximum ${opts.maxLength} characters allowed`,
                 code: 'MAX_LENGTH',
-              };
+              }
             } else if (opts?.pattern) {
-              const regex = new RegExp(opts.pattern);
+              const regex = new RegExp(opts.pattern)
               if (!regex.test(strValue)) {
                 errors[field.name] = {
                   message: 'Value does not match the required format',
                   code: 'PATTERN_MISMATCH',
-                };
+                }
               }
             }
-            break;
+            break
           }
 
           case 'number': {
-            const numValue = Number(value);
-            const opts = field.options;
+            const numValue = Number(value)
+            const opts = field.options
             if (isNaN(numValue)) {
               errors[field.name] = {
                 message: 'Must be a valid number',
                 code: 'INVALID_TYPE',
-              };
+              }
             } else {
               if (opts?.min !== undefined && numValue < opts.min) {
                 errors[field.name] = {
                   message: `Minimum value is ${opts.min}`,
                   code: 'MIN_VALUE',
-                };
+                }
               } else if (opts?.max !== undefined && numValue > opts.max) {
                 errors[field.name] = {
                   message: `Maximum value is ${opts.max}`,
                   code: 'MAX_VALUE',
-                };
+                }
               } else if (opts?.precision === 0 && !Number.isInteger(numValue)) {
                 errors[field.name] = {
                   message: 'Must be a whole number',
                   code: 'NOT_INTEGER',
-                };
+                }
               }
             }
-            break;
+            break
           }
 
           case 'select': {
-            const opts = field.options;
-            if (opts?.options && !opts.options.some(o => o.value === value)) {
+            const opts = field.options
+            if (opts?.options && !opts.options.some((o) => o.value === value)) {
               errors[field.name] = {
                 message: 'Please select a valid option',
                 code: 'INVALID_OPTION',
-              };
+              }
             }
-            break;
+            break
           }
 
           case 'multiSelect': {
-            const opts = field.options;
+            const opts = field.options
             if (Array.isArray(value) && opts?.options) {
-              const validValues = opts.options.map(o => o.value);
-              const invalid = value.filter(v => !validValues.includes(String(v)));
+              const validValues = opts.options.map((o) => o.value)
+              const invalid = value.filter(
+                (v) => !validValues.includes(String(v))
+              )
               if (invalid.length > 0) {
                 errors[field.name] = {
                   message: 'Contains invalid options',
                   code: 'INVALID_OPTION',
-                };
+                }
               }
             }
-            break;
+            break
           }
         }
       }
     }
 
-    setFieldErrors(errors);
-    return Object.keys(errors).length === 0;
-  }, [contentType.fields, formData]);
+    setFieldErrors(errors)
+    return Object.keys(errors).length === 0
+  }, [contentType.fields, formData])
 
-  // Autosave draft with retry logic
-  const autosaveDraft = useCallback(async (retryAttempt = 0) => {
-    if (!isDirty || !entry) return;
+  const autosaveDraft = useCallback(
+    async (retryAttempt = 0) => {
+      if (!isDirty || !entry) return
 
-    // Only autosave if this is an existing draft entry
-    if (entry.status !== 'draft') return;
+      if (entry.status !== 'draft') return
 
-    try {
-      setAutosaveStatus('saving');
-      setAutosaveError(null);
+      try {
+        setAutosaveStatus('saving')
+        setAutosaveError(null)
 
-      await updateEntry({
-        id: entry._id,
-        data: formDataRef.current,
-      });
+        await updateEntry({
+          id: entry._id,
+          data: formDataRef.current,
+        })
 
-      setLastSavedData({ ...formDataRef.current });
-      setAutosaveStatus('saved');
-      setIsDirty(false);
-      setAutosaveRetryCount(0);
-
-      // Reset status after a delay
-      setTimeout(() => {
-        setAutosaveStatus('idle');
-      }, 3000);
-    } catch (error) {
-      console.error('Autosave failed:', error);
-
-      const errorMessage = error instanceof Error ? error.message : 'Failed to save';
-      const canRetry = isRetryableError(error) && retryAttempt < maxAutosaveRetries;
-
-      if (canRetry) {
-        // Schedule automatic retry with exponential backoff
-        const retryDelay = Math.min(1000 * Math.pow(2, retryAttempt), 10000);
-        setAutosaveStatus('error');
-        setAutosaveError(`Save failed, retrying in ${Math.round(retryDelay / 1000)}s...`);
-        setAutosaveRetryCount(retryAttempt + 1);
+        setLastSavedData({ ...formDataRef.current })
+        setAutosaveStatus('saved')
+        setIsDirty(false)
+        setAutosaveRetryCount(0)
 
         setTimeout(() => {
-          autosaveDraft(retryAttempt + 1);
-        }, retryDelay);
-      } else {
-        // Max retries reached or non-retryable error
-        setAutosaveStatus('error');
-        setAutosaveError(errorMessage);
-        setAutosaveRetryCount(0);
+          setAutosaveStatus('idle')
+        }, 3000)
+      } catch (error) {
+        console.error('Autosave failed:', error)
+
+        const errorMessage =
+          error instanceof Error ? error.message : 'Failed to save'
+        const canRetry =
+          isRetryableError(error) && retryAttempt < maxAutosaveRetries
+
+        if (canRetry) {
+          const retryDelay = Math.min(1000 * Math.pow(2, retryAttempt), 10000)
+          setAutosaveStatus('error')
+          setAutosaveError(
+            `Save failed, retrying in ${Math.round(retryDelay / 1000)}s...`
+          )
+          setAutosaveRetryCount(retryAttempt + 1)
+
+          setTimeout(() => {
+            autosaveDraft(retryAttempt + 1)
+          }, retryDelay)
+        } else {
+          setAutosaveStatus('error')
+          setAutosaveError(errorMessage)
+          setAutosaveRetryCount(0)
+        }
       }
-    }
-  }, [isDirty, entry, updateEntry, maxAutosaveRetries]);
+    },
+    [isDirty, entry, updateEntry, maxAutosaveRetries]
+  )
 
-  // Manual retry handler for autosave
   const handleAutosaveRetry = useCallback(() => {
-    setAutosaveRetryCount(0);
-    autosaveDraft(0);
-  }, [autosaveDraft]);
+    setAutosaveRetryCount(0)
+    autosaveDraft(0)
+  }, [autosaveDraft])
 
-  // Set up autosave timer
   useEffect(() => {
     if (!autosaveEnabled || !entry || entry.status !== 'draft') {
-      return;
+      return
     }
 
-    // Clear existing timer
     if (autosaveTimerRef.current) {
-      clearTimeout(autosaveTimerRef.current);
+      clearTimeout(autosaveTimerRef.current)
     }
 
-    // Set new timer if dirty
     if (isDirty) {
       autosaveTimerRef.current = setTimeout(() => {
-        autosaveDraft();
-      }, autosaveInterval);
+        autosaveDraft()
+      }, autosaveInterval)
     }
 
     return () => {
       if (autosaveTimerRef.current) {
-        clearTimeout(autosaveTimerRef.current);
+        clearTimeout(autosaveTimerRef.current)
       }
-    };
-  }, [autosaveEnabled, autosaveInterval, isDirty, entry, autosaveDraft]);
+    }
+  }, [autosaveEnabled, autosaveInterval, isDirty, entry, autosaveDraft])
 
-  // Confirmation modal state
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [confirmAction, setConfirmAction] = useState<'publish' | 'unpublish' | null>(null);
+  const [showConfirmModal, setShowConfirmModal] = useState(false)
+  const [confirmAction, setConfirmAction] = useState<
+    'publish' | 'unpublish' | null
+  >(null)
 
-  // Delete modal state
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
-  // Duplicate state
-  const [isDuplicating, setIsDuplicating] = useState(false);
+  const [isDuplicating, setIsDuplicating] = useState(false)
+  const [isArchiving, setIsArchiving] = useState(false)
+  const [showVersionHistory, setShowVersionHistory] = useState(false)
 
-  // Archive state
-  const [isArchiving, setIsArchiving] = useState(false);
-
-  // Version history panel state
-  const [showVersionHistory, setShowVersionHistory] = useState(false);
-
-  // Handle publish with confirmation
   const handlePublishClick = useCallback(() => {
-    setConfirmAction('publish');
-    setShowConfirmModal(true);
-  }, []);
+    setConfirmAction('publish')
+    setShowConfirmModal(true)
+  }, [])
 
-  // Handle unpublish with confirmation
   const handleUnpublishClick = useCallback(() => {
-    setConfirmAction('unpublish');
-    setShowConfirmModal(true);
-  }, []);
+    setConfirmAction('unpublish')
+    setShowConfirmModal(true)
+  }, [])
 
-  // Execute confirmed action
   const handleConfirmAction = useCallback(async () => {
-    if (!entry || !confirmAction) return;
+    if (!entry || !confirmAction) return
 
-    setShowConfirmModal(false);
-    setIsPublishing(true);
-    setPublishError(null);
+    setShowConfirmModal(false)
+    setIsPublishing(true)
+    setPublishError(null)
 
     try {
       if (confirmAction === 'publish') {
-        const publishedEntry = await publishEntry({
+        const publishedEntry = (await publishEntry({
           id: entry._id,
           changeDescription: 'Published from editor',
-        }) as ContentEntry;
-        onSave?.(publishedEntry);
+        })) as ContentEntry
+        onSave?.(publishedEntry)
       } else {
-        const draftEntry = await unpublishEntry({
+        const draftEntry = (await unpublishEntry({
           id: entry._id,
-        }) as ContentEntry;
-        onSave?.(draftEntry);
+        })) as ContentEntry
+        onSave?.(draftEntry)
       }
     } catch (error) {
-      const message = error instanceof Error ? error.message : `Failed to ${confirmAction}`;
-      setPublishError(message);
+      const message =
+        error instanceof Error
+          ? error.message
+          : `Failed to ${confirmAction}`
+      setPublishError(message)
     } finally {
-      setIsPublishing(false);
-      setConfirmAction(null);
+      setIsPublishing(false)
+      setConfirmAction(null)
     }
-  }, [entry, confirmAction, publishEntry, unpublishEntry, onSave]);
+  }, [entry, confirmAction, publishEntry, unpublishEntry, onSave])
 
-  // Handle publish (direct call for scheduled entries that want to publish now)
   const handlePublish = useCallback(async () => {
-    if (!entry) return;
+    if (!entry) return
 
-    setIsPublishing(true);
-    setPublishError(null);
+    setIsPublishing(true)
+    setPublishError(null)
 
     try {
-      const publishedEntry = await publishEntry({
+      const publishedEntry = (await publishEntry({
         id: entry._id,
         changeDescription: 'Published from editor',
-      }) as ContentEntry;
-      onSave?.(publishedEntry);
+      })) as ContentEntry
+      onSave?.(publishedEntry)
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to publish';
-      setPublishError(message);
+      const message =
+        error instanceof Error ? error.message : 'Failed to publish'
+      setPublishError(message)
     } finally {
-      setIsPublishing(false);
+      setIsPublishing(false)
     }
-  }, [entry, publishEntry, onSave]);
+  }, [entry, publishEntry, onSave])
 
-  // Handle unpublish
   const handleUnpublish = useCallback(async () => {
-    if (!entry) return;
+    if (!entry) return
 
-    setIsPublishing(true);
-    setPublishError(null);
+    setIsPublishing(true)
+    setPublishError(null)
 
     try {
-      const draftEntry = await unpublishEntry({
+      const draftEntry = (await unpublishEntry({
         id: entry._id,
-      }) as ContentEntry;
-      onSave?.(draftEntry);
+      })) as ContentEntry
+      onSave?.(draftEntry)
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to unpublish';
-      setPublishError(message);
+      const message =
+        error instanceof Error ? error.message : 'Failed to unpublish'
+      setPublishError(message)
     } finally {
-      setIsPublishing(false);
+      setIsPublishing(false)
     }
-  }, [entry, unpublishEntry, onSave]);
+  }, [entry, unpublishEntry, onSave])
 
-  // Handle schedule
   const handleSchedule = useCallback(async () => {
-    if (!entry) return;
+    if (!entry) return
 
-    const publishAt = parseDateTimeLocal(scheduleDateTime);
-    const minimumTime = Date.now() + 60 * 1000; // 1 minute from now
+    const publishAt = parseDateTimeLocal(scheduleDateTime)
+    const minimumTime = Date.now() + 60 * 1000
 
     if (publishAt < minimumTime) {
-      setPublishError('Schedule time must be at least 1 minute in the future');
-      return;
+      setPublishError('Schedule time must be at least 1 minute in the future')
+      return
     }
 
-    setIsPublishing(true);
-    setPublishError(null);
+    setIsPublishing(true)
+    setPublishError(null)
 
     try {
-      const scheduledEntry = await scheduleEntry({
+      const scheduledEntry = (await scheduleEntry({
         id: entry._id,
         publishAt,
-      }) as ContentEntry;
-      setShowScheduleModal(false);
-      onSave?.(scheduledEntry);
+      })) as ContentEntry
+      setShowScheduleModal(false)
+      onSave?.(scheduledEntry)
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to schedule';
-      setPublishError(message);
+      const message =
+        error instanceof Error ? error.message : 'Failed to schedule'
+      setPublishError(message)
     } finally {
-      setIsPublishing(false);
+      setIsPublishing(false)
     }
-  }, [entry, scheduleDateTime, scheduleEntry, onSave]);
+  }, [entry, scheduleDateTime, scheduleEntry, onSave])
 
-  // Handle cancel schedule
   const handleCancelSchedule = useCallback(async () => {
-    if (!entry) return;
+    if (!entry) return
 
-    setIsPublishing(true);
-    setPublishError(null);
+    setIsPublishing(true)
+    setPublishError(null)
 
     try {
-      const draftEntry = await cancelScheduleEntry({
+      const draftEntry = (await cancelScheduleEntry({
         id: entry._id,
-      }) as ContentEntry;
-      onSave?.(draftEntry);
+      })) as ContentEntry
+      onSave?.(draftEntry)
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to cancel schedule';
-      setPublishError(message);
+      const message =
+        error instanceof Error ? error.message : 'Failed to cancel schedule'
+      setPublishError(message)
     } finally {
-      setIsPublishing(false);
+      setIsPublishing(false)
     }
-  }, [entry, cancelScheduleEntry, onSave]);
+  }, [entry, cancelScheduleEntry, onSave])
 
-  // Handle delete click - opens confirmation modal
   const handleDeleteClick = useCallback(() => {
-    setDeleteError(null);
-    setShowDeleteModal(true);
-  }, []);
+    setDeleteError(null)
+    setShowDeleteModal(true)
+  }, [])
 
-  // Handle delete confirmation
   const handleDeleteConfirm = useCallback(async () => {
-    if (!entry) return;
+    if (!entry) return
 
-    setIsDeleting(true);
-    setDeleteError(null);
+    setIsDeleting(true)
+    setDeleteError(null)
 
     try {
       await deleteEntryMutation({
         id: entry._id,
-        hardDelete: false, // Soft delete - moves to trash
-      });
-      setShowDeleteModal(false);
-      onDelete?.();
+        hardDelete: false,
+      })
+      setShowDeleteModal(false)
+      onDelete?.()
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to delete entry';
-      setDeleteError(message);
+      const message =
+        error instanceof Error ? error.message : 'Failed to delete entry'
+      setDeleteError(message)
     } finally {
-      setIsDeleting(false);
+      setIsDeleting(false)
     }
-  }, [entry, deleteEntryMutation, onDelete]);
+  }, [entry, deleteEntryMutation, onDelete])
 
-  // Handle duplicate
   const handleDuplicate = useCallback(async () => {
-    if (!entry) return;
+    if (!entry) return
 
-    setIsDuplicating(true);
-    setSubmitError(null);
+    setIsDuplicating(true)
+    setSubmitError(null)
 
     try {
-      const duplicatedEntry = await duplicateEntryMutation({
+      const duplicatedEntry = (await duplicateEntryMutation({
         sourceEntryId: entry._id,
-      }) as ContentEntry;
-      // Navigate to the new duplicated entry
-      onSave?.(duplicatedEntry);
+      })) as ContentEntry
+      onSave?.(duplicatedEntry)
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to duplicate entry';
-      setSubmitError(message);
+      const message =
+        error instanceof Error ? error.message : 'Failed to duplicate entry'
+      setSubmitError(message)
     } finally {
-      setIsDuplicating(false);
+      setIsDuplicating(false)
     }
-  }, [entry, duplicateEntryMutation, onSave]);
+  }, [entry, duplicateEntryMutation, onSave])
 
-  // Handle archive
   const handleArchive = useCallback(async () => {
-    if (!entry) return;
+    if (!entry) return
 
-    setIsArchiving(true);
-    setSubmitError(null);
+    setIsArchiving(true)
+    setSubmitError(null)
 
     try {
-      const archivedEntry = await updateEntry({
+      const archivedEntry = (await updateEntry({
         id: entry._id,
         status: 'archived',
-      }) as ContentEntry;
-      onSave?.(archivedEntry);
+      })) as ContentEntry
+      onSave?.(archivedEntry)
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to archive entry';
-      setSubmitError(message);
+      const message =
+        error instanceof Error ? error.message : 'Failed to archive entry'
+      setSubmitError(message)
     } finally {
-      setIsArchiving(false);
+      setIsArchiving(false)
     }
-  }, [entry, updateEntry, onSave]);
+  }, [entry, updateEntry, onSave])
 
-  // Handle form submission
-  const handleSubmit = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmitError(null);
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault()
+      setSubmitError(null)
 
-    // Validate form
-    const isValid = await validateForm();
-    if (!isValid) {
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      let savedEntry: ContentEntry;
-
-      if (entry) {
-        // Update existing entry
-        savedEntry = await updateEntry({
-          id: entry._id,
-          data: formData,
-        }) as ContentEntry;
-      } else {
-        // Create new entry
-        savedEntry = await createEntry({
-          contentTypeId: contentType._id,
-          data: formData,
-        }) as ContentEntry;
+      const isValid = await validateForm()
+      if (!isValid) {
+        return
       }
 
-      setIsDirty(false);
-      setLastSavedData({ ...formData });
-      setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 3000);
-      onSave?.(savedEntry);
-    } catch (error) {
-      // Parse server error for field-level errors and general message
-      const { fieldErrors: serverFieldErrors, generalError } = parseServerError(error);
-      const message = generalError ?? (error instanceof Error ? error.message : 'Failed to save entry');
+      setIsSubmitting(true)
 
-      setSubmitError(message);
+      try {
+        let savedEntry: ContentEntry
 
-      // Apply any field-level errors from the server
-      if (Object.keys(serverFieldErrors).length > 0) {
-        setFieldErrors(prev => ({ ...prev, ...serverFieldErrors }));
+        if (entry) {
+          savedEntry = (await updateEntry({
+            id: entry._id,
+            data: formData,
+          })) as ContentEntry
+        } else {
+          savedEntry = (await createEntry({
+            contentTypeId: contentType._id,
+            data: formData,
+          })) as ContentEntry
+        }
+
+        setIsDirty(false)
+        setLastSavedData({ ...formData })
+        setSaveSuccess(true)
+        setTimeout(() => setSaveSuccess(false), 3000)
+        onSave?.(savedEntry)
+      } catch (error) {
+        const { fieldErrors: serverFieldErrors, generalError } =
+          parseServerError(error)
+        const message =
+          generalError ??
+          (error instanceof Error ? error.message : 'Failed to save entry')
+
+        setSubmitError(message)
+
+        if (Object.keys(serverFieldErrors).length > 0) {
+          setFieldErrors((prev) => ({ ...prev, ...serverFieldErrors }))
+        }
+      } finally {
+        setIsSubmitting(false)
       }
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [validateForm, entry, formData, contentType._id, createEntry, updateEntry, onSave]);
+    },
+    [
+      validateForm,
+      entry,
+      formData,
+      contentType._id,
+      createEntry,
+      updateEntry,
+      onSave,
+    ]
+  )
 
-  // Handle cancel
   const handleCancel = useCallback(() => {
     if (isDirty) {
       const confirmed = window.confirm(
         'You have unsaved changes. Are you sure you want to leave?'
-      );
-      if (!confirmed) return;
+      )
+      if (!confirmed) return
     }
-    onCancel?.();
-  }, [isDirty, onCancel]);
+    onCancel?.()
+  }, [isDirty, onCancel])
 
-  // Get autosave status display
   const getAutosaveStatusText = () => {
     switch (autosaveStatus) {
       case 'saving':
-        return autosaveRetryCount > 0 ? `Retrying (${autosaveRetryCount}/${maxAutosaveRetries})...` : 'Saving...';
+        return autosaveRetryCount > 0
+          ? `Retrying (${autosaveRetryCount}/${maxAutosaveRetries})...`
+          : 'Saving...'
       case 'saved':
-        return 'Draft saved';
+        return 'Draft saved'
       case 'error':
-        return autosaveError ?? 'Autosave failed';
+        return autosaveError ?? 'Autosave failed'
       default:
-        return null;
+        return null
     }
-  };
+  }
 
   return (
-    <form className="entry-editor" onSubmit={handleSubmit}>
-      <div className="entry-editor-header">
-        <div className="entry-editor-title">
-          <h2>{entry ? 'Edit' : 'Create'} {contentType.displayName}</h2>
-          {entry && (
-            <span className={`entry-status entry-status--${entry.status}`}>
-              {entry.status}
-            </span>
-          )}
+    <form className="space-y-6" onSubmit={handleSubmit}>
+      {/* Header */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <h2 className="text-xl font-semibold">
+            {entry ? 'Edit' : 'Create'} {contentType.displayName}
+          </h2>
+          {entry && <CmsStatusBadge status={entry.status} />}
         </div>
 
-        <div className="entry-editor-actions">
+        <div className="flex items-center gap-3">
           {autosaveStatus !== 'idle' && (
-            <div className="autosave-status-container">
+            <div className="flex items-center gap-2">
               <span
-                className={`autosave-status autosave-status--${autosaveStatus}`}
+                className={cn(
+                  'flex items-center gap-1.5 text-sm',
+                  autosaveStatus === 'saving' && 'text-muted-foreground',
+                  autosaveStatus === 'saved' && 'text-emerald-600',
+                  autosaveStatus === 'error' && 'text-red-600'
+                )}
                 data-testid="autosave-status"
               >
+                {autosaveStatus === 'saving' && (
+                  <Loader2 className="size-3 animate-spin" />
+                )}
+                {autosaveStatus === 'saved' && (
+                  <CheckCircle className="size-3" />
+                )}
+                {autosaveStatus === 'error' && (
+                  <AlertCircle className="size-3" />
+                )}
                 {getAutosaveStatusText()}
               </span>
               {autosaveStatus === 'error' && autosaveRetryCount === 0 && (
                 <button
                   type="button"
-                  className="autosave-retry-btn"
                   onClick={handleAutosaveRetry}
-                  title="Retry saving"
+                  className="text-sm text-primary hover:underline"
                   data-testid="autosave-retry-button"
                 >
-                  Retry
+                  <RefreshCw className="size-3" />
                 </button>
               )}
             </div>
           )}
 
           {isDirty && (
-            <span className="unsaved-indicator">Unsaved changes</span>
+            <span className="text-sm text-amber-600">Unsaved changes</span>
           )}
         </div>
       </div>
 
+      {/* Success/Error Messages */}
       {saveSuccess && (
-        <div className="entry-editor-success" role="status">
+        <div
+          className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800"
+          role="status"
+        >
+          <CheckCircle className="size-4" />
           Changes saved successfully
         </div>
       )}
 
       {(submitError || publishError) && (
-        <div className="entry-editor-error" role="alert">
-          <strong>Error:</strong> {submitError || publishError}
+        <div
+          className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+          role="alert"
+        >
+          <span className="font-medium">Error:</span> {submitError || publishError}
         </div>
       )}
 
-      <div className="entry-editor-fields">
+      {/* Fields */}
+      <div className="space-y-4">
         {contentType.fields.map((field) => (
           <FieldRenderer
             key={field.name}
@@ -768,158 +760,181 @@ export function ContentEntryEditor({
         ))}
       </div>
 
-      <div className="entry-editor-footer">
-        <div className="entry-editor-footer-left">
-          {/* Delete button - only shown for existing entries with permission */}
+      {/* Footer */}
+      <div className="flex flex-wrap items-center justify-between gap-4 border-t pt-4">
+        <div className="flex flex-wrap items-center gap-2">
           {entry && canDeleteProp && (
-            <button
+            <CmsButton
               type="button"
-              className="btn btn-danger"
+              variant="danger"
               onClick={handleDeleteClick}
-              disabled={isSubmitting || isPublishing || isDeleting || isDuplicating}
+              disabled={
+                isSubmitting ||
+                isPublishing ||
+                isDeleting ||
+                isDuplicating
+              }
+              loading={isDeleting}
               data-testid="delete-button"
             >
-              {isDeleting ? 'Deleting...' : 'Delete'}
-            </button>
+              Delete
+            </CmsButton>
           )}
 
-          {/* Duplicate button - only shown for existing entries */}
           {entry && (
-            <button
+            <CmsButton
               type="button"
-              className="btn btn-secondary"
+              variant="secondary"
               onClick={handleDuplicate}
-              disabled={isSubmitting || isPublishing || isDeleting || isDuplicating || isArchiving}
+              disabled={
+                isSubmitting ||
+                isPublishing ||
+                isDeleting ||
+                isDuplicating ||
+                isArchiving
+              }
+              loading={isDuplicating}
               data-testid="duplicate-button"
             >
-              {isDuplicating ? 'Duplicating...' : 'Duplicate'}
-            </button>
+              Duplicate
+            </CmsButton>
           )}
 
-          {/* Archive button - shown for draft and scheduled entries */}
-          {entry && (entry.status === 'draft' || entry.status === 'scheduled') && (
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={handleArchive}
-              disabled={isSubmitting || isPublishing || isDeleting || isDuplicating || isArchiving}
-              data-testid="archive-button"
-            >
-              {isArchiving ? 'Archiving...' : 'Archive'}
-            </button>
-          )}
+          {entry &&
+            (entry.status === 'draft' || entry.status === 'scheduled') && (
+              <CmsButton
+                type="button"
+                variant="secondary"
+                onClick={handleArchive}
+                disabled={
+                  isSubmitting ||
+                  isPublishing ||
+                  isDeleting ||
+                  isDuplicating ||
+                  isArchiving
+                }
+                loading={isArchiving}
+                data-testid="archive-button"
+              >
+                Archive
+              </CmsButton>
+            )}
 
           {entry && (
-            <div className="entry-meta-info">
-              <span className="entry-version">Version {entry.version}</span>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Badge variant="outline" className="font-mono">
+                v{entry.version}
+              </Badge>
               <button
                 type="button"
-                className="btn btn-sm btn-link"
                 onClick={() => setShowVersionHistory(true)}
-                title="View version history"
+                className="flex items-center gap-1 text-primary hover:underline"
               >
+                <History className="size-3" />
                 History
               </button>
 
-              {/* Publish timestamps */}
               {entry.lastPublishedAt && (
-                <span className="entry-publish-info" data-testid="last-published-time">
-                  Last published: {new Date(entry.lastPublishedAt).toLocaleString()}
-                </span>
-              )}
-              {entry.firstPublishedAt && entry.firstPublishedAt !== entry.lastPublishedAt && (
-                <span className="entry-publish-info entry-publish-info--first">
-                  First published: {new Date(entry.firstPublishedAt).toLocaleString()}
+                <span
+                  className="text-xs"
+                  data-testid="last-published-time"
+                >
+                  Last published:{' '}
+                  {new Date(entry.lastPublishedAt).toLocaleString()}
                 </span>
               )}
 
-              {/* Scheduled time */}
               {entry.status === 'scheduled' && entry.scheduledPublishAt && (
-                <span className="entry-scheduled-time" data-testid="scheduled-time">
-                  Scheduled for {new Date(entry.scheduledPublishAt).toLocaleString()}
+                <span
+                  className="flex items-center gap-1 text-xs text-blue-600"
+                  data-testid="scheduled-time"
+                >
+                  <Clock className="size-3" />
+                  Scheduled:{' '}
+                  {new Date(entry.scheduledPublishAt).toLocaleString()}
                 </span>
               )}
             </div>
           )}
         </div>
 
-        <div className="entry-editor-footer-right">
-          <button
+        <div className="flex flex-wrap items-center gap-2">
+          <CmsButton
             type="button"
-            className="btn btn-secondary"
+            variant="outline"
             onClick={handleCancel}
             disabled={isSubmitting || isPublishing}
           >
             Cancel
-          </button>
+          </CmsButton>
 
-          <button
+          <CmsButton
             type="submit"
-            className="btn btn-primary"
+            variant="primary"
             disabled={isSubmitting || isPublishing}
+            loading={isSubmitting}
           >
-            {isSubmitting ? 'Saving...' : entry ? 'Save Changes' : 'Create Entry'}
-          </button>
+            {entry ? 'Save Changes' : 'Create Entry'}
+          </CmsButton>
 
-          {/* Publishing actions - only shown for existing entries */}
           {entry && (
             <>
-              {/* Draft: Show Publish and Schedule buttons */}
               {entry.status === 'draft' && (
                 <>
-                  <button
+                  <CmsButton
                     type="button"
-                    className="btn btn-secondary"
+                    variant="secondary"
                     onClick={() => setShowScheduleModal(true)}
                     disabled={isSubmitting || isPublishing}
                   >
                     Schedule
-                  </button>
-                  <button
+                  </CmsButton>
+                  <CmsButton
                     type="button"
-                    className="btn btn-success"
+                    variant="success"
                     onClick={handlePublishClick}
                     disabled={isSubmitting || isPublishing}
+                    loading={isPublishing}
                     data-testid="publish-button"
                   >
-                    {isPublishing ? 'Publishing...' : 'Publish Now'}
-                  </button>
+                    Publish Now
+                  </CmsButton>
                 </>
               )}
 
-              {/* Scheduled: Show Cancel Schedule and Publish Now buttons */}
               {entry.status === 'scheduled' && (
                 <>
-                  <button
+                  <CmsButton
                     type="button"
-                    className="btn btn-secondary"
+                    variant="secondary"
                     onClick={handleCancelSchedule}
                     disabled={isSubmitting || isPublishing}
                   >
                     Cancel Schedule
-                  </button>
-                  <button
+                  </CmsButton>
+                  <CmsButton
                     type="button"
-                    className="btn btn-success"
+                    variant="success"
                     onClick={handlePublish}
                     disabled={isSubmitting || isPublishing}
+                    loading={isPublishing}
                   >
-                    {isPublishing ? 'Publishing...' : 'Publish Now'}
-                  </button>
+                    Publish Now
+                  </CmsButton>
                 </>
               )}
 
-              {/* Published: Show Unpublish button */}
               {entry.status === 'published' && (
-                <button
+                <CmsButton
                   type="button"
-                  className="btn btn-warning"
+                  variant="warning"
                   onClick={handleUnpublishClick}
                   disabled={isSubmitting || isPublishing}
+                  loading={isPublishing}
                   data-testid="unpublish-button"
                 >
-                  {isPublishing ? 'Unpublishing...' : 'Unpublish'}
-                </button>
+                  Unpublish
+                </CmsButton>
               )}
             </>
           )}
@@ -927,192 +942,99 @@ export function ContentEntryEditor({
       </div>
 
       {/* Schedule Modal */}
-      {showScheduleModal && (
-        <div className="modal-overlay" onClick={() => setShowScheduleModal(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>Schedule Publication</h3>
-              <button
-                type="button"
-                className="modal-close"
-                onClick={() => setShowScheduleModal(false)}
-              >
-                &times;
-              </button>
-            </div>
-            <div className="modal-body">
-              <p>Choose when this content should be automatically published:</p>
-              <input
-                type="datetime-local"
-                className="schedule-datetime-input"
-                value={scheduleDateTime}
-                onChange={(e) => setScheduleDateTime(e.target.value)}
-                min={formatDateTimeLocal(Date.now() + 60 * 1000)}
-              />
-              {publishError && (
-                <p className="schedule-error">{publishError}</p>
-              )}
-            </div>
-            <div className="modal-footer">
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() => setShowScheduleModal(false)}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={handleSchedule}
-                disabled={isPublishing}
-              >
-                {isPublishing ? 'Scheduling...' : 'Schedule'}
-              </button>
-            </div>
-          </div>
+      <CmsDialog
+        open={showScheduleModal}
+        onOpenChange={setShowScheduleModal}
+        title="Schedule Publication"
+        size="sm"
+        footer={
+          <>
+            <CmsButton
+              variant="outline"
+              onClick={() => setShowScheduleModal(false)}
+            >
+              Cancel
+            </CmsButton>
+            <CmsButton
+              variant="primary"
+              onClick={handleSchedule}
+              loading={isPublishing}
+            >
+              Schedule
+            </CmsButton>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Choose when this content should be automatically published:
+          </p>
+          <Input
+            type="datetime-local"
+            value={scheduleDateTime}
+            onChange={(e) => setScheduleDateTime(e.target.value)}
+            min={formatDateTimeLocal(Date.now() + 60 * 1000)}
+          />
+          {publishError && (
+            <p className="text-sm text-destructive">{publishError}</p>
+          )}
         </div>
-      )}
+      </CmsDialog>
 
       {/* Publish/Unpublish Confirmation Modal */}
-      {showConfirmModal && confirmAction && (
-        <div
-          className="modal-overlay"
-          onClick={() => {
-            setShowConfirmModal(false);
-            setConfirmAction(null);
-          }}
-          data-testid="confirm-modal-overlay"
-        >
-          <div className="modal" onClick={(e) => e.stopPropagation()} data-testid="confirm-modal">
-            <div className="modal-header">
-              <h3>{confirmAction === 'publish' ? 'Confirm Publish' : 'Confirm Unpublish'}</h3>
-              <button
-                type="button"
-                className="modal-close"
-                onClick={() => {
-                  setShowConfirmModal(false);
-                  setConfirmAction(null);
-                }}
-              >
-                &times;
-              </button>
-            </div>
-            <div className="modal-body">
-              {confirmAction === 'publish' ? (
-                <p>
-                  Are you sure you want to publish this entry? It will become publicly visible.
-                </p>
-              ) : (
-                <p>
-                  Are you sure you want to unpublish this entry? It will no longer be publicly visible.
-                </p>
-              )}
-            </div>
-            <div className="modal-footer">
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() => {
-                  setShowConfirmModal(false);
-                  setConfirmAction(null);
-                }}
-                data-testid="confirm-cancel-button"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className={confirmAction === 'publish' ? 'btn btn-success' : 'btn btn-warning'}
-                onClick={handleConfirmAction}
-                disabled={isPublishing}
-                data-testid="confirm-action-button"
-              >
-                {confirmAction === 'publish' ? 'Publish' : 'Unpublish'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <CmsConfirmDialog
+        open={showConfirmModal && confirmAction !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setShowConfirmModal(false)
+            setConfirmAction(null)
+          }
+        }}
+        title={
+          confirmAction === 'publish' ? 'Confirm Publish' : 'Confirm Unpublish'
+        }
+        description={
+          confirmAction === 'publish'
+            ? 'Are you sure you want to publish this entry? It will become publicly visible.'
+            : 'Are you sure you want to unpublish this entry? It will no longer be publicly visible.'
+        }
+        confirmLabel={confirmAction === 'publish' ? 'Publish' : 'Unpublish'}
+        variant={confirmAction === 'publish' ? 'primary' : 'warning'}
+        onConfirm={handleConfirmAction}
+        isLoading={isPublishing}
+      />
 
       {/* Delete Confirmation Modal */}
-      {showDeleteModal && (
-        <div
-          className="modal-overlay"
-          onClick={() => {
-            if (!isDeleting) {
-              setShowDeleteModal(false);
-              setDeleteError(null);
-            }
-          }}
-          data-testid="delete-modal-overlay"
-        >
-          <div className="modal" onClick={(e) => e.stopPropagation()} data-testid="delete-modal">
-            <div className="modal-header">
-              <h3>Delete Entry</h3>
-              <button
-                type="button"
-                className="modal-close"
-                onClick={() => {
-                  if (!isDeleting) {
-                    setShowDeleteModal(false);
-                    setDeleteError(null);
-                  }
-                }}
-                disabled={isDeleting}
-              >
-                &times;
-              </button>
-            </div>
-            <div className="modal-body">
-              <p>
-                Are you sure you want to delete this entry? It will be moved to the trash
-                and can be restored within the retention period.
-              </p>
-              {deleteError && (
-                <p className="entry-editor-error" style={{ marginTop: '1rem' }}>
-                  {deleteError}
-                </p>
-              )}
-            </div>
-            <div className="modal-footer">
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() => {
-                  setShowDeleteModal(false);
-                  setDeleteError(null);
-                }}
-                disabled={isDeleting}
-                data-testid="delete-cancel-button"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="btn btn-danger"
-                onClick={handleDeleteConfirm}
-                disabled={isDeleting}
-                data-testid="delete-confirm-button"
-              >
-                {isDeleting ? 'Deleting...' : 'Delete'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <CmsConfirmDialog
+        open={showDeleteModal}
+        onOpenChange={(open) => {
+          if (!open && !isDeleting) {
+            setShowDeleteModal(false)
+            setDeleteError(null)
+          }
+        }}
+        title="Delete Entry"
+        description="Are you sure you want to delete this entry? It will be moved to the trash and can be restored within the retention period."
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={handleDeleteConfirm}
+        isLoading={isDeleting}
+        error={deleteError}
+      />
 
       {/* Version History Panel */}
       {showVersionHistory && entry && (
-        <VersionHistory
-          entryId={entry._id}
-          currentVersion={entry.version}
-          onRollbackComplete={() => {
-            setShowVersionHistory(false);
-          }}
-          onClose={() => setShowVersionHistory(false)}
-        />
+        <div className="fixed inset-y-0 right-0 z-50 w-96 shadow-xl">
+          <VersionHistory
+            entryId={entry._id}
+            currentVersion={entry.version}
+            onRollbackComplete={() => {
+              setShowVersionHistory(false)
+            }}
+            onClose={() => setShowVersionHistory(false)}
+          />
+        </div>
       )}
     </form>
-  );
+  )
 }

@@ -1,848 +1,880 @@
-import { useState, useCallback, useMemo } from "react";
-import { useMutation } from "convex/react";
-import { api } from "../../convex/_generated/api";
-import { FieldType } from "@convex-cms/core/types";
+import { useState, useCallback, useMemo } from 'react'
+import { useMutation } from 'convex/react'
+import { api } from '../../convex/_generated/api'
+import type { FieldType } from '@convex-cms/core/types'
+import { CmsDialog } from '~/components/cmsds/CmsDialog'
+import { CmsButton } from '~/components/cmsds/CmsButton'
+import { Input } from '~/components/ui/input'
+import { Label } from '~/components/ui/label'
+import { Textarea } from '~/components/ui/textarea'
+import { Checkbox } from '~/components/ui/checkbox'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '~/components/ui/select'
+import { ScrollArea } from '~/components/ui/scroll-area'
+import { Badge } from '~/components/ui/badge'
+import {
+  Plus,
+  X,
+  ChevronUp,
+  ChevronDown,
+  AlignLeft,
+  FileType,
+  Hash,
+  ToggleLeft,
+  Calendar,
+  Link2,
+  Image,
+  Braces,
+  ChevronDownIcon,
+  List,
+  Tag,
+  FolderOpen,
+} from 'lucide-react'
+import { cn } from '~/lib/cn'
 
-/**
- * Select option for select/multiSelect fields.
- */
 interface SelectOption {
-	value: string;
-	label: string;
+  value: string
+  label: string
 }
 
-/**
- * Field definition for content type schema.
- */
 interface FieldDefinition {
-	name: string;
-	label: string;
-	type: FieldType;
-	required: boolean;
-	searchable?: boolean;
-	localized?: boolean;
-	description?: string;
-	options?: {
-		minLength?: number;
-		maxLength?: number;
-		pattern?: string;
-		min?: number;
-		max?: number;
-		step?: number;
-		precision?: number;
-		options?: SelectOption[];
-		allowedContentTypes?: string[];
-		multiple?: boolean;
-	};
+  name: string
+  label: string
+  type: FieldType
+  required: boolean
+  searchable?: boolean
+  localized?: boolean
+  description?: string
+  options?: {
+    minLength?: number
+    maxLength?: number
+    pattern?: string
+    min?: number
+    max?: number
+    step?: number
+    precision?: number
+    options?: SelectOption[]
+    allowedContentTypes?: string[]
+    multiple?: boolean
+  }
 }
 
-/**
- * Field type metadata for UI display.
- */
 const FIELD_TYPE_INFO: Record<
-	FieldType,
-	{ label: string; icon: string; description: string }
+  FieldType,
+  { label: string; icon: React.ReactNode; description: string }
 > = {
-	text: { label: "Text", icon: "Aa", description: "Single line text input" },
-	richText: {
-		label: "Rich Text",
-		icon: "¶",
-		description: "Multi-line formatted text",
-	},
-	number: { label: "Number", icon: "#", description: "Numeric value" },
-	boolean: { label: "Boolean", icon: "☑", description: "True/false toggle" },
-	date: { label: "Date", icon: "📅", description: "Date picker" },
-	datetime: {
-		label: "Date & Time",
-		icon: "📆",
-		description: "Date and time picker",
-	},
-	reference: {
-		label: "Reference",
-		icon: "🔗",
-		description: "Link to another content entry",
-	},
-	media: { label: "Media", icon: "🖼", description: "Image, video, or file" },
-	json: { label: "JSON", icon: "{}", description: "Custom JSON data" },
-	select: { label: "Select", icon: "▼", description: "Dropdown selection" },
-	multiSelect: {
-		label: "Multi-Select",
-		icon: "☰",
-		description: "Multiple selections",
-	},
-	tags: { label: "Tags", icon: "🏷", description: "Free-form tag list" },
-	category: {
-		label: "Category",
-		icon: "📁",
-		description: "Taxonomy category selection",
-	},
-};
+  text: {
+    label: 'Text',
+    icon: <AlignLeft className="size-4" />,
+    description: 'Single line text input',
+  },
+  richText: {
+    label: 'Rich Text',
+    icon: <FileType className="size-4" />,
+    description: 'Multi-line formatted text',
+  },
+  number: {
+    label: 'Number',
+    icon: <Hash className="size-4" />,
+    description: 'Numeric value',
+  },
+  boolean: {
+    label: 'Boolean',
+    icon: <ToggleLeft className="size-4" />,
+    description: 'True/false toggle',
+  },
+  date: {
+    label: 'Date',
+    icon: <Calendar className="size-4" />,
+    description: 'Date picker',
+  },
+  datetime: {
+    label: 'Date & Time',
+    icon: <Calendar className="size-4" />,
+    description: 'Date and time picker',
+  },
+  reference: {
+    label: 'Reference',
+    icon: <Link2 className="size-4" />,
+    description: 'Link to another content entry',
+  },
+  media: {
+    label: 'Media',
+    icon: <Image className="size-4" />,
+    description: 'Image, video, or file',
+  },
+  json: {
+    label: 'JSON',
+    icon: <Braces className="size-4" />,
+    description: 'Custom JSON data',
+  },
+  select: {
+    label: 'Select',
+    icon: <ChevronDownIcon className="size-4" />,
+    description: 'Dropdown selection',
+  },
+  multiSelect: {
+    label: 'Multi-Select',
+    icon: <List className="size-4" />,
+    description: 'Multiple selections',
+  },
+  tags: {
+    label: 'Tags',
+    icon: <Tag className="size-4" />,
+    description: 'Free-form tag list',
+  },
+  category: {
+    label: 'Category',
+    icon: <FolderOpen className="size-4" />,
+    description: 'Taxonomy category selection',
+  },
+}
 
-/**
- * Props for the ContentTypeFormModal component.
- */
 interface ContentTypeFormModalProps {
-	/** Whether the modal is open */
-	isOpen: boolean;
-	/** Callback when modal is closed */
-	onClose: () => void;
-	/** Callback when content type is created successfully */
-	onCreated?: (contentType: any) => void;
+  isOpen: boolean
+  onClose: () => void
+  onCreated?: (contentType: unknown) => void
 }
 
-/**
- * Generates a machine-readable name from a display name.
- * Converts to lowercase, replaces spaces with underscores, removes special chars.
- */
 function generateMachineName(displayName: string): string {
-	return displayName
-		.toLowerCase()
-		.trim()
-		.replace(/[^a-z0-9\s]/g, "")
-		.replace(/\s+/g, "_")
-		.replace(/^[0-9]/, "_$&") // Prefix with underscore if starts with number
-		.slice(0, 64);
+  return displayName
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s]/g, '')
+    .replace(/\s+/g, '_')
+    .replace(/^[0-9]/, '_$&')
+    .slice(0, 64)
 }
 
-/**
- * Validates system name format.
- * Must start with a letter, contain only lowercase letters, numbers, underscores.
- */
 function isValidMachineName(name: string): boolean {
-	return /^[a-z][a-z0-9_]{0,63}$/.test(name);
+  return /^[a-z][a-z0-9_]{0,63}$/.test(name)
 }
 
-/**
- * Modal form for creating a new content type with field definitions.
- *
- * Features:
- * - Basic info (name, display name, description)
- * - Dynamic field builder with drag-and-drop reordering
- * - Field type selection with type-specific options
- * - Validation of field definitions
- */
 export function ContentTypeFormModal({
-	isOpen,
-	onClose,
-	onCreated,
+  isOpen,
+  onClose,
+  onCreated,
 }: ContentTypeFormModalProps) {
-	// Form state
-	const [displayName, setDisplayName] = useState("");
-	const [machineName, setMachineName] = useState("");
-	const [machineNameManuallyEdited, setMachineNameManuallyEdited] = useState(
-		false,
-	);
-	const [description, setDescription] = useState("");
-	const [singleton, setSingleton] = useState(false);
-	const [fields, setFields] = useState<FieldDefinition[]>([
-		{ name: "title", label: "Title", type: "text", required: true },
-	]);
-	const [titleField, setTitleField] = useState("title");
-	const [slugField, setSlugField] = useState("title");
+  const [displayName, setDisplayName] = useState('')
+  const [machineName, setMachineName] = useState('')
+  const [machineNameManuallyEdited, setMachineNameManuallyEdited] = useState(false)
+  const [description, setDescription] = useState('')
+  const [singleton, setSingleton] = useState(false)
+  const [fields, setFields] = useState<FieldDefinition[]>([
+    { name: 'title', label: 'Title', type: 'text', required: true },
+  ])
+  const [titleField, setTitleField] = useState('title')
+  const [slugField, setSlugField] = useState('title')
 
-	// UI state
-	const [isSubmitting, setIsSubmitting] = useState(false);
-	const [submitError, setSubmitError] = useState<string | null>(null);
-	const [activeFieldIndex, setActiveFieldIndex] = useState<number | null>(null);
-	const [showFieldEditor, setShowFieldEditor] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
+  const [activeFieldIndex, setActiveFieldIndex] = useState<number | null>(null)
+  const [showFieldEditor, setShowFieldEditor] = useState(false)
 
-	// Mutation
-	const createContentType = useMutation(api.contentTypes.create);
+  const createContentType = useMutation(api.contentTypes.create)
 
-	// Reset form when modal opens/closes
-	const resetForm = useCallback(() => {
-		setDisplayName("");
-		setMachineName("");
-		setMachineNameManuallyEdited(false);
-		setDescription("");
-		setSingleton(false);
-		setFields([
-			{ name: "title", label: "Title", type: "text", required: true },
-		]);
-		setTitleField("title");
-		setSlugField("title");
-		setIsSubmitting(false);
-		setSubmitError(null);
-		setActiveFieldIndex(null);
-		setShowFieldEditor(false);
-	}, []);
+  const resetForm = useCallback(() => {
+    setDisplayName('')
+    setMachineName('')
+    setMachineNameManuallyEdited(false)
+    setDescription('')
+    setSingleton(false)
+    setFields([{ name: 'title', label: 'Title', type: 'text', required: true }])
+    setTitleField('title')
+    setSlugField('title')
+    setIsSubmitting(false)
+    setSubmitError(null)
+    setActiveFieldIndex(null)
+    setShowFieldEditor(false)
+  }, [])
 
-	// Auto-generate system name from display name
-	const handleDisplayNameChange = useCallback(
-		(value: string) => {
-			setDisplayName(value);
-			if (!machineNameManuallyEdited) {
-				setMachineName(generateMachineName(value));
-			}
-		},
-		[machineNameManuallyEdited],
-	);
+  const handleDisplayNameChange = useCallback(
+    (value: string) => {
+      setDisplayName(value)
+      if (!machineNameManuallyEdited) {
+        setMachineName(generateMachineName(value))
+      }
+    },
+    [machineNameManuallyEdited]
+  )
 
-	// Handle system name manual edit
-	const handleMachineNameChange = useCallback((value: string) => {
-		setMachineNameManuallyEdited(true);
-		setMachineName(value.toLowerCase().replace(/[^a-z0-9_]/g, ""));
-	}, []);
+  const handleMachineNameChange = useCallback((value: string) => {
+    setMachineNameManuallyEdited(true)
+    setMachineName(value.toLowerCase().replace(/[^a-z0-9_]/g, ''))
+  }, [])
 
-	// Field management
-	const addField = useCallback(() => {
-		const newFieldName = `field_${fields.length + 1}`;
-		setFields((prev) => [
-			...prev,
-			{
-				name: newFieldName,
-				label: `Field ${prev.length + 1}`,
-				type: "text",
-				required: false,
-			},
-		]);
-		setActiveFieldIndex(fields.length);
-		setShowFieldEditor(true);
-	}, [fields.length]);
+  const addField = useCallback(() => {
+    const newFieldName = `field_${fields.length + 1}`
+    setFields((prev) => [
+      ...prev,
+      {
+        name: newFieldName,
+        label: `Field ${prev.length + 1}`,
+        type: 'text',
+        required: false,
+      },
+    ])
+    setActiveFieldIndex(fields.length)
+    setShowFieldEditor(true)
+  }, [fields.length])
 
-	const removeField = useCallback(
-		(index: number) => {
-			const fieldToRemove = fields[index];
-			setFields((prev) => prev.filter((_, i) => i !== index));
+  const removeField = useCallback(
+    (index: number) => {
+      const fieldToRemove = fields[index]
+      setFields((prev) => prev.filter((_, i) => i !== index))
 
-			// Update title/slug field if the removed field was selected
-			if (titleField === fieldToRemove.name) {
-				const firstTextField = fields.find(
-					(f, i) => i !== index && f.type === "text",
-				);
-				setTitleField(firstTextField?.name || "");
-			}
-			if (slugField === fieldToRemove.name) {
-				const firstTextField = fields.find(
-					(f, i) => i !== index && f.type === "text",
-				);
-				setSlugField(firstTextField?.name || "");
-			}
+      if (titleField === fieldToRemove.name) {
+        const firstTextField = fields.find(
+          (f, i) => i !== index && f.type === 'text'
+        )
+        setTitleField(firstTextField?.name || '')
+      }
+      if (slugField === fieldToRemove.name) {
+        const firstTextField = fields.find(
+          (f, i) => i !== index && f.type === 'text'
+        )
+        setSlugField(firstTextField?.name || '')
+      }
 
-			if (activeFieldIndex === index) {
-				setActiveFieldIndex(null);
-				setShowFieldEditor(false);
-			} else if (activeFieldIndex !== null && activeFieldIndex > index) {
-				setActiveFieldIndex(activeFieldIndex - 1);
-			}
-		},
-		[fields, activeFieldIndex, titleField, slugField],
-	);
+      if (activeFieldIndex === index) {
+        setActiveFieldIndex(null)
+        setShowFieldEditor(false)
+      } else if (activeFieldIndex !== null && activeFieldIndex > index) {
+        setActiveFieldIndex(activeFieldIndex - 1)
+      }
+    },
+    [fields, activeFieldIndex, titleField, slugField]
+  )
 
-	const updateField = useCallback(
-		(index: number, updates: Partial<FieldDefinition>) => {
-			setFields((prev) =>
-				prev.map((field, i) =>
-					i === index ? { ...field, ...updates } : field,
-				),
-			);
-		},
-		[],
-	);
+  const updateField = useCallback(
+    (index: number, updates: Partial<FieldDefinition>) => {
+      setFields((prev) =>
+        prev.map((field, i) =>
+          i === index ? { ...field, ...updates } : field
+        )
+      )
+    },
+    []
+  )
 
-	const moveField = useCallback((fromIndex: number, toIndex: number) => {
-		setFields((prev) => {
-			const newFields = [...prev];
-			const [movedField] = newFields.splice(fromIndex, 1);
-			newFields.splice(toIndex, 0, movedField);
-			return newFields;
-		});
-		setActiveFieldIndex(toIndex);
-	}, []);
+  const moveField = useCallback((fromIndex: number, toIndex: number) => {
+    setFields((prev) => {
+      const newFields = [...prev]
+      const [movedField] = newFields.splice(fromIndex, 1)
+      newFields.splice(toIndex, 0, movedField)
+      return newFields
+    })
+    setActiveFieldIndex(toIndex)
+  }, [])
 
-	// Validation
-	const validationErrors = useMemo(() => {
-		const errors: string[] = [];
+  const validationErrors = useMemo(() => {
+    const errors: string[] = []
 
-		if (!displayName.trim()) {
-			errors.push("Display name is required");
-		}
+    if (!displayName.trim()) {
+      errors.push('Display name is required')
+    }
 
-		if (!machineName.trim()) {
-			errors.push("System Name is required");
-		} else if (!isValidMachineName(machineName)) {
-			errors.push(
-				"System Name must start with a letter and contain only lowercase letters, numbers, and underscores",
-			);
-		}
+    if (!machineName.trim()) {
+      errors.push('System Name is required')
+    } else if (!isValidMachineName(machineName)) {
+      errors.push(
+        'System Name must start with a letter and contain only lowercase letters, numbers, and underscores'
+      )
+    }
 
-		if (fields.length === 0) {
-			errors.push("At least one field is required");
-		}
+    if (fields.length === 0) {
+      errors.push('At least one field is required')
+    }
 
-		// Check for duplicate field names
-		const fieldNames = fields.map((f) => f.name);
-		const duplicates = fieldNames.filter(
-			(name, index) => fieldNames.indexOf(name) !== index,
-		);
-		if (duplicates.length > 0) {
-			errors.push(
-				`Duplicate field names: ${[...new Set(duplicates)].join(", ")}`,
-			);
-		}
+    const fieldNames = fields.map((f) => f.name)
+    const duplicates = fieldNames.filter(
+      (name, index) => fieldNames.indexOf(name) !== index
+    )
+    if (duplicates.length > 0) {
+      errors.push(
+        `Duplicate field names: ${[...new Set(duplicates)].join(', ')}`
+      )
+    }
 
-		// Check field name validity
-		for (const field of fields) {
-			if (!field.name.trim()) {
-				errors.push(`Field "${field.label}" has an empty name`);
-			} else if (!/^[a-z][a-z0-9_]{0,63}$/.test(field.name)) {
-				errors.push(`Field "${field.name}" has an invalid name format`);
-			}
-			if (!field.label.trim()) {
-				errors.push(`Field with name "${field.name}" has an empty label`);
-			}
+    for (const field of fields) {
+      if (!field.name.trim()) {
+        errors.push(`Field "${field.label}" has an empty name`)
+      } else if (!/^[a-z][a-z0-9_]{0,63}$/.test(field.name)) {
+        errors.push(`Field "${field.name}" has an invalid name format`)
+      }
+      if (!field.label.trim()) {
+        errors.push(`Field with name "${field.name}" has an empty label`)
+      }
 
-			// Check select fields have options
-			if (
-				(field.type === "select" || field.type === "multiSelect") &&
-				(!field.options?.options || field.options.options.length === 0)
-			) {
-				errors.push(
-					`${field.type} field "${field.label}" requires at least one option`,
-				);
-			}
-		}
+      if (
+        (field.type === 'select' || field.type === 'multiSelect') &&
+        (!field.options?.options || field.options.options.length === 0)
+      ) {
+        errors.push(
+          `${field.type} field "${field.label}" requires at least one option`
+        )
+      }
+    }
 
-		return errors;
-	}, [displayName, machineName, fields]);
+    return errors
+  }, [displayName, machineName, fields])
 
-	// Text fields for title/slug selection
-	const textFields = useMemo(() => fields.filter((f) => f.type === "text"), [
-		fields,
-	]);
+  const textFields = useMemo(
+    () => fields.filter((f) => f.type === 'text'),
+    [fields]
+  )
 
-	// Handle form submission
-	const handleSubmit = useCallback(
-		async (e: React.FormEvent) => {
-			e.preventDefault();
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault()
 
-			if (validationErrors.length > 0) {
-				setSubmitError(validationErrors.join(". "));
-				return;
-			}
+      if (validationErrors.length > 0) {
+        setSubmitError(validationErrors.join('. '))
+        return
+      }
 
-			setIsSubmitting(true);
-			setSubmitError(null);
+      setIsSubmitting(true)
+      setSubmitError(null)
 
-			try {
-				// Cast fields to satisfy TypeScript - backend validates the actual structure
-				const contentType = await createContentType({
-					name: machineName,
-					displayName: displayName.trim(),
-					description: description.trim() || undefined,
-					fields: fields as typeof fields,
-					singleton,
-					titleField: titleField || undefined,
-					slugField: slugField || undefined,
-				} as Parameters<typeof createContentType>[0]);
+      try {
+        const contentType = await createContentType({
+          name: machineName,
+          displayName: displayName.trim(),
+          description: description.trim() || undefined,
+          fields: fields as typeof fields,
+          singleton,
+          titleField: titleField || undefined,
+          slugField: slugField || undefined,
+        } as Parameters<typeof createContentType>[0])
 
-				onCreated?.(contentType);
-				resetForm();
-				onClose();
-			} catch (error) {
-				const message =
-					error instanceof Error
-						? error.message
-						: "Failed to create content type";
-				setSubmitError(message);
-			} finally {
-				setIsSubmitting(false);
-			}
-		},
-		[
-			validationErrors,
-			createContentType,
-			machineName,
-			displayName,
-			description,
-			fields,
-			singleton,
-			titleField,
-			slugField,
-			onCreated,
-			resetForm,
-			onClose,
-		],
-	);
+        onCreated?.(contentType)
+        resetForm()
+        onClose()
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : 'Failed to create content type'
+        setSubmitError(message)
+      } finally {
+        setIsSubmitting(false)
+      }
+    },
+    [
+      validationErrors,
+      createContentType,
+      machineName,
+      displayName,
+      description,
+      fields,
+      singleton,
+      titleField,
+      slugField,
+      onCreated,
+      resetForm,
+      onClose,
+    ]
+  )
 
-	// Handle modal close
-	const handleClose = useCallback(() => {
-		if (isSubmitting) return;
-		resetForm();
-		onClose();
-	}, [isSubmitting, resetForm, onClose]);
+  const handleClose = useCallback(() => {
+    if (isSubmitting) return
+    resetForm()
+    onClose()
+  }, [isSubmitting, resetForm, onClose])
 
-	if (!isOpen) return null;
+  if (!isOpen) return null
 
-	const activeField =
-		activeFieldIndex !== null ? fields[activeFieldIndex] : null;
+  const activeField =
+    activeFieldIndex !== null ? fields[activeFieldIndex] : null
 
-	return (
-		<div className="modal-overlay" onClick={handleClose}>
-			<div
-				className="modal modal-content-type"
-				onClick={(e) => e.stopPropagation()}
-				role="dialog"
-				aria-modal="true"
-				aria-labelledby="modal-title"
-			>
-				<div className="modal-header">
-					<h3 id="modal-title">Create Content Type</h3>
-					<button
-						type="button"
-						className="modal-close"
-						onClick={handleClose}
-						disabled={isSubmitting}
-						aria-label="Close modal"
-					>
-						&times;
-					</button>
-				</div>
+  return (
+    <CmsDialog
+      open={isOpen}
+      onOpenChange={(open) => !open && handleClose()}
+      title="Create Content Type"
+      size="xl"
+      className="max-h-[90vh]"
+      footer={
+        <>
+          <CmsButton
+            variant="outline"
+            onClick={handleClose}
+            disabled={isSubmitting}
+          >
+            Cancel
+          </CmsButton>
+          <CmsButton
+            variant="primary"
+            onClick={handleSubmit}
+            disabled={validationErrors.length > 0}
+            loading={isSubmitting}
+            data-testid="create-content-type-submit"
+          >
+            Create Content Type
+          </CmsButton>
+        </>
+      }
+    >
+      <ScrollArea className="max-h-[60vh]">
+        <form onSubmit={handleSubmit} className="space-y-6 pr-4">
+          {/* Basic Info Section */}
+          <div className="space-y-4">
+            <h4 className="text-sm font-semibold text-foreground">
+              Basic Information
+            </h4>
 
-				<form onSubmit={handleSubmit}>
-					<div className="modal-body modal-body-scrollable">
-						{/* Basic Info Section */}
-						<div className="form-section">
-							<h4 className="form-section-title">Basic Information</h4>
+            <div className="space-y-2">
+              <Label htmlFor="displayName">
+                Display Name <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="displayName"
+                value={displayName}
+                onChange={(e) => handleDisplayNameChange(e.target.value)}
+                placeholder="e.g., Blog Post"
+                disabled={isSubmitting}
+                autoFocus
+                data-testid="display-name-input"
+              />
+            </div>
 
-							<div className="form-group">
-								<label htmlFor="displayName">Display Name *</label>
-								<input
-									id="displayName"
-									type="text"
-									value={displayName}
-									onChange={(e) => handleDisplayNameChange(e.target.value)}
-									placeholder="e.g., Blog Post"
-									disabled={isSubmitting}
-									autoFocus
-									data-testid="display-name-input"
-								/>
-							</div>
+            <div className="space-y-2">
+              <Label htmlFor="machineName">
+                System Name <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="machineName"
+                value={machineName}
+                onChange={(e) => handleMachineNameChange(e.target.value)}
+                placeholder="e.g., blog_post"
+                disabled={isSubmitting}
+                className={cn(
+                  !isValidMachineName(machineName) &&
+                    machineName &&
+                    'border-destructive'
+                )}
+                data-testid="machine-name-input"
+              />
+              <p className="text-xs text-muted-foreground">
+                Lowercase letters, numbers, and underscores only. Used in API
+                queries.
+              </p>
+            </div>
 
-							<div className="form-group">
-								<label htmlFor="machineName">System Name *</label>
-								<input
-									id="machineName"
-									type="text"
-									value={machineName}
-									onChange={(e) => handleMachineNameChange(e.target.value)}
-									placeholder="e.g., blog_post"
-									disabled={isSubmitting}
-									className={
-										!isValidMachineName(machineName) && machineName
-											? "input-error"
-											: ""
-									}
-									data-testid="machine-name-input"
-								/>
-								<span className="form-help">
-									Lowercase letters, numbers, and underscores only. Used in API
-									queries.
-								</span>
-							</div>
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Optional description of this content type"
+                disabled={isSubmitting}
+                rows={2}
+              />
+            </div>
 
-							<div className="form-group">
-								<label htmlFor="description">Description</label>
-								<textarea
-									id="description"
-									value={description}
-									onChange={(e) => setDescription(e.target.value)}
-									placeholder="Optional description of this content type"
-									disabled={isSubmitting}
-									rows={2}
-								/>
-							</div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="singleton"
+                checked={singleton}
+                onCheckedChange={(checked) => setSingleton(checked as boolean)}
+                disabled={isSubmitting}
+              />
+              <Label htmlFor="singleton" className="cursor-pointer">
+                Singleton (only one entry allowed)
+              </Label>
+            </div>
+          </div>
 
-							<div className="form-group form-group-checkbox">
-								<label>
-									<input
-										type="checkbox"
-										checked={singleton}
-										onChange={(e) => setSingleton(e.target.checked)}
-										disabled={isSubmitting}
-									/>
-									<span>Singleton (only one entry allowed)</span>
-								</label>
-							</div>
-						</div>
+          {/* Fields Section */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-semibold text-foreground">Fields</h4>
+              <CmsButton
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={addField}
+                disabled={isSubmitting}
+                data-testid="add-field-button"
+              >
+                <Plus className="size-3.5" />
+                Add Field
+              </CmsButton>
+            </div>
 
-						{/* Fields Section */}
-						<div className="form-section">
-							<div className="form-section-header">
-								<h4 className="form-section-title">Fields</h4>
-								<button
-									type="button"
-									className="btn btn-small btn-secondary"
-									onClick={addField}
-									disabled={isSubmitting}
-									data-testid="add-field-button"
-								>
-									+ Add Field
-								</button>
-							</div>
+            <div className="space-y-2">
+              {fields.map((field, index) => (
+                <div
+                  key={index}
+                  className={cn(
+                    'flex cursor-pointer items-center gap-2 rounded-lg border p-2 transition-colors hover:bg-muted/50',
+                    activeFieldIndex === index &&
+                      'border-primary bg-primary/5'
+                  )}
+                  onClick={() => {
+                    setActiveFieldIndex(index)
+                    setShowFieldEditor(true)
+                  }}
+                  data-testid={`field-item-${index}`}
+                >
+                  <div className="flex flex-col gap-0.5">
+                    {index > 0 && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          moveField(index, index - 1)
+                        }}
+                        className="rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+                      >
+                        <ChevronUp className="size-3" />
+                      </button>
+                    )}
+                    {index < fields.length - 1 && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          moveField(index, index + 1)
+                        }}
+                        className="rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+                      >
+                        <ChevronDown className="size-3" />
+                      </button>
+                    )}
+                  </div>
 
-							<div className="field-list">
-								{fields.map((field, index) => (
-									<div
-										key={index}
-										className={`field-list-item ${
-											activeFieldIndex === index
-												? "field-list-item--active"
-												: ""
-										}`}
-										onClick={() => {
-											setActiveFieldIndex(index);
-											setShowFieldEditor(true);
-										}}
-										data-testid={`field-item-${index}`}
-									>
-										<div className="field-list-item-drag">
-											{index > 0 && (
-												<button
-													type="button"
-													className="field-move-btn"
-													onClick={(e) => {
-														e.stopPropagation();
-														moveField(index, index - 1);
-													}}
-													title="Move up"
-												>
-													▲
-												</button>
-											)}
-											{index < fields.length - 1 && (
-												<button
-													type="button"
-													className="field-move-btn"
-													onClick={(e) => {
-														e.stopPropagation();
-														moveField(index, index + 1);
-													}}
-													title="Move down"
-												>
-													▼
-												</button>
-											)}
-										</div>
-										<div className="field-list-item-icon">
-											{FIELD_TYPE_INFO[field.type].icon}
-										</div>
-										<div className="field-list-item-info">
-											<span className="field-list-item-label">
-												{field.label}
-											</span>
-											<span className="field-list-item-type">
-												{FIELD_TYPE_INFO[field.type].label}
-												{field.required && " *"}
-											</span>
-										</div>
-										<button
-											type="button"
-											className="field-list-item-remove"
-											onClick={(e) => {
-												e.stopPropagation();
-												removeField(index);
-											}}
-											disabled={isSubmitting || fields.length === 1}
-											title="Remove field"
-										>
-											×
-										</button>
-									</div>
-								))}
-							</div>
+                  <div className="flex size-8 items-center justify-center rounded bg-muted text-muted-foreground">
+                    {FIELD_TYPE_INFO[field.type].icon}
+                  </div>
 
-							{/* Field Editor Panel */}
-							{showFieldEditor && activeField && activeFieldIndex !== null && (
-								<div className="field-editor" data-testid="field-editor">
-									<div className="field-editor-header">
-										<h5>Edit Field: {activeField.label}</h5>
-										<button
-											type="button"
-											className="btn-icon"
-											onClick={() => {
-												setShowFieldEditor(false);
-												setActiveFieldIndex(null);
-											}}
-										>
-											×
-										</button>
-									</div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium">
+                      {field.label}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {FIELD_TYPE_INFO[field.type].label}
+                      {field.required && ' *'}
+                    </p>
+                  </div>
 
-									<div className="form-group">
-										<label htmlFor="fieldLabel">Label *</label>
-										<input
-											id="fieldLabel"
-											type="text"
-											value={activeField.label}
-											onChange={(e) =>
-												updateField(activeFieldIndex, {
-													label: e.target.value,
-													name: machineNameManuallyEdited
-														? activeField.name
-														: generateMachineName(e.target.value) ||
-														  activeField.name,
-												})
-											}
-											disabled={isSubmitting}
-											data-testid="field-label-input"
-										/>
-									</div>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      removeField(index)
+                    }}
+                    disabled={isSubmitting || fields.length === 1}
+                    className="rounded p-1 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
+                  >
+                    <X className="size-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
 
-									<div className="form-group">
-										<label htmlFor="fieldName">Name *</label>
-										<input
-											id="fieldName"
-											type="text"
-											value={activeField.name}
-											onChange={(e) =>
-												updateField(activeFieldIndex, {
-													name: e.target.value
-														.toLowerCase()
-														.replace(/[^a-z0-9_]/g, ""),
-												})
-											}
-											disabled={isSubmitting}
-											data-testid="field-name-input"
-										/>
-									</div>
+            {/* Field Editor Panel */}
+            {showFieldEditor && activeField && activeFieldIndex !== null && (
+              <div
+                className="rounded-lg border bg-muted/30 p-4"
+                data-testid="field-editor"
+              >
+                <div className="mb-4 flex items-center justify-between">
+                  <h5 className="font-medium">Edit Field: {activeField.label}</h5>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowFieldEditor(false)
+                      setActiveFieldIndex(null)
+                    }}
+                    className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                  >
+                    <X className="size-4" />
+                  </button>
+                </div>
 
-									<div className="form-group">
-										<label htmlFor="fieldType">Type *</label>
-										<select
-											id="fieldType"
-											value={activeField.type}
-											onChange={(e) =>
-												updateField(activeFieldIndex, {
-													type: e.target.value as FieldType,
-													options: undefined, // Reset options when type changes
-												})
-											}
-											disabled={isSubmitting}
-											data-testid="field-type-select"
-										>
-											{Object.entries(FIELD_TYPE_INFO).map(([type, info]) => (
-												<option key={type} value={type}>
-													{info.label} - {info.description}
-												</option>
-											))}
-										</select>
-									</div>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="fieldLabel">
+                      Label <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      id="fieldLabel"
+                      value={activeField.label}
+                      onChange={(e) =>
+                        updateField(activeFieldIndex, {
+                          label: e.target.value,
+                          name: machineNameManuallyEdited
+                            ? activeField.name
+                            : generateMachineName(e.target.value) ||
+                              activeField.name,
+                        })
+                      }
+                      disabled={isSubmitting}
+                      data-testid="field-label-input"
+                    />
+                  </div>
 
-									<div className="form-group form-group-checkbox">
-										<label>
-											<input
-												type="checkbox"
-												checked={activeField.required}
-												onChange={(e) =>
-													updateField(activeFieldIndex, {
-														required: e.target.checked,
-													})
-												}
-												disabled={isSubmitting}
-											/>
-											<span>Required</span>
-										</label>
-									</div>
+                  <div className="space-y-2">
+                    <Label htmlFor="fieldName">
+                      Name <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      id="fieldName"
+                      value={activeField.name}
+                      onChange={(e) =>
+                        updateField(activeFieldIndex, {
+                          name: e.target.value
+                            .toLowerCase()
+                            .replace(/[^a-z0-9_]/g, ''),
+                        })
+                      }
+                      disabled={isSubmitting}
+                      data-testid="field-name-input"
+                    />
+                  </div>
 
-									<div className="form-group">
-										<label htmlFor="fieldDescription">Help Text</label>
-										<input
-											id="fieldDescription"
-											type="text"
-											value={activeField.description || ""}
-											onChange={(e) =>
-												updateField(activeFieldIndex, {
-													description: e.target.value || undefined,
-												})
-											}
-											placeholder="Help text shown below the field"
-											disabled={isSubmitting}
-										/>
-									</div>
+                  <div className="space-y-2">
+                    <Label htmlFor="fieldType">
+                      Type <span className="text-destructive">*</span>
+                    </Label>
+                    <Select
+                      value={activeField.type}
+                      onValueChange={(value) =>
+                        updateField(activeFieldIndex, {
+                          type: value as FieldType,
+                          options: undefined,
+                        })
+                      }
+                      disabled={isSubmitting}
+                    >
+                      <SelectTrigger data-testid="field-type-select">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(FIELD_TYPE_INFO).map(([type, info]) => (
+                          <SelectItem key={type} value={type}>
+                            <div className="flex items-center gap-2">
+                              {info.icon}
+                              <span>{info.label}</span>
+                              <span className="text-muted-foreground">
+                                - {info.description}
+                              </span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-									{/* Select options editor */}
-									{(activeField.type === "select" ||
-										activeField.type === "multiSelect") && (
-										<SelectOptionsEditor
-											options={activeField.options?.options || []}
-											onChange={(options) =>
-												updateField(activeFieldIndex, {
-													options: { ...activeField.options, options },
-												})
-											}
-											disabled={isSubmitting}
-										/>
-									)}
-								</div>
-							)}
-						</div>
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="fieldRequired"
+                      checked={activeField.required}
+                      onCheckedChange={(checked) =>
+                        updateField(activeFieldIndex, {
+                          required: checked as boolean,
+                        })
+                      }
+                      disabled={isSubmitting}
+                    />
+                    <Label htmlFor="fieldRequired" className="cursor-pointer">
+                      Required
+                    </Label>
+                  </div>
 
-						{/* Advanced Settings */}
-						{textFields.length > 0 && (
-							<div className="form-section">
-								<h4 className="form-section-title">Display Settings</h4>
+                  <div className="space-y-2">
+                    <Label htmlFor="fieldDescription">Help Text</Label>
+                    <Input
+                      id="fieldDescription"
+                      value={activeField.description || ''}
+                      onChange={(e) =>
+                        updateField(activeFieldIndex, {
+                          description: e.target.value || undefined,
+                        })
+                      }
+                      placeholder="Help text shown below the field"
+                      disabled={isSubmitting}
+                    />
+                  </div>
 
-								<div className="form-group">
-									<label htmlFor="titleField">Title Field</label>
-									<select
-										id="titleField"
-										value={titleField}
-										onChange={(e) => setTitleField(e.target.value)}
-										disabled={isSubmitting}
-									>
-										<option value="">None</option>
-										{textFields.map((field) => (
-											<option key={field.name} value={field.name}>
-												{field.label}
-											</option>
-										))}
-									</select>
-									<span className="form-help">
-										Field to display as the entry title in lists
-									</span>
-								</div>
+                  {(activeField.type === 'select' ||
+                    activeField.type === 'multiSelect') && (
+                    <SelectOptionsEditor
+                      options={activeField.options?.options || []}
+                      onChange={(options) =>
+                        updateField(activeFieldIndex, {
+                          options: { ...activeField.options, options },
+                        })
+                      }
+                      disabled={isSubmitting}
+                    />
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
 
-								<div className="form-group">
-									<label htmlFor="slugField">Slug Field</label>
-									<select
-										id="slugField"
-										value={slugField}
-										onChange={(e) => setSlugField(e.target.value)}
-										disabled={isSubmitting}
-									>
-										<option value="">None (auto-generate)</option>
-										{textFields.map((field) => (
-											<option key={field.name} value={field.name}>
-												{field.label}
-											</option>
-										))}
-									</select>
-									<span className="form-help">
-										Field to use for generating URL-friendly slugs
-									</span>
-								</div>
-							</div>
-						)}
+          {/* Display Settings */}
+          {textFields.length > 0 && (
+            <div className="space-y-4">
+              <h4 className="text-sm font-semibold text-foreground">
+                Display Settings
+              </h4>
 
-						{/* Error display */}
-						{submitError && (
-							<div
-								className="form-error"
-								role="alert"
-								data-testid="submit-error"
-							>
-								{submitError}
-							</div>
-						)}
-					</div>
+              <div className="space-y-2">
+                <Label htmlFor="titleField">Title Field</Label>
+                <Select
+                  value={titleField}
+                  onValueChange={setTitleField}
+                  disabled={isSubmitting}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="None" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">None</SelectItem>
+                    {textFields.map((field) => (
+                      <SelectItem key={field.name} value={field.name}>
+                        {field.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Field to display as the entry title in lists
+                </p>
+              </div>
 
-					<div className="modal-footer">
-						<button
-							type="button"
-							className="btn btn-secondary"
-							onClick={handleClose}
-							disabled={isSubmitting}
-						>
-							Cancel
-						</button>
-						<button
-							type="submit"
-							className="btn btn-primary"
-							disabled={isSubmitting || validationErrors.length > 0}
-							data-testid="create-content-type-submit"
-						>
-							{isSubmitting ? "Creating..." : "Create Content Type"}
-						</button>
-					</div>
-				</form>
-			</div>
-		</div>
-	);
+              <div className="space-y-2">
+                <Label htmlFor="slugField">Slug Field</Label>
+                <Select
+                  value={slugField}
+                  onValueChange={setSlugField}
+                  disabled={isSubmitting}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="None (auto-generate)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">None (auto-generate)</SelectItem>
+                    {textFields.map((field) => (
+                      <SelectItem key={field.name} value={field.name}>
+                        {field.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Field to use for generating URL-friendly slugs
+                </p>
+              </div>
+            </div>
+          )}
+
+          {submitError && (
+            <div
+              className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800"
+              role="alert"
+              data-testid="submit-error"
+            >
+              {submitError}
+            </div>
+          )}
+        </form>
+      </ScrollArea>
+    </CmsDialog>
+  )
 }
 
-/**
- * Editor for select/multiSelect field options.
- */
 function SelectOptionsEditor({
-	options,
-	onChange,
-	disabled,
+  options,
+  onChange,
+  disabled,
 }: {
-	options: SelectOption[];
-	onChange: (options: SelectOption[]) => void;
-	disabled?: boolean;
+  options: SelectOption[]
+  onChange: (options: SelectOption[]) => void
+  disabled?: boolean
 }) {
-	const addOption = () => {
-		onChange([
-			...options,
-			{ value: `option_${options.length + 1}`, label: "" },
-		]);
-	};
+  const addOption = () => {
+    onChange([
+      ...options,
+      { value: `option_${options.length + 1}`, label: '' },
+    ])
+  }
 
-	const removeOption = (index: number) => {
-		onChange(options.filter((_, i) => i !== index));
-	};
+  const removeOption = (index: number) => {
+    onChange(options.filter((_, i) => i !== index))
+  }
 
-	const updateOption = (index: number, updates: Partial<SelectOption>) => {
-		onChange(
-			options.map((opt, i) => (i === index ? { ...opt, ...updates } : opt)),
-		);
-	};
+  const updateOption = (index: number, updates: Partial<SelectOption>) => {
+    onChange(
+      options.map((opt, i) => (i === index ? { ...opt, ...updates } : opt))
+    )
+  }
 
-	return (
-		<div className="form-group">
-			<label>Options *</label>
-			<div className="select-options-list">
-				{options.map((option, index) => (
-					<div key={index} className="select-option-item">
-						<input
-							type="text"
-							value={option.label}
-							onChange={(e) => {
-								const label = e.target.value;
-								const value = label
-									.toLowerCase()
-									.replace(/[^a-z0-9]/g, "_")
-									.replace(/^_+|_+$/g, "");
-								updateOption(index, { label, value });
-							}}
-							placeholder="Option label"
-							disabled={disabled}
-						/>
-						<input
-							type="text"
-							value={option.value}
-							onChange={(e) =>
-								updateOption(index, {
-									value: e.target.value
-										.toLowerCase()
-										.replace(/[^a-z0-9_]/g, ""),
-								})
-							}
-							placeholder="value"
-							disabled={disabled}
-							className="select-option-value"
-						/>
-						<button
-							type="button"
-							className="btn-icon"
-							onClick={() => removeOption(index)}
-							disabled={disabled}
-						>
-							×
-						</button>
-					</div>
-				))}
-			</div>
-			<button
-				type="button"
-				className="btn btn-small btn-secondary"
-				onClick={addOption}
-				disabled={disabled}
-			>
-				+ Add Option
-			</button>
-		</div>
-	);
+  return (
+    <div className="space-y-2">
+      <Label>
+        Options <span className="text-destructive">*</span>
+      </Label>
+      <div className="space-y-2">
+        {options.map((option, index) => (
+          <div key={index} className="flex items-center gap-2">
+            <Input
+              value={option.label}
+              onChange={(e) => {
+                const label = e.target.value
+                const value = label
+                  .toLowerCase()
+                  .replace(/[^a-z0-9]/g, '_')
+                  .replace(/^_+|_+$/g, '')
+                updateOption(index, { label, value })
+              }}
+              placeholder="Option label"
+              disabled={disabled}
+              className="flex-1"
+            />
+            <Input
+              value={option.value}
+              onChange={(e) =>
+                updateOption(index, {
+                  value: e.target.value
+                    .toLowerCase()
+                    .replace(/[^a-z0-9_]/g, ''),
+                })
+              }
+              placeholder="value"
+              disabled={disabled}
+              className="w-32"
+            />
+            <button
+              type="button"
+              onClick={() => removeOption(index)}
+              disabled={disabled}
+              className="rounded p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+            >
+              <X className="size-4" />
+            </button>
+          </div>
+        ))}
+      </div>
+      <CmsButton
+        type="button"
+        variant="secondary"
+        size="sm"
+        onClick={addOption}
+        disabled={disabled}
+      >
+        <Plus className="size-3.5" />
+        Add Option
+      </CmsButton>
+    </div>
+  )
 }
