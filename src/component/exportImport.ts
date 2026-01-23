@@ -161,7 +161,8 @@ export type ExportedEntry = {
 	_originalId: string;
 	contentTypeName: string;
 	slug: string;
-	status: "draft" | "published" | "archived" | "scheduled";
+	/** Content status (supports custom workflow states) */
+	status: string;
 	data: Record<string, unknown>;
 	locale?: string;
 	version: number;

@@ -41,8 +41,8 @@ export interface ResolvedReference {
 	contentTypeDisplayName: string;
 	/** The entry's slug */
 	slug: string;
-	/** The entry's status */
-	status: "draft" | "published" | "archived" | "scheduled";
+	/** The entry's status (supports custom workflow states) */
+	status: string;
 	/** The entry's data (field values) */
 	data: Record<string, unknown>;
 	/** Whether the entry exists and is not deleted */

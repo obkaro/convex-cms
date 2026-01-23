@@ -160,8 +160,8 @@ export interface ResolvedContentEntry {
 	contentTypeDisplayName: string;
 	/** The entry's URL slug */
 	slug: string;
-	/** The entry's publishing status */
-	status: "draft" | "published" | "archived" | "scheduled";
+	/** The entry's publishing status (supports custom workflow states) */
+	status: string;
 	/** The entry's data with resolved references */
 	data: Record<string, unknown>;
 	/** Whether the entry exists */
@@ -251,7 +251,7 @@ export async function resolveEntryReferences(
 	entry: {
 		_id: string;
 		slug: string;
-		status: "draft" | "published" | "archived" | "scheduled";
+		status: string;
 		data: Record<string, unknown>;
 		contentTypeId?: string;
 		locale?: string;
@@ -395,7 +395,7 @@ export async function resolveEntryReferencesBatch(
 	entries: Array<{
 		_id: string;
 		slug: string;
-		status: "draft" | "published" | "archived" | "scheduled";
+		status: string;
 		data: Record<string, unknown>;
 		contentTypeId?: string;
 		locale?: string;
