@@ -31,14 +31,9 @@ describe("Version History Query", () => {
       expect(argFields).toContain("entryId");
     });
 
-    it("should have cursor field for pagination", () => {
+    it("should have paginationOpts field for pagination", () => {
       const argFields = Object.keys(getVersionHistoryArgs.fields);
-      expect(argFields).toContain("cursor");
-    });
-
-    it("should have limit field for page size", () => {
-      const argFields = Object.keys(getVersionHistoryArgs.fields);
-      expect(argFields).toContain("limit");
+      expect(argFields).toContain("paginationOpts");
     });
   });
 

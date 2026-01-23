@@ -52,9 +52,9 @@ describe("RBAC Constants", () => {
     it("should include all CMS resources", () => {
       expect(resources).toContain("contentTypes");
       expect(resources).toContain("contentEntries");
-      expect(resources).toContain("mediaAssets");
-      expect(resources).toContain("mediaFolders");
+      expect(resources).toContain("mediaItems");
       expect(resources).toContain("settings");
+      expect(resources).toHaveLength(4);
     });
   });
 
@@ -107,16 +107,15 @@ describe("DEFAULT_ROLES", () => {
     });
 
     it("should have full permissions on all resources", () => {
-      const resources: Resource[] = [
+      const testResources: Resource[] = [
         "contentTypes",
         "contentEntries",
-        "mediaAssets",
-        "mediaFolders",
+        "mediaItems",
       ];
-      const actions: Action[] = ["create", "read", "update", "delete"];
+      const testActions: Action[] = ["create", "read", "update", "delete"];
 
-      for (const resource of resources) {
-        for (const action of actions) {
+      for (const resource of testResources) {
+        for (const action of testActions) {
           expect(
             hasPermission("admin", { resource, action }),
             `admin should have ${action} permission on ${resource}`
@@ -183,7 +182,7 @@ describe("DEFAULT_ROLES", () => {
 
     it("should be able to read all media (for embedding)", () => {
       // Author should have read access to all media for embedding in content
-      expect(hasPermission("author", { resource: "mediaAssets", action: "read" })).toBe(true);
+      expect(hasPermission("author", { resource: "mediaItems", action: "read" })).toBe(true);
     });
 
     it("should NOT have settings access", () => {
@@ -201,8 +200,7 @@ describe("DEFAULT_ROLES", () => {
     it("should have read-only access", () => {
       expect(hasPermission("viewer", { resource: "contentTypes", action: "read" })).toBe(true);
       expect(hasPermission("viewer", { resource: "contentEntries", action: "read" })).toBe(true);
-      expect(hasPermission("viewer", { resource: "mediaAssets", action: "read" })).toBe(true);
-      expect(hasPermission("viewer", { resource: "mediaFolders", action: "read" })).toBe(true);
+      expect(hasPermission("viewer", { resource: "mediaItems", action: "read" })).toBe(true);
     });
 
     it("should NOT have any write permissions", () => {
@@ -342,8 +340,7 @@ describe("canAccessResource", () => {
     const allResources: Resource[] = [
       "contentTypes",
       "contentEntries",
-      "mediaAssets",
-      "mediaFolders",
+      "mediaItems",
       "settings",
     ];
     for (const resource of allResources) {

@@ -64,7 +64,7 @@ describe("UnauthorizedError", () => {
   it("should serialize to JSON correctly", () => {
     const error = new UnauthorizedError("Test", {
       code: "OWNERSHIP_REQUIRED",
-      resource: "mediaAssets",
+      resource: "mediaItems",
       action: "delete",
       role: "author",
       userId: "user456",
@@ -77,7 +77,7 @@ describe("UnauthorizedError", () => {
       name: "UnauthorizedError",
       message: "Test",
       code: "OWNERSHIP_REQUIRED",
-      resource: "mediaAssets",
+      resource: "mediaItems",
       action: "delete",
       role: "author",
       userId: "user456",
@@ -185,20 +185,17 @@ describe("checkPermission", () => {
       }
     });
 
-    it("should allow CRUD on media assets and folders", () => {
-      const resources = ["mediaAssets", "mediaFolders"] as const;
-      const actions = ["create", "read", "update", "delete"] as const;
+    it("should allow CRUD on media items", () => {
+      const testActions = ["create", "read", "update", "delete"] as const;
 
-      for (const resource of resources) {
-        for (const action of actions) {
-          const result = checkPermission({
-            role: "admin",
-            resource,
-            action,
-          });
+      for (const action of testActions) {
+        const result = checkPermission({
+          role: "admin",
+          resource: "mediaItems",
+          action,
+        });
 
-          expect(result.allowed).toBe(true);
-        }
+        expect(result.allowed).toBe(true);
       }
     });
 
@@ -367,7 +364,7 @@ describe("checkPermission", () => {
       const result = checkPermission({
         userId: "user123",
         role: "author",
-        resource: "mediaAssets",
+        resource: "mediaItems",
         action: "read",
         resourceOwnerId: "other-user",
       });
@@ -382,7 +379,7 @@ describe("checkPermission", () => {
       const ownResult = checkPermission({
         userId: "user123",
         role: "author",
-        resource: "mediaAssets",
+        resource: "mediaItems",
         action: "delete",
         resourceOwnerId: "user123",
       });
@@ -390,7 +387,7 @@ describe("checkPermission", () => {
       const otherResult = checkPermission({
         userId: "user123",
         role: "author",
-        resource: "mediaAssets",
+        resource: "mediaItems",
         action: "delete",
         resourceOwnerId: "other-user",
       });
@@ -431,7 +428,7 @@ describe("checkPermission", () => {
     it("should allow read on media assets", () => {
       const result = checkPermission({
         role: "viewer",
-        resource: "mediaAssets",
+        resource: "mediaItems",
         action: "read",
       });
 
@@ -458,10 +455,10 @@ describe("checkPermission", () => {
         description: "Full control over media assets",
         isSystem: false,
         permissions: [
-          { resource: "mediaAssets", action: "create" },
-          { resource: "mediaAssets", action: "read" },
-          { resource: "mediaAssets", action: "update" },
-          { resource: "mediaAssets", action: "delete" },
+          { resource: "mediaItems", action: "create" },
+          { resource: "mediaItems", action: "read" },
+          { resource: "mediaItems", action: "update" },
+          { resource: "mediaItems", action: "delete" },
         ],
       },
     };
@@ -494,7 +491,7 @@ describe("checkPermission", () => {
       for (const action of actions) {
         const result = checkPermission({
           role: "media-manager",
-          resource: "mediaAssets",
+          resource: "mediaItems",
           action,
           customRoles,
         });
@@ -637,7 +634,7 @@ describe("requireResourceOwnership", () => {
   it("should include resource and action in error", () => {
     try {
       requireResourceOwnership("user123", "user456", {
-        resource: "mediaAssets",
+        resource: "mediaItems",
         action: "delete",
         role: "author",
       });
@@ -646,7 +643,7 @@ describe("requireResourceOwnership", () => {
       expect(error).toBeInstanceOf(UnauthorizedError);
       const authError = error as UnauthorizedError;
       expect(authError.code).toBe("OWNERSHIP_REQUIRED");
-      expect(authError.resource).toBe("mediaAssets");
+      expect(authError.resource).toBe("mediaItems");
       expect(authError.action).toBe("delete");
       expect(authError.requiredScope).toBe("own");
     }
@@ -793,7 +790,7 @@ describe("error message generation", () => {
     try {
       requirePermission({
         role: "mystery-role",
-        resource: "mediaAssets",
+        resource: "mediaItems",
         action: "delete",
       });
     } catch (error) {

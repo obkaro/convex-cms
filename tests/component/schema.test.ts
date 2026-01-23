@@ -25,12 +25,12 @@ describe("Core Schema Definitions", () => {
 			expect(schema.tables.contentVersions).toBeDefined();
 		});
 
-		it("defines mediaAssets table", () => {
-			expect(schema.tables.mediaAssets).toBeDefined();
+		it("defines mediaItems table (unified assets and folders)", () => {
+			expect(schema.tables.mediaItems).toBeDefined();
 		});
 
-		it("defines mediaFolders table", () => {
-			expect(schema.tables.mediaFolders).toBeDefined();
+		it("defines mediaVariants table", () => {
+			expect(schema.tables.mediaVariants).toBeDefined();
 		});
 	});
 
@@ -69,16 +69,16 @@ describe("Core Schema Definitions", () => {
 		});
 	});
 
-	describe("mediaAssets table structure", () => {
+	describe("mediaItems table structure", () => {
 		it("has expected fields", () => {
-			const tableValidator = schema.tables.mediaAssets.validator;
+			const tableValidator = schema.tables.mediaItems.validator;
 			expect(tableValidator).toBeDefined();
 		});
 	});
 
-	describe("mediaFolders table structure", () => {
+	describe("mediaVariants table structure", () => {
 		it("has expected fields", () => {
-			const tableValidator = schema.tables.mediaFolders.validator;
+			const tableValidator = schema.tables.mediaVariants.validator;
 			expect(tableValidator).toBeDefined();
 		});
 	});

@@ -533,6 +533,7 @@ export const contentTypeFactory = {
 				.split("_")
 				.map((word) => word.charAt(0).toUpperCase() + word.slice(1))
 				.join(" "),
+			createdBy: "test-user",
 			fields: [],
 			isActive: true,
 		};
@@ -546,6 +547,7 @@ export const contentTypeFactory = {
 			name: "blog_post",
 			displayName: "Blog Post",
 			description: "A blog post content type for testing",
+			createdBy: "test-user",
 			fields: [
 				fieldFactory.text("title", "Title", {
 					required: true,
@@ -596,6 +598,7 @@ export const contentTypeFactory = {
 			name: "product",
 			displayName: "Product",
 			description: "A product content type for testing",
+			createdBy: "test-user",
 			fields: [
 				fieldFactory.text("name", "Product Name", {
 					required: true,
@@ -645,6 +648,7 @@ export const contentTypeFactory = {
 			name: "author",
 			displayName: "Author",
 			description: "An author content type for testing",
+			createdBy: "test-user",
 			fields: [
 				fieldFactory.text("name", "Name", { required: true, searchable: true }),
 				fieldFactory.text("email", "Email"),
@@ -669,6 +673,7 @@ export const contentTypeFactory = {
 			name: "category",
 			displayName: "Category",
 			description: "A category content type for testing",
+			createdBy: "test-user",
 			fields: [
 				fieldFactory.text("name", "Name", { required: true, searchable: true }),
 				fieldFactory.text("description", "Description"),
@@ -693,6 +698,7 @@ export const contentTypeFactory = {
 			name: "page",
 			displayName: "Page",
 			description: "A page content type for testing",
+			createdBy: "test-user",
 			fields: [
 				fieldFactory.text("title", "Title", {
 					required: true,
@@ -725,6 +731,7 @@ export const contentTypeFactory = {
 			name: "site_settings",
 			displayName: "Site Settings",
 			description: "Global site settings (singleton)",
+			createdBy: "test-user",
 			fields: [
 				fieldFactory.text("siteName", "Site Name", { required: true }),
 				fieldFactory.text("tagline", "Tagline"),
@@ -751,6 +758,7 @@ export const contentTypeFactory = {
 			name: "all_fields",
 			displayName: "All Field Types",
 			description: "A content type with every supported field type",
+			createdBy: "test-user",
 			fields: [
 				fieldFactory.text("textField", "Text Field", { required: true }),
 				fieldFactory.richText("richTextField", "Rich Text Field"),
@@ -790,6 +798,7 @@ export const contentTypeFactory = {
 		return {
 			name,
 			displayName,
+			createdBy: "test-user",
 			fields,
 			isActive: true,
 			...overrides,
@@ -1221,17 +1230,17 @@ export const mediaAssetFactory = {
 // Media Folder Factories
 // =============================================================================
 
-let folderCounter = 0;
+let _folderCounter = 0;
 
 /**
  * Factory functions for creating test media folder data.
  */
 export const mediaFolderFactory = {
 	/**
-	 * Reset the internal counter.
+	 * Reset the internal counter used for generating unique folder names.
 	 */
 	resetCounter(): void {
-		folderCounter = 0;
+		_folderCounter = 0;
 	},
 
 	/**
@@ -1241,7 +1250,6 @@ export const mediaFolderFactory = {
 		name: string,
 		overrides: Partial<MediaFolderData> = {},
 	): MediaFolderData {
-		folderCounter++;
 		return {
 			kind: "folder",
 			name,
@@ -1259,7 +1267,6 @@ export const mediaFolderFactory = {
 		parentPath: string,
 		overrides: Partial<MediaFolderData> = {},
 	): MediaFolderData {
-		folderCounter++;
 		return {
 			kind: "folder",
 			name,
@@ -1530,7 +1537,14 @@ export { schema, modules };
 /**
  * Re-export type constants for convenience.
  */
-export { fieldTypes, contentStatuses, mediaTypes } from "./component/schema.js";
+export {
+	fieldTypes,
+	contentStatuses,
+	mediaTypes,
+	variantTypes,
+	variantStatuses,
+	variantFormats,
+} from "./component/schema.js";
 
 /**
  * Default export for convenient importing.

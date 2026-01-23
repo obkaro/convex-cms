@@ -634,7 +634,6 @@ describe("Content Type Mutation Integration Tests", () => {
 				{
 					id: created._id,
 					displayName: "Updated Product",
-					createdBy: "test-user",
 					description: "Updated description",
 					updatedBy: "admin",
 				},
@@ -1096,7 +1095,6 @@ describe("Content Type Mutation Integration Tests", () => {
 				t.mutation(api.contentTypeMutations.updateContentType, {
 					id: created._id,
 					displayName: "Updated",
-					createdBy: "test-user",
 				}),
 			).rejects.toThrow(/not found/);
 		});
@@ -1123,7 +1121,6 @@ describe("Content Type Mutation Integration Tests", () => {
 				t.mutation(api.contentTypeMutations.updateContentType, {
 					id: contentType._id,
 					displayName: "Updated",
-					createdBy: "test-user",
 				}),
 			).rejects.toThrow(/has been deleted/);
 		});
