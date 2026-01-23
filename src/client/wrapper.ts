@@ -1,25 +1,4 @@
-/**
- * CMS Client Wrapper with typed method APIs.
- *
- * This module provides an ergonomic wrapper around the Convex CMS component
- * that offers typed methods for all CMS operations. Instead of calling
- * component functions directly, developers can use intuitive method calls.
- *
- * @example
- * ```typescript
- * import { createCmsClient } from "@convex-cms/core";
- * import { components } from "./_generated/api";
- *
- * const cms = createCmsClient(components.convexCms);
- *
- * // In a mutation or query:
- * const type = await cms.contentTypes.create(ctx, {
- *   name: "blog_post",
- *   displayName: "Blog Post",
- *   fields: [...]
- * });
- * ```
- */
+/** CMS Client Wrapper with typed method APIs */
 
 // Import Convex's native FunctionReference type for proper type safety
 import type {
@@ -28,48 +7,30 @@ import type {
   FunctionReturnType,
 } from "convex/server";
 
-// Import the generated ComponentApi type which has full type information
+import type {
+  GenericDataModel,
+  GenericMutationCtx,
+  GenericQueryCtx,
+} from "convex/server";
+
+type MutationCtx = Pick<GenericMutationCtx<GenericDataModel>, "runMutation" | "runQuery">;
+type QueryCtx = Pick<GenericQueryCtx<GenericDataModel>, "runQuery">;
+
 import type { ComponentApi as GeneratedComponentApi } from "../component/_generated/component.js";
 
-// =============================================================================
-// Type-Safe API Call Helpers
-// =============================================================================
-
-/**
- * Helper to safely call a mutation with runtime type adaptation.
- *
- * The wrapper's public API uses simplified types (e.g., `string` for IDs,
- * optional cursor fields) while the generated Convex types use more specific
- * types (e.g., `Id<"table">`, required cursor fields with null value).
- *
- * This helper bridges that gap by allowing the wrapper's convenient API
- * while ensuring the call goes through to the typed Convex function.
- *
- * The `any` type for args is intentional - it allows the wrapper's argument
- * types to differ from the generated API's exact types at the boundary while
- * still maintaining type safety in the wrapper's public API signatures.
- *
- * @internal
- */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function _callMutation<T extends ConvexFunctionReference<"mutation", "public" | "internal">, A = any>(
-  ctx: ConvexContext,
-  fn: T,
-  args: A
-): Promise<FunctionReturnType<T>> {
+/** @internal Bridges wrapper's simplified types to generated Convex types */
+function _callMutation<
+  T extends ConvexFunctionReference<"mutation", "public" | "internal">,
+  A extends Record<string, unknown> = Record<string, unknown>
+>(ctx: MutationCtx, fn: T, args: A): Promise<FunctionReturnType<T>> {
   return ctx.runMutation(fn, args as OptionalRestArgs<T>[0]);
 }
 
-/**
- * Helper to safely call a query with runtime type adaptation.
- * @internal
- */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function callQuery<T extends ConvexFunctionReference<"query", "public" | "internal">, A = any>(
-  ctx: ConvexContext,
-  fn: T,
-  args: A
-): Promise<FunctionReturnType<T>> {
+/** @internal */
+function callQuery<
+  T extends ConvexFunctionReference<"query", "public" | "internal">,
+  A extends Record<string, unknown> = Record<string, unknown>
+>(ctx: MutationCtx | QueryCtx, fn: T, args: A): Promise<FunctionReturnType<T>> {
   return ctx.runQuery(fn, args as OptionalRestArgs<T>[0]);
 }
 
@@ -83,27 +44,19 @@ import type {
   ContentVersion,
   MediaAsset,
   MediaFolder,
-  FieldDefinition,
-  ContentStatus,
-  // MediaType,
-  PaginatedResponse,
   PaginationResult,
   PaginationOpts,
-  ContentQueryOptions,
-  MediaQueryOptions,
   GetUserRoleResult,
   AuthorizationHookContext,
   CmsOperation,
   VersionComparison,
   FieldChange,
   FieldChangeType,
-  VariantType,
-  VariantStatus,
   MediaVariant,
   MediaVariantWithUrl,
 } from "./types.js";
 
-import { resolveConfig, AuthorizationNotConfiguredError, type CmsHookContext } from "./types.js";
+import { resolveConfig, AuthorizationNotConfiguredError } from "./types.js";
 
 // Import query builder
 import { ContentQueryBuilder, createQueryBuilder } from "./queryBuilder.js";
@@ -139,16 +92,9 @@ import {
 import {
   resolveFallbackChain,
   getFallbackChain,
-  buildLocaleResolutionOptions,
-  parseLocale,
-  getLocaleHierarchy,
   type LocaleFallbackConfig,
   type ResolvedFallbackChain,
-  type ParsedLocale,
 } from "../component/localeFallbackChain.js";
-
-// Import locale resolution types and functions
-import type { LocaleResolutionOptions } from "../component/localeFields.js";
 import {
   resolveLocaleContent,
   resolveLocaleContentBatch,
@@ -239,54 +185,13 @@ export interface RateLimitHelper {
 // Context Types
 // =============================================================================
 
-/**
- * Minimal Convex context interface for running component functions.
- * This works with both MutationCtx and QueryCtx from Convex.
- *
- * Uses Convex's native FunctionReference type for full type safety.
- * The generic constraints match Convex's actual runMutation/runQuery signatures.
- */
-export interface ConvexContext {
-  runMutation<Mutation extends ConvexFunctionReference<"mutation", "public" | "internal">>(
-    mutation: Mutation,
-    ...args: OptionalRestArgs<Mutation>
-  ): Promise<FunctionReturnType<Mutation>>;
-  runQuery<Query extends ConvexFunctionReference<"query", "public" | "internal">>(
-    query: Query,
-    ...args: OptionalRestArgs<Query>
-  ): Promise<FunctionReturnType<Query>>;
-}
+/** Convex context for CMS operations - includes db/auth for authorization hooks */
+export type ConvexContext = Pick<
+  GenericMutationCtx<GenericDataModel>,
+  "runMutation" | "runQuery" | "db" | "auth"
+>;
 
-/**
- * @deprecated Use Convex's native FunctionReference from "convex/server" instead.
- * This type alias is kept for backwards compatibility but should not be used in new code.
- *
- * Function reference type for Convex component functions.
- * Maps to Convex's FunctionReference<Type, Visibility, Args, Result, Name>.
- */
-export type FunctionReference<
-  Type extends "mutation" | "query" | "action",
-  _Args = unknown,
-  _Result = unknown
-> = ConvexFunctionReference<Type, "public" | "internal">;
-
-// =============================================================================
-// Component API Type
-// =============================================================================
-
-/**
- * The expected shape of the component API from `components.convexCms`.
- *
- * This type is an alias to the auto-generated ComponentApi from the Convex component,
- * which provides full type information for all component functions including
- * proper argument and return type inference.
- *
- * Using the generated type ensures:
- * 1. Full TypeScript type safety without `` casts
- * 2. IDE autocompletion for function arguments and return values
- * 3. Compile-time errors when function signatures change
- * 4. Consistent types between the component and client code
- */
+/** Component API type from `components.convexCms` */
 export type TypedComponentApi = GeneratedComponentApi;
 /**
  * Partial component API type for testing purposes.
@@ -311,653 +216,151 @@ export type MockComponentApi = Partial<{
 
 // =============================================================================
 // Argument Types for Component Functions
+// Re-exported from argTypes.ts where they are derived from validators
 // =============================================================================
 
-// Content Type Arguments
-export interface CreateContentTypeArgs {
-  name: string;
-  displayName: string;
-  description?: string;
-  fields: FieldDefinition[];
-  icon?: string;
-  singleton?: boolean;
-  slugField?: string;
-  titleField?: string;
-  sortOrder?: number;
-  /** Required for audit tracking - the user ID creating this content type */
-  createdBy: string;
-}
+export type {
+  // Content Type Arguments
+  CreateContentTypeArgs,
+  UpdateContentTypeArgs,
+  DeleteContentTypeArgs,
+  GetContentTypeArgs,
+  ListContentTypesArgs,
+  // Content Entry Arguments
+  CreateContentEntryArgs,
+  UpdateContentEntryArgs,
+  DeleteContentEntryArgs,
+  GetContentEntryArgs,
+  GetContentEntryBySlugArgs,
+  ListContentEntriesArgs,
+  PublishEntryArgs,
+  UnpublishEntryArgs,
+  ScheduleEntryArgs,
+  RestoreEntryArgs,
+  DuplicateEntryArgs,
+  // Bulk Operation Arguments
+  BulkPublishArgs,
+  BulkUnpublishArgs,
+  BulkDeleteArgs,
+  BulkUpdateArgs,
+  BulkRestoreArgs,
+  // Version Arguments
+  GetVersionArgs,
+  GetVersionHistoryArgs,
+  RollbackVersionArgs,
+  CompareVersionsArgs,
+  // Media Asset Arguments
+  CreateMediaAssetArgs,
+  UpdateMediaAssetArgs,
+  DeleteMediaAssetArgs,
+  GetMediaAssetArgs,
+  ListMediaAssetsArgs,
+  RestoreMediaAssetArgs,
+  FindMediaAssetReferencesArgs,
+  // Media Folder Arguments
+  CreateMediaFolderArgs,
+  UpdateMediaFolderArgs,
+  DeleteMediaFolderArgs,
+  GetMediaFolderArgs,
+  ListMediaFoldersArgs,
+  MoveFolderArgs,
+  RestoreMediaFolderArgs,
+  GetMediaFolderByPathArgs,
+  GetFolderTreeArgs,
+  MoveMediaAssetsArgs,
+  // Media Variant Arguments
+  CreateMediaVariantArgs,
+  RequestVariantGenerationArgs,
+  DeleteMediaVariantArgs,
+  DeleteAssetVariantsArgs,
+  GetMediaVariantArgs,
+  ListMediaVariantsArgs,
+  GetBestVariantArgs,
+  GenerateFromPresetsArgs,
+  // Upload Arguments
+  GenerateUploadUrlArgs,
+  // Result Types
+  BreakingChange,
+  UpdateContentTypeResult,
+  DeleteContentTypeResult,
+  BulkOperationItemResult,
+  BulkOperationResult,
+  GenerateUploadUrlResult,
+  MediaAssetReference,
+  GenerateVariantsResult,
+  SrcsetEntry,
+  ResponsiveSrcsetResult,
+  VariantPreset,
+  AssetWithVariants,
+} from "./argTypes.js";
 
-export interface UpdateContentTypeArgs {
-  id: string;
-  displayName?: string;
-  description?: string;
-  fields?: FieldDefinition[];
-  icon?: string;
-  singleton?: boolean;
-  slugField?: string;
-  titleField?: string;
-  sortOrder?: number;
-  isActive?: boolean;
-  updatedBy?: string;
-  /**
-   * If true, allow breaking changes that may affect existing content entries.
-   * Breaking changes include: removing fields with data, changing field types,
-   * making optional fields required, removing select options, etc.
-   * @default false
-   */
-  force?: boolean;
-}
-
-/**
- * Describes a breaking change detected during content type update.
- */
-export interface BreakingChange {
-  /** Type of breaking change */
-  type:
-    | "FIELD_REMOVED"
-    | "FIELD_TYPE_CHANGED"
-    | "FIELD_MADE_REQUIRED"
-    | "SELECT_OPTIONS_REMOVED"
-    | "REFERENCE_TYPES_RESTRICTED"
-    | "VALIDATION_TIGHTENED";
-  /** The field name affected */
-  fieldName: string;
-  /** Human-readable description */
-  message: string;
-  /** Number of entries affected */
-  affectedEntriesCount: number;
-}
-
-/**
- * Result from updating a content type, includes breaking changes if force=true was used.
- */
-export interface UpdateContentTypeResult extends ContentType {
-  /** Breaking changes that were detected (only present if force=true was used) */
-  breakingChanges?: BreakingChange[];
-}
-
-export interface DeleteContentTypeArgs {
-  id: string;
-  /**
-   * If true, delete all content entries of this type before deleting the type.
-   * If false and entries exist, the operation will fail.
-   * @default false
-   */
-  cascade?: boolean;
-  /**
-   * If true, permanently delete (hard delete).
-   * If false, soft delete by setting deletedAt timestamp.
-   * @default false
-   */
-  hardDelete?: boolean;
-  deletedBy?: string;
-}
-
-/**
- * Result from deleting a content type.
- */
-export interface DeleteContentTypeResult {
-  /** Whether the deletion was successful */
-  success: boolean;
-  /** The ID of the deleted content type */
-  deletedId: string;
-  /** Number of content entries that were deleted (when cascade=true) */
-  deletedEntriesCount: number;
-  /** Number of content versions that were deleted (when cascade=true and hardDelete=true) */
-  deletedVersionsCount: number;
-  /** Whether this was a hard delete (permanent) or soft delete */
-  wasHardDelete: boolean;
-}
-
-export interface GetContentTypeArgs {
-  id?: string;
-  name?: string;
-  /** Whether to include soft-deleted content types */
-  includeDeleted?: boolean;
-}
-
-export interface ListContentTypesArgs {
-  /** Filter by active status: true = active only, false = inactive only, undefined = all */
-  isActive?: boolean;
-  /** Whether to include soft-deleted content types */
-  includeDeleted?: boolean;
-  /** Field to sort by */
-  sortBy?: "name" | "createdAt";
-  /** Sort direction */
-  sortDirection?: "asc" | "desc";
-  /** Pagination options (optional - if not provided, returns all results) */
-  paginationOpts?: PaginationOpts;
-}
-
-// Content Entry Arguments
-export interface CreateContentEntryArgs {
-  contentTypeId: string;
-  slug?: string;
-  data: Record<string, unknown>;
-  locale?: string;
-  primaryEntryId?: string;
-  status?: ContentStatus;
-  createdBy?: string;
-}
-
-export interface UpdateContentEntryArgs {
-  id: string;
-  slug?: string;
-  data?: Record<string, unknown>;
-  status?: ContentStatus;
-  scheduledPublishAt?: number;
-  updatedBy?: string;
-}
-
-export interface DeleteContentEntryArgs {
-  id: string;
-  deletedBy?: string;
-}
-
-export interface GetContentEntryArgs {
-  id: string;
-}
-
-export interface GetContentEntryBySlugArgs {
-  contentTypeId?: string;
-  contentTypeName?: string;
-  slug: string;
-  locale?: string;
-}
-
-export interface ListContentEntriesArgs extends ContentQueryOptions {}
-
-export interface PublishEntryArgs {
-  id: string;
-  changeDescription?: string;
-  updatedBy?: string;
-}
-
-export interface UnpublishEntryArgs {
-  id: string;
-  updatedBy?: string;
-}
-
-export interface ScheduleEntryArgs {
-  id: string;
-  publishAt: number;
-  updatedBy?: string;
-}
-
-export interface RestoreEntryArgs {
-  id: string;
-  restoredBy?: string;
-}
-
-// Duplicate Entry Arguments
-export interface DuplicateEntryArgs {
-  /** The ID of the content entry to duplicate */
-  sourceEntryId: string;
-  /** Optional custom slug for the duplicated entry (auto-generated if not provided) */
-  slug?: string;
-  /** Whether to copy media references from the source entry (default: true) */
-  copyMediaReferences?: boolean;
-  /** Optional locale for the duplicated entry */
-  locale?: string;
-  /** User ID performing the duplication (for audit trail) */
-  createdBy?: string;
-}
-
-// =============================================================================
-// Bulk Operation Types
-// =============================================================================
-
-/**
- * Result of an individual item in a bulk operation.
- */
-export interface BulkOperationItemResult {
-  /** The content entry ID */
-  id: string;
-  /** Whether the operation succeeded for this entry */
-  success: boolean;
-  /** Error message if the operation failed */
-  error?: string;
-}
-
-/**
- * Result of a bulk operation on content entries.
- */
-export interface BulkOperationResult {
-  /** Total number of entries processed */
-  total: number;
-  /** Number of successful operations */
-  succeeded: number;
-  /** Number of failed operations */
-  failed: number;
-  /** Individual results for each entry */
-  results: BulkOperationItemResult[];
-}
-
-/**
- * Arguments for bulk publishing content entries.
- */
-export interface BulkPublishArgs {
-  /** Array of content entry IDs to publish */
-  ids: string[];
-  /** Optional description for version history (applied to all entries) */
-  changeDescription?: string;
-  /** User ID performing the operation (for audit trail) */
-  updatedBy?: string;
-}
-
-/**
- * Arguments for bulk unpublishing content entries.
- */
-export interface BulkUnpublishArgs {
-  /** Array of content entry IDs to unpublish */
-  ids: string[];
-  /** User ID performing the operation (for audit trail) */
-  updatedBy?: string;
-}
-
-/**
- * Arguments for bulk deleting content entries.
- */
-export interface BulkDeleteArgs {
-  /** Array of content entry IDs to delete */
-  ids: string[];
-  /** User ID performing the deletion (for audit trail) */
-  deletedBy?: string;
-  /** If true, permanently deletes entries and all versions. Default is soft delete. */
-  hardDelete?: boolean;
-}
-
-/**
- * Arguments for bulk updating content entries.
- */
-export interface BulkUpdateArgs {
-  /** Array of content entry IDs to update */
-  ids: string[];
-  /** Data to merge into each entry */
-  data?: Record<string, unknown>;
-  /** New status to apply to all entries */
-  status?: ContentStatus;
-  /** User ID performing the operation (for audit trail) */
-  updatedBy?: string;
-}
-
-/**
- * Arguments for bulk restoring soft-deleted content entries.
- */
-export interface BulkRestoreArgs {
-  /** Array of content entry IDs to restore */
-  ids: string[];
-  /** User ID performing the operation (for audit trail) */
-  restoredBy?: string;
-}
-
-// Version Arguments
-export interface ListVersionsArgs {
-  entryId: string;
-  cursor?: string;
-  limit?: number;
-}
-
-/**
- * Arguments for getting a specific version.
- * Supports lookup by version ID or version number.
- */
-export interface GetVersionArgs {
-  /** The content entry ID (required for ownership validation) */
-  entryId: string;
-  /** Direct lookup by version document ID */
-  versionId?: string;
-  /** Lookup by version number */
-  versionNumber?: number;
-}
-
-/**
- * Arguments for getting version history with improved pagination.
- */
-export interface GetVersionHistoryArgs {
-  /** The content entry ID to get history for */
-  entryId: string;
-  /** Pagination options */
-  paginationOpts: PaginationOpts;
-}
-
-export interface RollbackVersionArgs {
-  entryId: string;
-  versionNumber: number;
-  updatedBy?: string;
-}
-
-/**
- * Arguments for comparing two versions.
- */
-export interface CompareVersionsArgs {
-  /** The content entry ID */
-  entryId: string;
-  /** The version number or ID to compare from (older) */
-  fromVersion: number | string;
-  /** The version number or ID to compare to (newer) */
-  toVersion: number | string;
-}
-
-// Media Asset Arguments
-export interface CreateMediaAssetArgs {
-  storageId: string;
-  /** Original filename (e.g., "photo.jpg") */
-  name: string;
-  mimeType: string;
-  size?: number;
-  title?: string;
-  description?: string;
-  altText?: string;
-  /** Parent folder ID */
-  parentId?: string;
-  width?: number;
-  height?: number;
-  duration?: number;
-  metadata?: Record<string, unknown>;
-  tags?: string[];
-  createdBy?: string;
-}
-
-export interface UpdateMediaAssetArgs {
-  id: string;
-  /** Rename the file */
-  name?: string;
-  title?: string;
-  description?: string;
-  altText?: string;
-  /** Move to a different folder */
-  parentId?: string;
-  tags?: string[];
-  metadata?: Record<string, unknown>;
-  width?: number;
-  height?: number;
-  duration?: number;
-  /** User ID performing the update (used for authorization) */
-  updatedBy?: string;
-}
-
-export interface DeleteMediaAssetArgs {
-  id: string;
-  deletedBy?: string;
-}
-
-export interface GetMediaAssetArgs {
-  id: string;
-}
-
-export interface ListMediaAssetsArgs extends MediaQueryOptions {}
-
-// Media Folder Arguments
-export interface CreateMediaFolderArgs {
-  name: string;
-  parentId?: string;
-  description?: string;
-  sortOrder?: number;
-  createdBy?: string;
-}
-
-export interface UpdateMediaFolderArgs {
-  id: string;
-  name?: string;
-  description?: string;
-  sortOrder?: number;
-  /** User ID performing the update (used for authorization) */
-  updatedBy?: string;
-}
-
-export interface DeleteMediaFolderArgs {
-  id: string;
-  deletedBy?: string;
-}
-
-export interface GetMediaFolderArgs {
-  id: string;
-}
-
-export interface ListMediaFoldersArgs {
-  parentId?: string;
-  includeDeleted?: boolean;
-}
-
-export interface MoveFolderArgs {
-  id: string;
-  newParentId?: string;
-  /** User ID performing the move (used for authorization) */
-  updatedBy?: string;
-}
-
-// Media Upload Arguments
-export interface GenerateUploadUrlArgs {
-  /** Optional maximum file size in bytes (default: 50 MB, max: 500 MB) */
-  maxFileSize?: number;
-  /** Optional array of allowed MIME type patterns (e.g., ["image/*", "video/mp4"]) */
-  allowedMimeTypes?: string[];
-  /** Optional user ID for audit purposes */
-  requestedBy?: string;
-}
-
-export interface GenerateUploadUrlResult {
-  /** The temporary upload URL. Valid for 1 hour. */
-  uploadUrl: string;
-  /** Expiration timestamp in milliseconds since epoch */
-  expiresAt: number;
-  /** Maximum file size in bytes that will be accepted */
-  maxFileSize: number;
-  /** Allowed MIME types for the upload (if specified) */
-  allowedMimeTypes?: string[];
-}
-
-// Additional Media Asset Arguments
-export interface RestoreMediaAssetArgs {
-  id: string;
-}
-
-export interface FindMediaAssetReferencesArgs {
-  /** The ID of the media asset to find references for */
-  id: string;
-  /** Maximum number of references to return */
-  limit?: number;
-}
-
-/**
- * Reference to a content entry that uses a media asset.
- * Returned by findReferences to show which entries reference an asset.
- */
-export interface MediaAssetReference {
-  /** The ID of the content entry that references the asset */
-  entryId: string;
-  /** The slug of the content entry */
-  slug: string;
-  /** The name of the content type */
-  contentTypeName: string;
-  /** The field names that reference this asset */
-  fields: string[];
-}
-
-// Additional Media Folder Arguments
-export interface RestoreMediaFolderArgs {
-  id: string;
-  /** Whether to recursively restore contents */
-  recursive?: boolean;
-}
-
-export interface GetMediaFolderByPathArgs {
-  path: string;
-  includeDeleted?: boolean;
-}
-
-export interface GetFolderTreeArgs {
-  includeDeleted?: boolean;
-}
-
-// =============================================================================
-// Media Variant Arguments (types imported from ./types.js)
-// =============================================================================
-
-/** Arguments for creating a media variant */
-export interface CreateMediaVariantArgs {
-  assetId: string;
-  storageId: string;
-  variantType: VariantType;
-  width?: number;
-  height?: number;
-  format: string;
-  mimeType: string;
-  size: number;
-  quality?: number;
-  preset?: string;
-  autoGenerated?: boolean;
-  createdBy?: string;
-}
-
-/** Arguments for requesting variant generation */
-export interface RequestVariantGenerationArgs {
-  assetId: string;
-  variantType: VariantType;
-  width?: number;
-  height?: number;
-  format: string;
-  quality?: number;
-  preset?: string;
-  requestedBy?: string;
-}
-
-/** Arguments for listing variants */
-export interface ListMediaVariantsArgs {
-  assetId: string;
-  variantType?: VariantType;
-  format?: string;
-  preset?: string;
-  status?: VariantStatus;
-  includeDeleted?: boolean;
-}
-
-/** Arguments for getting the best variant */
-export interface GetBestVariantArgs {
-  assetId: string;
-  targetWidth?: number;
-  targetHeight?: number;
-  preferredFormat?: string;
-  fallbackToOriginal?: boolean;
-}
-
-/** Arguments for deleting a variant */
-export interface DeleteMediaVariantArgs {
-  id: string;
-  hardDelete?: boolean;
-  deletedBy?: string;
-}
-
-/** Arguments for deleting all variants of an asset */
-export interface DeleteAssetVariantsArgs {
-  assetId: string;
-  hardDelete?: boolean;
-  deletedBy?: string;
-}
-
-/** Arguments for generating variants from presets */
-export interface GenerateFromPresetsArgs {
-  assetId: string;
-  presets: string[];
-  requestedBy?: string;
-}
-
-/** Result of generating variants from presets */
-export interface GenerateVariantsResult {
-  total: number;
-  succeeded: number;
-  failed: number;
-  results: {
-    preset: string;
-    success: boolean;
-    variantId?: string;
-    error?: string;
-  }[];
-}
-
-/** Srcset entry for responsive images */
-export interface SrcsetEntry {
-  url: string;
-  descriptor: string;
-  width: number;
-  format: string;
-}
-
-/** Result for responsive srcset data */
-export interface ResponsiveSrcsetResult {
-  src: string | null;
-  srcset: string;
-  entries: SrcsetEntry[];
-  sizes?: string;
-}
-
-/** Variant preset configuration */
-export interface VariantPreset {
-  name: string;
-  variantType: VariantType;
-  width?: number;
-  height?: number;
-  format: string;
-  quality?: number;
-  description?: string;
-}
-
-/** Asset with all its variants */
-export interface AssetWithVariants {
-  original: {
-    _id: string;
-    _creationTime: number;
-    /** Original filename (e.g., "photo.jpg") */
-    name: string;
-    mimeType: string;
-    size: number;
-    width?: number;
-    height?: number;
-    url: string | null;
-  };
-  variants: MediaVariantWithUrl[];
-  variantsByType: {
-    thumbnail?: MediaVariantWithUrl;
-    responsive: MediaVariantWithUrl[];
-    format: MediaVariantWithUrl[];
-  };
-}
+// Import types locally for use in this file
+import type {
+  CreateContentTypeArgs,
+  UpdateContentTypeArgs,
+  DeleteContentTypeArgs,
+  GetContentTypeArgs,
+  ListContentTypesArgs,
+  CreateContentEntryArgs,
+  UpdateContentEntryArgs,
+  DeleteContentEntryArgs,
+  GetContentEntryArgs,
+  GetContentEntryBySlugArgs,
+  ListContentEntriesArgs,
+  PublishEntryArgs,
+  UnpublishEntryArgs,
+  ScheduleEntryArgs,
+  RestoreEntryArgs,
+  DuplicateEntryArgs,
+  BulkPublishArgs,
+  BulkUnpublishArgs,
+  BulkDeleteArgs,
+  BulkUpdateArgs,
+  BulkRestoreArgs,
+  GetVersionArgs,
+  GetVersionHistoryArgs,
+  RollbackVersionArgs,
+  CompareVersionsArgs,
+  CreateMediaAssetArgs,
+  UpdateMediaAssetArgs,
+  DeleteMediaAssetArgs,
+  GetMediaAssetArgs,
+  ListMediaAssetsArgs,
+  RestoreMediaAssetArgs,
+  FindMediaAssetReferencesArgs,
+  CreateMediaFolderArgs,
+  UpdateMediaFolderArgs,
+  DeleteMediaFolderArgs,
+  GetMediaFolderArgs,
+  ListMediaFoldersArgs,
+  MoveFolderArgs,
+  RestoreMediaFolderArgs,
+  GetMediaFolderByPathArgs,
+  GetFolderTreeArgs,
+  CreateMediaVariantArgs,
+  RequestVariantGenerationArgs,
+  DeleteMediaVariantArgs,
+  DeleteAssetVariantsArgs,
+  ListMediaVariantsArgs,
+  GetBestVariantArgs,
+  GenerateFromPresetsArgs,
+  GenerateUploadUrlArgs,
+  UpdateContentTypeResult,
+  DeleteContentTypeResult,
+  BulkOperationResult,
+  GenerateUploadUrlResult,
+  MediaAssetReference,
+  GenerateVariantsResult,
+  ResponsiveSrcsetResult,
+  VariantPreset,
+  AssetWithVariants,
+} from "./argTypes.js";
 
 // =============================================================================
 // Content Types API Wrapper
 // =============================================================================
 
-/**
- * Wrapper for content type operations.
- *
- * Content types define the schema/blueprint for content entries in the CMS.
- * They specify what fields an entry can have, validation rules, and metadata.
- *
- * @example
- * ```typescript
- * // Create a blog post content type
- * const blogType = await cms.contentTypes.create(ctx, {
- *   name: "blog_post",
- *   displayName: "Blog Post",
- *   fields: [
- *     { name: "title", label: "Title", type: "text", required: true },
- *     { name: "content", label: "Content", type: "richText", required: true },
- *     { name: "category", label: "Category", type: "select", required: true, options: {
- *       options: [{ value: "tech", label: "Technology" }, { value: "news", label: "News" }]
- *     }},
- *   ],
- *   slugField: "title",
- *   titleField: "title",
- * });
- *
- * // Check if a type exists before creating
- * if (!(await cms.contentTypes.exists(ctx, "blog_post"))) {
- *   await cms.contentTypes.create(ctx, { ... });
- * }
- * ```
- */
+/** Content type CRUD operations */
 export class ContentTypesApi {
   constructor(
     private readonly api: TypedComponentApi,
@@ -966,21 +369,7 @@ export class ContentTypesApi {
     private readonly rateLimitHelper?: RateLimitHelper
   ) {}
 
-  /**
-   * Perform authorization check for content type operations.
-   *
-   * Authorization behavior:
-   * - If `getUserRole` is not configured and `permissiveMode` is false: throws AuthorizationNotConfiguredError
-   * - If `getUserRole` is not configured and `permissiveMode` is true: logs warning and allows operation
-   * - If `skipRbac` is enabled: skips RBAC checks but still validates auth is configured
-   * - If no `userId` is provided: same rules apply based on permissiveMode
-   *
-   * @param ctx - The Convex context (passed to authorization hooks for database access)
-   * @param operation - The CMS operation being performed
-   * @param userId - The user performing the operation
-   * @param resourceId - Optional resource ID (for update/delete operations)
-   * @throws AuthorizationNotConfiguredError if authorization is not configured and permissiveMode is false
-   */
+  /** @throws AuthorizationNotConfiguredError if not configured and not in permissiveMode */
   private async authorize(
     ctx: ConvexContext,
     operation: CmsOperation,
@@ -1029,175 +418,32 @@ export class ContentTypesApi {
     });
   }
 
-  /**
-   * Enforce rate limit for content type operations.
-   * @param ctx - The Convex context (for database access)
-   * @param operation - The CMS operation being performed
-   * @param userId - The user performing the operation
-   */
   private async rateLimit(
     ctx: ConvexContext,
     operation: CmsOperation,
     userId: string | undefined
   ): Promise<void> {
-    // Skip if no rate limit helper configured
-    if (!this.rateLimitHelper) {
-      return;
-    }
-
+    if (!this.rateLimitHelper) return;
     const role = userId ? await this.rateLimitHelper.getUserRole(ctx, userId) : null;
-
-    await this.rateLimitHelper.requireRateLimit(operation, {
-      userId,
-      role,
-    });
+    await this.rateLimitHelper.requireRateLimit(operation, { userId, role });
   }
 
-  /**
-   * Create a new content type.
-   *
-   * Content type names must be unique and follow the naming convention:
-   * - Start with a lowercase letter
-   * - Contain only lowercase letters, numbers, and underscores
-   * - Maximum 64 characters
-   *
-   * @param ctx - Convex mutation context
-   * @param args - Content type creation arguments
-   * @returns The created content type
-   *
-   * @throws Error if the name is already taken
-   * @throws Error if the name format is invalid
-   * @throws Error if field definitions are invalid
-   *
-   * @example
-   * ```typescript
-   * const blogType = await cms.contentTypes.create(ctx, {
-   *   name: "blog_post",
-   *   displayName: "Blog Post",
-   *   fields: [
-   *     { name: "title", label: "Title", type: "text", required: true },
-   *     { name: "content", label: "Content", type: "richText", required: true },
-   *   ],
-   *   slugField: "title",
-   *   createdBy: currentUserId,
-   * });
-   * ```
-   */
-  async create(
-    ctx: ConvexContext,
-    args: CreateContentTypeArgs
-  ): Promise<ContentType> {
-    // Authorization check - contentTypes.create
+  async create(ctx: ConvexContext, args: CreateContentTypeArgs): Promise<ContentType> {
     await this.authorize(ctx, "contentTypes.create", args.createdBy);
-    // Rate limit check - contentTypes.create
     await this.rateLimit(ctx, "contentTypes.create", args.createdBy);
     return ctx.runMutation(this.api.contentTypeMutations.createContentType, args);
   }
 
-  /**
-   * Update an existing content type.
-   *
-   * When updating field definitions, the system detects breaking changes that
-   * could affect existing content entries:
-   * - Removing fields that have data
-   * - Changing field types
-   * - Making optional fields required
-   * - Removing select/multiSelect options
-   * - Restricting allowed reference types
-   * - Tightening validation rules
-   *
-   * If breaking changes are detected, the update will fail unless `force: true`
-   * is specified.
-   *
-   * @param ctx - Convex mutation context
-   * @param args - Content type update arguments
-   * @returns The updated content type, with breakingChanges if force was used
-   *
-   * @throws Error if the content type does not exist
-   * @throws Error if breaking changes are detected and force is not true
-   *
-   * @example
-   * ```typescript
-   * // Simple update (no breaking changes)
-   * const updated = await cms.contentTypes.update(ctx, {
-   *   id: contentTypeId,
-   *   displayName: "Updated Blog Post",
-   *   description: "New description",
-   * });
-   *
-   * // Force update with breaking changes
-   * const result = await cms.contentTypes.update(ctx, {
-   *   id: contentTypeId,
-   *   fields: newFields,
-   *   force: true, // Acknowledge potential data loss
-   * });
-   *
-   * if (result.breakingChanges) {
-   *   console.warn("Breaking changes applied:", result.breakingChanges);
-   * }
-   * ```
-   */
-  async update(
-    ctx: ConvexContext,
-    args: UpdateContentTypeArgs
-  ): Promise<UpdateContentTypeResult> {
-    // Authorization check - contentTypes.update
+  /** Detects breaking changes; fails unless force:true is specified */
+  async update(ctx: ConvexContext, args: UpdateContentTypeArgs): Promise<UpdateContentTypeResult> {
     await this.authorize(ctx, "contentTypes.update", args.updatedBy, args.id);
-    // Rate limit check - contentTypes.update
     await this.rateLimit(ctx, "contentTypes.update", args.updatedBy);
     return ctx.runMutation(this.api.contentTypeMutations.updateContentType, args);
   }
 
-  /**
-   * Delete a content type.
-   *
-   * Supports two deletion modes:
-   * - **Soft delete** (default): Sets a `deletedAt` timestamp, content type remains in database
-   * - **Hard delete** (`hardDelete: true`): Permanently removes from database
-   *
-   * If content entries exist for this type:
-   * - Without `cascade`: The operation fails
-   * - With `cascade: true`: All entries are deleted first (soft or hard based on `hardDelete`)
-   *
-   * @param ctx - Convex mutation context
-   * @param args - Delete arguments including cascade and hardDelete options
-   * @returns Result object with deletion counts
-   *
-   * @throws Error if content type does not exist
-   * @throws Error if cascade is false and content entries exist
-   *
-   * @example
-   * ```typescript
-   * // Soft delete - fails if entries exist
-   * const result = await cms.contentTypes.delete(ctx, {
-   *   id: contentTypeId,
-   *   deletedBy: currentUserId,
-   * });
-   *
-   * // Cascade soft delete - deletes all entries too
-   * const result = await cms.contentTypes.delete(ctx, {
-   *   id: contentTypeId,
-   *   cascade: true,
-   *   deletedBy: currentUserId,
-   * });
-   * console.log(`Deleted ${result.deletedEntriesCount} entries`);
-   *
-   * // Hard delete with cascade - permanently removes everything
-   * const result = await cms.contentTypes.delete(ctx, {
-   *   id: contentTypeId,
-   *   cascade: true,
-   *   hardDelete: true,
-   *   deletedBy: currentUserId,
-   * });
-   * ```
-   */
-  async delete(
-    ctx: ConvexContext,
-    args: DeleteContentTypeArgs
-  ): Promise<DeleteContentTypeResult> {
-    // Authorization check - contentTypes.delete
+  /** Soft delete by default; use hardDelete:true for permanent, cascade:true to delete entries */
+  async delete(ctx: ConvexContext, args: DeleteContentTypeArgs): Promise<DeleteContentTypeResult> {
     await this.authorize(ctx, "contentTypes.delete", args.deletedBy, args.id);
-    // Rate limit check - contentTypes.delete
     await this.rateLimit(ctx, "contentTypes.delete", args.deletedBy);
     return ctx.runMutation(this.api.contentTypeMutations.deleteContentType, args);
   }
@@ -1257,152 +503,29 @@ export class ContentTypesApi {
     return this.get(ctx, { name, includeDeleted });
   }
 
-  /**
-   * Get a content type by ID.
-   *
-   * Convenience method that wraps `get()` for ID-based lookup.
-   *
-   * @param ctx - Convex query context
-   * @param id - The content type ID
-   * @param includeDeleted - Whether to include soft-deleted types
-   * @returns The content type or null if not found
-   *
-   * @example
-   * ```typescript
-   * const type = await cms.contentTypes.getById(ctx, contentTypeId);
-   * ```
-   */
-  async getById(
-    ctx: ConvexContext,
-    id: string,
-    includeDeleted = false
-  ): Promise<ContentType | null> {
+  async getById(ctx: ConvexContext, id: string, includeDeleted = false): Promise<ContentType | null> {
     return this.get(ctx, { id, includeDeleted });
   }
 
-  /**
-   * Check if a content type with the given name exists.
-   *
-   * @param ctx - Convex query context
-   * @param name - The machine-readable name to check
-   * @param includeDeleted - Whether to include soft-deleted types
-   * @returns true if the content type exists
-   *
-   * @example
-   * ```typescript
-   * // Check before creating to avoid duplicate name error
-   * if (!(await cms.contentTypes.exists(ctx, "blog_post"))) {
-   *   await cms.contentTypes.create(ctx, { name: "blog_post", ... });
-   * }
-   * ```
-   */
-  async exists(
-    ctx: ConvexContext,
-    name: string,
-    includeDeleted = false
-  ): Promise<boolean> {
+  async exists(ctx: ConvexContext, name: string, includeDeleted = false): Promise<boolean> {
     const type = await this.getByName(ctx, name, includeDeleted);
     return type !== null;
   }
 
-  /**
-   * List all content types with optional filtering and pagination.
-   *
-   * Returns a paginated result compatible with Convex's `usePaginatedQuery` hook.
-   *
-   * @param ctx - Convex query context
-   * @param args - Optional filter, sort, and pagination arguments
-   * @returns Paginated result with page, continueCursor, and isDone
-   *
-   * @example
-   * ```typescript
-   * // List all active content types sorted by name
-   * const { page, continueCursor, isDone } = await cms.contentTypes.list(ctx, {
-   *   isActive: true,
-   *   sortBy: "name",
-   *   paginationOpts: { numItems: 20 },
-   * });
-   *
-   * // Get next page
-   * const page2 = await cms.contentTypes.list(ctx, {
-   *   isActive: true,
-   *   paginationOpts: { numItems: 20, cursor: continueCursor },
-   * });
-   *
-   * // List all content types (non-paginated)
-   * const all = await cms.contentTypes.list(ctx);
-   * console.log("Total types:", all.page.length);
-   * ```
-   */
-  async list(
-    ctx: ConvexContext,
-    args: ListContentTypesArgs = {}
-  ): Promise<PaginationResult<ContentType>> {
+  async list(ctx: ConvexContext, args: ListContentTypesArgs = {}): Promise<PaginationResult<ContentType>> {
     return ctx.runQuery(this.api.contentTypes.list, args);
   }
 
-  /**
-   * List only active content types.
-   *
-   * Convenience method that filters to active types only.
-   *
-   * @param ctx - Convex query context
-   * @param paginationOpts - Optional pagination options
-   * @returns Paginated result of active content types
-   *
-   * @example
-   * ```typescript
-   * const { page } = await cms.contentTypes.listActive(ctx);
-   * for (const type of page) {
-   *   console.log(type.displayName);
-   * }
-   * ```
-   */
-  async listActive(
-    ctx: ConvexContext,
-    paginationOpts?: PaginationOpts
-  ): Promise<PaginationResult<ContentType>> {
-    return this.list(ctx, {
-      isActive: true,
-      includeDeleted: false,
-      paginationOpts,
-    });
+  async listActive(ctx: ConvexContext, paginationOpts?: PaginationOpts): Promise<PaginationResult<ContentType>> {
+    return this.list(ctx, { isActive: true, includeDeleted: false, paginationOpts });
   }
 
-  /**
-   * Get all content types as a simple array.
-   *
-   * Convenience method that fetches all types without pagination.
-   * Use with caution for large numbers of content types.
-   *
-   * @param ctx - Convex query context
-   * @param includeInactive - Whether to include inactive types
-   * @returns Array of all content types
-   *
-   * @example
-   * ```typescript
-   * const allTypes = await cms.contentTypes.getAll(ctx);
-   * const typeNames = allTypes.map(t => t.name);
-   * ```
-   */
-  async getAll(
-    ctx: ConvexContext,
-    includeInactive = false
-  ): Promise<ContentType[]> {
-    const result = await this.list(ctx, {
-      isActive: includeInactive ? undefined : true,
-      includeDeleted: false,
-    });
+  async getAll(ctx: ConvexContext, includeInactive = false): Promise<ContentType[]> {
+    const result = await this.list(ctx, { isActive: includeInactive ? undefined : true, includeDeleted: false });
     return result.page;
   }
 
   /**
-   * Count the number of content types.
-   *
-   * @param ctx - Convex query context
-   * @param includeInactive - Whether to include inactive types
-   * @returns The total count of content types
-   *
    * @example
    * ```typescript
    * const count = await cms.contentTypes.count(ctx);
@@ -1467,9 +590,7 @@ export class ContentTypesApi {
 // Content Entries API Wrapper
 // =============================================================================
 
-/**
- * Wrapper for content entry operations.
- */
+/** Content entry CRUD and workflow operations */
 export class ContentEntriesApi {
   constructor(
     private readonly api: TypedComponentApi,
@@ -1478,23 +599,7 @@ export class ContentEntriesApi {
     private readonly rateLimitHelper?: RateLimitHelper
   ) {}
 
-  /**
-   * Perform authorization check for content entry operations.
-   *
-   * Authorization behavior:
-   * - If `getUserRole` is not configured and `permissiveMode` is false: throws AuthorizationNotConfiguredError
-   * - If `getUserRole` is not configured and `permissiveMode` is true: logs warning and allows operation
-   * - If `skipRbac` is enabled: skips RBAC checks but still validates auth is configured
-   * - If no `userId` is provided: same rules apply based on permissiveMode
-   *
-   * @param ctx - The Convex context (passed to authorization hooks for database access)
-   * @param operation - The CMS operation being performed
-   * @param userId - The user performing the operation
-   * @param resourceId - Optional resource ID (for update/delete operations)
-   * @param resourceOwnerId - Optional owner ID for ownership-based permissions
-   * @param contentTypeId - Optional content type ID for content-type-specific permissions
-   * @throws AuthorizationNotConfiguredError if authorization is not configured and permissiveMode is false
-   */
+  /** @throws AuthorizationNotConfiguredError if not configured and not in permissiveMode */
   private async authorize(
     ctx: ConvexContext,
     operation: CmsOperation,
@@ -1503,248 +608,95 @@ export class ContentEntriesApi {
     resourceOwnerId?: string,
     contentTypeId?: string
   ): Promise<void> {
-    // Check if authorization is configured
     if (!this.authHelper) {
       if (this.config.permissiveMode) {
-        // In permissive mode, allow operation but log a warning
         console.warn(
           `[ConvexCMS] Authorization not configured for "${operation}". ` +
-          "Operations are allowed in permissiveMode, but this should NOT be used in production. " +
-          "Configure getUserRole hook to enable proper authorization."
+          "Operations are allowed in permissiveMode, but this should NOT be used in production."
         );
         return;
       }
-      // Fail securely - require authorization configuration
       throw new AuthorizationNotConfiguredError(operation);
     }
 
-    // Skip RBAC checks if explicitly disabled (but auth was still validated above)
-    if (this.authHelper.skipRbac) {
-      return;
-    }
+    if (this.authHelper.skipRbac) return;
 
-    // Check if userId is provided
     if (!userId) {
       if (this.config.permissiveMode) {
-        // In permissive mode, allow anonymous operations with a warning
         console.warn(
           `[ConvexCMS] Anonymous operation attempted for "${operation}". ` +
-          "Operations without userId are allowed in permissiveMode, but this should NOT be used in production. " +
-          "Ensure all operations include a userId for proper authorization."
+          "Operations without userId are allowed in permissiveMode, but this should NOT be used in production."
         );
         return;
       }
-      // Fail securely - require userId for authorization
       throw new AuthorizationNotConfiguredError(
         `${operation} (no userId provided - anonymous operations require permissiveMode)`
       );
     }
 
     const role = await this.authHelper.getUserRole(ctx, userId);
-
-    await this.authHelper.requireAuthorization(ctx, {
-      operation,
-      userId,
-      role,
-      resourceId,
-      resourceOwnerId,
-      contentTypeId,
-    });
+    await this.authHelper.requireAuthorization(ctx, { operation, userId, role, resourceId, resourceOwnerId, contentTypeId });
   }
 
-  /**
-   * Enforce rate limit for content entry operations.
-   * @param ctx - The Convex context (for database access)
-   * @param operation - The CMS operation being performed
-   * @param userId - The user performing the operation
-   * @param contentTypeId - Optional content type ID for more granular rate limiting
-   */
   private async rateLimit(
     ctx: ConvexContext,
     operation: CmsOperation,
     userId: string | undefined,
     contentTypeId?: string
   ): Promise<void> {
-    // Skip if no rate limit helper configured
-    if (!this.rateLimitHelper) {
-      return;
-    }
-
+    if (!this.rateLimitHelper) return;
     const role = userId ? await this.rateLimitHelper.getUserRole(ctx, userId) : null;
-
-    await this.rateLimitHelper.requireRateLimit(operation, {
-      userId,
-      role,
-      contentTypeId,
-    });
+    await this.rateLimitHelper.requireRateLimit(operation, { userId, role, contentTypeId });
   }
 
-  /**
-   * Create a new content entry.
-   *
-   * @param ctx - Convex mutation context
-   * @param args - Entry creation arguments
-   * @returns The created entry
-   *
-   * @example
-   * ```typescript
-   * const post = await cms.contentEntries.create(ctx, {
-   *   contentTypeId: blogTypeId,
-   *   data: {
-   *     title: "My First Post",
-   *     content: "<p>Hello world!</p>",
-   *   },
-   * });
-   * ```
-   */
-  async create(
-    ctx: ConvexContext,
-    args: CreateContentEntryArgs
-  ): Promise<ContentEntry> {
-    // Authorization check - contentEntries.create
-    await this.authorize(
-      ctx,
-      "contentEntries.create",
-      args.createdBy,
-      undefined,
-      undefined,
-      args.contentTypeId
-    );
-    // Rate limit check - contentEntries.create
+  async create(ctx: ConvexContext, args: CreateContentEntryArgs): Promise<ContentEntry> {
+    await this.authorize(ctx, "contentEntries.create", args.createdBy, undefined, undefined, args.contentTypeId);
     await this.rateLimit(ctx, "contentEntries.create", args.createdBy, args.contentTypeId);
-
-    // Apply default locale if not specified and localization is enabled
-    const argsWithDefaults = {
-      ...args,
-      locale: args.locale ?? this.config.defaultLocale,
-    };
+    const argsWithDefaults = { ...args, locale: args.locale ?? this.config.defaultLocale };
     return ctx.runMutation(this.api.contentEntryMutations.createEntry, argsWithDefaults);
   }
 
-  /**
-   * Update an existing content entry.
-   *
-   * @param ctx - Convex mutation context
-   * @param args - Entry update arguments
-   * @returns The updated entry
-   */
-  async update(
-    ctx: ConvexContext,
-    args: UpdateContentEntryArgs
-  ): Promise<ContentEntry> {
-    // Fetch entry for ownership-based authorization
+  async update(ctx: ConvexContext, args: UpdateContentEntryArgs): Promise<ContentEntry> {
     const entry = await ctx.runQuery(this.api.contentEntries.get, { id: args.id });
-    if (!entry) {
-      throw new Error(`Content entry not found: ${args.id}`);
-    }
-
-    // Authorization check - contentEntries.update (with ownership info)
-    await this.authorize(
-      ctx,
-      "contentEntries.update",
-      args.updatedBy,
-      args.id,
-      entry.createdBy,
-      entry.contentTypeId
-    );
-    // Rate limit check - contentEntries.update
+    if (!entry) throw new Error(`Content entry not found: ${args.id}`);
+    await this.authorize(ctx, "contentEntries.update", args.updatedBy, args.id, entry.createdBy, entry.contentTypeId);
     await this.rateLimit(ctx, "contentEntries.update", args.updatedBy, entry.contentTypeId);
     return ctx.runMutation(this.api.contentEntryMutations.updateEntry, args);
   }
 
-  /**
-   * Soft delete a content entry.
-   *
-   * @param ctx - Convex mutation context
-   * @param args - Delete arguments
-   * @returns The deleted entry
-   */
-  async delete(
-    ctx: ConvexContext,
-    args: DeleteContentEntryArgs
-  ): Promise<ContentEntry> {
-    // Fetch entry for ownership-based authorization
+  async delete(ctx: ConvexContext, args: DeleteContentEntryArgs): Promise<ContentEntry> {
     const entry = await ctx.runQuery(this.api.contentEntries.get, { id: args.id });
-    if (!entry) {
-      throw new Error(`Content entry not found: ${args.id}`);
-    }
-
-    // Authorization check - contentEntries.delete (with ownership info)
-    await this.authorize(
-      ctx,
-      "contentEntries.delete",
-      args.deletedBy,
-      args.id,
-      entry.createdBy,
-      entry.contentTypeId
-    );
-    // Rate limit check - contentEntries.delete
+    if (!entry) throw new Error(`Content entry not found: ${args.id}`);
+    await this.authorize(ctx, "contentEntries.delete", args.deletedBy, args.id, entry.createdBy, entry.contentTypeId);
     await this.rateLimit(ctx, "contentEntries.delete", args.deletedBy, entry.contentTypeId);
     return ctx.runMutation(this.api.contentEntryMutations.deleteEntry, args);
   }
 
-  /**
-   * Get a content entry by ID.
-   *
-   * @param ctx - Convex query context
-   * @param args - Get arguments
-   * @returns The entry or null if not found
-   */
-  async get(
-    ctx: ConvexContext,
-    args: GetContentEntryArgs
-  ): Promise<ContentEntry | null> {
+  async get(ctx: ConvexContext, args: GetContentEntryArgs): Promise<ContentEntry | null> {
     return ctx.runQuery(this.api.contentEntries.get, args);
   }
 
-  /**
-   * Get a content entry by slug.
-   *
-   * @param ctx - Convex query context
-   * @param args - Get by slug arguments
-   * @returns The entry or null if not found
-   *
-   * @example
-   * ```typescript
-   * const post = await cms.contentEntries.getBySlug(ctx, {
-   *   contentTypeName: "blog_post",
-   *   slug: "my-first-post",
-   * });
-   * ```
-   */
-  async getBySlug(
-    ctx: ConvexContext,
-    args: GetContentEntryBySlugArgs
-  ): Promise<ContentEntry | null> {
-    return callQuery(ctx, this.api.contentEntries.getBySlug, args);
+  /** Looks up by contentTypeId+slug or contentTypeName+slug */
+  async getBySlug(ctx: ConvexContext, args: GetContentEntryBySlugArgs): Promise<ContentEntry | null> {
+    // The wrapper's unified interface adapts to the component's split API
+    if (args.contentTypeId) {
+      return ctx.runQuery(this.api.contentEntries.getBySlug, {
+        contentTypeId: args.contentTypeId,
+        slug: args.slug,
+        includeDeleted: false,
+      });
+    }
+    if (args.contentTypeName) {
+      return ctx.runQuery(this.api.contentEntries.getBySlugAndTypeName, {
+        contentTypeName: args.contentTypeName,
+        slug: args.slug,
+        includeDeleted: false,
+      });
+    }
+    throw new Error("getBySlug requires either contentTypeId or contentTypeName");
   }
 
-  /**
-   * List content entries with optional filters and cursor-based pagination.
-   *
-   * Uses the standard Convex pagination format compatible with usePaginatedQuery.
-   *
-   * @param ctx - Convex query context
-   * @param args - Query options with pagination
-   * @returns PaginationResult with page, continueCursor, and isDone
-   *
-   * @example
-   * ```typescript
-   * // First page
-   * const { page, continueCursor, isDone } = await cms.contentEntries.list(ctx, {
-   *   contentTypeName: "blog_post",
-   *   status: "published",
-   *   paginationOpts: { numItems: 10 },
-   * });
-   *
-   * // Next page
-   * const page2 = await cms.contentEntries.list(ctx, {
-   *   contentTypeName: "blog_post",
-   *   status: "published",
-   *   paginationOpts: { numItems: 10, cursor: continueCursor },
-   * });
-   * ```
-   */
+  /** Standard Convex pagination format compatible with usePaginatedQuery */
   async list(
     ctx: ConvexContext,
     args: ListContentEntriesArgs
@@ -2449,8 +1401,8 @@ export class ContentEntriesApi {
  * // Compare two versions
  * const diff = await cms.versions.compare(ctx, {
  *   entryId: entry._id,
- *   fromVersion: 1,
- *   toVersion: 5,
+ *   fromVersionNumber: 1,
+ *   toVersionNumber: 5,
  * });
  *
  * // Rollback to a previous version
@@ -2551,37 +1503,6 @@ export class VersionsApi {
       userId,
       role,
     });
-  }
-
-  /**
-   * List version history for a content entry (legacy format).
-   *
-   * @deprecated Use `getHistory` for improved pagination support
-   * @param ctx - Convex query context
-   * @param args - List arguments
-   * @returns Paginated list of versions (legacy format)
-   */
-  async list(
-    ctx: ConvexContext,
-    args: ListVersionsArgs
-  ): Promise<PaginatedResponse<ContentVersion>> {
-    this.ensureVersioningEnabled();
-    const result = await callQuery(ctx, this.api.contentEntries.getVersionHistory, {
-      entryId: args.entryId,
-      paginationOpts: {
-        numItems: args.limit ?? 50,
-        cursor: args.cursor ?? null,
-      },
-    });
-    // Adapt result format for legacy PaginatedResponse
-    if (!result) {
-      return { items: [], cursor: undefined, hasMore: false };
-    }
-    return {
-      items: result.page,
-      cursor: result.continueCursor ?? undefined,
-      hasMore: !result.isDone,
-    };
   }
 
   /**
@@ -2827,8 +1748,8 @@ export class VersionsApi {
    * ```typescript
    * const diff = await cms.versions.compare(ctx, {
    *   entryId: entry._id,
-   *   fromVersion: 1,  // Can be version number or ID
-   *   toVersion: 5,
+   *   fromVersionNumber: 1,
+   *   toVersionNumber: 5,
    * });
    *
    * if (diff) {
@@ -2845,12 +1766,12 @@ export class VersionsApi {
   ): Promise<VersionComparison | null> {
     this.ensureVersioningEnabled();
 
-    // Resolve fromVersion
-    const fromVersion = await this.resolveVersion(ctx, args.entryId, args.fromVersion);
+    // Get the fromVersion
+    const fromVersion = await this.getByNumber(ctx, args.entryId, args.fromVersionNumber);
     if (!fromVersion) return null;
 
-    // Resolve toVersion
-    const toVersion = await this.resolveVersion(ctx, args.entryId, args.toVersion);
+    // Get the toVersion
+    const toVersion = await this.getByNumber(ctx, args.entryId, args.toVersionNumber);
     if (!toVersion) return null;
 
     // Generate the comparison
@@ -2997,20 +1918,6 @@ export class VersionsApi {
   // =========================================================================
   // Private Helper Methods
   // =========================================================================
-
-  /**
-   * Resolve a version reference (number or ID) to a ContentVersion.
-   */
-  private async resolveVersion(
-    ctx: ConvexContext,
-    entryId: string,
-    versionRef: number | string
-  ): Promise<ContentVersion | null> {
-    if (typeof versionRef === "number") {
-      return this.getByNumber(ctx, entryId, versionRef);
-    }
-    return this.getById(ctx, entryId, versionRef);
-  }
 
   /**
    * Generate a detailed comparison between two versions.
@@ -3330,17 +2237,11 @@ export class MediaAssetsApi {
   async list(
     ctx: ConvexContext,
     args: ListMediaAssetsArgs = {}
-  ): Promise<PaginatedResponse<MediaAsset>> {
+  ): Promise<PaginationResult<MediaAsset>> {
     if (!this.config.features.mediaManagement) {
       throw new Error("Media management feature is not enabled");
     }
-    const result = await callQuery(ctx, this.api.mediaAssets.list, args);
-    // Adapt from Convex pagination format to legacy PaginatedResponse
-    return {
-      items: result.page,
-      cursor: result.continueCursor ?? undefined,
-      hasMore: !result.isDone,
-    };
+    return await callQuery(ctx, this.api.mediaAssets.list, args);
   }
 
   /**
@@ -4202,7 +3103,7 @@ export interface UserPermissionResult {
   };
 }
 
-export interface EnhancedCmsClient {
+export interface CmsClient {
   /**
    * The resolved configuration for this client instance.
    */
@@ -4468,145 +3369,6 @@ export interface EnhancedCmsClient {
   // =============================================================================
   // Locale Fallback Chain Methods (Legacy)
   // =============================================================================
-
-  /**
-   * Get the configured locale fallback configuration.
-   *
-   * Returns a LocaleFallbackConfig object that can be used with the
-   * locale fallback chain utilities.
-   *
-   * @returns The locale fallback configuration derived from CMS config
-   *
-   * @example
-   * ```typescript
-   * const config = cms.getLocaleFallbackConfig();
-   * // Use with locale resolution functions
-   * const chain = resolveFallbackChain("es-MX", config);
-   * ```
-   */
-  getLocaleFallbackConfig(): LocaleFallbackConfig;
-
-  /**
-   * Get the fallback chain for a specific locale.
-   *
-   * Returns an ordered array of locale codes to try when content is not
-   * available in the requested locale. The chain is built from:
-   * 1. Explicit fallback chains configured in `localeFallbackChains`
-   * 2. Auto-generated hierarchy-based chains (if `autoGenerateLocaleFallbacks` is true)
-   * 3. The default locale as final fallback
-   *
-   * @param locale - The locale to get the fallback chain for
-   * @returns Array of fallback locale codes in priority order
-   *
-   * @example
-   * ```typescript
-   * // With configured fallback chains:
-   * // localeFallbackChains: { "es-MX": ["es-ES", "en-US"] }
-   *
-   * const chain = cms.getLocaleFallbackChain("es-MX");
-   * // Returns: ["es-ES", "en-US"]
-   *
-   * // For auto-generated chains (e.g., "fr-CA" not explicitly configured):
-   * const chain = cms.getLocaleFallbackChain("fr-CA");
-   * // Returns: ["fr", "en"] (assuming defaultLocale is "en")
-   * ```
-   */
-  getLocaleFallbackChain(locale: LocaleCode): LocaleCode[];
-
-  /**
-   * Get the complete resolved fallback chain with metadata.
-   *
-   * Similar to `getLocaleFallbackChain`, but returns additional information
-   * about how the chain was resolved (whether it was auto-generated, etc.)
-   *
-   * @param locale - The locale to resolve the fallback chain for
-   * @returns ResolvedFallbackChain with chain and metadata
-   *
-   * @example
-   * ```typescript
-   * const resolved = cms.resolveLocaleFallbackChain("es-MX");
-   * // Returns: {
-   * //   requestedLocale: "es-MX",
-   * //   fallbackChain: ["es-ES", "en-US"],
-   * //   defaultLocale: "en-US",
-   * //   isAutoGenerated: false
-   * // }
-   * ```
-   */
-  resolveLocaleFallbackChain(locale: LocaleCode): ResolvedFallbackChain;
-
-  /**
-   * Build LocaleResolutionOptions for use with locale resolution functions.
-   *
-   * Creates the options object needed by `getLocalizedValue` and
-   * `resolveContentData` from the configured fallback chain for a locale.
-   *
-   * @param locale - The locale to build resolution options for
-   * @returns LocaleResolutionOptions for use with locale resolution functions
-   *
-   * @example
-   * ```typescript
-   * import { getLocalizedValue, resolveContentData } from "@convex-cms/core";
-   *
-   * // Build options from configured fallback chain
-   * const options = cms.buildLocaleResolutionOptions("es-MX");
-   * // Returns: {
-   * //   locale: "es-MX",
-   * //   fallbackChain: ["es-ES", "en-US"],
-   * //   defaultLocale: "en-US"
-   * // }
-   *
-   * // Use with getLocalizedValue
-   * const result = getLocalizedValue(localizedTitle, options);
-   *
-   * // Use with resolveContentData
-   * const resolved = resolveContentData(entryData, {
-   * ...options,
-   *   fields: contentType.fields,
-   * });
-   * ```
-   */
-  buildLocaleResolutionOptions(locale: LocaleCode): LocaleResolutionOptions;
-
-  /**
-   * Parse a locale code into its BCP 47 components.
-   *
-   * @param locale - The locale code to parse (e.g., "en-US", "zh-Hans-CN")
-   * @returns Parsed locale components, or null if invalid
-   *
-   * @example
-   * ```typescript
-   * cms.parseLocale("en-US");
-   * // Returns: { language: "en", region: "US" }
-   *
-   * cms.parseLocale("zh-Hans-CN");
-   * // Returns: { language: "zh", script: "Hans", region: "CN" }
-   *
-   * cms.parseLocale("invalid");
-   * // Returns: null
-   * ```
-   */
-  parseLocale(locale: LocaleCode): ParsedLocale | null;
-
-  /**
-   * Get the locale hierarchy (parent locales) for a locale.
-   *
-   * @param locale - The locale to get hierarchy for
-   * @returns Array of parent locales from most specific to least
-   *
-   * @example
-   * ```typescript
-   * cms.getLocaleHierarchy("zh-Hans-CN");
-   * // Returns: ["zh-Hans", "zh"]
-   *
-   * cms.getLocaleHierarchy("en-US");
-   * // Returns: ["en"]
-   *
-   * cms.getLocaleHierarchy("en");
-   * // Returns: []
-   * ```
-   */
-  getLocaleHierarchy(locale: LocaleCode): LocaleCode[];
 
   // =============================================================================
   // Custom Roles Methods
@@ -4980,10 +3742,10 @@ export interface ResourcePermissionGranted {
  * });
  * ```
  */
-export function createEnhancedCmsClient(
+export function createCmsClient(
   componentApi: TypedComponentApi,
   config?: ComponentConfig
-): EnhancedCmsClient {
+): CmsClient {
   const resolvedConfig = resolveConfig(config);
   // Store the getUserRole hook from the original config (not resolved)
   const getUserRoleHook = config?.getUserRole;
@@ -4997,7 +3759,7 @@ export function createEnhancedCmsClient(
     ? {
         async getUserRole(ctx: ConvexContext, userId: string): Promise<string | null> {
           if (!getUserRoleHook) return null;
-          return getUserRoleHook(ctx as unknown as CmsHookContext, { userId });
+          return getUserRoleHook(ctx, { userId });
         },
         async requireRateLimit(
           operation: CmsOperation,
@@ -5022,12 +3784,12 @@ export function createEnhancedCmsClient(
   const authHelper: AuthorizationHelper | undefined = getUserRoleHook
     ? {
         async getUserRole(ctx: ConvexContext, userId: string): Promise<string | null> {
-          return getUserRoleHook(ctx as unknown as CmsHookContext, { userId });
+          return getUserRoleHook(ctx, { userId });
         },
         async requireAuthorization(ctx: ConvexContext, context: Omit<AuthorizationHookContext, 'ctx'>): Promise<AuthorizationResult> {
           const fullContext: AuthorizationHookContext = {
             ...context,
-            ctx: ctx as unknown as CmsHookContext,
+            ctx: ctx,
           };
           const rbacOptions = contextToRbacOptions(fullContext);
 
@@ -5123,7 +3885,7 @@ export function createEnhancedCmsClient(
             "Configure a getUserRole function in createCmsClient options to map user IDs to CMS roles."
         );
       }
-      return await getUserRoleHook(ctx as unknown as CmsHookContext, { userId });
+      return await getUserRoleHook(ctx, { userId });
     },
 
     async hasPermissionForUser(
@@ -5139,7 +3901,7 @@ export function createEnhancedCmsClient(
         );
       }
 
-      const role = await getUserRoleHook(ctx as unknown as CmsHookContext, { userId });
+      const role = await getUserRoleHook(ctx, { userId });
 
       // If user has no role, they have no permissions
       if (role === null) {
@@ -5199,42 +3961,6 @@ export function createEnhancedCmsClient(
     },
 
     // ==========================================================================
-    // Locale Fallback Chain Methods
-    // ==========================================================================
-
-    getLocaleFallbackConfig(): LocaleFallbackConfig {
-      return {
-        defaultLocale: resolvedConfig.defaultLocale,
-        fallbackChains: resolvedConfig.localeFallbackChains,
-        autoGenerateFallbacks: resolvedConfig.autoGenerateLocaleFallbacks,
-        supportedLocales: resolvedConfig.supportedLocales,
-      };
-    },
-
-    getLocaleFallbackChain(locale: LocaleCode): LocaleCode[] {
-      const fallbackConfig = this.getLocaleFallbackConfig();
-      return getFallbackChain(locale, fallbackConfig);
-    },
-
-    resolveLocaleFallbackChain(locale: LocaleCode): ResolvedFallbackChain {
-      const fallbackConfig = this.getLocaleFallbackConfig();
-      return resolveFallbackChain(locale, fallbackConfig);
-    },
-
-    buildLocaleResolutionOptions(locale: LocaleCode): LocaleResolutionOptions {
-      const fallbackConfig = this.getLocaleFallbackConfig();
-      return buildLocaleResolutionOptions(locale, fallbackConfig);
-    },
-
-    parseLocale(locale: LocaleCode): ParsedLocale | null {
-      return parseLocale(locale);
-    },
-
-    getLocaleHierarchy(locale: LocaleCode): LocaleCode[] {
-      return getLocaleHierarchy(locale);
-    },
-
-    // ==========================================================================
     // Custom Roles Methods
     // ==========================================================================
 
@@ -5263,7 +3989,7 @@ export function createEnhancedCmsClient(
         );
       }
 
-      const role = await getUserRoleHook(ctx as unknown as CmsHookContext, { userId });
+      const role = await getUserRoleHook(ctx, { userId });
 
       if (role === null) {
         return {
@@ -5298,7 +4024,7 @@ export function createEnhancedCmsClient(
         );
       }
 
-      const role = await getUserRoleHook(ctx as unknown as CmsHookContext, { userId });
+      const role = await getUserRoleHook(ctx, { userId });
 
       if (role === null) {
         return [];
@@ -5334,7 +4060,7 @@ export function createEnhancedCmsClient(
         );
       }
 
-      const role = await getUserRoleHook(ctx as unknown as CmsHookContext, { userId });
+      const role = await getUserRoleHook(ctx, { userId });
 
       // If user has no role, they have no permissions
       if (role === null) {

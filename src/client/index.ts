@@ -83,20 +83,14 @@
 // Export types for external use
 export * from "./types.js";
 
-// =============================================================================
-// Admin API Helper (for Admin UI integration)
-// =============================================================================
-
+// --- Admin API Helper ---
 export {
   defineAdminAPI,
   type AdminApiOptions,
   type AdminOperation,
 } from "./adminApi.js";
 
-// =============================================================================
-// CMS Client Factory (Enhanced with Typed Methods)
-// =============================================================================
-
+// --- CMS Client Factory ---
 import {
   type ComponentConfig,
   type FeatureFlags,
@@ -109,10 +103,12 @@ import {
 
 import {
   type TypedComponentApi,
-  type EnhancedCmsClient,
+  type CmsClient,
   type ConvexContext,
   type PermissionCheckOptions,
   type UserPermissionResult,
+  type ResourcePermissionResult,
+  type ResourcePermissionGranted,
   ContentTypesApi,
   ContentEntriesApi,
   VersionsApi,
@@ -202,20 +198,14 @@ export type {
   ResourcePermissionGranted,
 } from "./wrapper.js";
 
-// Import the authorization hooks execution utilities for use in createCmsClient
 import {
-  executeAuthorizationHooks as executeAuthHooks,
-  operationToRbac as opToRbac,
-  contextToRbacOptions as ctxToRbacOpts,
+  executeAuthorizationHooks,
+  operationToRbac,
+  contextToRbacOptions,
   type AuthorizationResult,
 } from "../component/authorizationHooks.js";
-
-// Import UnauthorizedError for internal use (already re-exported above)
-import { UnauthorizedError as UnauthorizedErrorInternal } from "../component/authorization.js";
-
-// Import internal types from wrapper.ts for authHelper creation
+import { UnauthorizedError as InternalUnauthorizedError } from "../component/authorization.js";
 import type { AuthorizationHelper } from "./wrapper.js";
-// Import AuthorizationHookContext from types for internal use
 import type { AuthorizationHookContext as InternalAuthHookContext } from "./types.js";
 
 import {
@@ -232,16 +222,9 @@ import {
 import {
   resolveFallbackChain,
   getFallbackChain,
-  buildLocaleResolutionOptions,
-  parseLocale,
-  getLocaleHierarchy,
   type LocaleFallbackConfig,
   type ResolvedFallbackChain,
-  type ParsedLocale,
 } from "../component/localeFallbackChain.js";
-
-// Import locale resolution types
-import type { LocaleResolutionOptions } from "../component/localeFields.js";
 
 // Re-export wrapper types and classes
 export * from "./wrapper.js";
@@ -329,7 +312,7 @@ export {
 export function createCmsClient(
   componentApi: TypedComponentApi,
   config?: ComponentConfig
-): EnhancedCmsClient {
+): CmsClient {
   // Validate required hooks at initialization time (fail-fast)
   validateRequiredHooks(config);
 
@@ -356,9 +339,9 @@ export function createCmsClient(
             ctx: ctx as unknown as import("./types.js").CmsHookContext,
           };
 
-          const rbacOptions = ctxToRbacOpts(fullContext);
+          const rbacOptions = contextToRbacOptions(fullContext);
 
-          const result = await executeAuthHooks({
+          const result = await executeAuthorizationHooks({
             hooks: authHooks,
             context: fullContext,
             rbacOptions: rbacOptions ?? undefined,
@@ -366,9 +349,9 @@ export function createCmsClient(
           });
 
           if (!result.allowed) {
-            const rbacMapping = opToRbac(fullContext.operation);
+            const rbacMapping = operationToRbac(fullContext.operation);
 
-            throw new UnauthorizedErrorInternal(
+            throw new InternalUnauthorizedError(
               result.reason ?? "Operation not allowed",
               {
                 code:
@@ -474,9 +457,9 @@ export function createCmsClient(
 
     async authorize(context: AuthorizationHookContext): Promise<any> {
       // Build RBAC options from context
-      const rbacOptions = ctxToRbacOpts(context);
+      const rbacOptions = contextToRbacOptions(context);
 
-      return executeAuthHooks({
+      return executeAuthorizationHooks({
         hooks: authHooks,
         context,
         rbacOptions: rbacOptions ?? undefined,
@@ -488,9 +471,9 @@ export function createCmsClient(
       const result = await this.authorize(context);
 
       if (!result.allowed) {
-        const rbacMapping = opToRbac(context.operation);
+        const rbacMapping = operationToRbac(context.operation);
 
-        throw new UnauthorizedErrorInternal(
+        throw new InternalUnauthorizedError(
           result.reason ?? "Operation not allowed",
           {
             code: result.rbacResult?.allowed === false
@@ -595,48 +578,6 @@ export function createCmsClient(
     },
 
     // ==========================================================================
-    // Legacy Locale Methods (Deprecated - Use cms.locale.* instead)
-    // ==========================================================================
-
-    /** @deprecated Use cms.locale.getConfig() instead */
-    getLocaleFallbackConfig(): LocaleFallbackConfig {
-      return {
-        defaultLocale: resolvedConfig.defaultLocale,
-        fallbackChains: resolvedConfig.localeFallbackChains,
-        autoGenerateFallbacks: resolvedConfig.autoGenerateLocaleFallbacks,
-        supportedLocales: resolvedConfig.supportedLocales,
-      };
-    },
-
-    /** @deprecated Use cms.locale.getFallbackChain() instead */
-    getLocaleFallbackChain(locale: LocaleCode): LocaleCode[] {
-      const fallbackConfig = this.getLocaleFallbackConfig();
-      return getFallbackChain(locale, fallbackConfig);
-    },
-
-    /** @deprecated Use cms.locale.resolve() instead */
-    resolveLocaleFallbackChain(locale: LocaleCode): ResolvedFallbackChain {
-      const fallbackConfig = this.getLocaleFallbackConfig();
-      return resolveFallbackChain(locale, fallbackConfig);
-    },
-
-    /** @deprecated Internal method - consider using cms.locale.resolve() */
-    buildLocaleResolutionOptions(locale: LocaleCode): LocaleResolutionOptions {
-      const fallbackConfig = this.getLocaleFallbackConfig();
-      return buildLocaleResolutionOptions(locale, fallbackConfig);
-    },
-
-    /** @deprecated Use standard locale parsing libraries instead */
-    parseLocale(locale: LocaleCode): ParsedLocale | null {
-      return parseLocale(locale);
-    },
-
-    /** @deprecated Use cms.locale.getFallbackChain() for fallback resolution */
-    getLocaleHierarchy(locale: LocaleCode): LocaleCode[] {
-      return getLocaleHierarchy(locale);
-    },
-
-    // ==========================================================================
     // Custom Roles Methods
     // ==========================================================================
 
@@ -724,7 +665,7 @@ export function createCmsClient(
       resource: Resource,
       action: Action,
       resourceOwnerId?: string
-    ): Promise<import("./wrapper.js").ResourcePermissionResult> {
+    ): Promise<ResourcePermissionResult> {
       if (!getUserRoleHook) {
         throw new Error(
           "No getUserRole hook configured. " +
@@ -780,7 +721,7 @@ export function createCmsClient(
       resource: Resource,
       action: Action,
       resourceOwnerId?: string
-    ): Promise<import("./wrapper.js").ResourcePermissionGranted> {
+    ): Promise<ResourcePermissionGranted> {
       const result = await this.canUserPerformOnResource(
         ctx,
         userId,
@@ -790,7 +731,7 @@ export function createCmsClient(
       );
 
       if (!result.allowed) {
-        throw new UnauthorizedErrorInternal(
+        throw new InternalUnauthorizedError(
           result.reason ?? "Operation not allowed",
           {
             code: (result.code ?? "PERMISSION_DENIED") as
@@ -824,20 +765,111 @@ export function createCmsClient(
   };
 }
 
-// Backwards compatibility alias
-export { createCmsClient as createEnhancedCmsClient };
-
-// =============================================================================
-// Field Validators and Validation Functions
-// =============================================================================
-
-// Re-export Convex validators from schema
+// --- Field Validators and Validation ---
 export {
   fieldTypeValidator,
   fieldDefinitionValidator,
   contentStatusValidator,
   mediaTypeValidator,
 } from "../component/schema.js";
+
+// --- Mutation Argument Validators ---
+// These validators can be used in wrapper functions and custom mutations.
+// Note: v.id() validators accept strings at runtime, making them work
+// across the component boundary.
+export {
+  // Content Type validators
+  createContentTypeArgs,
+  updateContentTypeArgs,
+  deleteContentTypeArgs,
+
+  // Content Entry validators
+  createContentEntryArgs,
+  updateContentEntryArgs,
+  publishEntryArgs,
+  scheduleEntryArgs,
+  unpublishEntryArgs,
+  deleteContentEntryArgs,
+  duplicateContentEntryArgs,
+
+  // Media Asset validators
+  createMediaAssetArgs,
+  updateMediaAssetArgs,
+  deleteMediaAssetArgs,
+  restoreMediaAssetArgs,
+  moveMediaAssetsArgs,
+
+  // Media Folder validators
+  createMediaFolderArgs,
+  updateMediaFolderArgs,
+  deleteMediaFolderArgs,
+  restoreMediaFolderArgs,
+  moveFolderArgs,
+
+  // Bulk Operation validators
+  bulkPublishArgs,
+  bulkUnpublishArgs,
+  bulkDeleteArgs,
+  bulkUpdateArgs,
+
+  // Version validators
+  getVersionHistoryArgs,
+  getVersionArgs,
+  rollbackVersionArgs,
+  compareVersionsArgs,
+  createVersionSnapshotArgs,
+
+  // Query validators
+  contentQueryArgs,
+  mediaQueryArgs,
+  listMediaAssetsArgs,
+
+  // Lock validators
+  acquireLockArgs,
+  releaseLockArgs,
+  renewLockArgs,
+  checkLockArgs,
+
+  // Trash validators
+  updateTrashConfigArgs,
+  listTrashArgs,
+  emptyTrashArgs,
+
+  // Audit log validators
+  listAuditLogsArgs,
+  getResourceAuditLogsArgs,
+  getUserAuditLogsArgs,
+
+  // Inferred types from validators
+  type CreateContentTypeArgs,
+  type UpdateContentTypeArgs,
+  type DeleteContentTypeArgs,
+  type CreateContentEntryArgs,
+  type UpdateContentEntryArgs,
+  type DeleteContentEntryArgs,
+  type PublishEntryArgs,
+  type UnpublishEntryArgs,
+  type ScheduleEntryArgs,
+  type DuplicateContentEntryArgs,
+  type CreateMediaAssetArgs,
+  type UpdateMediaAssetArgs,
+  type DeleteMediaAssetArgs,
+  type RestoreMediaAssetArgs,
+  type CreateMediaFolderArgs,
+  type UpdateMediaFolderArgs,
+  type DeleteMediaFolderArgs,
+  type RestoreMediaFolderArgs,
+  type MoveFolderArgs,
+  type MoveMediaAssetsArgs,
+  type BulkPublishArgs,
+  type BulkUnpublishArgs,
+  type BulkDeleteArgs,
+  type BulkUpdateArgs,
+  type GetVersionHistoryArgs,
+  type GetVersionArgs,
+  type RollbackVersionArgs,
+  type CompareVersionsArgs,
+} from "../component/validators.js";
 
 // Re-export field type constants
 export {
@@ -879,11 +911,7 @@ export type {
   ContentValidationOptions,
 } from "../component/validation.js";
 
-// =============================================================================
-// Locale-Specific Content Field Storage and Resolution
-// =============================================================================
-
-// Re-export locale field types and utilities
+// --- Locale Field Utilities ---
 export {
   // Type guards
   isLocalizedFieldValue,
@@ -919,11 +947,7 @@ export type {
   ResolveLocaleOptions,
 } from "../component/localeFields.js";
 
-// =============================================================================
-// Locale Fallback Chain Configuration and Utilities
-// =============================================================================
-
-// Re-export locale fallback chain utilities
+// --- Locale Fallback Chain ---
 export {
   // Configuration utilities
   createFallbackConfig,
@@ -965,11 +989,7 @@ export {
 
 export type { SlugOptions } from "../component/lib/slugGenerator.js";
 
-// =============================================================================
-// Deep Reference Resolution (Recursive with Depth Limiting)
-// =============================================================================
-
-// Re-export deep reference resolution utilities from component
+// --- Deep Reference Resolution ---
 export {
   // Core resolution functions
   resolveEntryReferences,
@@ -989,11 +1009,7 @@ export type {
 // Note: DeepResolveOptions, ResolvedContentEntry, and BatchResolveResult
 // are already exported from ./types.js above
 
-// =============================================================================
-// RBAC Utilities
-// =============================================================================
-
-// Re-export RBAC types and utilities from component
+// --- RBAC Utilities ---
 export {
   // Role constants
   roleNames,
@@ -1066,11 +1082,7 @@ export type {
   CustomPermission,
 } from "./types.js";
 
-// =============================================================================
-// Rate Limiting Hooks Infrastructure
-// =============================================================================
-
-// Re-export rate limit hook execution utilities
+// --- Rate Limiting ---
 export {
   // Main execution functions
   executeRateLimitHooks,
@@ -1110,11 +1122,7 @@ export type {
   OperationCategory,
 } from "./types.js";
 
-// =============================================================================
-// Agent Tools (@convex-dev/agent Integration)
-// =============================================================================
-
-// Re-export agent tools for AI agent integration
+// --- Agent Tools ---
 export {
   // Main factory function
   createCmsTools,
@@ -1168,11 +1176,7 @@ export {
   searchContentArgsSchema,
 } from "./agentTools.js";
 
-// =============================================================================
-// Code-Only Schema System
-// =============================================================================
-
-// Re-export schema definition functions and types
+// --- Code-Only Schema System ---
 export {
   // Core functions
   defineContentType,
