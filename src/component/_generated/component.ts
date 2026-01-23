@@ -2910,6 +2910,19 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
       >;
     };
     mediaAssets: {
+      count: FunctionReference<
+        "query",
+        "internal",
+        {
+          deletedOnly?: boolean;
+          folderId?: string;
+          includeDeleted?: boolean;
+          mimeType?: string;
+          mimeTypePrefix?: string;
+        },
+        { count: number },
+        Name
+      >;
       get: FunctionReference<
         "query",
         "internal",
@@ -3283,7 +3296,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
       listMediaFolders: FunctionReference<
         "query",
         "internal",
-        { includeDeleted?: boolean; parentId?: string },
+        { deletedOnly?: boolean; includeDeleted?: boolean; parentId?: string },
         Array<
           | {
               _creationTime: number;
@@ -4202,6 +4215,24 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         { continueCursor: string | null; isDone: boolean; page: Array<string> },
         Name
       >;
+      getMediaByTerm: FunctionReference<
+        "query",
+        "internal",
+        {
+          includeDeleted?: boolean;
+          paginationOpts?: {
+            cursor: string | null;
+            endCursor?: string | null;
+            id?: number;
+            maximumBytesRead?: number;
+            maximumRowsRead?: number;
+            numItems: number;
+          };
+          termId: string;
+        },
+        { continueCursor: string | null; isDone: boolean; page: Array<string> },
+        Name
+      >;
       getTerm: FunctionReference<
         "query",
         "internal",
@@ -4245,6 +4276,31 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           depth: number;
           description?: string;
           fieldName: string;
+          icon?: string;
+          name: string;
+          parentId?: string;
+          path?: string;
+          searchText?: string;
+          slug: string;
+          sortOrder?: number;
+          taxonomyId: string;
+          updatedBy?: string;
+          usageCount: number;
+        }>,
+        Name
+      >;
+      getTermsByMedia: FunctionReference<
+        "query",
+        "internal",
+        { mediaId: string; taxonomyId?: string },
+        Array<{
+          _creationTime: number;
+          _id: string;
+          color?: string;
+          createdBy?: string;
+          deletedAt?: number;
+          depth: number;
+          description?: string;
           icon?: string;
           name: string;
           parentId?: string;
@@ -4405,6 +4461,13 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         null,
         Name
       >;
+      addTermToMedia: FunctionReference<
+        "mutation",
+        "internal",
+        { mediaId: string; termId: string },
+        null,
+        Name
+      >;
       createTaxonomy: FunctionReference<
         "mutation",
         "internal",
@@ -4451,6 +4514,13 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         string,
         Name
       >;
+      createTermAndAddToMedia: FunctionReference<
+        "mutation",
+        "internal",
+        { mediaId: string; name: string; taxonomyId: string; userId?: string },
+        string,
+        Name
+      >;
       deleteTaxonomy: FunctionReference<
         "mutation",
         "internal",
@@ -4472,6 +4542,13 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         null,
         Name
       >;
+      removeTermFromMedia: FunctionReference<
+        "mutation",
+        "internal",
+        { mediaId: string; termId: string },
+        null,
+        Name
+      >;
       restoreTaxonomy: FunctionReference<
         "mutation",
         "internal",
@@ -4490,6 +4567,13 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         "mutation",
         "internal",
         { entryId: string; fieldName: string; termIds: Array<string> },
+        null,
+        Name
+      >;
+      setMediaTerms: FunctionReference<
+        "mutation",
+        "internal",
+        { mediaId: string; taxonomyId: string; termIds: Array<string> },
         null,
         Name
       >;

@@ -129,11 +129,13 @@ export const create = mutation({
 /**
  * Update an existing content type.
  * Derives args from component validator with string ID.
+ * Supports force option to allow breaking changes.
  */
 export const update = mutation({
 	args: {
 		...omit(updateContentTypeArgs.fields, ["id"]),
 		id: v.string(),
+		force: v.optional(v.boolean()),
 	},
 	handler: async (ctx, args) => {
 		return await ctx.runMutation(

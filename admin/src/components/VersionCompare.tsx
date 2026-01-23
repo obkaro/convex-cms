@@ -14,11 +14,30 @@ interface VersionCompareProps {
   onRollback: (version: number) => void
 }
 
-interface DiffChange {
+interface FieldDiff {
   field: string
-  oldValue: unknown
-  newValue: unknown
+  fromValue: unknown
+  toValue: unknown
   changeType: 'added' | 'removed' | 'modified'
+}
+
+interface VersionInfo {
+  versionNumber: number
+  status: string
+  slug: string
+  wasPublished: boolean
+  createdAt: number
+}
+
+interface ComparisonResult {
+  hasChanges: boolean
+  fromVersion: VersionInfo
+  toVersion: VersionInfo
+  changedFields: string[]
+  fieldDiffs: FieldDiff[]
+  slugChanged: boolean
+  statusChanged: boolean
+  changeSummary: string
 }
 
 export function VersionCompare({
@@ -35,19 +54,7 @@ export function VersionCompare({
   })
 
   const isLoading = comparisonQuery === undefined
-  const comparison = comparisonQuery as {
-    from: {
-      versionNumber: number
-      data: Record<string, unknown>
-      _creationTime: number
-    }
-    to: {
-      versionNumber: number
-      data: Record<string, unknown>
-      _creationTime: number
-    }
-    diff: DiffChange[]
-  } | null
+  const comparison = comparisonQuery as ComparisonResult | null
 
   const formatValue = (value: unknown): string => {
     if (value === null || value === undefined) {
@@ -109,7 +116,7 @@ export function VersionCompare({
   }
 
   return (
-    <div className="flex h-full flex-col border-l bg-background">
+    <div className="flex h-full flex-col bg-background">
       <div className="flex items-center justify-between border-b px-4 py-3">
         <div className="flex items-center gap-2">
           <GitCompare className="size-4 text-muted-foreground" />
@@ -127,7 +134,7 @@ export function VersionCompare({
         </button>
       </div>
 
-      <ScrollArea className="flex-1">
+      <ScrollArea className="min-h-0 flex-1">
         <div className="p-4">
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-8">
@@ -140,7 +147,7 @@ export function VersionCompare({
             <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
               Could not load version comparison
             </div>
-          ) : comparison.diff.length === 0 ? (
+          ) : !comparison.hasChanges ? (
             <div className="py-8 text-center">
               <p className="text-sm text-muted-foreground">
                 No differences found between these versions
@@ -151,25 +158,31 @@ export function VersionCompare({
               <div className="mb-4 flex items-center justify-center gap-3 rounded-lg border bg-muted/30 p-3">
                 <div className="text-center">
                   <Badge variant="secondary" className="font-mono">
-                    v{comparison.from.versionNumber}
+                    v{comparison.fromVersion.versionNumber}
                   </Badge>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    {formatDate(comparison.from._creationTime)}
+                    {formatDate(comparison.fromVersion.createdAt)}
                   </p>
                 </div>
                 <ArrowRight className="size-4 text-muted-foreground" />
                 <div className="text-center">
                   <Badge variant="secondary" className="font-mono">
-                    v{comparison.to.versionNumber}
+                    v{comparison.toVersion.versionNumber}
                   </Badge>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    {formatDate(comparison.to._creationTime)}
+                    {formatDate(comparison.toVersion.createdAt)}
                   </p>
                 </div>
               </div>
 
+              {comparison.changeSummary && (
+                <p className="mb-4 text-sm text-muted-foreground">
+                  {comparison.changeSummary}
+                </p>
+              )}
+
               <div className="space-y-3">
-                {comparison.diff.map((change, index) => (
+                {comparison.fieldDiffs.map((change, index) => (
                   <div
                     key={index}
                     className={cn(
@@ -201,7 +214,7 @@ export function VersionCompare({
                             Before:
                           </p>
                           <pre className="overflow-x-auto whitespace-pre-wrap break-words font-mono text-xs text-red-900">
-                            {formatValue(change.oldValue)}
+                            {formatValue(change.fromValue)}
                           </pre>
                         </div>
                       )}
@@ -211,7 +224,7 @@ export function VersionCompare({
                             After:
                           </p>
                           <pre className="overflow-x-auto whitespace-pre-wrap break-words font-mono text-xs text-emerald-900">
-                            {formatValue(change.newValue)}
+                            {formatValue(change.toValue)}
                           </pre>
                         </div>
                       )}

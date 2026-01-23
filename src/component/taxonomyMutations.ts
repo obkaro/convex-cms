@@ -608,6 +608,16 @@ export const deleteTerm = mutation({
 			await ctx.db.delete(assoc._id);
 		}
 
+		// Remove media asset tag associations
+		const mediaAssociations = await ctx.db
+			.query("mediaAssetTags")
+			.withIndex("by_term", (q) => q.eq("termId", id))
+			.collect();
+
+		for (const assoc of mediaAssociations) {
+			await ctx.db.delete(assoc._id);
+		}
+
 		return null;
 	},
 });
@@ -934,6 +944,263 @@ export const createTermAndAddToEntry = mutation({
 				termId,
 				taxonomyId,
 				fieldName,
+				sortOrder: existingAssoc.length,
+			});
+		}
+
+		return termId;
+	},
+});
+
+// =============================================================================
+// Media Asset Tag Mutations
+// =============================================================================
+
+/**
+ * Set the terms for a media asset in a taxonomy (replaces all existing terms).
+ *
+ * @example
+ * ```typescript
+ * await ctx.runMutation(api.taxonomyMutations.setMediaTerms, {
+ *   mediaId: imageId,
+ *   taxonomyId: categoriesTaxonomyId,
+ *   termIds: [landscapeTagId, summerTagId],
+ * });
+ * ```
+ */
+export const setMediaTerms = mutation({
+	args: {
+		mediaId: v.id("mediaItems"),
+		taxonomyId: v.id("taxonomies"),
+		termIds: v.array(v.id("taxonomyTerms")),
+	},
+	returns: v.null(),
+	handler: async (ctx, args) => {
+		const { mediaId, taxonomyId, termIds } = args;
+
+		const media = await ctx.db.get(mediaId);
+		if (!media || isDeleted(media)) {
+			throw new Error("Media asset not found");
+		}
+
+		const taxonomy = await ctx.db.get(taxonomyId);
+		if (!taxonomy || isDeleted(taxonomy)) {
+			throw new Error("Taxonomy not found");
+		}
+
+		const existing = await ctx.db
+			.query("mediaAssetTags")
+			.withIndex("by_media_and_taxonomy", (q) =>
+				q.eq("mediaId", mediaId).eq("taxonomyId", taxonomyId),
+			)
+			.collect();
+
+		const existingTermIds = new Set(existing.map((e) => e.termId));
+		const newTermIds = new Set(termIds);
+
+		const toRemove = existing.filter((e) => !newTermIds.has(e.termId));
+		const toAdd = termIds.filter((id) => !existingTermIds.has(id));
+
+		for (const assoc of toRemove) {
+			const term = await ctx.db.get(assoc.termId);
+			if (term && term.usageCount > 0) {
+				await ctx.db.patch(assoc.termId, {
+					usageCount: term.usageCount - 1,
+				});
+			}
+			await ctx.db.delete(assoc._id);
+		}
+
+		for (let i = 0; i < toAdd.length; i++) {
+			const termId = toAdd[i];
+			const term = await ctx.db.get(termId);
+			if (!term || isDeleted(term)) {
+				continue;
+			}
+
+			if (term.taxonomyId !== taxonomyId) {
+				continue;
+			}
+
+			await ctx.db.patch(termId, {
+				usageCount: term.usageCount + 1,
+			});
+
+			await ctx.db.insert("mediaAssetTags", {
+				mediaId,
+				termId,
+				taxonomyId,
+				sortOrder: i,
+			});
+		}
+
+		const remainingExisting = existing.filter((e) => newTermIds.has(e.termId));
+		for (const assoc of remainingExisting) {
+			const newIndex = termIds.indexOf(assoc.termId);
+			if (newIndex !== assoc.sortOrder) {
+				await ctx.db.patch(assoc._id, { sortOrder: newIndex });
+			}
+		}
+
+		return null;
+	},
+});
+
+/**
+ * Add a single term to a media asset.
+ */
+export const addTermToMedia = mutation({
+	args: {
+		mediaId: v.id("mediaItems"),
+		termId: v.id("taxonomyTerms"),
+	},
+	returns: v.null(),
+	handler: async (ctx, args) => {
+		const { mediaId, termId } = args;
+
+		const media = await ctx.db.get(mediaId);
+		if (!media || isDeleted(media)) {
+			throw new Error("Media asset not found");
+		}
+
+		const term = await ctx.db.get(termId);
+		if (!term || isDeleted(term)) {
+			throw new Error("Term not found");
+		}
+
+		const existing = await ctx.db
+			.query("mediaAssetTags")
+			.withIndex("by_media", (q) => q.eq("mediaId", mediaId))
+			.collect();
+
+		if (existing.some((e) => e.termId === termId)) {
+			return null;
+		}
+
+		await ctx.db.patch(termId, {
+			usageCount: term.usageCount + 1,
+		});
+
+		await ctx.db.insert("mediaAssetTags", {
+			mediaId,
+			termId,
+			taxonomyId: term.taxonomyId,
+			sortOrder: existing.length,
+		});
+
+		return null;
+	},
+});
+
+/**
+ * Remove a single term from a media asset.
+ */
+export const removeTermFromMedia = mutation({
+	args: {
+		mediaId: v.id("mediaItems"),
+		termId: v.id("taxonomyTerms"),
+	},
+	returns: v.null(),
+	handler: async (ctx, args) => {
+		const { mediaId, termId } = args;
+
+		const associations = await ctx.db
+			.query("mediaAssetTags")
+			.withIndex("by_media", (q) => q.eq("mediaId", mediaId))
+			.collect();
+
+		const assoc = associations.find((a) => a.termId === termId);
+		if (!assoc) {
+			return null;
+		}
+
+		const term = await ctx.db.get(termId);
+		if (term && term.usageCount > 0) {
+			await ctx.db.patch(termId, {
+				usageCount: term.usageCount - 1,
+			});
+		}
+
+		await ctx.db.delete(assoc._id);
+
+		return null;
+	},
+});
+
+/**
+ * Create a term and add it to a media asset in one operation.
+ * Useful for inline tag creation in the media library.
+ */
+export const createTermAndAddToMedia = mutation({
+	args: {
+		taxonomyId: v.id("taxonomies"),
+		name: v.string(),
+		mediaId: v.id("mediaItems"),
+		userId: v.optional(v.string()),
+	},
+	returns: v.id("taxonomyTerms"),
+	handler: async (ctx, args) => {
+		const { taxonomyId, name, mediaId, userId } = args;
+
+		const taxonomy = await ctx.db.get(taxonomyId);
+		if (!taxonomy || isDeleted(taxonomy)) {
+			throw new Error("Taxonomy not found");
+		}
+
+		if (!taxonomy.allowInlineCreation) {
+			throw new Error("Inline term creation is not allowed for this taxonomy");
+		}
+
+		const slug = generateSlug(name);
+
+		const existingTerm = await ctx.db
+			.query("taxonomyTerms")
+			.withIndex("by_taxonomy_and_slug", (q) =>
+				q.eq("taxonomyId", taxonomyId).eq("slug", slug),
+			)
+			.first();
+
+		let termId: Id<"taxonomyTerms">;
+
+		if (existingTerm && !isDeleted(existingTerm)) {
+			termId = existingTerm._id;
+		} else if (existingTerm) {
+			await ctx.db.patch(existingTerm._id, {
+				deletedAt: undefined,
+				name,
+				searchText: name,
+				updatedBy: userId,
+			});
+			termId = existingTerm._id;
+		} else {
+			termId = await ctx.db.insert("taxonomyTerms", {
+				taxonomyId,
+				slug,
+				name,
+				depth: 0,
+				usageCount: 0,
+				searchText: name,
+				createdBy: userId,
+			});
+		}
+
+		const existingAssoc = await ctx.db
+			.query("mediaAssetTags")
+			.withIndex("by_media", (q) => q.eq("mediaId", mediaId))
+			.collect();
+
+		if (!existingAssoc.some((a) => a.termId === termId)) {
+			const termDoc = await ctx.db.get(termId);
+			if (termDoc) {
+				await ctx.db.patch(termId, {
+					usageCount: termDoc.usageCount + 1,
+				});
+			}
+
+			await ctx.db.insert("mediaAssetTags", {
+				mediaId,
+				termId,
+				taxonomyId,
 				sortOrder: existingAssoc.length,
 			});
 		}

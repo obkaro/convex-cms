@@ -469,6 +469,26 @@ export const updateEntry = mutation({
 			updates.scheduledPublishAt = scheduledPublishAt;
 		}
 
+		// Check if content has changed to determine if we need a version snapshot
+		const hasDataChanges =
+			data !== undefined &&
+			JSON.stringify(entry.data) !== JSON.stringify(mergedData);
+		const hasSlugChanges = updates.slug !== undefined;
+
+		// Create a version snapshot before updating if content changed
+		if (hasDataChanges || hasSlugChanges) {
+			await ctx.db.insert("contentVersions", {
+				entryId: id,
+				versionNumber: entry.version,
+				data: entry.data,
+				slug: entry.slug,
+				status: entry.status,
+				changeDescription: "Draft saved",
+				createdBy: updatedBy,
+				wasPublished: false,
+			});
+		}
+
 		// Increment version number
 		updates.version = entry.version + 1;
 

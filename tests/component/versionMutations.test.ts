@@ -768,10 +768,12 @@ describe("Version Snapshot Integration Tests", () => {
 				paginationOpts: { numItems: 10, cursor: null },
 			});
 
-			expect(history!.page.length).toBe(2);
+			// 3 snapshots: V1 manual, auto snapshot from updateEntry, V2 manual
+			expect(history!.page.length).toBe(3);
 			// Newest first (descending order)
 			expect(history!.page[0].changeDescription).toBe("Version 2");
-			expect(history!.page[1].changeDescription).toBe("Version 1");
+			expect(history!.page[1].changeDescription).toBe("Draft saved");
+			expect(history!.page[2].changeDescription).toBe("Version 1");
 		});
 	});
 
@@ -942,8 +944,8 @@ describe("Version Snapshot Integration Tests", () => {
 				paginationOpts: { numItems: 10, cursor: null },
 			});
 
-			// Should have 3 snapshots: initial, pre-rollback, post-rollback
-			expect(history!.page.length).toBe(3);
+			// Should have 4 snapshots: initial, auto-save, pre-rollback, post-rollback
+			expect(history!.page.length).toBe(4);
 
 			// Most recent should be the rollback snapshot
 			const rollbackSnapshot = history!.page[0];
@@ -956,6 +958,9 @@ describe("Version Snapshot Integration Tests", () => {
 			const preRollbackSnapshot = history!.page[1];
 			expect(preRollbackSnapshot.changeDescription).toContain("Pre-rollback");
 			expect(preRollbackSnapshot.data.title).toBe("Version 2 Title");
+
+			// Third is auto-save from updateEntry
+			expect(history!.page[2].changeDescription).toBe("Draft saved");
 		});
 
 		it("should throw error for non-existent entry", async () => {

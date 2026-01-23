@@ -5,6 +5,7 @@ import { FieldRenderer } from './fields/FieldRenderer'
 import { VersionHistory } from './VersionHistory'
 import type { FieldDefinition, FieldError } from './fields/types'
 import { parseServerError, isRetryableError } from '~/utils'
+import { useSettingsConfig } from '~/contexts'
 import { CmsButton } from '~/components/cmsds/CmsButton'
 import { CmsStatusBadge } from '~/components/cmsds/CmsStatusBadge'
 import { CmsDialog, CmsConfirmDialog } from '~/components/cmsds/CmsDialog'
@@ -32,6 +33,52 @@ function formatDateTimeLocal(timestamp: number): string {
 
 function parseDateTimeLocal(value: string): number {
   return new Date(value).getTime()
+}
+
+function formatDateOnly(timestamp: number): string {
+  const date = new Date(timestamp)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+function transformDataForUI(
+  data: Record<string, unknown>,
+  fields: FieldDefinition[]
+): Record<string, unknown> {
+  const transformed = { ...data }
+  for (const field of fields) {
+    const value = data[field.name]
+    if (
+      (field.type === 'date' || field.type === 'datetime') &&
+      typeof value === 'number'
+    ) {
+      transformed[field.name] =
+        field.type === 'datetime'
+          ? formatDateTimeLocal(value)
+          : formatDateOnly(value)
+    }
+  }
+  return transformed
+}
+
+function transformDataForBackend(
+  data: Record<string, unknown>,
+  fields: FieldDefinition[]
+): Record<string, unknown> {
+  const transformed = { ...data }
+  for (const field of fields) {
+    const value = data[field.name]
+    if (field.type === 'date' || field.type === 'datetime') {
+      if (typeof value === 'string' && value) {
+        transformed[field.name] = new Date(value).getTime()
+      } else if (!value) {
+        transformed[field.name] = null
+      }
+    }
+  }
+  return transformed
 }
 
 export interface ContentType {
@@ -79,9 +126,11 @@ export function ContentEntryEditor({
   autosaveInterval = 30000,
   canDelete: canDeleteProp = false,
 }: ContentEntryEditorProps) {
+  const { settings } = useSettingsConfig()
+
   const getInitialData = useCallback(() => {
     if (entry) {
-      return { ...entry.data }
+      return transformDataForUI({ ...entry.data }, contentType.fields)
     }
 
     const defaults: Record<string, unknown> = {}
@@ -308,7 +357,7 @@ export function ContentEntryEditor({
 
         await updateEntry({
           id: entry._id,
-          data: formDataRef.current,
+          data: transformDataForBackend(formDataRef.current, contentType.fields),
         })
 
         setLastSavedData({ ...formDataRef.current })
@@ -604,15 +653,20 @@ export function ContentEntryEditor({
       try {
         let savedEntry: ContentEntry
 
+        const dataForBackend = transformDataForBackend(
+          formData,
+          contentType.fields
+        )
+
         if (entry) {
           savedEntry = (await updateEntry({
             id: entry._id,
-            data: formData,
+            data: dataForBackend,
           })) as ContentEntry
         } else {
           savedEntry = (await createEntry({
             contentTypeId: contentType._id,
-            data: formData,
+            data: dataForBackend,
           })) as ContentEntry
         }
 
@@ -821,18 +875,22 @@ export function ContentEntryEditor({
             )}
 
           {entry && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Badge variant="outline" className="font-mono">
-                v{entry.version}
-              </Badge>
-              <button
-                type="button"
-                onClick={() => setShowVersionHistory(true)}
-                className="flex items-center gap-1 text-primary hover:underline"
-              >
-                <History className="size-3" />
-                History
-              </button>
+            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+              {settings?.features.versioning && (
+                <button
+                  type="button"
+                  onClick={() => setShowVersionHistory(true)}
+                  className="flex items-center gap-2 rounded-md border bg-muted/30 px-3 py-1.5 transition-colors hover:bg-muted/50"
+                >
+                  <History className="size-4 text-muted-foreground" />
+                  <span className="text-xs font-medium text-foreground">
+                    Version {entry.version}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    View history
+                  </span>
+                </button>
+              )}
 
               {entry.lastPublishedAt && (
                 <span
@@ -844,16 +902,18 @@ export function ContentEntryEditor({
                 </span>
               )}
 
-              {entry.status === 'scheduled' && entry.scheduledPublishAt && (
-                <span
-                  className="flex items-center gap-1 text-xs text-blue-600"
-                  data-testid="scheduled-time"
-                >
-                  <Clock className="size-3" />
-                  Scheduled:{' '}
-                  {new Date(entry.scheduledPublishAt).toLocaleString()}
-                </span>
-              )}
+              {settings?.features.scheduling &&
+                entry.status === 'scheduled' &&
+                entry.scheduledPublishAt && (
+                  <span
+                    className="flex items-center gap-1 text-xs text-blue-600"
+                    data-testid="scheduled-time"
+                  >
+                    <Clock className="size-3" />
+                    Scheduled:{' '}
+                    {new Date(entry.scheduledPublishAt).toLocaleString()}
+                  </span>
+                )}
             </div>
           )}
         </div>
@@ -881,14 +941,16 @@ export function ContentEntryEditor({
             <>
               {entry.status === 'draft' && (
                 <>
-                  <CmsButton
-                    type="button"
-                    variant="secondary"
-                    onClick={() => setShowScheduleModal(true)}
-                    disabled={isSubmitting || isPublishing}
-                  >
-                    Schedule
-                  </CmsButton>
+                  {settings?.features.scheduling && (
+                    <CmsButton
+                      type="button"
+                      variant="secondary"
+                      onClick={() => setShowScheduleModal(true)}
+                      disabled={isSubmitting || isPublishing}
+                    >
+                      Schedule
+                    </CmsButton>
+                  )}
                   <CmsButton
                     type="button"
                     variant="success"
@@ -902,7 +964,7 @@ export function ContentEntryEditor({
                 </>
               )}
 
-              {entry.status === 'scheduled' && (
+              {settings?.features.scheduling && entry.status === 'scheduled' && (
                 <>
                   <CmsButton
                     type="button"
@@ -942,44 +1004,46 @@ export function ContentEntryEditor({
       </div>
 
       {/* Schedule Modal */}
-      <CmsDialog
-        open={showScheduleModal}
-        onOpenChange={setShowScheduleModal}
-        title="Schedule Publication"
-        size="sm"
-        footer={
-          <>
-            <CmsButton
-              variant="outline"
-              onClick={() => setShowScheduleModal(false)}
-            >
-              Cancel
-            </CmsButton>
-            <CmsButton
-              variant="primary"
-              onClick={handleSchedule}
-              loading={isPublishing}
-            >
-              Schedule
-            </CmsButton>
-          </>
-        }
-      >
-        <div className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            Choose when this content should be automatically published:
-          </p>
-          <Input
-            type="datetime-local"
-            value={scheduleDateTime}
-            onChange={(e) => setScheduleDateTime(e.target.value)}
-            min={formatDateTimeLocal(Date.now() + 60 * 1000)}
-          />
-          {publishError && (
-            <p className="text-sm text-destructive">{publishError}</p>
-          )}
-        </div>
-      </CmsDialog>
+      {settings?.features.scheduling && (
+        <CmsDialog
+          open={showScheduleModal}
+          onOpenChange={setShowScheduleModal}
+          title="Schedule Publication"
+          size="sm"
+          footer={
+            <>
+              <CmsButton
+                variant="outline"
+                onClick={() => setShowScheduleModal(false)}
+              >
+                Cancel
+              </CmsButton>
+              <CmsButton
+                variant="primary"
+                onClick={handleSchedule}
+                loading={isPublishing}
+              >
+                Schedule
+              </CmsButton>
+            </>
+          }
+        >
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Choose when this content should be automatically published:
+            </p>
+            <Input
+              type="datetime-local"
+              value={scheduleDateTime}
+              onChange={(e) => setScheduleDateTime(e.target.value)}
+              min={formatDateTimeLocal(Date.now() + 60 * 1000)}
+            />
+            {publishError && (
+              <p className="text-sm text-destructive">{publishError}</p>
+            )}
+          </div>
+        </CmsDialog>
+      )}
 
       {/* Publish/Unpublish Confirmation Modal */}
       <CmsConfirmDialog
@@ -1023,8 +1087,8 @@ export function ContentEntryEditor({
       />
 
       {/* Version History Panel */}
-      {showVersionHistory && entry && (
-        <div className="fixed inset-y-0 right-0 z-50 w-96 shadow-xl">
+      {settings?.features.versioning && showVersionHistory && entry && (
+        <div className="fixed inset-y-0 right-0 z-50 flex w-96 flex-col shadow-xl">
           <VersionHistory
             entryId={entry._id}
             currentVersion={entry.version}

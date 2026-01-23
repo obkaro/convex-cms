@@ -9,14 +9,15 @@ import { useMemo, type ReactNode } from "react";
 import globalsCss from "~/styles/globals.css?url";
 import { AdminLayout, RouteGuard } from "~/components";
 import {
-  AdminConfigProvider,
   AuthProvider,
   BreadcrumbProvider,
+  SettingsConfigProvider,
   ThemeProvider,
   type GetUserHook,
   type GetUserRoleHook,
   type LogoutHook,
 } from "~/contexts";
+import type { AdminConfig } from "~/lib/admin-config";
 import { resolveAdminConfig } from "~/lib/admin-config";
 import { getServerConfig, type ServerConfig } from "~/lib/config.server";
 
@@ -148,21 +149,19 @@ function RootComponent() {
     <RootDocument>
       <ThemeProvider>
         <BreadcrumbProvider>
-          <AdminConfigProvider config={adminConfig}>
-            <ConvexProviderWrapper config={config}>
-              <AuthProvider
-                getUser={authConfig.getUser}
-                getUserRole={authConfig.getUserRole}
-                onLogout={authConfig.onLogout}
-              >
-                <RouteGuard>
-                  <AdminLayout>
-                    <Outlet />
-                  </AdminLayout>
-                </RouteGuard>
-              </AuthProvider>
-            </ConvexProviderWrapper>
-          </AdminConfigProvider>
+          <ConvexProviderWrapper config={config} adminConfig={adminConfig}>
+            <AuthProvider
+              getUser={authConfig.getUser}
+              getUserRole={authConfig.getUserRole}
+              onLogout={authConfig.onLogout}
+            >
+              <RouteGuard>
+                <AdminLayout>
+                  <Outlet />
+                </AdminLayout>
+              </RouteGuard>
+            </AuthProvider>
+          </ConvexProviderWrapper>
         </BreadcrumbProvider>
       </ThemeProvider>
     </RootDocument>
@@ -172,12 +171,12 @@ function RootComponent() {
 function ConvexProviderWrapper({
   children,
   config,
+  adminConfig,
 }: {
   children: ReactNode;
   config: ServerConfig;
+  adminConfig: AdminConfig;
 }) {
-  // Create Convex client from runtime config
-  // useMemo ensures we only create one client per URL
   const convex = useMemo(() => {
     if (!config.convexUrl) return null;
     return new ConvexReactClient(config.convexUrl);
@@ -227,7 +226,13 @@ function ConvexProviderWrapper({
     );
   }
 
-  return <ConvexProvider client={convex}>{children}</ConvexProvider>;
+  return (
+    <ConvexProvider client={convex}>
+      <SettingsConfigProvider baseConfig={adminConfig}>
+        {children}
+      </SettingsConfigProvider>
+    </ConvexProvider>
+  );
 }
 
 function RootDocument({ children }: Readonly<{ children: ReactNode }>) {

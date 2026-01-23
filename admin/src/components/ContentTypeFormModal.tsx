@@ -1,7 +1,7 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import type { FieldType } from "@convex-cms/core/types";
+import type { FieldType, ContentType } from "@convex-cms/core/types";
 import { CmsDialog } from "~/components/cmsds/CmsDialog";
 import { CmsButton } from "~/components/cmsds/CmsButton";
 import { Input } from "~/components/ui/input";
@@ -34,6 +34,7 @@ import {
 	FolderOpen,
 } from "lucide-react";
 import { cn } from "~/lib/cn";
+import { BreakingChangesWarningDialog } from "./BreakingChangesWarningDialog";
 
 interface SelectOption {
 	value: string;
@@ -137,6 +138,8 @@ interface ContentTypeFormModalProps {
 	isOpen: boolean;
 	onClose: () => void;
 	onCreated?: (contentType: unknown) => void;
+	onUpdated?: (contentType: unknown) => void;
+	contentType?: ContentType | null;
 }
 
 function generateMachineName(displayName: string): string {
@@ -157,7 +160,11 @@ export function ContentTypeFormModal({
 	isOpen,
 	onClose,
 	onCreated,
+	onUpdated,
+	contentType,
 }: ContentTypeFormModalProps) {
+	const isEditing = !!contentType;
+
 	const [displayName, setDisplayName] = useState("");
 	const [machineName, setMachineName] = useState("");
 	const [machineNameManuallyEdited, setMachineNameManuallyEdited] = useState(
@@ -176,7 +183,27 @@ export function ContentTypeFormModal({
 	const [activeFieldIndex, setActiveFieldIndex] = useState<number | null>(null);
 	const [showFieldEditor, setShowFieldEditor] = useState(false);
 
+	// Breaking changes state
+	const [breakingChanges, setBreakingChanges] = useState<string[]>([]);
+	const [showBreakingWarning, setShowBreakingWarning] = useState(false);
+	const [isForceUpdating, setIsForceUpdating] = useState(false);
+
 	const createContentType = useMutation(api.contentTypes.create);
+	const updateContentType = useMutation(api.contentTypes.update);
+
+	// Populate form when editing
+	useEffect(() => {
+		if (contentType && isOpen) {
+			setDisplayName(contentType.displayName);
+			setMachineName(contentType.name);
+			setMachineNameManuallyEdited(true);
+			setDescription(contentType.description || "");
+			setSingleton(contentType.singleton || false);
+			setFields(contentType.fields as FieldDefinition[]);
+			setTitleField(contentType.titleField || "");
+			setSlugField(contentType.slugField || "");
+		}
+	}, [contentType, isOpen]);
 
 	const resetForm = useCallback(() => {
 		setDisplayName("");
@@ -193,6 +220,9 @@ export function ContentTypeFormModal({
 		setSubmitError(null);
 		setActiveFieldIndex(null);
 		setShowFieldEditor(false);
+		setBreakingChanges([]);
+		setShowBreakingWarning(false);
+		setIsForceUpdating(false);
 	}, []);
 
 	const handleDisplayNameChange = useCallback(
@@ -330,8 +360,15 @@ export function ContentTypeFormModal({
 		fields,
 	]);
 
+	const parseBreakingChanges = (errorMessage: string): string[] => {
+		const lines = errorMessage.split("\n");
+		return lines
+			.filter((line) => line.trim().startsWith("-"))
+			.map((line) => line.trim().substring(2));
+	};
+
 	const handleSubmit = useCallback(
-		async (e: React.FormEvent) => {
+		async (e: React.FormEvent, force = false) => {
 			e.preventDefault();
 
 			if (validationErrors.length > 0) {
@@ -343,32 +380,68 @@ export function ContentTypeFormModal({
 			setSubmitError(null);
 
 			try {
-				const contentType = await createContentType({
-					name: machineName,
-					displayName: displayName.trim(),
-					description: description.trim() || undefined,
-					fields: fields as typeof fields,
-					singleton,
-					titleField: titleField || undefined,
-					slugField: slugField || undefined,
-				} as Parameters<typeof createContentType>[0]);
+				if (isEditing && contentType) {
+					// Update existing content type
+					const result = await updateContentType({
+						id: contentType._id,
+						displayName: displayName.trim(),
+						description: description.trim() || undefined,
+						fields: fields as typeof fields,
+						singleton,
+						titleField: titleField || undefined,
+						slugField: slugField || undefined,
+						force,
+					} as Parameters<typeof updateContentType>[0]);
 
-				onCreated?.(contentType);
-				resetForm();
-				onClose();
+					onUpdated?.(result);
+					resetForm();
+					onClose();
+				} else {
+					// Create new content type
+					const result = await createContentType({
+						name: machineName,
+						displayName: displayName.trim(),
+						description: description.trim() || undefined,
+						fields: fields as typeof fields,
+						singleton,
+						titleField: titleField || undefined,
+						slugField: slugField || undefined,
+					} as Parameters<typeof createContentType>[0]);
+
+					onCreated?.(result);
+					resetForm();
+					onClose();
+				}
 			} catch (error) {
 				const message =
 					error instanceof Error
 						? error.message
-						: "Failed to create content type";
-				setSubmitError(message);
+						: isEditing
+							? "Failed to update content type"
+							: "Failed to create content type";
+
+				// Check for breaking changes error
+				if (
+					isEditing &&
+					!force &&
+					message.includes("breaking change")
+				) {
+					const changes = parseBreakingChanges(message);
+					setBreakingChanges(changes);
+					setShowBreakingWarning(true);
+				} else {
+					setSubmitError(message);
+				}
 			} finally {
 				setIsSubmitting(false);
 			}
 		},
 		[
 			validationErrors,
+			isEditing,
+			contentType,
 			createContentType,
+			updateContentType,
 			machineName,
 			displayName,
 			description,
@@ -377,10 +450,55 @@ export function ContentTypeFormModal({
 			titleField,
 			slugField,
 			onCreated,
+			onUpdated,
 			resetForm,
 			onClose,
 		],
 	);
+
+	const handleForceUpdate = useCallback(async () => {
+		setIsForceUpdating(true);
+		try {
+			if (contentType) {
+				const result = await updateContentType({
+					id: contentType._id,
+					displayName: displayName.trim(),
+					description: description.trim() || undefined,
+					fields: fields as typeof fields,
+					singleton,
+					titleField: titleField || undefined,
+					slugField: slugField || undefined,
+					force: true,
+				} as Parameters<typeof updateContentType>[0]);
+
+				onUpdated?.(result);
+				resetForm();
+				setShowBreakingWarning(false);
+				onClose();
+			}
+		} catch (error) {
+			const message =
+				error instanceof Error
+					? error.message
+					: "Failed to update content type";
+			setSubmitError(message);
+			setShowBreakingWarning(false);
+		} finally {
+			setIsForceUpdating(false);
+		}
+	}, [
+		contentType,
+		updateContentType,
+		displayName,
+		description,
+		fields,
+		singleton,
+		titleField,
+		slugField,
+		onUpdated,
+		resetForm,
+		onClose,
+	]);
 
 	const handleClose = useCallback(() => {
 		if (isSubmitting) return;
@@ -394,10 +512,11 @@ export function ContentTypeFormModal({
 		activeFieldIndex !== null ? fields[activeFieldIndex] : null;
 
 	return (
+		<>
 		<CmsDialog
 			open={isOpen}
 			onOpenChange={(open) => !open && handleClose()}
-			title="Create Content Type"
+			title={isEditing ? "Edit Content Type" : "Create Content Type"}
 			size="2xl"
 			footer={
 				<>
@@ -413,9 +532,9 @@ export function ContentTypeFormModal({
 						onClick={handleSubmit}
 						disabled={validationErrors.length > 0}
 						loading={isSubmitting}
-						data-testid="create-content-type-submit"
+						data-testid={isEditing ? "update-content-type-submit" : "create-content-type-submit"}
 					>
-						Create Content Type
+						{isEditing ? "Save Changes" : "Create Content Type"}
 					</CmsButton>
 				</>
 			}
@@ -451,7 +570,7 @@ export function ContentTypeFormModal({
 							value={machineName}
 							onChange={(e) => handleMachineNameChange(e.target.value)}
 							placeholder="e.g., blog_post"
-							disabled={isSubmitting}
+							disabled={isSubmitting || isEditing}
 							className={cn(
 								!isValidMachineName(machineName) &&
 									machineName &&
@@ -460,8 +579,9 @@ export function ContentTypeFormModal({
 							data-testid="machine-name-input"
 						/>
 						<p className="text-xs text-muted-foreground">
-							Lowercase letters, numbers, and underscores only. Used in API
-							queries.
+							{isEditing
+								? "System name cannot be changed after creation"
+								: "Lowercase letters, numbers, and underscores only. Used in API queries."}
 						</p>
 					</div>
 
@@ -785,6 +905,19 @@ export function ContentTypeFormModal({
 				)}
 			</form>
 		</CmsDialog>
+
+		<BreakingChangesWarningDialog
+			isOpen={showBreakingWarning}
+			onClose={() => setShowBreakingWarning(false)}
+			breakingChanges={breakingChanges}
+			onForceUpdate={handleForceUpdate}
+			onCancel={() => {
+				setShowBreakingWarning(false);
+				setBreakingChanges([]);
+			}}
+			isLoading={isForceUpdating}
+		/>
+		</>
 	);
 }
 

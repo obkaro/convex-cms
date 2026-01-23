@@ -933,6 +933,7 @@ export const getMediaFolder = query({
  *
  * @param parentId - The parent folder ID (undefined for root folders)
  * @param includeDeleted - If true, includes soft-deleted folders
+ * @param deletedOnly - If true, shows only soft-deleted folders (ignores parentId)
  *
  * @returns Array of folder documents sorted by sortOrder, then name
  */
@@ -940,18 +941,26 @@ export const listMediaFolders = query({
 	args: {
 		parentId: v.optional(v.id("mediaItems")),
 		includeDeleted: v.optional(v.boolean()),
+		deletedOnly: v.optional(v.boolean()),
 	},
 	returns: v.array(mediaItemDoc),
 	handler: async (ctx, args) => {
-		const { parentId, includeDeleted = false } = args;
+		const { parentId, includeDeleted = false, deletedOnly = false } = args;
 
-		let query = ctx.db
-			.query("mediaItems")
-			.withIndex("by_kind_and_parent", (q) =>
-				q.eq("kind", "folder").eq("parentId", parentId),
-			);
+		// When viewing trash (deletedOnly), show all deleted folders regardless of parent
+		let query = deletedOnly
+			? ctx.db
+					.query("mediaItems")
+					.withIndex("by_kind", (q) => q.eq("kind", "folder"))
+			: ctx.db
+					.query("mediaItems")
+					.withIndex("by_kind_and_parent", (q) =>
+						q.eq("kind", "folder").eq("parentId", parentId),
+					);
 
-		if (!includeDeleted) {
+		if (deletedOnly) {
+			query = query.filter((q) => q.neq(q.field("deletedAt"), undefined));
+		} else if (!includeDeleted) {
 			query = query.filter((q) => q.eq(q.field("deletedAt"), undefined));
 		}
 

@@ -301,6 +301,7 @@ function TermEditModal({
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [slugManuallyEdited, setSlugManuallyEdited] = useState(false)
 
   const createTerm = useMutation(api.taxonomies.createTerm)
   const updateTerm = useMutation(api.taxonomies.updateTerm)
@@ -326,11 +327,11 @@ function TermEditModal({
   const handleNameChange = useCallback(
     (value: string) => {
       handleChange('name', value)
-      if (!isEditing && !formData.slug) {
+      if (!isEditing && !slugManuallyEdited) {
         handleChange('slug', generateSlug(value))
       }
     },
-    [handleChange, isEditing, formData.slug, generateSlug]
+    [handleChange, isEditing, slugManuallyEdited, generateSlug]
   )
 
   const validate = useCallback(() => {
@@ -463,7 +464,10 @@ function TermEditModal({
           <Input
             id="termSlug"
             value={formData.slug}
-            onChange={(e) => handleChange('slug', e.target.value.toLowerCase())}
+            onChange={(e) => {
+              handleChange('slug', e.target.value.toLowerCase())
+              setSlugManuallyEdited(true)
+            }}
             placeholder="e.g., technology"
             disabled={isSubmitting}
             className={errors.slug ? 'border-destructive' : ''}

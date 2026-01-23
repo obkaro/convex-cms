@@ -47,6 +47,7 @@ export function TaxonomyEditor({
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [slugManuallyEdited, setSlugManuallyEdited] = useState(false)
 
   const createTaxonomy = useMutation(api.taxonomies.createTaxonomy)
   const updateTaxonomy = useMutation(api.taxonomies.updateTaxonomy)
@@ -87,11 +88,11 @@ export function TaxonomyEditor({
   const handleDisplayNameChange = useCallback(
     (value: string) => {
       handleChange('displayName', value)
-      if (!isEditing && !formData.name) {
+      if (!isEditing && !slugManuallyEdited) {
         handleChange('name', generateSlug(value))
       }
     },
-    [handleChange, isEditing, formData.name, generateSlug]
+    [handleChange, isEditing, slugManuallyEdited, generateSlug]
   )
 
   const validate = useCallback(() => {
@@ -215,7 +216,10 @@ export function TaxonomyEditor({
           <Input
             id="name"
             value={formData.name}
-            onChange={(e) => handleChange('name', e.target.value.toLowerCase())}
+            onChange={(e) => {
+              handleChange('name', e.target.value.toLowerCase())
+              setSlugManuallyEdited(true)
+            }}
             placeholder="e.g., categories, tags"
             disabled={isSubmitting || isEditing}
             className={errors.name ? 'border-destructive' : ''}
