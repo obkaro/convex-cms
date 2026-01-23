@@ -1,0 +1,99 @@
+# Convex CMS
+
+A developer-first headless CMS built as a [Convex Component](https://docs.convex.dev/components).
+
+## Features
+
+- **Type-safe APIs** - Full TypeScript support with generated types
+- **Flexible content modeling** - Define content types with 13 field types
+- **Publishing workflows** - Draft, publish, schedule, and version content
+- **Media management** - Upload, organize, and serve media with variants
+- **Role-based access control** - Fine-grained permissions with custom roles
+- **Multi-locale support** - Content localization with fallback chains
+- **Admin UI** - Ready-to-use React admin interface
+
+## Installation
+
+```bash
+npm install convex-cms
+```
+
+## Quick Start
+
+### 1. Configure Convex Component
+
+```typescript
+// convex/convex.config.ts
+import { defineApp } from "convex/server";
+import convexCms from "convex-cms/convex.config";
+
+const app = defineApp();
+app.use(convexCms);
+export default app;
+```
+
+### 2. Create CMS Client
+
+```typescript
+// convex/cms.ts
+import { createCmsClient } from "convex-cms";
+import { components } from "./_generated/api";
+
+export const cms = createCmsClient(components.convexCms, {
+  defaultLocale: "en",
+  permissiveMode: true, // For development only
+});
+```
+
+### 3. Use in Your Functions
+
+```typescript
+// convex/blog.ts
+import { query, mutation } from "./_generated/server";
+import { v } from "convex/values";
+import { cms } from "./cms";
+
+export const getPosts = query({
+  handler: async (ctx) => {
+    const result = await cms.contentEntries.list(ctx, {
+      status: "published",
+    });
+    return result.items;
+  },
+});
+
+export const createPost = mutation({
+  args: { title: v.string(), content: v.string() },
+  handler: async (ctx, args) => {
+    return await cms.contentEntries.create(ctx, {
+      contentTypeId: blogTypeId,
+      data: args,
+    });
+  },
+});
+```
+
+## Documentation
+
+- [Getting Started Guide](./docs/guides/getting-started.md)
+- [Content Modeling](./docs/guides/content-modeling.md)
+- [Media Management](./docs/guides/media.md)
+- [Authorization](./docs/guides/authorization.md)
+- [API Reference](./docs/api/client-api.md)
+
+## Admin UI
+
+Convex CMS includes a ready-to-use admin interface:
+
+```bash
+npx convex-cms admin
+```
+
+## Requirements
+
+- Convex ^1.17.0
+- Node.js 18+
+
+## License
+
+Apache-2.0
