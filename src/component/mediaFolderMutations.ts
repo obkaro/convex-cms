@@ -36,6 +36,7 @@ import {
 	internalError,
 } from "./lib/errors.js";
 import { requireMutationAuth } from "./lib/mutationAuth.js";
+import { isDeleted } from "./lib/softDelete.js";
 
 // =============================================================================
 // Constants
@@ -199,7 +200,7 @@ export const createMediaFolder = mutation({
 				throw mediaFolderNotFound((parentId as unknown) as string);
 			}
 
-			if (parentFolder.deletedAt !== undefined) {
+			if (isDeleted(parentFolder)) {
 				throw mediaFolderDeleted((parentId as unknown) as string);
 			}
 
@@ -299,14 +300,13 @@ export const updateMediaFolder = mutation({
 		// Authorization check - mediaFolders.update permission
 		requireMutationAuth(_auth, "mediaItems", "update");
 
-		// Retrieve the folder
 		const folder = await ctx.db.get(id);
 
 		if (!folder) {
 			throw mediaFolderNotFound((id as unknown) as string);
 		}
 
-		if (folder.deletedAt !== undefined) {
+		if (isDeleted(folder)) {
 			throw mediaFolderDeleted((id as unknown) as string);
 		}
 
@@ -454,14 +454,13 @@ export const moveMediaFolder = mutation({
 		// Authorization check - mediaFolders.update permission (move is a form of update)
 		requireMutationAuth(_auth, "mediaItems", "update");
 
-		// Retrieve the folder
 		const folder = await ctx.db.get(id);
 
 		if (!folder) {
 			throw mediaFolderNotFound((id as unknown) as string);
 		}
 
-		if (folder.deletedAt !== undefined) {
+		if (isDeleted(folder)) {
 			throw mediaFolderDeleted((id as unknown) as string);
 		}
 
@@ -481,7 +480,7 @@ export const moveMediaFolder = mutation({
 				throw mediaFolderNotFound((newParentId as unknown) as string);
 			}
 
-			if (newParentFolder.deletedAt !== undefined) {
+			if (isDeleted(newParentFolder)) {
 				throw mediaFolderDeleted((newParentId as unknown) as string);
 			}
 
@@ -643,7 +642,6 @@ export const deleteMediaFolder = mutation({
 		// Authorization check - mediaFolders.delete permission
 		requireMutationAuth(_auth, "mediaItems", "delete");
 
-		// Retrieve the folder
 		const folder = await ctx.db.get(id);
 
 		if (!folder) {
@@ -651,7 +649,7 @@ export const deleteMediaFolder = mutation({
 		}
 
 		// For soft delete, check if already deleted
-		if (!hardDelete && folder.deletedAt !== undefined) {
+		if (!hardDelete && isDeleted(folder)) {
 			throw mediaFolderDeleted((id as unknown) as string);
 		}
 
@@ -818,21 +816,20 @@ export const restoreMediaFolder = mutation({
 		// Authorization check - use update permission for restore
 		requireMutationAuth(_auth, "mediaItems", "update");
 
-		// Retrieve the folder
 		const folder = await ctx.db.get(id);
 
 		if (!folder) {
 			throw mediaFolderNotFound((id as unknown) as string);
 		}
 
-		if (folder.deletedAt === undefined) {
+		if (!isDeleted(folder)) {
 			throw mediaFolderNotDeleted((id as unknown) as string);
 		}
 
 		// Check that parent folder is not deleted (if it exists)
 		if (folder.parentId) {
 			const parentFolder = await ctx.db.get(folder.parentId);
-			if (parentFolder && parentFolder.deletedAt !== undefined) {
+			if (parentFolder && isDeleted(parentFolder)) {
 				throw mediaFolderParentDeleted(
 					(id as unknown) as string,
 					(folder.parentId as unknown) as string,
@@ -923,7 +920,7 @@ export const getMediaFolder = query({
 			return null;
 		}
 
-		if (!includeDeleted && item.deletedAt !== undefined) {
+		if (!includeDeleted && isDeleted(item)) {
 			return null;
 		}
 

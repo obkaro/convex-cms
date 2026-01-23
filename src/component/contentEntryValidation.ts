@@ -14,6 +14,7 @@
  */
 
 import { v } from "convex/values";
+import { isDeleted } from "./lib/softDelete.js";
 import { internalQuery, query } from "./_generated/server.js";
 import { Id } from "./_generated/dataModel.js";
 import {
@@ -177,7 +178,7 @@ export const validateContentEntry = internalQuery({
 			};
 		}
 
-		if (contentType.deletedAt !== undefined) {
+		if (isDeleted(contentType)) {
 			return {
 				valid: false,
 				errors: [
@@ -281,7 +282,7 @@ export const validateEntry = query({
 			};
 		}
 
-		if (contentType.deletedAt !== undefined) {
+		if (isDeleted(contentType)) {
 			return {
 				valid: false,
 				errors: [
@@ -391,7 +392,7 @@ export const validateContentEntryByTypeName = internalQuery({
 		const validateReferencesOption = options?.validateReferences ?? true;
 		const strictFields = options?.strictFields ?? false;
 
-		if (contentType.deletedAt !== undefined) {
+		if (isDeleted(contentType)) {
 			return {
 				valid: false,
 				errors: [
@@ -587,7 +588,7 @@ async function validateSingleReference(
 		}
 
 		// Check if entry is deleted
-		if (entry.deletedAt !== undefined) {
+		if (isDeleted(entry)) {
 			errors.push({
 				field: fieldLabel,
 				message: `Referenced entry has been deleted: ${referenceId}`,
@@ -661,7 +662,7 @@ async function validateSingleMediaAsset(
 		}
 
 		// Check if asset is deleted
-		if (item.deletedAt !== undefined) {
+		if (isDeleted(item)) {
 			errors.push({
 				field: fieldLabel,
 				message: `Media asset has been deleted: ${assetId}`,

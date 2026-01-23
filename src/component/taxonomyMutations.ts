@@ -10,25 +10,14 @@
  */
 
 import { v } from "convex/values";
+import { isDeleted } from "./lib/softDelete.js";
 import { mutation, MutationCtx } from "./_generated/server.js";
 import type { Id } from "./_generated/dataModel.js";
+import { generateSlug } from "./lib/slugGenerator.js";
 
 // =============================================================================
 // Helper Functions
 // =============================================================================
-
-/**
- * Generate a URL-friendly slug from a string.
- */
-function generateSlug(text: string): string {
-	return text
-		.toLowerCase()
-		.trim()
-		.replace(/[^\w\s-]/g, "") // Remove non-word chars
-		.replace(/\s+/g, "-") // Replace spaces with -
-		.replace(/-+/g, "-") // Replace multiple - with single -
-		.substring(0, 100); // Limit length
-}
 
 /**
  * Build the full path for a term in a hierarchy.
@@ -43,7 +32,7 @@ async function buildTermPath(
 	}
 
 	const parent = await ctx.db.get(parentId);
-	if (!parent || parent.deletedAt !== undefined) {
+	if (!parent || isDeleted(parent)) {
 		return `/${slug}`;
 	}
 
@@ -63,7 +52,7 @@ async function calculateDepth(
 	}
 
 	const parent = await ctx.db.get(parentId);
-	if (!parent || parent.deletedAt !== undefined) {
+	if (!parent || isDeleted(parent)) {
 		return 0;
 	}
 
@@ -144,7 +133,7 @@ export const createTaxonomy = mutation({
 			.withIndex("by_name", (q) => q.eq("name", name))
 			.first();
 
-		if (existing && existing.deletedAt === undefined) {
+		if (existing && !isDeleted(existing)) {
 			throw new Error(`Taxonomy with name "${name}" already exists`);
 		}
 
@@ -203,7 +192,7 @@ export const updateTaxonomy = mutation({
 			throw new Error("Taxonomy not found");
 		}
 
-		if (taxonomy.deletedAt !== undefined) {
+		if (isDeleted(taxonomy)) {
 			throw new Error("Cannot update deleted taxonomy");
 		}
 
@@ -244,7 +233,7 @@ export const deleteTaxonomy = mutation({
 			throw new Error("Taxonomy not found");
 		}
 
-		if (taxonomy.deletedAt !== undefined) {
+		if (isDeleted(taxonomy)) {
 			return null; // Already deleted
 		}
 
@@ -262,7 +251,7 @@ export const deleteTaxonomy = mutation({
 			.collect();
 
 		for (const term of terms) {
-			if (term.deletedAt === undefined) {
+			if (!isDeleted(term)) {
 				await ctx.db.patch(term._id, {
 					deletedAt: Date.now(),
 					updatedBy: userId,
@@ -291,7 +280,7 @@ export const restoreTaxonomy = mutation({
 			throw new Error("Taxonomy not found");
 		}
 
-		if (taxonomy.deletedAt === undefined) {
+		if (!isDeleted(taxonomy)) {
 			return id; // Not deleted
 		}
 
@@ -355,7 +344,7 @@ export const createTerm = mutation({
 
 		// Verify taxonomy exists
 		const taxonomy = await ctx.db.get(taxonomyId);
-		if (!taxonomy || taxonomy.deletedAt !== undefined) {
+		if (!taxonomy || isDeleted(taxonomy)) {
 			throw new Error("Taxonomy not found");
 		}
 
@@ -367,7 +356,7 @@ export const createTerm = mutation({
 		// Verify parent exists if specified
 		if (parentId) {
 			const parent = await ctx.db.get(parentId);
-			if (!parent || parent.deletedAt !== undefined) {
+			if (!parent || isDeleted(parent)) {
 				throw new Error("Parent term not found");
 			}
 			if (parent.taxonomyId !== taxonomyId) {
@@ -386,7 +375,7 @@ export const createTerm = mutation({
 			)
 			.first();
 
-		if (existing && existing.deletedAt === undefined) {
+		if (existing && !isDeleted(existing)) {
 			throw new Error(
 				`Term with slug "${slug}" already exists in this taxonomy`,
 			);
@@ -443,12 +432,12 @@ export const updateTerm = mutation({
 			throw new Error("Term not found");
 		}
 
-		if (term.deletedAt !== undefined) {
+		if (isDeleted(term)) {
 			throw new Error("Cannot update deleted term");
 		}
 
 		const taxonomy = await ctx.db.get(term.taxonomyId);
-		if (!taxonomy || taxonomy.deletedAt !== undefined) {
+		if (!taxonomy || isDeleted(taxonomy)) {
 			throw new Error("Taxonomy not found");
 		}
 
@@ -490,7 +479,7 @@ export const updateTerm = mutation({
 				)
 				.first();
 
-			if (existing && existing._id !== id && existing.deletedAt === undefined) {
+			if (existing && existing._id !== id && !isDeleted(existing)) {
 				throw new Error(`Term with slug "${updates.slug}" already exists`);
 			}
 
@@ -517,7 +506,7 @@ export const updateTerm = mutation({
 			// Verify new parent if specified
 			if (newParentId) {
 				const newParent = await ctx.db.get(newParentId);
-				if (!newParent || newParent.deletedAt !== undefined) {
+				if (!newParent || isDeleted(newParent)) {
 					throw new Error("New parent term not found");
 				}
 				if (newParent.taxonomyId !== term.taxonomyId) {
@@ -575,7 +564,7 @@ export const deleteTerm = mutation({
 			throw new Error("Term not found");
 		}
 
-		if (term.deletedAt !== undefined) {
+		if (isDeleted(term)) {
 			return null;
 		}
 
@@ -585,7 +574,7 @@ export const deleteTerm = mutation({
 			.withIndex("by_parent", (q) => q.eq("parentId", id))
 			.collect();
 
-		const activeChildren = children.filter((c) => c.deletedAt === undefined);
+		const activeChildren = children.filter((c) => !isDeleted(c));
 
 		if (activeChildren.length > 0 && !cascade) {
 			throw new Error(
@@ -640,14 +629,14 @@ export const restoreTerm = mutation({
 			throw new Error("Term not found");
 		}
 
-		if (term.deletedAt === undefined) {
+		if (!isDeleted(term)) {
 			return id;
 		}
 
 		// Make sure parent exists if there is one
 		if (term.parentId) {
 			const parent = await ctx.db.get(term.parentId);
-			if (!parent || parent.deletedAt !== undefined) {
+			if (!parent || isDeleted(parent)) {
 				// Restore as root term
 				await ctx.db.patch(id, {
 					deletedAt: undefined,
@@ -697,7 +686,7 @@ export const setEntryTerms = mutation({
 
 		// Verify entry exists
 		const entry = await ctx.db.get(entryId);
-		if (!entry || entry.deletedAt !== undefined) {
+		if (!entry || isDeleted(entry)) {
 			throw new Error("Content entry not found");
 		}
 
@@ -731,7 +720,7 @@ export const setEntryTerms = mutation({
 		for (let i = 0; i < toAdd.length; i++) {
 			const termId = toAdd[i];
 			const term = await ctx.db.get(termId);
-			if (!term || term.deletedAt !== undefined) {
+			if (!term || isDeleted(term)) {
 				continue; // Skip invalid terms
 			}
 
@@ -778,13 +767,13 @@ export const addTermToEntry = mutation({
 
 		// Verify entry exists
 		const entry = await ctx.db.get(entryId);
-		if (!entry || entry.deletedAt !== undefined) {
+		if (!entry || isDeleted(entry)) {
 			throw new Error("Content entry not found");
 		}
 
 		// Verify term exists
 		const term = await ctx.db.get(termId);
-		if (!term || term.deletedAt !== undefined) {
+		if (!term || isDeleted(term)) {
 			throw new Error("Term not found");
 		}
 
@@ -877,7 +866,7 @@ export const createTermAndAddToEntry = mutation({
 
 		// Verify taxonomy allows inline creation
 		const taxonomy = await ctx.db.get(taxonomyId);
-		if (!taxonomy || taxonomy.deletedAt !== undefined) {
+		if (!taxonomy || isDeleted(taxonomy)) {
 			throw new Error("Taxonomy not found");
 		}
 
@@ -898,7 +887,7 @@ export const createTermAndAddToEntry = mutation({
 
 		let termId: Id<"taxonomyTerms">;
 
-		if (existingTerm && existingTerm.deletedAt === undefined) {
+		if (existingTerm && !isDeleted(existingTerm)) {
 			// Use existing term
 			termId = existingTerm._id;
 		} else if (existingTerm) {

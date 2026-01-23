@@ -7,6 +7,7 @@
  */
 
 import { v, type Infer } from "convex/values";
+import { isDeleted } from "./lib/softDelete.js";
 import { paginationOptsValidator } from "convex/server";
 import { stream } from "convex-helpers/server/stream";
 import { query, type QueryCtx } from "./_generated/server.js";
@@ -103,7 +104,6 @@ export const get = query({
   handler: async (ctx, args) => {
     const { id, includeDeleted = false } = args;
 
-    // Retrieve the media item by ID
     const item = await ctx.db.get(id);
 
     // Return null if item doesn't exist or is not an asset
@@ -113,7 +113,7 @@ export const get = query({
 
     // Filter out soft-deleted assets unless explicitly requested
     // This respects the soft delete pattern used throughout the CMS
-    if (!includeDeleted && item.deletedAt !== undefined) {
+    if (!includeDeleted && isDeleted(item)) {
       return null;
     }
 
@@ -558,7 +558,7 @@ async function handleSearchQuery(
   // Filter by soft-delete status
   if (!includeDeleted) {
     filteredResults = filteredResults.filter(
-      (asset: any) => asset.deletedAt === undefined
+      (asset: any) => !isDeleted(asset)
     );
   }
 
@@ -702,7 +702,7 @@ async function handleIndexQuery(
     }
 
     // Filter by soft-delete status
-    if (!includeDeleted && item.deletedAt !== undefined) {
+    if (!includeDeleted && isDeleted(item)) {
       return false;
     }
 

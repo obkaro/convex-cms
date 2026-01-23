@@ -13,6 +13,7 @@
  */
 
 import { v, type Infer } from "convex/values";
+import { isDeleted } from "./lib/softDelete.js";
 import type { Id } from "./_generated/dataModel.js";
 import { query } from "./_generated/server.js";
 import {
@@ -22,17 +23,9 @@ import {
   getMediaVariantArgs,
   getBestVariantArgs,
   variantTypeValidator,
-  // variantStatusValidator,
   srcsetEntryValidator,
   responsiveSrcsetResult,
 } from "./validators.js";
-
-// =============================================================================
-// Types
-// =============================================================================
-
-// type VariantType = Infer<typeof variantTypeValidator>;
-// type VariantStatus = Infer<typeof variantStatusValidator>;
 
 /**
  * Default variant presets for common use cases.
@@ -134,7 +127,7 @@ export const get = query({
     }
 
     // Filter out soft-deleted variants unless explicitly requested
-    if (!includeDeleted && variant.deletedAt !== undefined) {
+    if (!includeDeleted && isDeleted(variant)) {
       return null;
     }
 
@@ -235,7 +228,7 @@ export const list = query({
     // Filter by soft-delete status
     if (!includeDeleted) {
       filteredVariants = filteredVariants.filter(
-        (v) => v.deletedAt === undefined
+        (v) => !isDeleted(v)
       );
     }
 
@@ -338,7 +331,7 @@ export const getBestVariant = query({
       if (fallbackToOriginal) {
         const item = await ctx.db.get(assetId);
         // Must be an asset (not folder) and not deleted
-        if (item && item.kind === "asset" && item.deletedAt === undefined) {
+        if (item && item.kind === "asset" && !isDeleted(item)) {
           const asset = item;
           const url = await ctx.storage.getUrl(asset.storageId);
           return {
@@ -467,7 +460,7 @@ export const getResponsiveSrcset = query({
     // Get the original asset for fallback
     const item = await ctx.db.get(assetId);
     // Must be an asset (not folder) and not deleted
-    if (!item || item.kind !== "asset" || item.deletedAt !== undefined) {
+    if (!item || item.kind !== "asset" || isDeleted(item)) {
       return {
         src: null,
         srcset: "",
@@ -720,7 +713,7 @@ export const getAssetWithVariants = query({
     // Get the original asset
     const item = await ctx.db.get(assetId);
     // Must be an asset (not folder) and not deleted
-    if (!item || item.kind !== "asset" || item.deletedAt !== undefined) {
+    if (!item || item.kind !== "asset" || isDeleted(item)) {
       return null;
     }
     const asset = item;

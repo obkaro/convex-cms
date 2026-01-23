@@ -98,6 +98,25 @@ export {
 } from "./slugUniqueness.js";
 
 export {
+  isDeleted,
+  isActive,
+  filterActive,
+  filterDeleted,
+  requireNotDeleted,
+  requireDeleted,
+  type SoftDeletable,
+} from "./softDelete.js";
+
+export {
+  getContentTypeByName,
+  getTaxonomyByName,
+  contentTypeExists,
+  taxonomyExists,
+  getActiveById,
+  type GetByIdOptions,
+} from "./queries.js";
+
+export {
   // Main API functions
   chunkContentEntry,
   extractContent,

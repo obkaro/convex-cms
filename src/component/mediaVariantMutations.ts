@@ -14,6 +14,7 @@
  */
 
 import { v } from "convex/values";
+import { isDeleted } from "./lib/softDelete.js";
 import type { Id } from "./_generated/dataModel.js";
 import { mutation, internalMutation } from "./_generated/server.js";
 import {
@@ -99,7 +100,7 @@ export const createMediaVariant = mutation({
 		if (!item || item.kind !== "asset") {
 			throw new Error(`Media asset not found: ${assetId}`);
 		}
-		if (item.deletedAt !== undefined) {
+		if (isDeleted(item)) {
 			throw new Error(`Cannot create variant for deleted asset: ${assetId}`);
 		}
 		const asset = item;
@@ -240,7 +241,7 @@ export const requestVariantGeneration = mutation({
 		if (!item || item.kind !== "asset") {
 			throw new Error(`Media asset not found: ${assetId}`);
 		}
-		if (item.deletedAt !== undefined) {
+		if (isDeleted(item)) {
 			throw new Error(`Cannot create variant for deleted asset: ${assetId}`);
 		}
 		const asset = item;
@@ -587,7 +588,7 @@ export const generateFromPresets = mutation({
 		if (!item || item.kind !== "asset") {
 			throw new Error(`Media asset not found: ${assetId}`);
 		}
-		if (item.deletedAt !== undefined) {
+		if (isDeleted(item)) {
 			throw new Error(`Cannot generate variants for deleted asset: ${assetId}`);
 		}
 		const asset = item;
@@ -748,7 +749,7 @@ export const restoreMediaVariant = mutation({
 			throw new Error(`Variant not found: ${id}`);
 		}
 
-		if (variant.deletedAt === undefined) {
+		if (!isDeleted(variant)) {
 			// Already restored, return as-is
 			return variant;
 		}
@@ -760,7 +761,7 @@ export const restoreMediaVariant = mutation({
 				`Cannot restore variant: parent asset not found: ${variant.assetId}`,
 			);
 		}
-		if (asset.deletedAt !== undefined) {
+		if (isDeleted(asset)) {
 			throw new Error(
 				`Cannot restore variant: parent asset is deleted: ${variant.assetId}`,
 			);

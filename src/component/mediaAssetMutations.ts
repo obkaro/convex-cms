@@ -47,6 +47,7 @@ import {
 } from "./lib/errors.js";
 import { requireMutationAuth, withResourceOwner } from "./lib/mutationAuth.js";
 import { classifyMimeType } from "./lib/metadataExtractor.js";
+import { isDeleted } from "./lib/softDelete.js";
 
 // =============================================================================
 // Delete Media Asset Result Type
@@ -97,7 +98,7 @@ export const createMediaAsset = mutation({
 			if (!folder) {
 				throw mediaFolderNotFound((parentId as unknown) as string);
 			}
-			if (folder.deletedAt !== undefined) {
+			if (isDeleted(folder)) {
 				throw mediaFolderDeleted((parentId as unknown) as string);
 			}
 		}
@@ -206,7 +207,7 @@ export const updateMediaAsset = mutation({
 		}
 		const asset = item;
 
-		if (asset.deletedAt !== undefined) {
+		if (isDeleted(asset)) {
 			throw mediaAssetDeleted((id as unknown) as string);
 		}
 
@@ -222,7 +223,7 @@ export const updateMediaAsset = mutation({
 			if (!folder || folder.kind !== "folder") {
 				throw mediaFolderNotFound((parentId as unknown) as string);
 			}
-			if (folder.deletedAt !== undefined) {
+			if (isDeleted(folder)) {
 				throw mediaFolderDeleted((parentId as unknown) as string);
 			}
 		}
@@ -452,7 +453,7 @@ export const deleteMediaAsset = mutation({
 			"delete",
 		);
 
-		if (!hardDelete && asset.deletedAt !== undefined) {
+		if (!hardDelete && isDeleted(asset)) {
 			throw mediaAssetDeleted((id as unknown) as string);
 		}
 
@@ -646,7 +647,7 @@ export const moveMediaAssets = mutation({
 			if (!targetFolder) {
 				throw mediaFolderNotFound((targetFolderId as unknown) as string);
 			}
-			if (targetFolder.deletedAt !== undefined) {
+			if (isDeleted(targetFolder)) {
 				throw mediaFolderDeleted((targetFolderId as unknown) as string);
 			}
 			targetFolderPath = targetFolder.path;
@@ -667,7 +668,7 @@ export const moveMediaAssets = mutation({
 					continue;
 				}
 
-				if (item.deletedAt !== undefined) {
+				if (isDeleted(item)) {
 					results.push({ id: assetId, success: false, error: "Asset has been deleted" });
 					continue;
 				}

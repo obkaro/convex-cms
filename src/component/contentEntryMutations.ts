@@ -51,6 +51,7 @@ import {
 	contentEntryUpdateFailed,
 } from "./lib/errors.js";
 import { requireMutationAuth, withResourceOwner } from "./lib/mutationAuth.js";
+import { isDeleted } from "./lib/softDelete.js";
 
 // =============================================================================
 // Create Entry Mutation
@@ -133,7 +134,7 @@ export const createEntry = mutation({
 				contentType.name,
 			);
 		}
-		if (contentType.deletedAt !== undefined) {
+		if (isDeleted(contentType)) {
 			throw contentTypeDeleted(
 				(contentTypeId as unknown) as string,
 				contentType.name,
@@ -325,12 +326,11 @@ export const updateEntry = mutation({
 			_auth,
 		} = args;
 
-		// Retrieve the existing entry
 		const entry = await ctx.db.get(id);
 		if (!entry) {
 			throw contentEntryNotFound((id as unknown) as string);
 		}
-		if (entry.deletedAt !== undefined) {
+		if (isDeleted(entry)) {
 			throw contentEntryDeleted((id as unknown) as string);
 		}
 
@@ -361,12 +361,11 @@ export const updateEntry = mutation({
 			);
 		}
 
-		// Retrieve the content type for validation and schema info
 		const contentType = await ctx.db.get(entry.contentTypeId);
 		if (!contentType) {
 			throw contentTypeNotFound((entry.contentTypeId as unknown) as string);
 		}
-		if (contentType.deletedAt !== undefined) {
+		if (isDeleted(contentType)) {
 			throw contentTypeDeleted(
 				(entry.contentTypeId as unknown) as string,
 				contentType.name,
@@ -476,7 +475,6 @@ export const updateEntry = mutation({
 		// Apply updates
 		await ctx.db.patch(id, updates);
 
-		// Return the updated entry
 		const updatedEntry = await ctx.db.get(id);
 		if (!updatedEntry) {
 			throw contentEntryUpdateFailed((id as unknown) as string);
@@ -549,12 +547,11 @@ export const publishEntry = mutation({
 	handler: async (ctx, args) => {
 		const { id, changeDescription, updatedBy, _auth } = args;
 
-		// Retrieve the existing entry
 		const entry = await ctx.db.get(id);
 		if (!entry) {
 			throw contentEntryNotFound((id as unknown) as string);
 		}
-		if (entry.deletedAt !== undefined) {
+		if (isDeleted(entry)) {
 			throw contentEntryDeleted((id as unknown) as string);
 		}
 
@@ -604,13 +601,11 @@ export const publishEntry = mutation({
 
 		await ctx.db.patch(id, updates);
 
-		// Return the published entry
 		const publishedEntry = await ctx.db.get(id);
 		if (!publishedEntry) {
 			throw contentEntryUpdateFailed((id as unknown) as string);
 		}
 
-		// Get content type for event payload
 		const contentType = await ctx.db.get(entry.contentTypeId);
 
 		// Emit content entry published event
@@ -681,12 +676,11 @@ export const unpublishEntry = mutation({
 	handler: async (ctx, args) => {
 		const { id, updatedBy, _auth } = args;
 
-		// Retrieve the existing entry
 		const entry = await ctx.db.get(id);
 		if (!entry) {
 			throw contentEntryNotFound((id as unknown) as string);
 		}
-		if (entry.deletedAt !== undefined) {
+		if (isDeleted(entry)) {
 			throw contentEntryDeleted((id as unknown) as string);
 		}
 
@@ -701,20 +695,17 @@ export const unpublishEntry = mutation({
 			throw contentEntryNotPublished((id as unknown) as string, entry.status);
 		}
 
-		// Update status to draft
 		await ctx.db.patch(id, {
 			status: "draft",
 			version: entry.version + 1,
 			updatedBy,
 		});
 
-		// Return the unpublished entry
 		const unpublishedEntry = await ctx.db.get(id);
 		if (!unpublishedEntry) {
 			throw contentEntryUpdateFailed((id as unknown) as string);
 		}
 
-		// Get content type for event payload
 		const contentType = await ctx.db.get(entry.contentTypeId);
 
 		// Emit content entry unpublished event
@@ -796,10 +787,8 @@ export const deleteEntry = mutation({
 	handler: async (ctx, args) => {
 		const { id, deletedBy, hardDelete = false, _auth } = args;
 
-		// Retrieve the content entry by ID
 		const entry = await ctx.db.get(id);
 
-		// Validate entry exists
 		if (!entry) {
 			throw contentEntryNotFound((id as unknown) as string);
 		}
@@ -812,7 +801,7 @@ export const deleteEntry = mutation({
 		);
 
 		// For soft delete, check if already deleted
-		if (!hardDelete && entry.deletedAt !== undefined) {
+		if (!hardDelete && isDeleted(entry)) {
 			throw contentEntryDeleted((id as unknown) as string);
 		}
 
@@ -824,7 +813,6 @@ export const deleteEntry = mutation({
 
 		const deletedVersionsCount = versions.length;
 
-		// Get content type for event payload
 		const contentType = await ctx.db.get(entry.contentTypeId);
 
 		if (hardDelete) {
@@ -888,7 +876,6 @@ export const deleteEntry = mutation({
 				metadata: { hardDelete: false },
 			});
 
-			// Return the updated entry
 			return {
 				...entry,
 				deletedAt: now,
@@ -934,10 +921,8 @@ export const restoreEntry = mutation({
 	handler: async (ctx, args) => {
 		const { id, restoredBy, _auth } = args;
 
-		// Retrieve the content entry by ID
 		const entry = await ctx.db.get(id);
 
-		// Validate entry exists
 		if (!entry) {
 			throw contentEntryNotFound((id as unknown) as string);
 		}
@@ -949,8 +934,7 @@ export const restoreEntry = mutation({
 			"restore",
 		);
 
-		// Validate entry is soft-deleted
-		if (entry.deletedAt === undefined) {
+		if (!isDeleted(entry)) {
 			throw contentEntryNotDeleted((id as unknown) as string);
 		}
 
@@ -960,7 +944,6 @@ export const restoreEntry = mutation({
 			updatedBy: restoredBy,
 		});
 
-		// Get content type for event payload
 		const contentType = await ctx.db.get(entry.contentTypeId);
 
 		// Emit content entry restored event
@@ -980,7 +963,6 @@ export const restoreEntry = mutation({
 			userId: restoredBy,
 		});
 
-		// Return the restored entry
 		return {
 			...entry,
 			deletedAt: undefined,
@@ -1071,12 +1053,11 @@ export const duplicateEntry = mutation({
 		// Authorization check - contentEntries.create permission (duplicate creates a new entry)
 		requireMutationAuth(_auth, "contentEntries", "create");
 
-		// Retrieve the source entry
 		const sourceEntry = await ctx.db.get(sourceEntryId);
 		if (!sourceEntry) {
 			throw contentEntryNotFound((sourceEntryId as unknown) as string);
 		}
-		if (sourceEntry.deletedAt !== undefined) {
+		if (isDeleted(sourceEntry)) {
 			throw contentEntryDeleted((sourceEntryId as unknown) as string);
 		}
 
@@ -1093,7 +1074,7 @@ export const duplicateEntry = mutation({
 				contentType.name,
 			);
 		}
-		if (contentType.deletedAt !== undefined) {
+		if (isDeleted(contentType)) {
 			throw contentTypeDeleted(
 				(sourceEntry.contentTypeId as unknown) as string,
 				contentType.name,

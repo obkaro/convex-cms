@@ -31,6 +31,7 @@ import {
 	FieldDefinition,
 } from "./validation.js";
 import { Id } from "./_generated/dataModel.js";
+import { isDeleted } from "./lib/softDelete.js";
 
 // =============================================================================
 // Types
@@ -112,7 +113,7 @@ export const bulkPublish = mutation({
 					continue;
 				}
 
-				if (entry.deletedAt !== undefined) {
+				if (isDeleted(entry)) {
 					results.push({ id, success: false, error: "Entry has been deleted" });
 					continue;
 				}
@@ -237,7 +238,7 @@ export const bulkUnpublish = mutation({
 					continue;
 				}
 
-				if (entry.deletedAt !== undefined) {
+				if (isDeleted(entry)) {
 					results.push({ id, success: false, error: "Entry has been deleted" });
 					continue;
 				}
@@ -248,7 +249,6 @@ export const bulkUnpublish = mutation({
 					continue;
 				}
 
-				// Update status to draft
 				await ctx.db.patch(id, {
 					status: "draft",
 					version: entry.version + 1,
@@ -347,7 +347,7 @@ export const bulkDelete = mutation({
 				}
 
 				// For soft delete, skip already deleted entries
-				if (!hardDelete && entry.deletedAt !== undefined) {
+				if (!hardDelete && isDeleted(entry)) {
 					// Already deleted - treat as success (idempotent)
 					results.push({ id, success: true });
 					continue;
@@ -480,7 +480,7 @@ export const bulkUpdate = mutation({
 					continue;
 				}
 
-				if (entry.deletedAt !== undefined) {
+				if (isDeleted(entry)) {
 					results.push({ id, success: false, error: "Entry has been deleted" });
 					continue;
 				}
@@ -507,7 +507,7 @@ export const bulkUpdate = mutation({
 							});
 							continue;
 						}
-						if (dbContentType.deletedAt !== undefined) {
+						if (isDeleted(dbContentType)) {
 							results.push({
 								id,
 								success: false,
@@ -654,7 +654,7 @@ export const bulkRestore = mutation({
 					continue;
 				}
 
-				if (entry.deletedAt === undefined) {
+				if (!isDeleted(entry)) {
 					// Not deleted - treat as success (idempotent)
 					results.push({ id, success: true });
 					continue;

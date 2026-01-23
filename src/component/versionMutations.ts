@@ -13,6 +13,7 @@
  */
 
 import { v } from "convex/values";
+import { isDeleted } from "./lib/softDelete.js";
 import { mutation, internalMutation } from "./_generated/server.js";
 import {
 	createVersionSnapshotArgs,
@@ -94,7 +95,6 @@ export const createVersionSnapshot = internalMutation({
 			wasPublished = false,
 		} = args;
 
-		// Retrieve the content entry to snapshot
 		const entry = await ctx.db.get(entryId);
 
 		if (!entry) {
@@ -102,7 +102,7 @@ export const createVersionSnapshot = internalMutation({
 		}
 
 		// Do not allow snapshots of deleted entries
-		if (entry.deletedAt !== undefined) {
+		if (isDeleted(entry)) {
 			throw versionEntryDeleted((entryId as unknown) as string);
 		}
 
@@ -198,7 +198,6 @@ export const createVersionSnapshotIfNotExists = internalMutation({
 			wasPublished = false,
 		} = args;
 
-		// Retrieve the content entry
 		const entry = await ctx.db.get(entryId);
 
 		if (!entry) {
@@ -206,7 +205,7 @@ export const createVersionSnapshotIfNotExists = internalMutation({
 		}
 
 		// Do not process deleted entries
-		if (entry.deletedAt !== undefined) {
+		if (isDeleted(entry)) {
 			return null;
 		}
 
@@ -322,7 +321,7 @@ export const rollbackVersion = mutation({
 			throw versionEntryNotFound((entryId as unknown) as string);
 		}
 
-		if (entry.deletedAt !== undefined) {
+		if (isDeleted(entry)) {
 			throw versionEntryDeleted((entryId as unknown) as string);
 		}
 
@@ -382,7 +381,6 @@ export const rollbackVersion = mutation({
 			wasPublished: false,
 		});
 
-		// Return the updated entry
 		const updatedEntry = await ctx.db.get(entryId);
 
 		if (!updatedEntry) {

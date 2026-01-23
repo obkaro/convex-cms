@@ -42,6 +42,7 @@
  */
 
 import { v } from "convex/values";
+import { isDeleted } from "./lib/softDelete.js";
 import { mutation, query } from "./_generated/server.js";
 import { Id } from "./_generated/dataModel.js";
 
@@ -703,7 +704,7 @@ export const migrateContentType = mutation({
 		if (!contentType) {
 			throw new Error(`Content type not found: ${contentTypeId}`);
 		}
-		if (contentType.deletedAt !== undefined) {
+		if (isDeleted(contentType)) {
 			throw new Error(`Content type has been deleted: ${contentType.name}`);
 		}
 
@@ -764,7 +765,6 @@ export const migrateContentType = mutation({
 		let failureCount = 0;
 		let skippedCount = 0;
 		let versionSnapshotsCreated = 0;
-		// const now = Date.now();
 
 		for (const entry of entries) {
 			try {

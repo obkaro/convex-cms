@@ -6,6 +6,7 @@
  */
 
 import { v } from "convex/values";
+import { isDeleted } from "./lib/softDelete.js";
 import { mutation } from "./_generated/server.js";
 import {
   createContentTypeArgs,
@@ -647,12 +648,11 @@ export const updateContentType = mutation({
     // Authorization check - contentTypes.update permission
     requireMutationAuth(_auth, "contentTypes", "update");
 
-    // Retrieve the existing content type
     const existingType = await ctx.db.get(id);
     if (!existingType) {
       throw contentTypeNotFound(id as unknown as string);
     }
-    if (existingType.deletedAt !== undefined) {
+    if (isDeleted(existingType)) {
       throw contentTypeDeleted(id as unknown as string, existingType.name);
     }
 
@@ -864,14 +864,13 @@ export const deleteContentType = mutation({
     // Authorization check - contentTypes.delete permission
     requireMutationAuth(_auth, "contentTypes", "delete");
 
-    // Retrieve the content type
     const contentType = await ctx.db.get(id);
     if (!contentType) {
       throw contentTypeNotFound(id as unknown as string);
     }
 
     // Check if already soft-deleted
-    if (contentType.deletedAt !== undefined) {
+    if (isDeleted(contentType)) {
       throw contentTypeDeleted(id as unknown as string, contentType.name);
     }
 

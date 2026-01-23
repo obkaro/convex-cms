@@ -20,7 +20,7 @@
  */
 
 import { v } from "convex/values";
-// import { paginationOptsValidator } from "convex/server";
+import { isDeleted } from "./lib/softDelete.js";
 import { stream } from "convex-helpers/server/stream";
 import { query, mutation, internalMutation } from "./_generated/server.js";
 import { internal } from "./_generated/api.js";
@@ -266,7 +266,7 @@ export const listTrash = query({
 
 		const filteredQuery = baseQuery.order("desc").filterWith(async (entry) => {
 			// Must be deleted
-			if (entry.deletedAt === undefined) {
+			if (!isDeleted(entry)) {
 				return false;
 			}
 
@@ -384,19 +384,20 @@ export const getTrashStats = query({
 		let newestDeletedAt: number | undefined;
 
 		for (const entry of deletedEntries) {
-			if (entry.deletedAt === undefined) continue;
+			if (!isDeleted(entry)) continue;
+			const deletedAt = entry.deletedAt!;
 
 			totalCount++;
 
-			if (retentionDays > 0 && entry.deletedAt < expirationThreshold) {
+			if (retentionDays > 0 && deletedAt < expirationThreshold) {
 				expiredCount++;
 			}
 
-			if (oldestDeletedAt === undefined || entry.deletedAt < oldestDeletedAt) {
-				oldestDeletedAt = entry.deletedAt;
+			if (oldestDeletedAt === undefined || deletedAt < oldestDeletedAt) {
+				oldestDeletedAt = deletedAt;
 			}
-			if (newestDeletedAt === undefined || entry.deletedAt > newestDeletedAt) {
-				newestDeletedAt = entry.deletedAt;
+			if (newestDeletedAt === undefined || deletedAt > newestDeletedAt) {
+				newestDeletedAt = deletedAt;
 			}
 		}
 
@@ -480,10 +481,11 @@ export const emptyTrash = mutation({
 
 		for (const entry of deletedEntries) {
 			// Skip if not actually deleted
-			if (entry.deletedAt === undefined) continue;
+			if (!isDeleted(entry)) continue;
+			const deletedAt = entry.deletedAt!;
 
 			// Apply filters
-			if (cutoffTime !== undefined && entry.deletedAt > cutoffTime) {
+			if (cutoffTime !== undefined && deletedAt > cutoffTime) {
 				continue; // Not old enough
 			}
 			if (
@@ -582,9 +584,8 @@ export const executeTrashCleanup = internalMutation({
 
 		for (const entry of expiredEntries) {
 			// Skip if not actually deleted or not expired
-			if (entry.deletedAt === undefined || entry.deletedAt > cutoffTime) {
-				continue;
-			}
+			if (!isDeleted(entry)) continue;
+			if (entry.deletedAt! > cutoffTime) continue;
 
 			try {
 				// Delete all versions
@@ -659,9 +660,8 @@ export const runTrashCleanup = mutation({
 		let deletedCount = 0;
 
 		for (const entry of expiredEntries) {
-			if (entry.deletedAt === undefined || entry.deletedAt > cutoffTime) {
-				continue;
-			}
+			if (!isDeleted(entry)) continue;
+			if (entry.deletedAt! > cutoffTime) continue;
 
 			// Delete versions
 			const versions = await ctx.db

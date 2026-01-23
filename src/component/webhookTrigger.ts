@@ -25,6 +25,7 @@
  */
 
 import { v } from "convex/values";
+import { isDeleted } from "./lib/softDelete.js";
 import {
 	mutation,
 	query,
@@ -426,7 +427,7 @@ export const updateWebhook = mutation({
 		if (!existing) {
 			throw new Error(`Webhook not found: ${id}`);
 		}
-		if (existing.deletedAt !== undefined) {
+		if (isDeleted(existing)) {
 			throw new Error(`Webhook has been deleted: ${id}`);
 		}
 
@@ -539,7 +540,7 @@ export const restoreWebhook = mutation({
 		if (!webhook) {
 			throw new Error(`Webhook not found: ${id}`);
 		}
-		if (webhook.deletedAt === undefined) {
+		if (!isDeleted(webhook)) {
 			throw new Error(`Webhook is not deleted: ${id}`);
 		}
 
@@ -574,7 +575,7 @@ export const getWebhook = query({
 		const webhook = await ctx.db.get(id);
 		if (!webhook) return null;
 
-		if (!includeDeleted && webhook.deletedAt !== undefined) {
+		if (!includeDeleted && isDeleted(webhook)) {
 			return null;
 		}
 
@@ -612,7 +613,7 @@ export const listWebhooks = query({
 
 		// Filter deleted
 		if (!includeDeleted) {
-			webhooks = webhooks.filter((w) => w.deletedAt === undefined);
+			webhooks = webhooks.filter((w) => !isDeleted(w));
 		}
 
 		// Remove secrets before returning
@@ -1079,7 +1080,7 @@ export const getDeliveryWithWebhook = internalQuery({
 		if (!delivery) return null;
 
 		const webhook = await ctx.db.get(delivery.webhookId);
-		if (!webhook || webhook.deletedAt !== undefined || !webhook.enabled) {
+		if (!webhook || isDeleted(webhook) || !webhook.enabled) {
 			return null;
 		}
 

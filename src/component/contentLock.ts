@@ -19,6 +19,7 @@
  */
 
 import { v } from "convex/values";
+import { isDeleted } from "./lib/softDelete.js";
 import { mutation, query } from "./_generated/server.js";
 import {
 	acquireLockArgs,
@@ -175,7 +176,7 @@ export const listLockedEntries = query({
 				return false;
 			}
 			// Must not be deleted
-			if (entry.deletedAt !== undefined) {
+			if (isDeleted(entry)) {
 				return false;
 			}
 			// Apply content type filter if provided
@@ -261,7 +262,6 @@ export const acquireLock = mutation({
 	handler: async (ctx, args) => {
 		const { id, userId, lockDuration } = args;
 
-		// Retrieve the entry
 		const entry = await ctx.db.get(id);
 		if (!entry) {
 			return {
@@ -271,7 +271,7 @@ export const acquireLock = mutation({
 		}
 
 		// Check if entry is deleted
-		if (entry.deletedAt !== undefined) {
+		if (isDeleted(entry)) {
 			return {
 				success: false,
 				error: `Content entry has been deleted: ${id}`,
