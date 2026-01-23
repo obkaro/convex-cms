@@ -2,6 +2,7 @@
  * Embeddable CMS Admin Component
  *
  * Use this component to embed the CMS admin UI into your existing React app.
+ * Provides a fully functional admin interface with router-agnostic navigation.
  *
  * @example
  * ```tsx
@@ -30,12 +31,29 @@
 import { ConvexProvider, ConvexReactClient } from "convex/react";
 import { useMemo, type ReactNode } from "react";
 import { AdminConfigProvider } from "../contexts/AdminConfigContext";
-import { AuthProvider, type GetUserHook, type GetUserRoleHook, type LogoutHook } from "../contexts/AuthContext";
+import {
+  AuthProvider,
+  type GetUserHook,
+  type GetUserRoleHook,
+  type LogoutHook,
+} from "../contexts/AuthContext";
 import { ThemeProvider } from "../contexts/ThemeContext";
-import { AdminLayout } from "../components/AdminLayout";
 import { RouteGuard } from "../components/RouteGuard";
 import { resolveAdminConfig } from "../lib/admin-config";
-import type { CmsAdminProps, CmsAdminAuthConfig, CmsAdminUser } from "./types";
+import type { CmsAdminProps, CmsAdminAuthConfig } from "./types";
+import {
+  EmbedNavigationProvider,
+  useEmbedNavigation,
+  type EmbedRoute,
+} from "./navigation";
+import { EmbedLayout } from "./components/EmbedLayout";
+import {
+  EmbedDashboard,
+  EmbedContent,
+  EmbedContentTypes,
+  EmbedMedia,
+  EmbedSettings,
+} from "./pages";
 
 function adaptAuthConfig(auth: CmsAdminAuthConfig): {
   getUser: GetUserHook;
@@ -79,7 +97,45 @@ function ConvexProviderWrapper({
   return <ConvexProvider client={convex}>{children}</ConvexProvider>;
 }
 
-export function CmsAdmin({ convexUrl, config, auth, basePath = "/", className }: CmsAdminProps) {
+function EmbedRouter() {
+  const { currentRoute } = useEmbedNavigation();
+
+  const renderPage = () => {
+    switch (currentRoute.route) {
+      case "dashboard":
+        return <EmbedDashboard />;
+      case "content":
+        return <EmbedContent />;
+      case "content-types":
+        return <EmbedContentTypes />;
+      case "media":
+        return <EmbedMedia />;
+      case "settings":
+        return <EmbedSettings />;
+      case "entries":
+        return <EmbedContent />;
+      case "taxonomies":
+      case "trash":
+      default:
+        return <EmbedDashboard />;
+    }
+  };
+
+  return <EmbedLayout>{renderPage()}</EmbedLayout>;
+}
+
+export function CmsAdmin({
+  convexUrl,
+  config,
+  auth,
+  basePath = "/admin",
+  className,
+  initialRoute = "dashboard",
+  onNavigate,
+}: CmsAdminProps & {
+  initialRoute?: EmbedRoute;
+  onNavigate?: (path: string, params: Record<string, string>) => void;
+}) {
   const adminConfig = useMemo(() => resolveAdminConfig(config), [config]);
   const authConfig = useMemo(() => adaptAuthConfig(auth), [auth]);
 
@@ -93,18 +149,17 @@ export function CmsAdmin({ convexUrl, config, auth, basePath = "/", className }:
               getUserRole={authConfig.getUserRole}
               onLogout={authConfig.onLogout}
             >
-              <RouteGuard>
-                <div className="min-h-screen">
-                  <AdminLayout>
-                    <div className="p-6">
-                      <p className="text-muted-foreground">
-                        Embedded admin component. For full functionality, use the standalone admin
-                        app with TanStack Router.
-                      </p>
-                    </div>
-                  </AdminLayout>
-                </div>
-              </RouteGuard>
+              <EmbedNavigationProvider
+                initialRoute={initialRoute}
+                basePath={basePath}
+                onNavigate={onNavigate}
+              >
+                <RouteGuard>
+                  <div className="min-h-screen">
+                    <EmbedRouter />
+                  </div>
+                </RouteGuard>
+              </EmbedNavigationProvider>
             </AuthProvider>
           </ConvexProviderWrapper>
         </AdminConfigProvider>
@@ -116,3 +171,5 @@ export function CmsAdmin({ convexUrl, config, auth, basePath = "/", className }:
 export type { CmsAdminProps, CmsAdminAuthConfig, CmsAdminUser } from "./types";
 export type { AdminConfig, NavItem } from "../lib/admin-config";
 export { resolveAdminConfig, defineAdminConfig } from "../lib/admin-config";
+export type { EmbedRoute, EmbedRouteState } from "./navigation";
+export { useEmbedNavigation, useEmbedParams, useEmbedRoute } from "./navigation";

@@ -9,6 +9,7 @@ import { CmsButton } from '~/components/cmsds/CmsButton'
 import { CmsStatusBadge } from '~/components/cmsds/CmsStatusBadge'
 import { CmsEmptyState } from '~/components/cmsds/CmsEmptyState'
 import { CmsConfirmDialog } from '~/components/cmsds/CmsDialog'
+import { TaxonomyFilter } from '~/components/filters/TaxonomyFilter'
 import { Input } from '~/components/ui/input'
 import {
   Select,
@@ -44,6 +45,7 @@ function ContentTypeEntriesPage() {
   const [sortField, setSortField] = useState<SortField>('updatedAt')
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
   const [currentPage, setCurrentPage] = useState(0)
+  const [selectedTermIds, setSelectedTermIds] = useState<string[]>([])
   const pageSize = 25
 
   const { canCreate, canUpdate, canDelete } = usePermissions()
@@ -75,6 +77,34 @@ function ContentTypeEntriesPage() {
   })
   const allEntries = entriesResult?.page ?? []
 
+  const entriesByTermResult0 = useQuery(
+    api.taxonomies.getEntriesByTerm,
+    selectedTermIds[0] ? { termId: selectedTermIds[0] } : 'skip'
+  )
+  const entriesByTermResult1 = useQuery(
+    api.taxonomies.getEntriesByTerm,
+    selectedTermIds[1] ? { termId: selectedTermIds[1] } : 'skip'
+  )
+  const entriesByTermResult2 = useQuery(
+    api.taxonomies.getEntriesByTerm,
+    selectedTermIds[2] ? { termId: selectedTermIds[2] } : 'skip'
+  )
+
+  const termFilteredEntryIds = useMemo(() => {
+    if (selectedTermIds.length === 0) return null
+    const ids = new Set<string>()
+    const results = [entriesByTermResult0, entriesByTermResult1, entriesByTermResult2]
+    for (let i = 0; i < selectedTermIds.length && i < 3; i++) {
+      const result = results[i]
+      if (result?.page) {
+        for (const entry of result.page) {
+          ids.add(entry._id)
+        }
+      }
+    }
+    return ids
+  }, [selectedTermIds, entriesByTermResult0, entriesByTermResult1, entriesByTermResult2])
+
   const getEntryTitle = useCallback(
     (entry: { data: Record<string, unknown> }) => {
       const titleField = contentType?.titleField ?? 'title'
@@ -85,7 +115,11 @@ function ContentTypeEntriesPage() {
   )
 
   const sortedEntries = useMemo(() => {
-    const entries = [...allEntries]
+    let entries = [...allEntries]
+
+    if (termFilteredEntryIds !== null) {
+      entries = entries.filter((e) => termFilteredEntryIds.has(e._id))
+    }
 
     entries.sort((a, b) => {
       let comparison = 0
@@ -117,7 +151,7 @@ function ContentTypeEntriesPage() {
     })
 
     return entries
-  }, [allEntries, sortField, sortDirection, getEntryTitle])
+  }, [allEntries, sortField, sortDirection, getEntryTitle, termFilteredEntryIds])
 
   const paginatedEntries = useMemo(() => {
     const start = currentPage * pageSize
@@ -202,6 +236,7 @@ function ContentTypeEntriesPage() {
     setSearchQuery('')
     setDebouncedSearch('')
     setSelectedStatus('all')
+    setSelectedTermIds([])
     setCurrentPage(0)
   }, [])
 
@@ -232,7 +267,7 @@ function ContentTypeEntriesPage() {
     )
   }
 
-  const hasFilters = searchQuery || selectedStatus !== 'all'
+  const hasFilters = searchQuery || selectedStatus !== 'all' || selectedTermIds.length > 0
 
   return (
     <div className="space-y-6 p-6">
@@ -282,6 +317,14 @@ function ContentTypeEntriesPage() {
                 <SelectItem value="archived">Archived</SelectItem>
               </SelectContent>
             </Select>
+            <TaxonomyFilter
+              selectedTermIds={selectedTermIds}
+              onChange={(termIds) => {
+                setSelectedTermIds(termIds)
+                setCurrentPage(0)
+              }}
+              placeholder="Tags"
+            />
           </div>
         }
         right={
