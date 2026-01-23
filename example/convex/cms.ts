@@ -9,7 +9,7 @@
  * - User role mapping from the app's users table
  */
 
-import { createCmsClient } from "@convex-cms/core";
+import { createCmsClient } from "convex-cms";
 import { components } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
 // import { Id } from "./_generated/dataModel";

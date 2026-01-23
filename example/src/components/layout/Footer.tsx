@@ -80,7 +80,7 @@ export function Footer() {
               rel="noopener noreferrer"
               className="text-tempo-400 hover:text-white"
             >
-              @convex-cms/core
+              convex-cms
             </a>
           </p>
         </div>

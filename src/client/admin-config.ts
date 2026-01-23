@@ -72,7 +72,6 @@ const navigationSchema = z.object({
   showMedia: z.boolean().default(true),
   showTaxonomies: z.boolean().default(true),
   showContentTypes: z.boolean().default(true),
-  showAuditLogs: z.boolean().default(true),
   showTrash: z.boolean().default(true),
   showSettings: z.boolean().default(true),
   customItems: z.array(navItemSchema).default([]),
