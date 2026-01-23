@@ -37,8 +37,10 @@
   "scripts": {
     "build": "npm run build:component && npm run build:cli && npm run build:admin",
     "build:component": "tsc --project tsconfig.build.json",
+    "build:codegen": "npx convex codegen --component-dir ./src/component && npm run build",
     "build:cli": "tsc --project tsconfig.cli.json",
     "build:admin": "cd admin && npm run build && cp -r .output ../admin-dist",
+    "build:clean": "rm -rf dist *.tsbuildinfo && npm run build:codegen",
     "dev": "npm-run-all2 --parallel dev:*",
     "dev:component": "npx convex codegen --component-dir ./src/component --watch",
     "dev:build": "tsc --project tsconfig.build.json --watch",
