@@ -1,5 +1,5 @@
 import { useRouterState, useNavigate, Link } from '@tanstack/react-router'
-import { useAuth } from '../contexts/AuthContext'
+import { useAuth, useAdminConfig } from '~/contexts'
 import { getRole } from '../../../src/component/roles'
 import {
   Breadcrumb,
@@ -69,8 +69,8 @@ const routeLabels: Record<string, string> = {
   '/trash': 'Trash',
 }
 
-function getBreadcrumbs(pathname: string): BreadcrumbData[] {
-  const breadcrumbs: BreadcrumbData[] = [{ label: 'Home', to: '/' }]
+function getBreadcrumbs(pathname: string, appName = "Home"): BreadcrumbData[] {
+  const breadcrumbs: BreadcrumbData[] = [{ label: appName, to: '/' }]
 
   if (pathname === '/') {
     return breadcrumbs
@@ -96,7 +96,8 @@ function getBreadcrumbs(pathname: string): BreadcrumbData[] {
 export function Header() {
   const routerState = useRouterState()
   const navigate = useNavigate()
-  const breadcrumbs = getBreadcrumbs(routerState.location.pathname)
+  const { branding } = useAdminConfig()
+  const breadcrumbs = getBreadcrumbs(routerState.location.pathname, branding.appName)
 
   let user = null
   let role = null

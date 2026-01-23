@@ -9,6 +9,8 @@ import type {
 import * as validators from "../component/validators.js";
 import * as schema from "../component/schema.js";
 import type { ContentStatus } from "../component/validators.js";
+import type { FieldTypeDefinition } from "./field-types.js";
+import type { WorkflowConfig } from "./workflows.js";
 
 // --- Component Configuration ---
 
@@ -289,6 +291,12 @@ export interface ComponentConfig {
   customRoles?: Array<CustomRoleInput>;
   /** Content type schema for type-safe access */
   schema?: ContentSchemaConfig;
+  /** Custom field type definitions (extends built-in types) */
+  fieldTypes?: FieldTypeDefinition[];
+  /** Custom workflow configuration (replaces default draft/published/archived/scheduled) */
+  workflow?: WorkflowConfig;
+  /** Per-content-type workflow overrides */
+  contentTypeWorkflows?: Record<string, WorkflowConfig>;
 }
 
 export type ContentSchemaConfig = {
@@ -338,7 +346,7 @@ export interface CustomPermission {
 }
 
 /** Configuration with all defaults applied */
-export type ResolvedComponentConfig = Required<Omit<ComponentConfig, "getUserRole" | "authorizationHooks" | "rateLimitHooks" | "localeFallbackChains" | "customRoles" | "requireHooks" | "schema">> & {
+export type ResolvedComponentConfig = Required<Omit<ComponentConfig, "getUserRole" | "authorizationHooks" | "rateLimitHooks" | "localeFallbackChains" | "customRoles" | "requireHooks" | "schema" | "fieldTypes" | "workflow" | "contentTypeWorkflows">> & {
   getUserRole?: GetUserRoleHook;
   authorizationHooks?: AuthorizationHooks;
   rateLimitHooks?: RateLimitHooks;
@@ -346,6 +354,9 @@ export type ResolvedComponentConfig = Required<Omit<ComponentConfig, "getUserRol
   customRoles: Record<string, CustomRoleDefinition>;
   requireHooks: Array<"getUserRole" | "authorizationHooks" | "rateLimitHooks">;
   schema?: ContentSchemaConfig;
+  fieldTypes?: FieldTypeDefinition[];
+  workflow?: WorkflowConfig;
+  contentTypeWorkflows?: Record<string, WorkflowConfig>;
 };
 
 export const DEFAULT_CONFIG: Omit<ResolvedComponentConfig, "getUserRole" | "authorizationHooks" | "rateLimitHooks"> = {
@@ -507,6 +518,9 @@ export function resolveConfig(config?: ComponentConfig): ResolvedComponentConfig
     customRoles: customRolesRecord,
     requireHooks: config?.requireHooks ?? DEFAULT_CONFIG.requireHooks,
     schema: config?.schema,
+    fieldTypes: config?.fieldTypes,
+    workflow: config?.workflow,
+    contentTypeWorkflows: config?.contentTypeWorkflows,
   };
 }
 

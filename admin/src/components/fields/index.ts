@@ -20,9 +20,25 @@ export { RichTextField } from './RichTextField';
 // Wrapper component
 export { FieldWrapper } from './FieldWrapper';
 
+// Default renderer for custom field types
+export { DefaultFieldRenderer } from './DefaultFieldRenderer';
+
+// Field renderer registry for custom field types
+export {
+  registerFieldRenderer,
+  registerFieldRenderers,
+  getFieldRenderer,
+  hasFieldRenderer,
+  isBuiltInRenderer,
+  getAllRegisteredFieldTypes,
+  getCustomRendererTypes,
+  type FieldRendererComponent,
+} from './registry';
+
 // Types
 export type {
   FieldType,
+  BuiltInFieldType,
   FieldOptions,
   FieldDefinition,
   FieldError,

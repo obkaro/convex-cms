@@ -185,12 +185,15 @@ function ContentPage() {
                 data-testid="content-search-input"
               />
             </div>
-            <Select value={selectedTypeId} onValueChange={setSelectedTypeId}>
+            <Select
+              value={selectedTypeId || 'all'}
+              onValueChange={(v) => setSelectedTypeId(v === 'all' ? '' : v)}
+            >
               <SelectTrigger className="w-48">
                 <SelectValue placeholder="All Content Types" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Content Types</SelectItem>
+                <SelectItem value="all">All Content Types</SelectItem>
                 {contentTypes.map((type) => (
                   <SelectItem key={type._id} value={type._id}>
                     {type.displayName}
@@ -199,14 +202,14 @@ function ContentPage() {
               </SelectContent>
             </Select>
             <Select
-              value={selectedStatus}
-              onValueChange={(v) => setSelectedStatus(v as ContentStatus | '')}
+              value={selectedStatus || 'all'}
+              onValueChange={(v) => setSelectedStatus(v === 'all' ? '' : (v as ContentStatus))}
             >
               <SelectTrigger className="w-36">
                 <SelectValue placeholder="All Statuses" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Statuses</SelectItem>
+                <SelectItem value="all">All Statuses</SelectItem>
                 <SelectItem value="draft">Draft</SelectItem>
                 <SelectItem value="published">Published</SelectItem>
                 <SelectItem value="scheduled">Scheduled</SelectItem>

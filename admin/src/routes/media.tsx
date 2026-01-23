@@ -269,14 +269,14 @@ function MediaPage() {
             </div>
 
             <Select
-              value={typeFilter}
-              onValueChange={(v) => setTypeFilter(v as MediaType | '')}
+              value={typeFilter || 'all'}
+              onValueChange={(v) => setTypeFilter(v === 'all' ? '' : (v as MediaType))}
             >
               <SelectTrigger className="w-36">
                 <SelectValue placeholder="All Types" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Types</SelectItem>
+                <SelectItem value="all">All Types</SelectItem>
                 <SelectItem value="image">Images</SelectItem>
                 <SelectItem value="video">Videos</SelectItem>
                 <SelectItem value="audio">Audio</SelectItem>

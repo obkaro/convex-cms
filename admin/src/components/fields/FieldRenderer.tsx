@@ -1,17 +1,19 @@
-import type { FieldRendererProps } from './types';
-import { TextField } from './TextField';
-import { TextAreaField } from './TextAreaField';
-import { NumberField } from './NumberField';
-import { BooleanField } from './BooleanField';
-import { DateField } from './DateField';
-import { RichTextField } from './RichTextField';
-import { SelectField } from './SelectField';
-import { MultiSelectField } from './MultiSelectField';
-import { JsonField } from './JsonField';
-import { MediaField } from './MediaField';
-import { ReferenceField } from './ReferenceField';
-import { TagField } from './TagField';
-import { CategoryField } from './CategoryField';
+import type { FieldRendererProps } from "./types";
+import { TextField } from "./TextField";
+import { TextAreaField } from "./TextAreaField";
+import { NumberField } from "./NumberField";
+import { BooleanField } from "./BooleanField";
+import { DateField } from "./DateField";
+import { RichTextField } from "./RichTextField";
+import { SelectField } from "./SelectField";
+import { MultiSelectField } from "./MultiSelectField";
+import { JsonField } from "./JsonField";
+import { MediaField } from "./MediaField";
+import { ReferenceField } from "./ReferenceField";
+import { TagField } from "./TagField";
+import { CategoryField } from "./CategoryField";
+import { DefaultFieldRenderer } from "./DefaultFieldRenderer";
+import { getFieldRenderer } from "./registry";
 
 /**
  * FieldRenderer is the main entry point for rendering any field type.
@@ -19,6 +21,9 @@ import { CategoryField } from './CategoryField';
  * It maps field types to their respective components and passes
  * the appropriate props. This allows forms to render fields
  * dynamically based on content type definitions.
+ *
+ * For custom field types, it uses the field renderer registry.
+ * If no custom renderer is registered, it falls back to DefaultFieldRenderer.
  *
  * Usage:
  * ```tsx
@@ -37,9 +42,8 @@ export function FieldRenderer({
   error,
   disabled = false,
   readOnly = false,
-  className = '',
+  className = "",
 }: FieldRendererProps) {
-  // Common props shared by all field components
   const commonProps = {
     field,
     error,
@@ -49,25 +53,25 @@ export function FieldRenderer({
   };
 
   switch (field.type) {
-    case 'text':
+    case "text":
       return (
         <TextField
           {...commonProps}
-          value={(value as string) ?? ''}
+          value={(value as string) ?? ""}
           onChange={onChange as (value: string) => void}
         />
       );
 
-    case 'richText':
+    case "richText":
       return (
         <RichTextField
           {...commonProps}
-          value={(value as string) ?? ''}
+          value={(value as string) ?? ""}
           onChange={onChange as (value: string) => void}
         />
       );
 
-    case 'number':
+    case "number":
       return (
         <NumberField
           {...commonProps}
@@ -76,7 +80,7 @@ export function FieldRenderer({
         />
       );
 
-    case 'boolean':
+    case "boolean":
       return (
         <BooleanField
           {...commonProps}
@@ -85,7 +89,7 @@ export function FieldRenderer({
         />
       );
 
-    case 'date':
+    case "date":
       return (
         <DateField
           {...commonProps}
@@ -95,7 +99,7 @@ export function FieldRenderer({
         />
       );
 
-    case 'datetime':
+    case "datetime":
       return (
         <DateField
           {...commonProps}
@@ -105,16 +109,16 @@ export function FieldRenderer({
         />
       );
 
-    case 'select':
+    case "select":
       return (
         <SelectField
           {...commonProps}
-          value={(value as string) ?? ''}
+          value={(value as string) ?? ""}
           onChange={onChange as (value: string) => void}
         />
       );
 
-    case 'multiSelect':
+    case "multiSelect":
       return (
         <MultiSelectField
           {...commonProps}
@@ -123,16 +127,10 @@ export function FieldRenderer({
         />
       );
 
-    case 'json':
-      return (
-        <JsonField
-          {...commonProps}
-          value={value ?? null}
-          onChange={onChange}
-        />
-      );
+    case "json":
+      return <JsonField {...commonProps} value={value ?? null} onChange={onChange} />;
 
-    case 'media':
+    case "media":
       return (
         <MediaField
           {...commonProps}
@@ -141,7 +139,7 @@ export function FieldRenderer({
         />
       );
 
-    case 'reference':
+    case "reference":
       return (
         <ReferenceField
           {...commonProps}
@@ -150,7 +148,7 @@ export function FieldRenderer({
         />
       );
 
-    case 'tags':
+    case "tags":
       return (
         <TagField
           {...commonProps}
@@ -159,7 +157,7 @@ export function FieldRenderer({
         />
       );
 
-    case 'category':
+    case "category":
       return (
         <CategoryField
           {...commonProps}
@@ -169,15 +167,14 @@ export function FieldRenderer({
       );
 
     default: {
-      // TypeScript exhaustiveness check
-      const _exhaustiveCheck: never = field.type
-      return (
-        <div className="rounded-md border border-destructive bg-destructive/10 p-3">
-          <p className="text-sm text-destructive">
-            Unknown field type: {_exhaustiveCheck}
-          </p>
-        </div>
-      )
+      // Check if a custom renderer is registered for this field type
+      const CustomRenderer = getFieldRenderer(field.type);
+      if (CustomRenderer) {
+        return <CustomRenderer {...commonProps} value={value} onChange={onChange} />;
+      }
+
+      // Fall back to the default JSON renderer for unknown types
+      return <DefaultFieldRenderer {...commonProps} value={value} onChange={onChange} />;
     }
   }
 }

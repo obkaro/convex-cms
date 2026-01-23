@@ -9,6 +9,7 @@ interface FieldWrapperProps {
   error?: FieldError
   className?: string
   id: string
+  customLabel?: ReactNode
 }
 
 export function FieldWrapper({
@@ -17,6 +18,7 @@ export function FieldWrapper({
   error,
   className = '',
   id,
+  customLabel,
 }: FieldWrapperProps) {
   const hasError = !!error
 
@@ -29,7 +31,7 @@ export function FieldWrapper({
           hasError && 'text-destructive'
         )}
       >
-        {field.label}
+        {customLabel ?? field.label}
         {field.required && <span className="ml-1 text-destructive">*</span>}
       </Label>
 

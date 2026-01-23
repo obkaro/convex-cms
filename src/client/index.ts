@@ -316,6 +316,12 @@ export function createCmsClient(
   // Validate required hooks at initialization time (fail-fast)
   validateRequiredHooks(config);
 
+  // Register custom field types if provided
+  if (config?.fieldTypes && config.fieldTypes.length > 0) {
+    const { registerFieldTypes } = require("./field-types.js");
+    registerFieldTypes(config.fieldTypes);
+  }
+
   const resolvedConfig = resolveConfig(config);
   // Store the getUserRole hook from the original config (not resolved)
   const getUserRoleHook = config?.getUserRole;
@@ -1255,3 +1261,37 @@ export type {
   CodegenOptions,
   CodegenResult,
 } from "./schema/index.js";
+
+// --- Custom Field Types ---
+export {
+  defineFieldType,
+  registerFieldType,
+  registerFieldTypes,
+  getFieldTypeDefinition,
+  getAllFieldTypes,
+  getCustomFieldTypes,
+  isBuiltInFieldType,
+  isCustomFieldType,
+  hasFieldType,
+  getFieldTypeDefaultValue,
+  getFieldTypeIcon,
+  BUILT_IN_TYPES,
+  type FieldTypeDefinition,
+  type FieldValidationResult,
+} from "./field-types.js";
+
+// --- Custom Workflows ---
+export {
+  defineWorkflow,
+  getWorkflowState,
+  getAvailableTransitions,
+  canTransition,
+  isPublishedState,
+  getInitialState,
+  getAllPublishedStates,
+  validateWorkflowTransition,
+  DEFAULT_WORKFLOW,
+  type WorkflowConfig,
+  type WorkflowState,
+  type WorkflowStateColor,
+} from "./workflows.js";

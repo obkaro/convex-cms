@@ -235,12 +235,15 @@ export function MediaField({
                     className="pl-9"
                   />
                 </div>
-                <Select value={typeFilter} onValueChange={setTypeFilter}>
+                <Select
+                  value={typeFilter || 'all'}
+                  onValueChange={(v) => setTypeFilter(v === 'all' ? '' : v)}
+                >
                   <SelectTrigger className="w-[140px]">
                     <SelectValue placeholder="All Types" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Types</SelectItem>
+                    <SelectItem value="all">All Types</SelectItem>
                     <SelectItem value="image">Images</SelectItem>
                     <SelectItem value="video">Videos</SelectItem>
                     <SelectItem value="audio">Audio</SelectItem>

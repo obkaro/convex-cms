@@ -9,12 +9,14 @@ import { useMemo, type ReactNode } from "react";
 import globalsCss from "~/styles/globals.css?url";
 import { AdminLayout, RouteGuard } from "~/components";
 import {
+  AdminConfigProvider,
   AuthProvider,
   ThemeProvider,
   type GetUserHook,
   type GetUserRoleHook,
   type LogoutHook,
 } from "~/contexts";
+import { resolveAdminConfig } from "~/lib/admin-config";
 import { getServerConfig, type ServerConfig } from "~/lib/config.server";
 
 /**
@@ -133,28 +135,32 @@ export const Route = createRootRoute({
 });
 
 function RootComponent() {
-  // Get the server config from the loader
   const { config } = Route.useLoaderData();
 
-  // Get auth config based on the auth mode from server
   const authConfig = useMemo(() => getAuthConfig(config.authMode), [config.authMode]);
+  const adminConfig = useMemo(
+    () => resolveAdminConfig(config.adminConfig),
+    [config.adminConfig]
+  );
 
   return (
     <RootDocument>
       <ThemeProvider>
-        <ConvexProviderWrapper config={config}>
-          <AuthProvider
-            getUser={authConfig.getUser}
-            getUserRole={authConfig.getUserRole}
-            onLogout={authConfig.onLogout}
-          >
-            <RouteGuard>
-              <AdminLayout>
-                <Outlet />
-              </AdminLayout>
-            </RouteGuard>
-          </AuthProvider>
-        </ConvexProviderWrapper>
+        <AdminConfigProvider config={adminConfig}>
+          <ConvexProviderWrapper config={config}>
+            <AuthProvider
+              getUser={authConfig.getUser}
+              getUserRole={authConfig.getUserRole}
+              onLogout={authConfig.onLogout}
+            >
+              <RouteGuard>
+                <AdminLayout>
+                  <Outlet />
+                </AdminLayout>
+              </RouteGuard>
+            </AuthProvider>
+          </ConvexProviderWrapper>
+        </AdminConfigProvider>
       </ThemeProvider>
     </RootDocument>
   );

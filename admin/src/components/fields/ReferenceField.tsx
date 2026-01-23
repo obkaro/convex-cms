@@ -284,12 +284,15 @@ export function ReferenceField({
                 className="border-none shadow-none focus:ring-0"
               />
               {filteredContentTypes.length > 1 && (
-                <Select value={contentTypeFilter} onValueChange={setContentTypeFilter}>
+                <Select
+                  value={contentTypeFilter || 'all'}
+                  onValueChange={(v) => setContentTypeFilter(v === 'all' ? '' : v)}
+                >
                   <SelectTrigger className="h-8 w-[120px] shrink-0">
                     <SelectValue placeholder="All Types" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Types</SelectItem>
+                    <SelectItem value="all">All Types</SelectItem>
                     {filteredContentTypes.map((ct) => (
                       <SelectItem key={ct._id} value={ct._id}>
                         {ct.displayName || ct.name}
