@@ -50,11 +50,40 @@ const SettingsIcon = () => (
   </svg>
 )
 
-const navItems: NavItem[] = [
+const TaxonomiesIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+    <line x1="7" y1="7" x2="7.01" y2="7" />
+  </svg>
+)
+
+const AuditIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+    <polyline points="14 2 14 8 20 8" />
+    <line x1="12" y1="18" x2="12" y2="12" />
+    <line x1="9" y1="15" x2="15" y2="15" />
+  </svg>
+)
+
+const TrashIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="3 6 5 6 21 6" />
+    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+  </svg>
+)
+
+const mainNavItems: NavItem[] = [
   { to: '/', label: 'Dashboard', icon: <DashboardIcon />, exact: true },
   { to: '/content', label: 'Content', icon: <ContentIcon /> },
   { to: '/media', label: 'Media', icon: <MediaIcon /> },
+  { to: '/taxonomies', label: 'Taxonomies', icon: <TaxonomiesIcon /> },
+]
+
+const configNavItems: NavItem[] = [
   { to: '/content-types', label: 'Content Types', icon: <ContentTypesIcon /> },
+  { to: '/audit-logs', label: 'Audit Logs', icon: <AuditIcon /> },
+  { to: '/trash', label: 'Trash', icon: <TrashIcon /> },
   { to: '/settings', label: 'Settings', icon: <SettingsIcon /> },
 ]
 
@@ -87,7 +116,7 @@ export function Sidebar() {
       <nav className="sidebar-nav">
         <div className="nav-section">
           <span className="nav-section-title">Main</span>
-          {navItems.slice(0, 3).map((item) => (
+          {mainNavItems.map((item) => (
             <Link
               key={item.to}
               to={item.to}
@@ -101,7 +130,7 @@ export function Sidebar() {
 
         <div className="nav-section">
           <span className="nav-section-title">Configuration</span>
-          {navItems.slice(3).map((item) => (
+          {configNavItems.map((item) => (
             <Link
               key={item.to}
               to={item.to}

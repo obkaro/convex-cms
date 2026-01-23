@@ -4,6 +4,7 @@ import { useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { usePermissions } from '~/hooks';
 import { ErrorState, ErrorAlert } from '~/components';
+import { BulkActionBar } from '~/components/BulkActionBar';
 
 export const Route = createFileRoute('/content')({
   component: ContentPage,
@@ -18,6 +19,7 @@ function ContentPage() {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [showCreateMenu, setShowCreateMenu] = useState(false);
   const [dismissedError, setDismissedError] = useState<'contentTypes' | 'entries' | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   // Permission checks
   const { canCreate, canUpdate, canDelete, canPublish } = usePermissions();
@@ -76,6 +78,31 @@ function ContentPage() {
       day: 'numeric',
     });
   };
+
+  // Selection handlers
+  const handleSelectItem = useCallback((id: string, selected: boolean) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (selected) {
+        next.add(id);
+      } else {
+        next.delete(id);
+      }
+      return next;
+    });
+  }, []);
+
+  const handleSelectAll = useCallback(() => {
+    if (selectedIds.size === entries.length && entries.length > 0) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(entries.map((e) => e._id)));
+    }
+  }, [selectedIds.size, entries]);
+
+  const handleClearSelection = useCallback(() => {
+    setSelectedIds(new Set());
+  }, []);
 
   // Show full-page error state if both queries failed
   if (contentTypesError && entriesError) {
@@ -201,6 +228,13 @@ function ContentPage() {
         </div>
       </div>
 
+      {/* Bulk Action Bar */}
+      <BulkActionBar
+        selectedIds={Array.from(selectedIds)}
+        onClearSelection={handleClearSelection}
+        onOperationComplete={handleClearSelection}
+      />
+
       {entries.length === 0 ? (
         <div className="content-list empty-state">
           <div className="empty-state-icon" />
@@ -216,6 +250,14 @@ function ContentPage() {
           <table className="content-table">
             <thead>
               <tr>
+                <th className="content-col-checkbox">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.size === entries.length && entries.length > 0}
+                    onChange={handleSelectAll}
+                    aria-label="Select all entries"
+                  />
+                </th>
                 <th>Title</th>
                 <th>Type</th>
                 <th>Status</th>
@@ -225,7 +267,15 @@ function ContentPage() {
             </thead>
             <tbody>
               {entries.map((entry) => (
-                <tr key={entry._id}>
+                <tr key={entry._id} className={selectedIds.has(entry._id) ? 'selected' : ''}>
+                  <td className="content-col-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(entry._id)}
+                      onChange={(e) => handleSelectItem(entry._id, e.target.checked)}
+                      aria-label={`Select ${getEntryTitle(entry, entry.contentTypeId)}`}
+                    />
+                  </td>
                   <td>
                     <Link
                       to="/entries/$entryId"

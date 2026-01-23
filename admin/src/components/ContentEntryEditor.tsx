@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { useMutation } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { FieldRenderer } from './fields/FieldRenderer';
+import { VersionHistory } from './VersionHistory';
 import type { FieldDefinition, FieldError } from './fields/types';
 import { parseServerError, isRetryableError } from '~/utils';
 
@@ -150,6 +151,7 @@ export function ContentEntryEditor({
   const [autosaveError, setAutosaveError] = useState<string | null>(null);
   const [autosaveRetryCount, setAutosaveRetryCount] = useState(0);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [saveSuccess, setSaveSuccess] = useState(false);
   const maxAutosaveRetries = 3;
 
   // Refs for autosave
@@ -165,6 +167,7 @@ export function ContentEntryEditor({
   const scheduleEntry = useMutation(api.entries.schedule);
   const cancelScheduleEntry = useMutation(api.entries.cancelSchedule);
   const deleteEntryMutation = useMutation(api.entries.remove);
+  const duplicateEntryMutation = useMutation(api.entries.duplicate);
 
   // Schedule modal state
   const [showScheduleModal, setShowScheduleModal] = useState(false);
@@ -411,6 +414,15 @@ export function ContentEntryEditor({
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
+  // Duplicate state
+  const [isDuplicating, setIsDuplicating] = useState(false);
+
+  // Archive state
+  const [isArchiving, setIsArchiving] = useState(false);
+
+  // Version history panel state
+  const [showVersionHistory, setShowVersionHistory] = useState(false);
+
   // Handle publish with confirmation
   const handlePublishClick = useCallback(() => {
     setConfirmAction('publish');
@@ -572,6 +584,48 @@ export function ContentEntryEditor({
     }
   }, [entry, deleteEntryMutation, onDelete]);
 
+  // Handle duplicate
+  const handleDuplicate = useCallback(async () => {
+    if (!entry) return;
+
+    setIsDuplicating(true);
+    setSubmitError(null);
+
+    try {
+      const duplicatedEntry = await duplicateEntryMutation({
+        sourceEntryId: entry._id,
+      }) as ContentEntry;
+      // Navigate to the new duplicated entry
+      onSave?.(duplicatedEntry);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to duplicate entry';
+      setSubmitError(message);
+    } finally {
+      setIsDuplicating(false);
+    }
+  }, [entry, duplicateEntryMutation, onSave]);
+
+  // Handle archive
+  const handleArchive = useCallback(async () => {
+    if (!entry) return;
+
+    setIsArchiving(true);
+    setSubmitError(null);
+
+    try {
+      const archivedEntry = await updateEntry({
+        id: entry._id,
+        status: 'archived',
+      }) as ContentEntry;
+      onSave?.(archivedEntry);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to archive entry';
+      setSubmitError(message);
+    } finally {
+      setIsArchiving(false);
+    }
+  }, [entry, updateEntry, onSave]);
+
   // Handle form submission
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -604,6 +658,8 @@ export function ContentEntryEditor({
 
       setIsDirty(false);
       setLastSavedData({ ...formData });
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
       onSave?.(savedEntry);
     } catch (error) {
       // Parse server error for field-level errors and general message
@@ -687,6 +743,12 @@ export function ContentEntryEditor({
         </div>
       </div>
 
+      {saveSuccess && (
+        <div className="entry-editor-success" role="status">
+          Changes saved successfully
+        </div>
+      )}
+
       {(submitError || publishError) && (
         <div className="entry-editor-error" role="alert">
           <strong>Error:</strong> {submitError || publishError}
@@ -714,16 +776,50 @@ export function ContentEntryEditor({
               type="button"
               className="btn btn-danger"
               onClick={handleDeleteClick}
-              disabled={isSubmitting || isPublishing || isDeleting}
+              disabled={isSubmitting || isPublishing || isDeleting || isDuplicating}
               data-testid="delete-button"
             >
               {isDeleting ? 'Deleting...' : 'Delete'}
             </button>
           )}
 
+          {/* Duplicate button - only shown for existing entries */}
+          {entry && (
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={handleDuplicate}
+              disabled={isSubmitting || isPublishing || isDeleting || isDuplicating || isArchiving}
+              data-testid="duplicate-button"
+            >
+              {isDuplicating ? 'Duplicating...' : 'Duplicate'}
+            </button>
+          )}
+
+          {/* Archive button - shown for draft and scheduled entries */}
+          {entry && (entry.status === 'draft' || entry.status === 'scheduled') && (
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={handleArchive}
+              disabled={isSubmitting || isPublishing || isDeleting || isDuplicating || isArchiving}
+              data-testid="archive-button"
+            >
+              {isArchiving ? 'Archiving...' : 'Archive'}
+            </button>
+          )}
+
           {entry && (
             <div className="entry-meta-info">
               <span className="entry-version">Version {entry.version}</span>
+              <button
+                type="button"
+                className="btn btn-sm btn-link"
+                onClick={() => setShowVersionHistory(true)}
+                title="View version history"
+              >
+                History
+              </button>
 
               {/* Publish timestamps */}
               {entry.lastPublishedAt && (
@@ -1004,6 +1100,18 @@ export function ContentEntryEditor({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Version History Panel */}
+      {showVersionHistory && entry && (
+        <VersionHistory
+          entryId={entry._id}
+          currentVersion={entry.version}
+          onRollbackComplete={() => {
+            setShowVersionHistory(false);
+          }}
+          onClose={() => setShowVersionHistory(false)}
+        />
       )}
     </form>
   );
