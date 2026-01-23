@@ -58,6 +58,25 @@ function getMediaTypeIcon(type: string, className = 'size-6') {
   }
 }
 
+type MediaType = 'image' | 'video' | 'audio' | 'document' | 'other'
+
+function getMediaTypeFromMimeType(mimeType?: string): MediaType {
+  if (!mimeType) return 'other'
+  if (mimeType.startsWith('image/')) return 'image'
+  if (mimeType.startsWith('video/')) return 'video'
+  if (mimeType.startsWith('audio/')) return 'audio'
+  if (
+    mimeType === 'application/pdf' ||
+    mimeType.includes('document') ||
+    mimeType.includes('sheet') ||
+    mimeType.includes('presentation') ||
+    mimeType.startsWith('text/')
+  ) {
+    return 'document'
+  }
+  return 'other'
+}
+
 function formatFileSize(bytes: number): string {
   if (bytes === 0) return '0 B'
   const k = 1024
@@ -134,33 +153,36 @@ export function MediaField({
     <FieldWrapper field={field} error={error} className={className} id={fieldId}>
       <div className="space-y-2">
         {value && selectedAsset ? (
-          <div className="flex items-center gap-3 rounded-lg border border-border bg-card p-3">
-            <div className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted">
-              {selectedAsset.type === 'image' && selectedAsset.url ? (
-                <img
-                  src={selectedAsset.url}
-                  alt={selectedAsset.title || selectedAsset.filename}
-                  className="size-full object-cover"
-                />
-              ) : (
-                <div className="text-muted-foreground">
-                  {getMediaTypeIcon(selectedAsset.type)}
+          (() => {
+            const selectedMediaType = getMediaTypeFromMimeType(selectedAsset.mimeType)
+            return (
+              <div className="flex items-center gap-3 rounded-lg border border-border bg-card p-3">
+                <div className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted">
+                  {selectedMediaType === 'image' && selectedAsset.url ? (
+                    <img
+                      src={selectedAsset.url}
+                      alt={selectedAsset.title || selectedAsset.name}
+                      className="size-full object-cover"
+                    />
+                  ) : (
+                    <div className="text-muted-foreground">
+                      {getMediaTypeIcon(selectedMediaType)}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p
-                className="truncate text-sm font-medium text-foreground"
-                title={selectedAsset.filename}
-              >
-                {selectedAsset.filename}
-              </p>
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <span className="capitalize">{selectedAsset.type}</span>
-                <span>•</span>
-                <span>{formatFileSize(selectedAsset.size)}</span>
-              </div>
-            </div>
+                <div className="min-w-0 flex-1">
+                  <p
+                    className="truncate text-sm font-medium text-foreground"
+                    title={selectedAsset.name}
+                  >
+                    {selectedAsset.name}
+                  </p>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span className="capitalize">{selectedMediaType}</span>
+                    <span>•</span>
+                    <span>{formatFileSize(selectedAsset.size ?? 0)}</span>
+                  </div>
+                </div>
             {!disabled && !readOnly && (
               <div className="flex shrink-0 items-center gap-1">
                 <CmsButton
@@ -182,6 +204,8 @@ export function MediaField({
               </div>
             )}
           </div>
+            )
+          })()
         ) : (
           <button
             type="button"
@@ -260,7 +284,9 @@ export function MediaField({
                 </div>
               ) : filteredAssets && filteredAssets.length > 0 ? (
                 <div className="grid max-h-[300px] grid-cols-4 gap-2 overflow-y-auto">
-                  {filteredAssets.map((asset) => (
+                  {filteredAssets.map((asset) => {
+                    const assetMediaType = getMediaTypeFromMimeType(asset.mimeType)
+                    return (
                     <button
                       key={asset._id}
                       type="button"
@@ -272,27 +298,27 @@ export function MediaField({
                       onClick={() => handleSelect(asset._id)}
                     >
                       <div className="aspect-square bg-muted">
-                        {asset.type === 'image' && asset.url ? (
+                        {assetMediaType === 'image' && asset.url ? (
                           <img
                             src={asset.url}
-                            alt={asset.title || asset.filename}
+                            alt={asset.title || asset.name}
                             className="size-full object-cover"
                           />
                         ) : (
                           <div className="flex size-full items-center justify-center text-muted-foreground">
-                            {getMediaTypeIcon(asset.type)}
+                            {getMediaTypeIcon(assetMediaType)}
                           </div>
                         )}
                       </div>
                       <div className="p-1.5">
                         <p
                           className="truncate text-xs font-medium"
-                          title={asset.filename}
+                          title={asset.name}
                         >
-                          {asset.filename}
+                          {asset.name}
                         </p>
                         <p className="text-[10px] text-muted-foreground">
-                          {formatFileSize(asset.size)}
+                          {formatFileSize(asset.size ?? 0)}
                         </p>
                       </div>
                       {value === asset._id && (
@@ -301,7 +327,8 @@ export function MediaField({
                         </div>
                       )}
                     </button>
-                  ))}
+                    )
+                  })}
                 </div>
               ) : (
                 <CmsEmptyState

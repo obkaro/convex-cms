@@ -11,6 +11,7 @@ import { AdminLayout, RouteGuard } from "~/components";
 import {
   AdminConfigProvider,
   AuthProvider,
+  BreadcrumbProvider,
   ThemeProvider,
   type GetUserHook,
   type GetUserRoleHook,
@@ -146,21 +147,23 @@ function RootComponent() {
   return (
     <RootDocument>
       <ThemeProvider>
-        <AdminConfigProvider config={adminConfig}>
-          <ConvexProviderWrapper config={config}>
-            <AuthProvider
-              getUser={authConfig.getUser}
-              getUserRole={authConfig.getUserRole}
-              onLogout={authConfig.onLogout}
-            >
-              <RouteGuard>
-                <AdminLayout>
-                  <Outlet />
-                </AdminLayout>
-              </RouteGuard>
-            </AuthProvider>
-          </ConvexProviderWrapper>
-        </AdminConfigProvider>
+        <BreadcrumbProvider>
+          <AdminConfigProvider config={adminConfig}>
+            <ConvexProviderWrapper config={config}>
+              <AuthProvider
+                getUser={authConfig.getUser}
+                getUserRole={authConfig.getUserRole}
+                onLogout={authConfig.onLogout}
+              >
+                <RouteGuard>
+                  <AdminLayout>
+                    <Outlet />
+                  </AdminLayout>
+                </RouteGuard>
+              </AuthProvider>
+            </ConvexProviderWrapper>
+          </AdminConfigProvider>
+        </BreadcrumbProvider>
       </ThemeProvider>
     </RootDocument>
   );
