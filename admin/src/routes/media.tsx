@@ -124,8 +124,6 @@ function MediaPage() {
 
   // Mutations
   const createFolder = useMutation(api.media.createFolder)
-  const generateUploadUrl = useMutation(api.media.generateUploadUrl)
-  const createAsset = useMutation(api.media.createAsset)
 
   // Build breadcrumb path
   const breadcrumbPath = useMemo(() => {
@@ -572,8 +570,8 @@ function MediaPage() {
             <div className="modal-body">
               <UploadDropzone
                 currentFolderId={currentFolderId}
-                generateUploadUrl={generateUploadUrl}
-                createAsset={createAsset}
+                generateUploadUrl={api.media.generateUploadUrl}
+                createAsset={api.media.createAsset}
                 onUploadComplete={handleUploadComplete}
                 maxFileSize={50 * 1024 * 1024}
                 maxConcurrentUploads={3}

@@ -1221,7 +1221,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: {
+                options?: {
                   maxLength?: number;
                   minLength?: number;
                   pattern?: string;
@@ -1236,7 +1236,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: {
+                options?: {
                   max?: number;
                   min?: number;
                   precision?: number;
@@ -1252,7 +1252,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: { falseLabel?: string; trueLabel?: string };
+                options?: { falseLabel?: string; trueLabel?: string };
                 required: boolean;
                 searchable?: boolean;
                 type: "boolean";
@@ -1263,7 +1263,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: {
+                options?: {
                   allowedBlocks?: Array<string>;
                   allowedMarks?: Array<string>;
                 };
@@ -1277,7 +1277,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: {
+                options?: {
                   allowedMimeTypes?: Array<string>;
                   maxFileSize?: number;
                   mediaType?:
@@ -1297,7 +1297,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: { options?: Array<{ label: string; value: string }> };
+                options?: { options?: Array<{ label: string; value: string }> };
                 required: boolean;
                 searchable?: boolean;
                 type: "select";
@@ -1308,7 +1308,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: { options?: Array<{ label: string; value: string }> };
+                options?: { options?: Array<{ label: string; value: string }> };
                 required: boolean;
                 searchable?: boolean;
                 type: "multiSelect";
@@ -1319,7 +1319,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: {
+                options?: {
                   allowCreate?: boolean;
                   maxTags?: number;
                   minTags?: number;
@@ -1335,7 +1335,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: { allowMultiple?: boolean };
+                options?: { allowMultiple?: boolean };
                 required: boolean;
                 searchable?: boolean;
                 type: "category";
@@ -1346,7 +1346,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: { schema?: any };
+                options?: { schema?: any };
                 required: boolean;
                 searchable?: boolean;
                 type: "json";
@@ -1357,7 +1357,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: { max?: number; min?: number };
+                options?: { max?: number; min?: number };
                 required: boolean;
                 searchable?: boolean;
                 type: "date";
@@ -1368,7 +1368,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: { max?: number; min?: number };
+                options?: { max?: number; min?: number };
                 required: boolean;
                 searchable?: boolean;
                 type: "datetime";
@@ -1379,7 +1379,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: {
+                options?: {
                   allowedContentTypes?: Array<string>;
                   minItems?: number;
                   multiple?: boolean;
@@ -1410,7 +1410,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: {
+                options?: {
                   maxLength?: number;
                   minLength?: number;
                   pattern?: string;
@@ -1425,7 +1425,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: {
+                options?: {
                   max?: number;
                   min?: number;
                   precision?: number;
@@ -1441,7 +1441,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: { falseLabel?: string; trueLabel?: string };
+                options?: { falseLabel?: string; trueLabel?: string };
                 required: boolean;
                 searchable?: boolean;
                 type: "boolean";
@@ -1452,7 +1452,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: {
+                options?: {
                   allowedBlocks?: Array<string>;
                   allowedMarks?: Array<string>;
                 };
@@ -1466,7 +1466,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: {
+                options?: {
                   allowedMimeTypes?: Array<string>;
                   maxFileSize?: number;
                   mediaType?:
@@ -1486,7 +1486,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: { options?: Array<{ label: string; value: string }> };
+                options?: { options?: Array<{ label: string; value: string }> };
                 required: boolean;
                 searchable?: boolean;
                 type: "select";
@@ -1497,7 +1497,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: { options?: Array<{ label: string; value: string }> };
+                options?: { options?: Array<{ label: string; value: string }> };
                 required: boolean;
                 searchable?: boolean;
                 type: "multiSelect";
@@ -1508,7 +1508,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: {
+                options?: {
                   allowCreate?: boolean;
                   maxTags?: number;
                   minTags?: number;
@@ -1524,7 +1524,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: { allowMultiple?: boolean };
+                options?: { allowMultiple?: boolean };
                 required: boolean;
                 searchable?: boolean;
                 type: "category";
@@ -1535,7 +1535,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: { schema?: any };
+                options?: { schema?: any };
                 required: boolean;
                 searchable?: boolean;
                 type: "json";
@@ -1546,7 +1546,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: { max?: number; min?: number };
+                options?: { max?: number; min?: number };
                 required: boolean;
                 searchable?: boolean;
                 type: "date";
@@ -1557,7 +1557,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: { max?: number; min?: number };
+                options?: { max?: number; min?: number };
                 required: boolean;
                 searchable?: boolean;
                 type: "datetime";
@@ -1568,7 +1568,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: {
+                options?: {
                   allowedContentTypes?: Array<string>;
                   minItems?: number;
                   multiple?: boolean;
@@ -1630,7 +1630,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: {
+                options?: {
                   maxLength?: number;
                   minLength?: number;
                   pattern?: string;
@@ -1645,7 +1645,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: {
+                options?: {
                   max?: number;
                   min?: number;
                   precision?: number;
@@ -1661,7 +1661,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: { falseLabel?: string; trueLabel?: string };
+                options?: { falseLabel?: string; trueLabel?: string };
                 required: boolean;
                 searchable?: boolean;
                 type: "boolean";
@@ -1672,7 +1672,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: {
+                options?: {
                   allowedBlocks?: Array<string>;
                   allowedMarks?: Array<string>;
                 };
@@ -1686,7 +1686,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: {
+                options?: {
                   allowedMimeTypes?: Array<string>;
                   maxFileSize?: number;
                   mediaType?:
@@ -1706,7 +1706,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: { options?: Array<{ label: string; value: string }> };
+                options?: { options?: Array<{ label: string; value: string }> };
                 required: boolean;
                 searchable?: boolean;
                 type: "select";
@@ -1717,7 +1717,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: { options?: Array<{ label: string; value: string }> };
+                options?: { options?: Array<{ label: string; value: string }> };
                 required: boolean;
                 searchable?: boolean;
                 type: "multiSelect";
@@ -1728,7 +1728,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: {
+                options?: {
                   allowCreate?: boolean;
                   maxTags?: number;
                   minTags?: number;
@@ -1744,7 +1744,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: { allowMultiple?: boolean };
+                options?: { allowMultiple?: boolean };
                 required: boolean;
                 searchable?: boolean;
                 type: "category";
@@ -1755,7 +1755,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: { schema?: any };
+                options?: { schema?: any };
                 required: boolean;
                 searchable?: boolean;
                 type: "json";
@@ -1766,7 +1766,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: { max?: number; min?: number };
+                options?: { max?: number; min?: number };
                 required: boolean;
                 searchable?: boolean;
                 type: "date";
@@ -1777,7 +1777,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: { max?: number; min?: number };
+                options?: { max?: number; min?: number };
                 required: boolean;
                 searchable?: boolean;
                 type: "datetime";
@@ -1788,7 +1788,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: {
+                options?: {
                   allowedContentTypes?: Array<string>;
                   minItems?: number;
                   multiple?: boolean;
@@ -1834,7 +1834,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: {
+                options?: {
                   maxLength?: number;
                   minLength?: number;
                   pattern?: string;
@@ -1849,7 +1849,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: {
+                options?: {
                   max?: number;
                   min?: number;
                   precision?: number;
@@ -1865,7 +1865,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: { falseLabel?: string; trueLabel?: string };
+                options?: { falseLabel?: string; trueLabel?: string };
                 required: boolean;
                 searchable?: boolean;
                 type: "boolean";
@@ -1876,7 +1876,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: {
+                options?: {
                   allowedBlocks?: Array<string>;
                   allowedMarks?: Array<string>;
                 };
@@ -1890,7 +1890,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: {
+                options?: {
                   allowedMimeTypes?: Array<string>;
                   maxFileSize?: number;
                   mediaType?:
@@ -1910,7 +1910,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: { options?: Array<{ label: string; value: string }> };
+                options?: { options?: Array<{ label: string; value: string }> };
                 required: boolean;
                 searchable?: boolean;
                 type: "select";
@@ -1921,7 +1921,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: { options?: Array<{ label: string; value: string }> };
+                options?: { options?: Array<{ label: string; value: string }> };
                 required: boolean;
                 searchable?: boolean;
                 type: "multiSelect";
@@ -1932,7 +1932,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: {
+                options?: {
                   allowCreate?: boolean;
                   maxTags?: number;
                   minTags?: number;
@@ -1948,7 +1948,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: { allowMultiple?: boolean };
+                options?: { allowMultiple?: boolean };
                 required: boolean;
                 searchable?: boolean;
                 type: "category";
@@ -1959,7 +1959,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: { schema?: any };
+                options?: { schema?: any };
                 required: boolean;
                 searchable?: boolean;
                 type: "json";
@@ -1970,7 +1970,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: { max?: number; min?: number };
+                options?: { max?: number; min?: number };
                 required: boolean;
                 searchable?: boolean;
                 type: "date";
@@ -1981,7 +1981,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: { max?: number; min?: number };
+                options?: { max?: number; min?: number };
                 required: boolean;
                 searchable?: boolean;
                 type: "datetime";
@@ -1992,7 +1992,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: {
+                options?: {
                   allowedContentTypes?: Array<string>;
                   minItems?: number;
                   multiple?: boolean;
@@ -2033,7 +2033,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: {
+                options?: {
                   maxLength?: number;
                   minLength?: number;
                   pattern?: string;
@@ -2048,7 +2048,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: {
+                options?: {
                   max?: number;
                   min?: number;
                   precision?: number;
@@ -2064,7 +2064,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: { falseLabel?: string; trueLabel?: string };
+                options?: { falseLabel?: string; trueLabel?: string };
                 required: boolean;
                 searchable?: boolean;
                 type: "boolean";
@@ -2075,7 +2075,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: {
+                options?: {
                   allowedBlocks?: Array<string>;
                   allowedMarks?: Array<string>;
                 };
@@ -2089,7 +2089,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: {
+                options?: {
                   allowedMimeTypes?: Array<string>;
                   maxFileSize?: number;
                   mediaType?:
@@ -2109,7 +2109,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: { options?: Array<{ label: string; value: string }> };
+                options?: { options?: Array<{ label: string; value: string }> };
                 required: boolean;
                 searchable?: boolean;
                 type: "select";
@@ -2120,7 +2120,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: { options?: Array<{ label: string; value: string }> };
+                options?: { options?: Array<{ label: string; value: string }> };
                 required: boolean;
                 searchable?: boolean;
                 type: "multiSelect";
@@ -2131,7 +2131,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: {
+                options?: {
                   allowCreate?: boolean;
                   maxTags?: number;
                   minTags?: number;
@@ -2147,7 +2147,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: { allowMultiple?: boolean };
+                options?: { allowMultiple?: boolean };
                 required: boolean;
                 searchable?: boolean;
                 type: "category";
@@ -2158,7 +2158,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: { schema?: any };
+                options?: { schema?: any };
                 required: boolean;
                 searchable?: boolean;
                 type: "json";
@@ -2169,7 +2169,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: { max?: number; min?: number };
+                options?: { max?: number; min?: number };
                 required: boolean;
                 searchable?: boolean;
                 type: "date";
@@ -2180,7 +2180,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: { max?: number; min?: number };
+                options?: { max?: number; min?: number };
                 required: boolean;
                 searchable?: boolean;
                 type: "datetime";
@@ -2191,7 +2191,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options: {
+                options?: {
                   allowedContentTypes?: Array<string>;
                   minItems?: number;
                   multiple?: boolean;
@@ -2246,7 +2246,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                   label: string;
                   localized?: boolean;
                   name: string;
-                  options: {
+                  options?: {
                     maxLength?: number;
                     minLength?: number;
                     pattern?: string;
@@ -2261,7 +2261,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                   label: string;
                   localized?: boolean;
                   name: string;
-                  options: {
+                  options?: {
                     max?: number;
                     min?: number;
                     precision?: number;
@@ -2277,7 +2277,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                   label: string;
                   localized?: boolean;
                   name: string;
-                  options: { falseLabel?: string; trueLabel?: string };
+                  options?: { falseLabel?: string; trueLabel?: string };
                   required: boolean;
                   searchable?: boolean;
                   type: "boolean";
@@ -2288,7 +2288,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                   label: string;
                   localized?: boolean;
                   name: string;
-                  options: {
+                  options?: {
                     allowedBlocks?: Array<string>;
                     allowedMarks?: Array<string>;
                   };
@@ -2302,7 +2302,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                   label: string;
                   localized?: boolean;
                   name: string;
-                  options: {
+                  options?: {
                     allowedMimeTypes?: Array<string>;
                     maxFileSize?: number;
                     mediaType?:
@@ -2322,7 +2322,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                   label: string;
                   localized?: boolean;
                   name: string;
-                  options: {
+                  options?: {
                     options?: Array<{ label: string; value: string }>;
                   };
                   required: boolean;
@@ -2335,7 +2335,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                   label: string;
                   localized?: boolean;
                   name: string;
-                  options: {
+                  options?: {
                     options?: Array<{ label: string; value: string }>;
                   };
                   required: boolean;
@@ -2348,7 +2348,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                   label: string;
                   localized?: boolean;
                   name: string;
-                  options: {
+                  options?: {
                     allowCreate?: boolean;
                     maxTags?: number;
                     minTags?: number;
@@ -2364,7 +2364,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                   label: string;
                   localized?: boolean;
                   name: string;
-                  options: { allowMultiple?: boolean };
+                  options?: { allowMultiple?: boolean };
                   required: boolean;
                   searchable?: boolean;
                   type: "category";
@@ -2375,7 +2375,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                   label: string;
                   localized?: boolean;
                   name: string;
-                  options: { schema?: any };
+                  options?: { schema?: any };
                   required: boolean;
                   searchable?: boolean;
                   type: "json";
@@ -2386,7 +2386,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                   label: string;
                   localized?: boolean;
                   name: string;
-                  options: { max?: number; min?: number };
+                  options?: { max?: number; min?: number };
                   required: boolean;
                   searchable?: boolean;
                   type: "date";
@@ -2397,7 +2397,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                   label: string;
                   localized?: boolean;
                   name: string;
-                  options: { max?: number; min?: number };
+                  options?: { max?: number; min?: number };
                   required: boolean;
                   searchable?: boolean;
                   type: "datetime";
@@ -2408,7 +2408,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                   label: string;
                   localized?: boolean;
                   name: string;
-                  options: {
+                  options?: {
                     allowedContentTypes?: Array<string>;
                     minItems?: number;
                     multiple?: boolean;

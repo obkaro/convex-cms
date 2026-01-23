@@ -42,10 +42,99 @@ export {
 // Re-export Convex React provider
 export { ConvexProvider, ConvexProviderWithAuth } from "convex/react";
 
-import { useMemo, useCallback, useState } from "react";
+import { useMemo, useCallback, useState, useRef, useReducer, useEffect } from "react";
 import { useQuery, usePaginatedQuery, useMutation } from "convex/react";
 import type { FunctionReference, FunctionArgs, FunctionReturnType } from "convex/server";
 import type { PaginationResult } from "convex/server";
+
+// =============================================================================
+// Upload Utilities
+// =============================================================================
+
+function generateUploadId(): string {
+  return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+}
+
+function getImageDimensions(file: File, timeoutMs = 5000): Promise<{ width: number; height: number } | undefined> {
+  if (!file.type.startsWith("image/")) return Promise.resolve(undefined);
+
+  return new Promise((resolve) => {
+    const img = new Image();
+    let objectUrl: string | null = null;
+
+    const timeoutId = setTimeout(() => {
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      resolve(undefined);
+    }, timeoutMs);
+
+    img.onload = () => {
+      clearTimeout(timeoutId);
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      resolve({ width: img.naturalWidth, height: img.naturalHeight });
+    };
+
+    img.onerror = () => {
+      clearTimeout(timeoutId);
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      resolve(undefined);
+    };
+
+    objectUrl = URL.createObjectURL(file);
+    img.src = objectUrl;
+  });
+}
+
+function uploadWithXHR(
+  url: string,
+  file: File,
+  signal: AbortSignal,
+  onProgress: (progress: number) => void
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+
+    const abortHandler = () => {
+      xhr.abort();
+      reject(new DOMException("Upload aborted", "AbortError"));
+    };
+    signal.addEventListener("abort", abortHandler);
+
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) {
+        const percent = Math.round((event.loaded / event.total) * 80);
+        onProgress(10 + percent);
+      }
+    };
+
+    xhr.onload = () => {
+      signal.removeEventListener("abort", abortHandler);
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          const response = JSON.parse(xhr.responseText);
+          resolve(response.storageId);
+        } catch {
+          reject(new Error("Invalid response from upload server"));
+        }
+      } else {
+        reject(new Error(`Upload failed: ${xhr.statusText || `HTTP ${xhr.status}`}`));
+      }
+    };
+
+    xhr.onerror = () => {
+      signal.removeEventListener("abort", abortHandler);
+      reject(new Error("Network error during upload"));
+    };
+
+    xhr.ontimeout = () => {
+      signal.removeEventListener("abort", abortHandler);
+      reject(new Error("Upload timed out"));
+    };
+
+    xhr.open("POST", url);
+    xhr.setRequestHeader("Content-Type", file.type);
+    xhr.send(file);
+  });
+}
 
 // =============================================================================
 // Types
@@ -342,24 +431,51 @@ export function useCmsMutation<
 // =============================================================================
 
 /**
+ * Result type for useMediaUpload hook
+ */
+export interface UseMediaUploadResult<Result> {
+  /** Upload a file with optional metadata */
+  upload: (file: File, metadata?: Record<string, unknown>) => Promise<Result>;
+  /** Cancel the current upload */
+  cancel: () => void;
+  /** Whether an upload is in progress */
+  isUploading: boolean;
+  /** Upload progress (0-100) */
+  progress: number;
+  /** Last error message, null if no error */
+  error: string | null;
+  /** Reset the upload state */
+  reset: () => void;
+}
+
+/**
  * Hook for uploading files to Convex storage with CMS media asset creation.
+ * Includes real-time progress tracking, cancellation support, and error handling.
  *
  * @param getUploadUrl - Mutation to get a storage upload URL
  * @param createAsset - Mutation to create the media asset record
- * @returns Upload function with progress tracking
+ * @returns Upload function with progress tracking, cancellation, and error state
  *
  * @example
  * ```tsx
- * const { upload, isUploading, progress } = useMediaUpload(
+ * const { upload, cancel, isUploading, progress, error } = useMediaUpload(
  *   api.example.generateUploadUrl,
  *   api.example.createMediaAsset
  * );
  *
- * const handleDrop = async (files: File[]) => {
- *   for (const file of files) {
- *     await upload(file, { folderId: currentFolder });
+ * const handleUpload = async (file: File) => {
+ *   try {
+ *     const asset = await upload(file, { parentId: folderId });
+ *     console.log("Uploaded:", asset);
+ *   } catch (e) {
+ *     if (e.name !== "AbortError") {
+ *       console.error("Upload failed:", e);
+ *     }
  *   }
  * };
+ *
+ * // Cancel button
+ * <button onClick={cancel} disabled={!isUploading}>Cancel</button>
  * ```
  */
 export function useMediaUpload<
@@ -369,75 +485,414 @@ export function useMediaUpload<
 >(
   getUploadUrl: UploadMutation,
   createAsset: CreateMutation
-): {
-  upload: (file: File, metadata?: Partial<CreateArgs>) => Promise<FunctionReturnType<CreateMutation>>;
-  isUploading: boolean;
-  progress: number;
-} {
+): UseMediaUploadResult<FunctionReturnType<CreateMutation>> {
   const generateUrl = useMutation(getUploadUrl);
   const create = useMutation(createAsset);
   const [isUploading, setIsUploading] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const upload = useCallback(
-    async (file: File, metadata?: Partial<CreateArgs>): Promise<FunctionReturnType<CreateMutation>> => {
+    async (file: File, metadata?: Record<string, unknown>): Promise<FunctionReturnType<CreateMutation>> => {
+      abortControllerRef.current = new AbortController();
       setIsUploading(true);
       setProgress(0);
+      setError(null);
 
       try {
-        // Get upload URL
         const uploadUrl = await generateUrl({});
-        setProgress(10);
+        setProgress(5);
 
-        // Upload file
-        const response = await fetch(uploadUrl as string, {
-          method: "POST",
-          headers: { "Content-Type": file.type },
-          body: file,
-        });
+        const storageId = await uploadWithXHR(
+          uploadUrl as string,
+          file,
+          abortControllerRef.current.signal,
+          setProgress
+        );
 
-        if (!response.ok) {
-          throw new Error(`Upload failed: ${response.statusText}`);
-        }
+        setProgress(90);
 
-        const { storageId } = await response.json();
-        setProgress(80);
+        const dimensions = await getImageDimensions(file);
 
-        // Determine media type from MIME type
-        let mediaType: "image" | "video" | "audio" | "document" | "other" = "other";
-        if (file.type.startsWith("image/")) mediaType = "image";
-        else if (file.type.startsWith("video/")) mediaType = "video";
-        else if (file.type.startsWith("audio/")) mediaType = "audio";
-        else if (
-          file.type.includes("pdf") ||
-          file.type.includes("document") ||
-          file.type.includes("text/")
-        ) {
-          mediaType = "document";
-        }
-
-        // Create asset record
         const asset = await create({
           storageId,
-          filename: file.name,
+          name: file.name,
           mimeType: file.type,
           size: file.size,
-          type: mediaType,
+          ...dimensions,
           ...metadata,
         } as CreateArgs);
 
         setProgress(100);
         return asset;
+      } catch (e) {
+        const err = e instanceof Error ? e : new Error(String(e));
+        if (err.name !== "AbortError") {
+          setError(err.message);
+        }
+        throw err;
       } finally {
         setIsUploading(false);
+        abortControllerRef.current = null;
       }
     },
     [generateUrl, create]
   );
 
+  const cancel = useCallback(() => {
+    abortControllerRef.current?.abort();
+  }, []);
+
+  const reset = useCallback(() => {
+    setProgress(0);
+    setError(null);
+    setIsUploading(false);
+  }, []);
+
   return {
     upload,
+    cancel,
     isUploading,
     progress,
+    error,
+    reset,
+  };
+}
+
+// =============================================================================
+// Multi-file Upload Queue
+// =============================================================================
+
+/**
+ * Status of a file in the upload queue
+ */
+export type UploadQueueFileStatus = "pending" | "uploading" | "complete" | "error" | "cancelled";
+
+/**
+ * A file in the upload queue
+ */
+export interface UploadQueueFile {
+  /** Unique ID for this upload */
+  id: string;
+  /** The file being uploaded */
+  file: File;
+  /** Current status */
+  status: UploadQueueFileStatus;
+  /** Upload progress (0-100) */
+  progress: number;
+  /** Error message if status is 'error' */
+  error?: string;
+  /** Result from createAsset if status is 'complete' */
+  result?: unknown;
+}
+
+/**
+ * Options for useMediaUploadQueue hook
+ */
+export interface UseMediaUploadQueueOptions<
+  UploadMutation extends FunctionReference<"mutation">,
+  CreateMutation extends FunctionReference<"mutation">
+> {
+  /** Mutation to get a storage upload URL */
+  getUploadUrl: UploadMutation;
+  /** Mutation to create the media asset record */
+  createAsset: CreateMutation;
+  /** Maximum concurrent uploads (default: 3) */
+  maxConcurrent?: number;
+  /** Metadata to include with each uploaded asset */
+  metadata?: Record<string, unknown>;
+  /** Called when all uploads complete */
+  onComplete?: (results: UploadQueueFile[]) => void;
+  /** Called when a file upload fails */
+  onError?: (file: UploadQueueFile) => void;
+}
+
+/**
+ * Result type for useMediaUploadQueue hook
+ */
+export interface UseMediaUploadQueueResult {
+  /** Current files in the queue */
+  files: UploadQueueFile[];
+  /** Add files to the queue (starts uploading automatically) */
+  addFiles: (files: File[]) => void;
+  /** Cancel a specific file upload */
+  cancelFile: (id: string) => void;
+  /** Cancel all pending/uploading files */
+  cancelAll: () => void;
+  /** Retry a failed upload */
+  retryFile: (id: string) => void;
+  /** Remove completed/failed files from the queue */
+  clearCompleted: () => void;
+  /** Clear the entire queue */
+  clearAll: () => void;
+  /** Whether any uploads are in progress */
+  isUploading: boolean;
+  /** Overall progress (0-100) */
+  overallProgress: number;
+}
+
+type QueueAction =
+  | { type: "ADD_FILES"; files: File[] }
+  | { type: "UPDATE_FILE"; id: string; updates: Partial<UploadQueueFile> }
+  | { type: "RETRY_FILE"; id: string }
+  | { type: "REMOVE_FILE"; id: string }
+  | { type: "CLEAR_COMPLETED" }
+  | { type: "CLEAR_ALL" }
+  | { type: "CANCEL_FILE"; id: string }
+  | { type: "CANCEL_ALL" };
+
+function queueReducer(state: UploadQueueFile[], action: QueueAction): UploadQueueFile[] {
+  switch (action.type) {
+    case "ADD_FILES": {
+      const newFiles: UploadQueueFile[] = action.files.map((file) => ({
+        id: generateUploadId(),
+        file,
+        status: "pending",
+        progress: 0,
+      }));
+      return [...state, ...newFiles];
+    }
+    case "UPDATE_FILE":
+      return state.map((f) =>
+        f.id === action.id ? { ...f, ...action.updates } : f
+      );
+    case "RETRY_FILE":
+      return state.map((f) =>
+        f.id === action.id
+          ? { ...f, status: "pending", progress: 0, error: undefined }
+          : f
+      );
+    case "REMOVE_FILE":
+      return state.filter((f) => f.id !== action.id);
+    case "CLEAR_COMPLETED":
+      return state.filter(
+        (f) => f.status === "pending" || f.status === "uploading"
+      );
+    case "CLEAR_ALL":
+      return [];
+    case "CANCEL_FILE":
+      return state.map((f) =>
+        f.id === action.id && (f.status === "pending" || f.status === "uploading")
+          ? { ...f, status: "cancelled", error: "Upload cancelled" }
+          : f
+      );
+    case "CANCEL_ALL":
+      return state.map((f) =>
+        f.status === "pending" || f.status === "uploading"
+          ? { ...f, status: "cancelled", error: "Upload cancelled" }
+          : f
+      );
+    default:
+      return state;
+  }
+}
+
+/**
+ * Hook for uploading multiple files with queue management, concurrency control,
+ * and progress tracking. Uses a reducer for state management to avoid closure issues.
+ *
+ * @param options - Configuration options
+ * @returns Queue state and control functions
+ *
+ * @example
+ * ```tsx
+ * const queue = useMediaUploadQueue({
+ *   getUploadUrl: api.media.generateUploadUrl,
+ *   createAsset: api.media.createAsset,
+ *   maxConcurrent: 3,
+ *   metadata: { parentId: folderId },
+ *   onComplete: (results) => console.log("All done!", results),
+ * });
+ *
+ * // In your dropzone handler:
+ * const handleDrop = (files: File[]) => {
+ *   queue.addFiles(files);
+ * };
+ *
+ * // Display progress:
+ * {queue.files.map(f => (
+ *   <div key={f.id}>
+ *     {f.file.name}: {f.status} ({f.progress}%)
+ *     {f.status === "uploading" && <button onClick={() => queue.cancelFile(f.id)}>Cancel</button>}
+ *     {f.status === "error" && <button onClick={() => queue.retryFile(f.id)}>Retry</button>}
+ *   </div>
+ * ))}
+ * ```
+ */
+export function useMediaUploadQueue<
+  UploadMutation extends FunctionReference<"mutation">,
+  CreateMutation extends FunctionReference<"mutation">
+>(
+  options: UseMediaUploadQueueOptions<UploadMutation, CreateMutation>
+): UseMediaUploadQueueResult {
+  const { maxConcurrent = 3, metadata, onComplete, onError } = options;
+  const [files, dispatch] = useReducer(queueReducer, []);
+  const generateUrl = useMutation(options.getUploadUrl);
+  const create = useMutation(options.createAsset);
+
+  const activeUploadsRef = useRef(0);
+  const abortControllersRef = useRef<Map<string, AbortController>>(new Map());
+  const processingRef = useRef(false);
+
+  const uploadFile = useCallback(
+    async (queueFile: UploadQueueFile) => {
+      const abortController = new AbortController();
+      abortControllersRef.current.set(queueFile.id, abortController);
+
+      dispatch({
+        type: "UPDATE_FILE",
+        id: queueFile.id,
+        updates: { status: "uploading", progress: 0 },
+      });
+
+      try {
+        const uploadUrl = await generateUrl({});
+
+        dispatch({
+          type: "UPDATE_FILE",
+          id: queueFile.id,
+          updates: { progress: 5 },
+        });
+
+        const storageId = await uploadWithXHR(
+          uploadUrl as string,
+          queueFile.file,
+          abortController.signal,
+          (progress) => {
+            dispatch({
+              type: "UPDATE_FILE",
+              id: queueFile.id,
+              updates: { progress },
+            });
+          }
+        );
+
+        dispatch({
+          type: "UPDATE_FILE",
+          id: queueFile.id,
+          updates: { progress: 90 },
+        });
+
+        const dimensions = await getImageDimensions(queueFile.file);
+
+        const result = await create({
+          storageId,
+          name: queueFile.file.name,
+          mimeType: queueFile.file.type,
+          size: queueFile.file.size,
+          ...dimensions,
+          ...metadata,
+        } as FunctionArgs<CreateMutation>);
+
+        dispatch({
+          type: "UPDATE_FILE",
+          id: queueFile.id,
+          updates: { status: "complete", progress: 100, result },
+        });
+      } catch (e) {
+        const err = e instanceof Error ? e : new Error(String(e));
+        if (err.name === "AbortError") {
+          dispatch({
+            type: "UPDATE_FILE",
+            id: queueFile.id,
+            updates: { status: "cancelled", error: "Upload cancelled" },
+          });
+        } else {
+          const updatedFile = {
+            ...queueFile,
+            status: "error" as const,
+            error: err.message,
+          };
+          dispatch({
+            type: "UPDATE_FILE",
+            id: queueFile.id,
+            updates: { status: "error", error: err.message },
+          });
+          onError?.(updatedFile);
+        }
+      } finally {
+        abortControllersRef.current.delete(queueFile.id);
+        activeUploadsRef.current--;
+      }
+    },
+    [generateUrl, create, metadata, onError]
+  );
+
+  const processQueue = useCallback(() => {
+    if (processingRef.current) return;
+    processingRef.current = true;
+
+    const pending = files.filter((f) => f.status === "pending");
+
+    while (activeUploadsRef.current < maxConcurrent && pending.length > 0) {
+      const next = pending.shift()!;
+      activeUploadsRef.current++;
+      uploadFile(next);
+    }
+
+    processingRef.current = false;
+
+    if (
+      activeUploadsRef.current === 0 &&
+      files.length > 0 &&
+      files.every((f) => f.status !== "pending" && f.status !== "uploading")
+    ) {
+      onComplete?.(files);
+    }
+  }, [files, maxConcurrent, uploadFile, onComplete]);
+
+  useEffect(() => {
+    if (files.some((f) => f.status === "pending") && activeUploadsRef.current < maxConcurrent) {
+      processQueue();
+    }
+  }, [files, maxConcurrent, processQueue]);
+
+  const addFiles = useCallback((newFiles: File[]) => {
+    dispatch({ type: "ADD_FILES", files: newFiles });
+  }, []);
+
+  const cancelFile = useCallback((id: string) => {
+    const controller = abortControllersRef.current.get(id);
+    if (controller) {
+      controller.abort();
+    }
+    dispatch({ type: "CANCEL_FILE", id });
+  }, []);
+
+  const cancelAll = useCallback(() => {
+    abortControllersRef.current.forEach((controller) => controller.abort());
+    dispatch({ type: "CANCEL_ALL" });
+  }, []);
+
+  const retryFile = useCallback((id: string) => {
+    dispatch({ type: "RETRY_FILE", id });
+  }, []);
+
+  const clearCompleted = useCallback(() => {
+    dispatch({ type: "CLEAR_COMPLETED" });
+  }, []);
+
+  const clearAll = useCallback(() => {
+    abortControllersRef.current.forEach((controller) => controller.abort());
+    dispatch({ type: "CLEAR_ALL" });
+  }, []);
+
+  const isUploading = files.some((f) => f.status === "uploading");
+  const overallProgress =
+    files.length > 0
+      ? Math.round(files.reduce((sum, f) => sum + f.progress, 0) / files.length)
+      : 0;
+
+  return {
+    files,
+    addFiles,
+    cancelFile,
+    cancelAll,
+    retryFile,
+    clearCompleted,
+    clearAll,
+    isUploading,
+    overallProgress,
   };
 }
