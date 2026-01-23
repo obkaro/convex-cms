@@ -6,10 +6,9 @@
  */
 
 /**
- * Field types supported by the CMS.
- * Mirrors the core schema definition.
+ * Built-in field types supported by the CMS.
  */
-export type FieldType =
+export type BuiltInFieldType =
   | 'text'
   | 'richText'
   | 'number'
@@ -23,6 +22,12 @@ export type FieldType =
   | 'multiSelect'
   | 'tags'
   | 'category';
+
+/**
+ * Field types supported by the CMS.
+ * Includes built-in types and allows custom types via string.
+ */
+export type FieldType = BuiltInFieldType | (string & {});
 
 /**
  * Select option for select/multiSelect fields.

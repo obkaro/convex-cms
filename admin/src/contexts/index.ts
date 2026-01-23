@@ -12,3 +12,5 @@ export {
 } from './AuthContext';
 
 export { ThemeProvider, useTheme } from './ThemeContext';
+
+export { AdminConfigProvider, useAdminConfig } from './AdminConfigContext';

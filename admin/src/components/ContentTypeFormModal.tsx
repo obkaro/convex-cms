@@ -731,15 +731,15 @@ export function ContentTypeFormModal({
               <div className="space-y-2">
                 <Label htmlFor="titleField">Title Field</Label>
                 <Select
-                  value={titleField}
-                  onValueChange={setTitleField}
+                  value={titleField || 'none'}
+                  onValueChange={(v) => setTitleField(v === 'none' ? '' : v)}
                   disabled={isSubmitting}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="None" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">None</SelectItem>
+                    <SelectItem value="none">None</SelectItem>
                     {textFields.map((field) => (
                       <SelectItem key={field.name} value={field.name}>
                         {field.label}
@@ -755,15 +755,15 @@ export function ContentTypeFormModal({
               <div className="space-y-2">
                 <Label htmlFor="slugField">Slug Field</Label>
                 <Select
-                  value={slugField}
-                  onValueChange={setSlugField}
+                  value={slugField || 'none'}
+                  onValueChange={(v) => setSlugField(v === 'none' ? '' : v)}
                   disabled={isSubmitting}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="None (auto-generate)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">None (auto-generate)</SelectItem>
+                    <SelectItem value="none">None (auto-generate)</SelectItem>
                     {textFields.map((field) => (
                       <SelectItem key={field.name} value={field.name}>
                         {field.label}

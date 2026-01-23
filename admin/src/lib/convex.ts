@@ -8,12 +8,12 @@
  * Until then, TypeScript may show import errors which can be ignored.
  */
 
-import { useQuery, useMutation } from 'convex/react'
+import { useQuery, useMutation } from "convex/react";
 
 /**
  * Re-export Convex hooks for convenience
  */
-export { useQuery, useMutation }
+export { useQuery, useMutation };
 
 /**
  * Access to the generated Convex API
@@ -23,5 +23,4 @@ export { useQuery, useMutation }
  *   import { api } from '~/lib/convex'
  *   const contentTypes = useQuery(api.convexCms.contentEntries.get, { id: '...' })
  */
-// @ts-expect-error - Generated file, available after `npx convex dev`
-export { api } from '../../convex/_generated/api'
+export { api } from "../../convex/_generated/api";

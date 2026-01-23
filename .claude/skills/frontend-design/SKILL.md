@@ -15,6 +15,7 @@ Guide for creating distinctive, production-grade frontend interfaces for the con
 1. **Read the design language**: `.claude/skills/frontend-design/CMS_DESIGN_SYSTEM.md`
 2. **Use CMS DS wrappers**: All styling should use `admin/src/components/cmsds/` components, not base UI primitives
 3. **Follow the principles**: Professional, Clean, Content-First
+4. **Always check the docs**: Use context7, the shadcn mcp, and any other reference for latest docs.
 
 ### Available CMS DS Components
 
@@ -31,20 +32,6 @@ Guide for creating distinctive, production-grade frontend interfaces for the con
 | `CmsDropdown` | Action menu wrapper |
 | `CmsTable` | Data table with selection |
 | `CmsDialog` | Modal dialog wrapper |
-
-### Available Variants
-
-**Button variants:**
-- `primary` — Solid indigo for primary CTA
-- `secondary` — Zinc background for secondary actions
-- `danger` — Red for destructive actions
-- `ghost` — No background for tertiary actions
-
-**Status badges:**
-- `draft` — Amber for unpublished content
-- `published` — Emerald for live content
-- `scheduled` — Light Blue for future publish
-- `archived` — Gray for archived content
 
 ### Motion Presets
 

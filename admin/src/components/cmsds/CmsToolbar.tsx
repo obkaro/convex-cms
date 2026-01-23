@@ -4,6 +4,8 @@ import { Input } from '~/components/ui/input'
 import { Search } from 'lucide-react'
 
 export interface CmsToolbarProps extends React.HTMLAttributes<HTMLDivElement> {
+  left?: React.ReactNode
+  right?: React.ReactNode
   search?: {
     value: string
     onChange: (value: string) => void
@@ -14,6 +16,8 @@ export interface CmsToolbarProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 export function CmsToolbar({
+  left,
+  right,
   search,
   filters,
   actions,
@@ -43,9 +47,12 @@ export function CmsToolbar({
           </div>
         )}
         {filters}
+        {left}
         {children}
       </div>
-      {actions && <div className="flex items-center gap-2">{actions}</div>}
+      {(right || actions) && (
+        <div className="flex items-center gap-2">{right ?? actions}</div>
+      )}
     </div>
   )
 }

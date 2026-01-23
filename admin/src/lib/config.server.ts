@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import type { AdminConfig } from "./admin-config";
 
 /**
  * Server function to retrieve runtime configuration.
@@ -12,14 +13,21 @@ import { createServerFn } from "@tanstack/react-start";
  */
 export const getServerConfig = createServerFn({ method: "GET" }).handler(
   async () => {
-    return {
-      // Convex deployment URL - priority: CONVEX_URL > VITE_CONVEX_URL
-      convexUrl:
-        process.env.CONVEX_URL || process.env.VITE_CONVEX_URL || "",
+    let adminConfig: Partial<AdminConfig> = {};
 
-      // Authentication mode: 'demo' for mock auth, 'production' for real auth
-      authMode:
-        process.env.AUTH_MODE || process.env.VITE_AUTH_MODE || "demo",
+    const configEnv = process.env.CONVEX_CMS_ADMIN_CONFIG;
+    if (configEnv) {
+      try {
+        adminConfig = JSON.parse(configEnv) as Partial<AdminConfig>;
+      } catch {
+        console.warn("Failed to parse CONVEX_CMS_ADMIN_CONFIG as JSON");
+      }
+    }
+
+    return {
+      convexUrl: process.env.CONVEX_URL || process.env.VITE_CONVEX_URL || "",
+      authMode: process.env.AUTH_MODE || process.env.VITE_AUTH_MODE || "demo",
+      adminConfig,
     };
   }
 );

@@ -1,0 +1,118 @@
+/**
+ * Embeddable CMS Admin Component
+ *
+ * Use this component to embed the CMS admin UI into your existing React app.
+ *
+ * @example
+ * ```tsx
+ * import { CmsAdmin } from "@convex-cms/admin/embed";
+ *
+ * function App() {
+ *   return (
+ *     <CmsAdmin
+ *       convexUrl="https://your-deployment.convex.cloud"
+ *       auth={{
+ *         getUser: () => currentUser,
+ *         getUserRole: (userId) => userRoles[userId] ?? null,
+ *         onLogout: () => signOut(),
+ *       }}
+ *       config={{
+ *         branding: { appName: "My CMS" },
+ *         navigation: { showTaxonomies: false },
+ *       }}
+ *       basePath="/admin"
+ *     />
+ *   );
+ * }
+ * ```
+ */
+
+import { ConvexProvider, ConvexReactClient } from "convex/react";
+import { useMemo, type ReactNode } from "react";
+import { AdminConfigProvider } from "../contexts/AdminConfigContext";
+import { AuthProvider, type GetUserHook, type GetUserRoleHook, type LogoutHook } from "../contexts/AuthContext";
+import { ThemeProvider } from "../contexts/ThemeContext";
+import { AdminLayout } from "../components/AdminLayout";
+import { RouteGuard } from "../components/RouteGuard";
+import { resolveAdminConfig } from "../lib/admin-config";
+import type { CmsAdminProps, CmsAdminAuthConfig, CmsAdminUser } from "./types";
+
+function adaptAuthConfig(auth: CmsAdminAuthConfig): {
+  getUser: GetUserHook;
+  getUserRole: GetUserRoleHook;
+  onLogout: LogoutHook;
+} {
+  return {
+    getUser: auth.getUser,
+    getUserRole: ({ userId }) => auth.getUserRole(userId),
+    onLogout: auth.onLogout ?? (() => {}),
+  };
+}
+
+function ConvexProviderWrapper({
+  convexUrl,
+  children,
+}: {
+  convexUrl: string;
+  children: ReactNode;
+}) {
+  const convex = useMemo(() => {
+    if (!convexUrl) return null;
+    return new ConvexReactClient(convexUrl);
+  }, [convexUrl]);
+
+  if (!convex) {
+    return (
+      <div className="flex min-h-full items-center justify-center bg-background p-6">
+        <div className="max-w-lg space-y-4 rounded-lg border border-amber-200 bg-amber-50 p-6 text-center">
+          <h2 className="text-xl font-semibold text-amber-900">
+            Convex Configuration Required
+          </h2>
+          <p className="text-sm text-amber-800">
+            Please provide a valid convexUrl prop to the CmsAdmin component.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return <ConvexProvider client={convex}>{children}</ConvexProvider>;
+}
+
+export function CmsAdmin({ convexUrl, config, auth, basePath = "/", className }: CmsAdminProps) {
+  const adminConfig = useMemo(() => resolveAdminConfig(config), [config]);
+  const authConfig = useMemo(() => adaptAuthConfig(auth), [auth]);
+
+  return (
+    <div className={className}>
+      <ThemeProvider>
+        <AdminConfigProvider config={adminConfig}>
+          <ConvexProviderWrapper convexUrl={convexUrl}>
+            <AuthProvider
+              getUser={authConfig.getUser}
+              getUserRole={authConfig.getUserRole}
+              onLogout={authConfig.onLogout}
+            >
+              <RouteGuard>
+                <div className="min-h-screen">
+                  <AdminLayout>
+                    <div className="p-6">
+                      <p className="text-muted-foreground">
+                        Embedded admin component. For full functionality, use the standalone admin
+                        app with TanStack Router.
+                      </p>
+                    </div>
+                  </AdminLayout>
+                </div>
+              </RouteGuard>
+            </AuthProvider>
+          </ConvexProviderWrapper>
+        </AdminConfigProvider>
+      </ThemeProvider>
+    </div>
+  );
+}
+
+export type { CmsAdminProps, CmsAdminAuthConfig, CmsAdminUser } from "./types";
+export type { AdminConfig, NavItem } from "../lib/admin-config";
+export { resolveAdminConfig, defineAdminConfig } from "../lib/admin-config";

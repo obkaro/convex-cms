@@ -199,12 +199,15 @@ function TrashPage() {
                 className="w-64 pl-9"
               />
             </div>
-            <Select value={selectedContentType} onValueChange={setSelectedContentType}>
+            <Select
+              value={selectedContentType || 'all'}
+              onValueChange={(v) => setSelectedContentType(v === 'all' ? '' : v)}
+            >
               <SelectTrigger className="w-48">
                 <SelectValue placeholder="All Content Types" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Content Types</SelectItem>
+                <SelectItem value="all">All Content Types</SelectItem>
                 {contentTypes.map((type) => (
                   <SelectItem key={type._id} value={type._id}>
                     {type.displayName}
