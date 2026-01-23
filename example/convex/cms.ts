@@ -12,7 +12,6 @@
 import { createCmsClient } from "convex-cms";
 import { components } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
-// import { Id } from "./_generated/dataModel";
 
 /**
  * Configured CMS client with full feature demonstration.
@@ -23,12 +22,12 @@ import { Id } from "./_generated/dataModel";
  *
  * // Use in a mutation
  * export const createPost = mutation({
- *   args: { title: v.string(), userId: v.string() },
+ *   args: { title: v.string(), createdBy: v.string() },
  *   handler: async (ctx, args) => {
  *     return await cms.contentEntries.create(ctx, {
  *       contentTypeId,
  *       data: { title: args.title },
- *       userId: args.userId,
+ *       createdBy: args.createdBy,
  *     });
  *   },
  * });
@@ -108,8 +107,9 @@ export const cms = createCmsClient(components.convexCms, {
 		// Get the user in our users table by id
 		const user = await ctx.db.get(userId as Id<"users">);
 
-		// Return the user's CMS role, or null if no user/role
-		return { role: user?.cmsRole ?? null };
+		// Return the user's CMS role directly (string | null)
+		// Cast is safe because schema defines cmsRole as string literal union
+		return (user?.cmsRole ?? null) as string | null;
 	},
 
 	authorizationHooks: {
@@ -173,6 +173,7 @@ export const cms = createCmsClient(components.convexCms, {
 		/**
 		 * Called when an operation is denied.
 		 * Use for logging, analytics, or triggering alerts.
+		 * Must return AuthorizationHookResult.
 		 */
 		onDeny: async (context) => {
 			// Log denied operations for security monitoring
@@ -181,6 +182,7 @@ export const cms = createCmsClient(components.convexCms, {
 				operation: context.operation,
 				role: context.role,
 			});
+			return { allowed: false };
 		},
 	},
 });

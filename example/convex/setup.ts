@@ -28,13 +28,14 @@ export const syncContentTypes = mutation({
       await cms.contentTypes.create(ctx, {
         name: roadmapItem.name,
         displayName: roadmapItem.meta.displayName,
-        fields: roadmapFields,
+        fields: roadmapFields as any,
+        createdBy: "system",
       });
       console.log(`Created content type: ${roadmapItem.name}`);
     } else {
       await cms.contentTypes.update(ctx, {
         id: existingRoadmap._id,
-        fields: roadmapFields,
+        fields: roadmapFields as any,
         displayName: roadmapItem.meta.displayName,
       });
       console.log(`Updated content type: ${roadmapItem.name}`);
@@ -50,13 +51,14 @@ export const syncContentTypes = mutation({
       await cms.contentTypes.create(ctx, {
         name: changelogEntry.name,
         displayName: changelogEntry.meta.displayName,
-        fields: changelogFields,
+        fields: changelogFields as any,
+        createdBy: "system",
       });
       console.log(`Created content type: ${changelogEntry.name}`);
     } else {
       await cms.contentTypes.update(ctx, {
         id: existingChangelog._id,
-        fields: changelogFields,
+        fields: changelogFields as any,
         displayName: changelogEntry.meta.displayName,
       });
       console.log(`Updated content type: ${changelogEntry.name}`);

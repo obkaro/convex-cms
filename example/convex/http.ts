@@ -70,7 +70,7 @@ http.route({
 http.route({
   path: "/webhook/content-updated",
   method: "POST",
-  handler: httpAction(async (ctx, request) => {
+  handler: httpAction(async (_ctx, request) => {
     try {
       const body = await request.json();
 
@@ -115,7 +115,7 @@ http.route({
 http.route({
   path: "/api/content/{contentType}/{slug}",
   method: "GET",
-  handler: httpAction(async (ctx, request) => {
+  handler: httpAction(async (_ctx, request) => {
     // Extract path parameters
     const url = new URL(request.url);
     const pathParts = url.pathname.split("/").filter(Boolean);

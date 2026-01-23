@@ -35,122 +35,7 @@
 
 import { createTool } from "@convex-dev/agent";
 import { z } from "zod";
-
-// =============================================================================
-// Component API Type
-// =============================================================================
-
-/**
- * The component API type for agent tools.
- * This represents the actual structure of `components.convexCms` from the generated API.
- *
- * Uses `any` for internal function references since the exact types depend on
- * the generated Convex types which vary per project.
- *
- * Note: This matches the actual Convex component module structure:
- * - contentTypes: queries in contentTypes.ts (get handles both ID and name lookup via args)
- * - contentTypeMutations: mutations in contentTypeMutations.ts
- * - contentEntries: queries in contentEntries.ts
- * - contentEntryMutations: mutations in contentEntryMutations.ts
- * - scheduledPublish: schedule-related mutations in scheduledPublish.ts (separate module)
- * - mediaAssets: queries in mediaAssets.ts
- * - mediaAssetMutations: mutations in mediaAssetMutations.ts
- * - bulkOperations: bulk mutations in bulkOperations.ts
- *
- * IMPORTANT: This type represents the raw component API shape as exported from
- * `components.convexCms`. It differs from the wrapper API (createCmsClient) which
- * provides a different, more ergonomic namespace structure.
- */
-export type AgentComponentApi = {
-  /**
-   * Content type queries (contentTypes.ts module)
-   * @see src/component/contentTypes.ts
-   */
-  contentTypes: {
-    /**
-     * Get content type by ID or name.
-     * Supports lookup by either `id` OR `name` argument (not both).
-     * @example { id: "..." } or { name: "blog_post" }
-     */
-    get: any;
-    /** List content types with filtering and pagination */
-    list: any;
-  };
-  /**
-   * Content type mutations (contentTypeMutations.ts module)
-   * @see src/component/contentTypeMutations.ts
-   */
-  contentTypeMutations: {
-    createContentType: any;
-    updateContentType: any;
-    deleteContentType: any;
-  };
-  /**
-   * Content entry queries (contentEntries.ts module)
-   * @see src/component/contentEntries.ts
-   */
-  contentEntries: {
-    /** Get content entry by ID */
-    get: any;
-    /** Get content entry by slug and content type ID */
-    getBySlug: any;
-    /** Get content entry by slug and content type name */
-    getBySlugAndTypeName: any;
-    /** List content entries with filtering and pagination */
-    list: any;
-  };
-  /**
-   * Content entry mutations (contentEntryMutations.ts module)
-   * @see src/component/contentEntryMutations.ts
-   */
-  contentEntryMutations: {
-    createEntry: any;
-    updateEntry: any;
-    publishEntry: any;
-    unpublishEntry: any;
-    deleteEntry: any;
-    duplicateEntry: any;
-    restoreEntry: any;
-  };
-  /**
-   * Scheduling-related mutations (scheduledPublish.ts module - SEPARATE from contentEntryMutations)
-   * @see src/component/scheduledPublish.ts
-   */
-  scheduledPublish: {
-    /** Schedule an entry for future publication */
-    scheduleEntry: any;
-    /** Cancel a scheduled publication */
-    cancelScheduledPublish: any;
-  };
-  /**
-   * Media asset queries (mediaAssets.ts module)
-   * @see src/component/mediaAssets.ts
-   */
-  mediaAssets: {
-    get: any;
-    list: any;
-  };
-  /**
-   * Media asset mutations (mediaAssetMutations.ts module)
-   * @see src/component/mediaAssetMutations.ts
-   */
-  mediaAssetMutations: {
-    createMediaAsset: any;
-    updateMediaAsset: any;
-    deleteMediaAsset: any;
-  };
-  /**
-   * Bulk operations (bulkOperations.ts module)
-   * @see src/component/bulkOperations.ts
-   */
-  bulkOperations: {
-    bulkPublish: any;
-    bulkUnpublish: any;
-    bulkDelete: any;
-    bulkUpdate: any;
-    bulkRestore: any;
-  };
-};
+import type { ComponentApi } from "../component/_generated/component.js";
 
 // =============================================================================
 // Zod Schemas for Tool Arguments
@@ -728,7 +613,7 @@ export interface CreateCmsToolsOptions {
  * ```
  */
 export function createCmsTools(
-  componentApi: AgentComponentApi,
+  componentApi: ComponentApi,
   options: CreateCmsToolsOptions = {}
 ) {
   const { defaultUserId } = options;
@@ -747,11 +632,14 @@ export function createCmsTools(
       "Each field has a name, label, type, and validation options.",
     args: createContentTypeArgsSchema,
     handler: async (ctx, args) => {
+      const createdBy = args.createdBy ?? defaultUserId ?? "agent";
       const result = await ctx.runMutation(
         componentApi.contentTypeMutations.createContentType,
         {
           ...args,
-          createdBy: args.createdBy ?? defaultUserId,
+          createdBy,
+          // Cast fields to satisfy the discriminated union type
+          fields: args.fields as Parameters<typeof ctx.runMutation<typeof componentApi.contentTypeMutations.createContentType>>[1]["fields"],
         }
       );
       return result;
@@ -771,8 +659,10 @@ export function createCmsTools(
         componentApi.contentTypeMutations.updateContentType,
         {
           ...args,
-          id: args.id ,
+          id: args.id,
           updatedBy: args.updatedBy ?? defaultUserId,
+          // Cast fields to satisfy the discriminated union type
+          fields: args.fields as Parameters<typeof ctx.runMutation<typeof componentApi.contentTypeMutations.updateContentType>>[1]["fields"],
         }
       );
       return result;
@@ -788,10 +678,11 @@ export function createCmsTools(
       "Returns an array of content type definitions with their field schemas.",
     args: listContentTypesArgsSchema,
     handler: async (ctx, args) => {
-      const result = await ctx.runQuery(
-        componentApi.contentTypes.list,
-        args
-      );
+      const result = await ctx.runQuery(componentApi.contentTypes.list, {
+        // Map includeInactive to the actual API parameters
+        isActive: args.includeInactive ? undefined : true,
+        includeDeleted: args.includeInactive,
+      });
       return result;
     },
   });
@@ -1057,8 +948,8 @@ export function createCmsTools(
       const result = await ctx.runMutation(
         componentApi.contentEntryMutations.restoreEntry,
         {
-          id: args.id ,
-          updatedBy: args.updatedBy ?? defaultUserId,
+          id: args.id,
+          restoredBy: args.updatedBy ?? defaultUserId,
         }
       );
       return result;
@@ -1081,9 +972,19 @@ export function createCmsTools(
       const result = await ctx.runMutation(
         componentApi.mediaAssetMutations.createMediaAsset,
         {
-          ...args,
-          storageId: args.storageId ,
-          folderId: args.folderId ,
+          storageId: args.storageId,
+          name: args.filename,
+          mimeType: args.mimeType,
+          size: args.size,
+          title: args.title,
+          description: args.description,
+          altText: args.altText,
+          parentId: args.folderId,
+          width: args.width,
+          height: args.height,
+          duration: args.duration,
+          metadata: args.metadata,
+          tags: args.tags,
           createdBy: args.createdBy ?? defaultUserId,
         }
       );
@@ -1102,9 +1003,12 @@ export function createCmsTools(
       const result = await ctx.runMutation(
         componentApi.mediaAssetMutations.updateMediaAsset,
         {
-          ...args,
-          id: args.id ,
-          folderId: args.folderId ,
+          id: args.id,
+          title: args.title,
+          description: args.description,
+          altText: args.altText,
+          parentId: args.folderId,
+          tags: args.tags,
         }
       );
       return result;
@@ -1120,14 +1024,16 @@ export function createCmsTools(
     args: listMediaAssetsArgsSchema,
     handler: async (ctx, args) => {
       const result = await ctx.runQuery(componentApi.mediaAssets.list, {
-        folderId: args.folderId ,
+        folderId: args.folderId,
         type: args.type,
         mimeType: args.mimeType,
         search: args.search,
         tags: args.tags,
         includeDeleted: args.includeDeleted,
-        cursor: args.cursor,
-        limit: args.limit,
+        paginationOpts: {
+          numItems: args.limit ?? 50,
+          cursor: args.cursor ?? null,
+        },
       });
       return result;
     },

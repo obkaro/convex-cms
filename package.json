@@ -1,6 +1,6 @@
 {
   "name": "convex-cms",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "A developer-first Convex Component for content management with flexible RBAC and AI-ready architecture",
   "type": "module",
   "workspaces": [
@@ -23,11 +23,13 @@
       "import": "./dist/react/index.js"
     },
     "./_generated/component": "./dist/component/_generated/component.js",
-    "./test": "./src/test.ts"
+    "./test": {
+      "types": "./dist/test.d.ts",
+      "import": "./dist/test.js"
+    }
   },
   "files": [
     "dist",
-    "src",
     "admin-dist",
     "README.md"
   ],
@@ -39,14 +41,14 @@
     "build:component": "tsc --project tsconfig.build.json",
     "build:codegen": "npx convex codegen --component-dir ./src/component && npm run build",
     "build:cli": "tsc --project tsconfig.cli.json",
-    "build:admin": "cd admin && npm run build && cp -r .output ../admin-dist",
+    "build:admin": "cd admin && npm run build && rm -rf ../admin-dist && cp -r .output ../admin-dist",
     "build:clean": "rm -rf dist *.tsbuildinfo && npm run build:codegen",
     "dev": "npm-run-all2 --parallel dev:*",
     "dev:component": "npx convex codegen --component-dir ./src/component --watch",
     "dev:build": "tsc --project tsconfig.build.json --watch",
     "dev:example": "cd example && npx convex dev",
     "dev:watch": "chokidar 'src/**/*.ts' -c 'npm run build:component' --silent",
-    "test": "vitest --once",
+    "test": "vitest run",
     "lint": "eslint src/",
     "typecheck": "tsc --noEmit",
     "alpha": "npm version prerelease --preid=alpha && npm publish --tag alpha",
