@@ -1,3 +1,36 @@
+/**
+ * Admin UI Configuration Re-exports
+ *
+ * These utilities allow users to define admin UI configuration
+ * in a code-first, type-safe manner.
+ *
+ * @example
+ * // cms-admin.config.ts
+ * import { defineAdminConfig } from "@convex-cms/core";
+ *
+ * export default defineAdminConfig({
+ *   branding: {
+ *     appName: "My Blog CMS",
+ *     logo: "/logo.svg",
+ *   },
+ *   navigation: {
+ *     showTaxonomies: false,
+ *     customItems: [
+ *       {
+ *         id: "analytics",
+ *         path: "/analytics",
+ *         label: "Analytics",
+ *         icon: "BarChart",
+ *         section: "main",
+ *       },
+ *     ],
+ *   },
+ *   theme: {
+ *     mode: "dark",
+ *   },
+ * });
+ */
+
 import { z } from "zod";
 
 export interface NavItem {
@@ -39,6 +72,7 @@ const navigationSchema = z.object({
   showMedia: z.boolean().default(true),
   showTaxonomies: z.boolean().default(true),
   showContentTypes: z.boolean().default(true),
+  showAuditLogs: z.boolean().default(true),
   showTrash: z.boolean().default(true),
   showSettings: z.boolean().default(true),
   customItems: z.array(navItemSchema).default([]),
@@ -59,53 +93,46 @@ export const adminConfigSchema = z.object({
 
 export type AdminConfig = z.infer<typeof adminConfigSchema>;
 
-export const DEFAULT_NAV_ITEMS: NavItem[] = [
-  {
-    id: "dashboard",
-    path: "/",
-    label: "Dashboard",
-    icon: "LayoutDashboard",
-    section: "main",
-    exact: true,
-  },
-  { id: "content", path: "/content", label: "Content", icon: "FileText", section: "main" },
-  { id: "media", path: "/media", label: "Media", icon: "Image", section: "main" },
-  { id: "taxonomies", path: "/taxonomies", label: "Taxonomies", icon: "Tags", section: "main" },
-  {
-    id: "content-types",
-    path: "/content-types",
-    label: "Content Types",
-    icon: "Layers",
-    section: "config",
-  },
-  { id: "trash", path: "/trash", label: "Trash", icon: "Trash2", section: "config" },
-  { id: "settings", path: "/settings", label: "Settings", icon: "Settings", section: "config" },
-];
-
-export function resolveAdminConfig(input?: Partial<AdminConfig>): AdminConfig {
-  return adminConfigSchema.parse(input ?? {});
-}
-
-export function getVisibleNavItems(config: AdminConfig): { main: NavItem[]; config: NavItem[] } {
-  const visibilityMap: Record<string, boolean> = {
-    dashboard: config.navigation.showDashboard,
-    content: config.navigation.showContent,
-    media: config.navigation.showMedia,
-    taxonomies: config.navigation.showTaxonomies,
-    "content-types": config.navigation.showContentTypes,
-    trash: config.navigation.showTrash,
-    settings: config.navigation.showSettings,
-  };
-
-  const filtered = DEFAULT_NAV_ITEMS.filter((item) => visibilityMap[item.id] !== false);
-  const allItems = [...filtered, ...config.navigation.customItems.filter((i) => i.visible !== false)];
-
-  return {
-    main: allItems.filter((i) => i.section === "main"),
-    config: allItems.filter((i) => i.section === "config"),
-  };
-}
-
+/**
+ * Define admin UI configuration for your CMS.
+ *
+ * Use this function in a cms-admin.config.ts file at your project root,
+ * or pass the config directly to the <CmsAdmin /> component for embedded mode.
+ *
+ * @param config - Partial admin configuration (uses sensible defaults)
+ * @returns The configuration object (unchanged, for type inference)
+ *
+ * @example
+ * // Code-first config file approach (cms-admin.config.ts)
+ * import { defineAdminConfig } from "@convex-cms/core";
+ *
+ * export default defineAdminConfig({
+ *   branding: { appName: "My CMS" },
+ *   navigation: { showTaxonomies: false },
+ * });
+ *
+ * @example
+ * // Embedded admin approach
+ * import { CmsAdmin, defineAdminConfig } from "@convex-cms/admin/embed";
+ *
+ * const config = defineAdminConfig({
+ *   branding: { appName: "My CMS" },
+ * });
+ *
+ * function App() {
+ *   return <CmsAdmin config={config} ... />;
+ * }
+ */
 export function defineAdminConfig(config: Partial<AdminConfig>): Partial<AdminConfig> {
   return config;
+}
+
+/**
+ * Resolve partial admin config with defaults.
+ *
+ * @param input - Partial configuration
+ * @returns Full configuration with all defaults applied
+ */
+export function resolveAdminConfig(input?: Partial<AdminConfig>): AdminConfig {
+  return adminConfigSchema.parse(input ?? {});
 }

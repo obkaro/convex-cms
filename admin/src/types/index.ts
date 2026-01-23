@@ -18,7 +18,6 @@ export type MediaItem = Doc<"mediaItems">;
 export type MediaVariant = Doc<"mediaVariants">;
 export type Taxonomy = Doc<"taxonomies">;
 export type TaxonomyTerm = Doc<"taxonomyTerms">;
-export type AuditLog = Doc<"auditLogs">;
 
 // =============================================================================
 // Extended Types (admin-specific additions)
@@ -43,8 +42,6 @@ export type TaxonomyTermWithChildren = TaxonomyTerm & {
 // =============================================================================
 
 export type ContentStatus = ContentEntry["status"];
-export type AuditLogAction = AuditLog["action"];
-export type AuditLogResourceType = AuditLog["resourceType"];
 
 // =============================================================================
 // ID Types (aliases for clarity)
@@ -57,7 +54,6 @@ export type MediaItemId = Id<"mediaItems">;
 export type MediaVariantId = Id<"mediaVariants">;
 export type TaxonomyId = Id<"taxonomies">;
 export type TaxonomyTermId = Id<"taxonomyTerms">;
-export type AuditLogId = Id<"auditLogs">;
 
 // =============================================================================
 // Type Assertion Helpers
