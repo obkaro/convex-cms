@@ -37,10 +37,6 @@ import {
   type RoleDefinition,
 } from "./roles.js";
 
-// =============================================================================
-// Error Types
-// =============================================================================
-
 /**
  * Error codes for authorization failures.
  * These provide machine-readable error classification.
@@ -136,10 +132,6 @@ export class UnauthorizedError extends Error {
   }
 }
 
-// =============================================================================
-// Permission Check Types
-// =============================================================================
-
 /**
  * Options for checking a user's permission to perform an action.
  */
@@ -196,10 +188,6 @@ export interface PermissionDenied {
  * Result of a permission check.
  */
 export type PermissionCheckResult = PermissionGranted | PermissionDenied;
-
-// =============================================================================
-// Human-Readable Message Helpers
-// =============================================================================
 
 /**
  * Get a human-readable label for a resource.
@@ -270,10 +258,6 @@ function generateDenialMessage(options: {
       return `Access denied: Cannot ${actionLabel} ${resourceLabel}.`;
   }
 }
-
-// =============================================================================
-// Core Permission Check Functions
-// =============================================================================
 
 /**
  * Check if a user has permission to perform an action on a resource.
@@ -449,10 +433,6 @@ export function requirePermission(
   return result;
 }
 
-// =============================================================================
-// Ownership Validation Helpers
-// =============================================================================
-
 /**
  * Check if a user owns a resource.
  *
@@ -535,10 +515,6 @@ export function requireResourceOwnership(
     );
   }
 }
-
-// =============================================================================
-// Authorization Context Helpers
-// =============================================================================
 
 /**
  * Context for performing authorization checks within a request.

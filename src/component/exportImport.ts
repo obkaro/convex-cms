@@ -36,6 +36,7 @@
  */
 
 import { v } from "convex/values";
+import { isDeleted } from "./lib/softDelete.js";
 import { query, mutation } from "./_generated/server.js";
 import { Id, Doc } from "./_generated/dataModel.js";
 import {
@@ -49,7 +50,6 @@ import {
 	ContentTypeSchema,
 	FieldDefinition,
 } from "./validation.js";
-// import { generateSlug } from "./lib/slugGenerator.js";
 import { ensureUniqueSlug } from "./lib/slugUniqueness.js";
 
 // =============================================================================
@@ -463,7 +463,7 @@ export const exportEntries = query({
 		// Filter by deleted status
 		if (!includeDeleted) {
 			filteredEntries = filteredEntries.filter(
-				(e) => e.deletedAt === undefined,
+				(e) => !isDeleted(e),
 			);
 		}
 
@@ -993,7 +993,7 @@ export const getExportPreview = query({
 
 		if (!includeDeleted) {
 			filteredEntries = filteredEntries.filter(
-				(e) => e.deletedAt === undefined,
+				(e) => !isDeleted(e),
 			);
 		}
 

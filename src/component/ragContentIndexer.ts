@@ -52,8 +52,6 @@ import { internal } from "./_generated/api.js";
 import type { Doc } from "./_generated/dataModel.js";
 import {
   chunkContentEntry,
-  // chunkMultipleEntries,
-  // type ContentChunk,
   type ContentEntryInfo,
   type ContentTypeInfo,
   type RagExtractionOptions,

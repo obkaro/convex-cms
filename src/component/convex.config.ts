@@ -8,10 +8,8 @@ import { defineComponent } from "convex/server";
  * - Content versioning and publishing workflows
  * - Media asset management
  * - Flexible RBAC
- * - AI-ready architecture
+ * - Built-in AI tools for content management
  *
- * This component runs in a sandboxed environment with its own
- * isolated database tables and type-safe APIs.
  *
  * @example
  * ```typescript

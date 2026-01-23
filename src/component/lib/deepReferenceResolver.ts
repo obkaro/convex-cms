@@ -34,6 +34,7 @@ import {
 	Id,
 } from "../_generated/dataModel.js";
 import { QueryCtx } from "../_generated/server.js";
+import { isDeleted } from "./softDelete.js";
 import {
 	resolveReference,
 	// resolveReferences,
@@ -664,7 +665,7 @@ async function resolveNestedReference(
 		}
 
 		// Check soft-delete
-		if (!options.includeDeleted && entry.deletedAt !== undefined) {
+		if (!options.includeDeleted && isDeleted(entry)) {
 			resolutionCtx.resolvedCache.set(refId, null);
 			return null;
 		}
@@ -678,7 +679,7 @@ async function resolveNestedReference(
 		// Get content type for field definitions
 		const contentType = await ctx.db.get(entry.contentTypeId);
 
-		if (!contentType || contentType.deletedAt !== undefined) {
+		if (!contentType || isDeleted(contentType)) {
 			resolutionCtx.resolvedCache.set(refId, null);
 			return null;
 		}

@@ -6,10 +6,8 @@
  * validating reference constraints.
  */
 
-import {
-	// Doc,
-	Id,
-} from "../_generated/dataModel.js";
+import { Id } from "../_generated/dataModel.js";
+import { isDeleted } from "./softDelete.js";
 import { QueryCtx } from "../_generated/server.js";
 
 // =============================================================================
@@ -110,7 +108,7 @@ export async function resolveReference(
 		}
 
 		// Check soft-delete status
-		if (!includeDeleted && entry.deletedAt !== undefined) {
+		if (!includeDeleted && isDeleted(entry)) {
 			return null;
 		}
 
@@ -122,7 +120,7 @@ export async function resolveReference(
 		// Get the content type for this entry
 		const contentType = await ctx.db.get(entry.contentTypeId);
 
-		if (!contentType || contentType.deletedAt !== undefined) {
+		if (!contentType || isDeleted(contentType)) {
 			return null;
 		}
 
@@ -230,7 +228,7 @@ export async function isValidReference(
 		}
 
 		// Check soft-delete status
-		if (entry.deletedAt !== undefined) {
+		if (isDeleted(entry)) {
 			return {
 				valid: false,
 				error: `Content entry has been deleted: ${referenceId}`,
@@ -415,13 +413,13 @@ export async function getContentTypeName(
 	try {
 		const entry = await ctx.db.get(entryId as Id<"contentEntries">);
 
-		if (!entry || entry.deletedAt !== undefined) {
+		if (!entry || isDeleted(entry)) {
 			return null;
 		}
 
 		const contentType = await ctx.db.get(entry.contentTypeId);
 
-		if (!contentType || contentType.deletedAt !== undefined) {
+		if (!contentType || isDeleted(contentType)) {
 			return null;
 		}
 

@@ -16,6 +16,7 @@
  */
 
 import { v } from "convex/values";
+import { isDeleted } from "./lib/softDelete.js";
 import { paginationOptsValidator } from "convex/server";
 import { query } from "./_generated/server.js";
 import { taxonomyDoc, taxonomyTermDoc } from "./validators.js";
@@ -91,7 +92,7 @@ export const get = query({
 			return null;
 		}
 
-		if (!includeDeleted && taxonomy.deletedAt !== undefined) {
+		if (!includeDeleted && isDeleted(taxonomy)) {
 			return null;
 		}
 
@@ -168,7 +169,7 @@ export const list = query({
 
 		// Apply post-filters
 		if (!includeDeleted) {
-			results = results.filter((t) => t.deletedAt === undefined);
+			results = results.filter((t) => !isDeleted(t));
 		}
 
 		if (isHierarchical !== undefined) {
@@ -250,7 +251,7 @@ export const getTerm = query({
 			return null;
 		}
 
-		if (!includeDeleted && term.deletedAt !== undefined) {
+		if (!includeDeleted && isDeleted(term)) {
 			return null;
 		}
 
@@ -376,7 +377,7 @@ export const listTerms = query({
 
 		// Apply post-filters
 		if (!includeDeleted) {
-			results = results.filter((t) => t.deletedAt === undefined);
+			results = results.filter((t) => !isDeleted(t));
 		}
 
 		if (rootOnly) {
@@ -465,7 +466,7 @@ export const getTermsHierarchy = query({
 
 		// Filter deleted if needed
 		if (!includeDeleted) {
-			terms = terms.filter((t) => t.deletedAt === undefined);
+			terms = terms.filter((t) => !isDeleted(t));
 		}
 
 		// Sort by sortOrder, then name
@@ -557,7 +558,7 @@ export const suggestTerms = query({
 				.take(limit * 2);
 
 			return terms
-				.filter((t) => t.deletedAt === undefined && !excludeSet.has(t._id))
+				.filter((t) => !isDeleted(t) && !excludeSet.has(t._id))
 				.slice(0, limit);
 		}
 
@@ -571,7 +572,7 @@ export const suggestTerms = query({
 
 		// Filter and limit
 		const filtered = terms.filter(
-			(t) => t.deletedAt === undefined && !excludeSet.has(t._id),
+			(t) => !isDeleted(t) && !excludeSet.has(t._id),
 		);
 
 		// Sort by: exact prefix match first, then usage count
@@ -653,7 +654,7 @@ export const getTermsByEntry = query({
 		const results = [];
 		for (const junction of filtered) {
 			const term = await ctx.db.get(junction.termId);
-			if (term && term.deletedAt === undefined) {
+			if (term && !isDeleted(term)) {
 				results.push({
 					...term,
 					fieldName: junction.fieldName,
@@ -732,7 +733,7 @@ export const getEntriesByTerm = query({
 			const validEntryIds: typeof entryIds = [];
 			for (const entryId of entryIds) {
 				const entry = await ctx.db.get(entryId);
-				if (entry && entry.status === status && entry.deletedAt === undefined) {
+				if (entry && entry.status === status && !isDeleted(entry)) {
 					validEntryIds.push(entryId);
 				}
 			}
@@ -793,7 +794,7 @@ export const countTerms = query({
 
 		const filteredTerms = includeDeleted
 			? terms
-			: terms.filter((t) => t.deletedAt === undefined);
+			: terms.filter((t) => !isDeleted(t));
 
 		return { count: filteredTerms.length };
 	},

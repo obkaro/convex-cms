@@ -161,12 +161,6 @@ export function isLocalizedFieldValue(
 	// Check if all keys are valid BCP 47 locale codes
 	// Valid patterns (with hyphen required for disambiguation):
 	// - "en-US" (language + ISO 3166-1 alpha-2 region, uppercase)
-	// - "zh-Hans" (language + script subtag, title case)
-	// - "zh-Hans-CN" (language + script + region)
-	// Pattern: lowercase language (2-3), optional Title-case script (4), optional UPPERCASE region (2)
-	// const hyphenatedLocalePattern = /^[a-z]{2,3}(-[A-Z][a-z]{3})?(-[A-Z]{2})$/;
-	// const scriptOnlyPattern = /^[a-z]{2,3}-[A-Z][a-z]{3}$/;
-
 	// At least one key must be hyphenated to confirm this is a localized structure
 	const hasHyphenatedKey = keys.some((key) => key.includes("-"));
 

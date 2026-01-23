@@ -6,10 +6,8 @@
  * MIME type constraints for media fields.
  */
 
-import {
-	// Doc,
-	Id,
-} from "../_generated/dataModel.js";
+import { Id } from "../_generated/dataModel.js";
+import { isDeleted } from "./softDelete.js";
 import { QueryCtx } from "../_generated/server.js";
 import { classifyMimeType } from "./metadataExtractor.js";
 
@@ -140,7 +138,7 @@ export async function resolveMediaReference(
 		}
 
 		// Check soft-delete status
-		if (!includeDeleted && item.deletedAt !== undefined) {
+		if (!includeDeleted && isDeleted(item)) {
 			return null;
 		}
 
@@ -260,7 +258,7 @@ export async function isValidMediaReference(
 		}
 
 		// Check soft-delete status
-		if (item.deletedAt !== undefined) {
+		if (isDeleted(item)) {
 			return {
 				valid: false,
 				error: `Media asset has been deleted: ${mediaId}`,
@@ -447,7 +445,7 @@ export async function getMediaMimeType(
 	try {
 		const item = await ctx.db.get(mediaId as Id<"mediaItems">);
 
-		if (!item || item.kind !== "asset" || item.deletedAt !== undefined) {
+		if (!item || item.kind !== "asset" || isDeleted(item)) {
 			return null;
 		}
 

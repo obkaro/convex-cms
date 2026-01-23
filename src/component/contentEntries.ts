@@ -8,6 +8,7 @@
  */
 
 import { v, type Infer } from "convex/values";
+import { isDeleted } from "./lib/softDelete.js";
 import { paginationOptsValidator } from "convex/server";
 import { stream } from "convex-helpers/server/stream";
 import { query, type QueryCtx } from "./_generated/server.js";
@@ -364,7 +365,6 @@ export const get = query({
   args: getContentEntryArgs.fields,
   returns: v.union(contentEntryWithVersionDoc, v.null()),
   handler: async (ctx, args) => {
-    // Retrieve the content entry by ID
     const entry = await ctx.db.get(args.id);
 
     // Return null if entry doesn't exist
@@ -374,7 +374,7 @@ export const get = query({
 
     // Return null if entry has been soft-deleted
     // (respects the soft delete feature - deleted entries should not be returned)
-    if (entry.deletedAt !== undefined) {
+    if (isDeleted(entry)) {
       return null;
     }
 
@@ -488,7 +488,7 @@ export const getBySlug = query({
     }
 
     // Filter out soft-deleted entries unless explicitly requested
-    if (!includeDeleted && entry.deletedAt !== undefined) {
+    if (!includeDeleted && isDeleted(entry)) {
       return null;
     }
 
@@ -552,7 +552,7 @@ export const getBySlugAndTypeName = query({
 
     // Check if content type is active and not deleted
     // Inactive or deleted content types should not serve content
-    if (!contentType.isActive || contentType.deletedAt !== undefined) {
+    if (!contentType.isActive || isDeleted(contentType)) {
       return null;
     }
 
@@ -570,7 +570,7 @@ export const getBySlugAndTypeName = query({
     }
 
     // Filter out soft-deleted entries unless explicitly requested
-    if (!includeDeleted && entry.deletedAt !== undefined) {
+    if (!includeDeleted && isDeleted(entry)) {
       return null;
     }
 
@@ -855,7 +855,7 @@ export const list = query({
         .first();
 
       // If content type not found or inactive, return empty result
-      if (!contentType || !contentType.isActive || contentType.deletedAt !== undefined) {
+      if (!contentType || !contentType.isActive || isDeleted(contentType)) {
         return { page: [], continueCursor: null, isDone: true };
       }
 
@@ -1029,7 +1029,7 @@ async function handleSearchQuery(
   // Filter by soft-delete status
   if (!includeDeleted) {
     filteredResults = filteredResults.filter(
-      (entry: any) => entry.deletedAt === undefined
+      (entry: any) => !isDeleted(entry)
     );
   }
 
@@ -1183,7 +1183,7 @@ async function handlePaginatorQuery(
   if (needsFiltering) {
     const filteredQuery = orderedQuery.filterWith(async (entry: any) => {
       // Filter out soft-deleted entries
-      if (!includeDeleted && entry.deletedAt !== undefined) {
+      if (!includeDeleted && isDeleted(entry)) {
         return false;
       }
 
@@ -1288,7 +1288,7 @@ async function handleCustomSortQuery(
   // Use filterWith to apply filters while collecting results
   const filteredQuery = orderedQuery.filterWith(async (entry: any) => {
     // Filter out soft-deleted entries
-    if (!includeDeleted && entry.deletedAt !== undefined) {
+    if (!includeDeleted && isDeleted(entry)) {
       return false;
     }
 
@@ -1452,7 +1452,7 @@ export const getVersionHistory = query({
 
     // Return null if entry has been soft-deleted
     // (deleted entries should not expose version history)
-    if (entry.deletedAt !== undefined) {
+    if (isDeleted(entry)) {
       return null;
     }
 
@@ -1568,7 +1568,7 @@ export const getVersion = query({
     }
 
     // Return null for soft-deleted entries (they shouldn't expose version history)
-    if (entry.deletedAt !== undefined) {
+    if (isDeleted(entry)) {
       return null;
     }
 
@@ -1741,7 +1741,7 @@ export const compareVersions = query({
 
     // Verify the entry exists and is not soft-deleted
     const entry = await ctx.db.get(entryId);
-    if (!entry || entry.deletedAt !== undefined) {
+    if (!entry || isDeleted(entry)) {
       return null;
     }
 
@@ -1915,7 +1915,7 @@ export const count = query({
         .first();
 
       // If content type not found or inactive, return 0 count
-      if (!contentType || !contentType.isActive || contentType.deletedAt !== undefined) {
+      if (!contentType || !contentType.isActive || isDeleted(contentType)) {
         return { count: 0 };
       }
 
@@ -1957,7 +1957,7 @@ export const count = query({
 
     for await (const entry of queryBuilder) {
       // Filter out soft-deleted entries unless explicitly requested
-      if (!includeDeleted && entry.deletedAt !== undefined) {
+      if (!includeDeleted && isDeleted(entry)) {
         continue;
       }
 

@@ -18,6 +18,7 @@
  */
 
 import { v } from "convex/values";
+import { isDeleted } from "./lib/softDelete.js";
 import { mutation, internalMutation, query } from "./_generated/server.js";
 import { internal } from "./_generated/api.js";
 import { contentEntryDoc, scheduleEntryArgs } from "./validators.js";
@@ -69,12 +70,11 @@ export const scheduleEntry = mutation({
 	handler: async (ctx, args) => {
 		const { id, publishAt, updatedBy } = args;
 
-		// Retrieve the existing entry
 		const entry = await ctx.db.get(id);
 		if (!entry) {
 			throw new Error(`Content entry not found: ${id}`);
 		}
-		if (entry.deletedAt !== undefined) {
+		if (isDeleted(entry)) {
 			throw new Error(`Content entry has been deleted: ${id}`);
 		}
 		if (entry.status === "published") {
@@ -121,7 +121,6 @@ export const scheduleEntry = mutation({
 			version: entry.version + 1,
 		});
 
-		// Return the scheduled entry
 		const scheduledEntry = await ctx.db.get(id);
 		if (!scheduledEntry) {
 			throw new Error("Failed to retrieve scheduled entry");
@@ -171,12 +170,11 @@ export const cancelScheduledPublish = mutation({
 	handler: async (ctx, args) => {
 		const { id, updatedBy } = args;
 
-		// Retrieve the existing entry
 		const entry = await ctx.db.get(id);
 		if (!entry) {
 			throw new Error(`Content entry not found: ${id}`);
 		}
-		if (entry.deletedAt !== undefined) {
+		if (isDeleted(entry)) {
 			throw new Error(`Content entry has been deleted: ${id}`);
 		}
 		if (entry.status !== "scheduled") {
@@ -193,7 +191,6 @@ export const cancelScheduledPublish = mutation({
 			version: entry.version + 1,
 		});
 
-		// Return the updated entry
 		const updatedEntry = await ctx.db.get(id);
 		if (!updatedEntry) {
 			throw new Error("Failed to retrieve updated entry");
@@ -231,7 +228,6 @@ export const executeScheduledPublish = internalMutation({
 	handler: async (ctx, args) => {
 		const { entryId, expectedPublishAt } = args;
 
-		// Retrieve the entry
 		const entry = await ctx.db.get(entryId);
 
 		// Safety checks - skip publish if conditions aren't met
@@ -241,7 +237,7 @@ export const executeScheduledPublish = internalMutation({
 			);
 			return;
 		}
-		if (entry.deletedAt !== undefined) {
+		if (isDeleted(entry)) {
 			console.log(
 				`Scheduled publish skipped: Entry ${entryId} has been deleted`,
 			);
@@ -346,7 +342,7 @@ export const getScheduledEntries = query({
 					return false;
 				}
 				// Must not be deleted
-				if (entry.deletedAt !== undefined) {
+				if (isDeleted(entry)) {
 					return false;
 				}
 				// Filter by content type if specified

@@ -48,7 +48,6 @@ import type * as scheduledPublish from "../scheduledPublish.js";
 import type * as taxonomies from "../taxonomies.js";
 import type * as taxonomyMutations from "../taxonomyMutations.js";
 import type * as trash from "../trash.js";
-import type * as types from "../types.js";
 import type * as userContext from "../userContext.js";
 import type * as validation from "../validation.js";
 import type * as validators from "../validators.js";
@@ -103,7 +102,6 @@ const fullApi: ApiFromModules<{
   taxonomies: typeof taxonomies;
   taxonomyMutations: typeof taxonomyMutations;
   trash: typeof trash;
-  types: typeof types;
   userContext: typeof userContext;
   validation: typeof validation;
   validators: typeof validators;

@@ -27,6 +27,12 @@ import schema, {
 	mediaItemValidator,
 	mediaAssetItemValidator,
 	mediaFolderItemValidator,
+	fieldTypes,
+	contentStatuses,
+	mediaTypes,
+	variantTypes,
+	variantStatuses,
+	variantFormats,
 } from "./schema.js";
 
 // Re-export schema validators for convenience
@@ -37,6 +43,16 @@ export {
 	mediaTypeValidator,
 	variantTypeValidator,
 	variantStatusValidator,
+};
+
+// Re-export schema constants for convenience
+export {
+	fieldTypes,
+	contentStatuses,
+	mediaTypes,
+	variantTypes,
+	variantStatuses,
+	variantFormats,
 };
 
 // =============================================================================
@@ -155,8 +171,7 @@ export const duplicateContentEntryArgs = v.object({
 
 export const getVersionHistoryArgs = v.object({
 	entryId: v.id("contentEntries"),
-	cursor: v.optional(v.string()),
-	limit: v.optional(v.number()),
+	paginationOpts: paginationOptsValidator,
 });
 
 export const getVersionArgs = v.object({
@@ -313,6 +328,7 @@ export const updateMediaFolderArgs = v.object({
 export const moveFolderArgs = v.object({
 	id: v.id("mediaItems"),
 	newParentId: v.optional(v.id("mediaItems")),
+	updatedBy: v.optional(v.string()),
 });
 
 export const deleteMediaFolderArgs = v.object({
@@ -474,12 +490,6 @@ export const responsiveSrcsetResult = v.object({
 // Query/Pagination Validators
 // =============================================================================
 
-/** @deprecated Use paginationOptsValidator from convex/server for new implementations. */
-export const paginationArgs = v.object({
-	cursor: v.optional(v.string()),
-	limit: v.optional(v.number()),
-});
-
 export const paginationResultValidator = <T extends Validator<unknown, "required", string>>(itemValidator: T) =>
 	v.object({
 		page: v.array(itemValidator),
@@ -565,18 +575,6 @@ export const mediaAssetReference = v.object({
 	contentTypeName: v.string(),
 	fields: v.array(v.string()),
 });
-
-// =============================================================================
-// Paginated Response Validators
-// =============================================================================
-
-/** @deprecated Use paginationResultValidator for new implementations. */
-export const paginatedResponseValidator = <T extends Validator<unknown, "required", string>>(itemValidator: T) =>
-	v.object({
-		items: v.array(itemValidator),
-		cursor: v.optional(v.string()),
-		hasMore: v.boolean(),
-	});
 
 // =============================================================================
 // Bulk Operation Validators

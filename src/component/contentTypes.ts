@@ -10,6 +10,7 @@
  */
 
 import { v } from "convex/values";
+import { isDeleted } from "./lib/softDelete.js";
 import { paginationOptsValidator } from "convex/server";
 import { query } from "./_generated/server.js";
 import { contentTypeDoc } from "./validators.js";
@@ -115,7 +116,7 @@ export const get = query({
 		}
 
 		// Filter out soft-deleted types unless explicitly requested
-		if (!includeDeleted && contentType.deletedAt !== undefined) {
+		if (!includeDeleted && isDeleted(contentType)) {
 			return null;
 		}
 
@@ -295,7 +296,7 @@ export const list = query({
 
 		// Filter out soft-deleted types unless explicitly requested
 		if (!includeDeleted) {
-			results = results.filter((ct) => ct.deletedAt === undefined);
+			results = results.filter((ct) => !isDeleted(ct));
 		}
 
 		// Apply sorting based on sortBy parameter
