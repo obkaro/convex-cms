@@ -13,7 +13,7 @@
     "setup": "convex run setup:syncContentTypes && convex run seed:seedAll"
   },
   "dependencies": {
-    "@convex-cms/core": "file:..",
+    "convex-cms": "file:..",
     "convex": "^1.17.0",
     "lucide-react": "^0.468.0",
     "react": "^19.0.0",

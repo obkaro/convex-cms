@@ -2,7 +2,7 @@
  * Admin API for CMS Admin UI
  *
  * This file exports Convex functions that the admin UI calls.
- * It uses `defineAdminAPI` from @convex-cms/core to create
+ * It uses `defineAdminAPI` from convex-cms to create
  * typed wrappers around the CMS component functions.
  *
  * Usage:
@@ -17,7 +17,7 @@
  * - api.admin.stats.getDashboardStats
  */
 
-import { defineAdminAPI } from "@convex-cms/core";
+import { defineAdminAPI } from "convex-cms";
 import { components } from "./_generated/api";
 
 /**

@@ -10,7 +10,7 @@
 
 import { mutation } from "./_generated/server";
 import { v } from "convex/values";
-import { toFieldDefinitions } from "@convex-cms/core";
+import { toFieldDefinitions } from "convex-cms";
 import { roadmapItem, changelogEntry } from "./schemas";
 import { cms } from "./cms";
 

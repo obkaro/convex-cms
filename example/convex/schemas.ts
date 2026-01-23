@@ -11,7 +11,7 @@
  */
 
 import { v } from "convex/values";
-import { defineContentType, createContentSchema } from "@convex-cms/core";
+import { defineContentType, createContentSchema } from "convex-cms";
 
 export const roadmapItem = defineContentType({
   name: "roadmap_item",
