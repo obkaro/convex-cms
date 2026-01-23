@@ -185,11 +185,57 @@ export interface RateLimitHelper {
 // Context Types
 // =============================================================================
 
-/** Convex context for CMS operations - includes db/auth for authorization hooks */
-export type ConvexContext = Pick<
+/**
+ * Read-only context for CMS queries - enables reactivity via useQuery.
+ *
+ * Use this context type for read operations like get(), list(), search(), etc.
+ * This allows query functions to call CMS read methods and participate in
+ * Convex's reactive subscription system.
+ *
+ * @example
+ * ```typescript
+ * export const listPosts = query({
+ *   handler: async (ctx) => {
+ *     // ctx (QueryCtx) is compatible with CmsReadContext
+ *     return await cms.contentEntries.list(ctx, {});
+ *   },
+ * });
+ * ```
+ */
+export type CmsReadContext = Pick<GenericQueryCtx<GenericDataModel>, "runQuery">;
+
+/**
+ * Full mutation context for CMS write operations.
+ *
+ * Required for create, update, delete, publish, and other write operations.
+ * Includes db and auth access needed for authorization hooks.
+ *
+ * @example
+ * ```typescript
+ * export const createPost = mutation({
+ *   handler: async (ctx, args) => {
+ *     // ctx (MutationCtx) provides CmsMutationContext
+ *     return await cms.contentEntries.create(ctx, args);
+ *   },
+ * });
+ * ```
+ */
+export type CmsMutationContext = Pick<
   GenericMutationCtx<GenericDataModel>,
   "runMutation" | "runQuery" | "db" | "auth"
 >;
+
+/**
+ * Internal type for methods that accept either read or mutation context.
+ * Read methods use this to work in both query and mutation handlers.
+ */
+type ReadableContext = CmsReadContext | CmsMutationContext;
+
+/**
+ * @deprecated Use CmsReadContext for read operations or CmsMutationContext for writes.
+ * This alias is preserved for backward compatibility.
+ */
+export type ConvexContext = CmsMutationContext;
 
 /** Component API type from `components.convexCms` */
 export type TypedComponentApi = GeneratedComponentApi;
@@ -451,7 +497,7 @@ export class ContentTypesApi {
   /**
    * Get a content type by ID or name.
    *
-   * @param ctx - Convex query context
+   * @param ctx - Convex query or mutation context
    * @param args - Get arguments (id or name)
    * @returns The content type or null if not found
    *
@@ -471,7 +517,7 @@ export class ContentTypesApi {
    * ```
    */
   async get(
-    ctx: ConvexContext,
+    ctx: ReadableContext,
     args: GetContentTypeArgs
   ): Promise<ContentType | null> {
     return ctx.runQuery(this.api.contentTypes.get, args);
@@ -482,7 +528,7 @@ export class ContentTypesApi {
    *
    * Convenience method that wraps `get()` for name-based lookup.
    *
-   * @param ctx - Convex query context
+   * @param ctx - Convex query or mutation context
    * @param name - The machine-readable name of the content type
    * @param includeDeleted - Whether to include soft-deleted types
    * @returns The content type or null if not found
@@ -496,31 +542,31 @@ export class ContentTypesApi {
    * ```
    */
   async getByName(
-    ctx: ConvexContext,
+    ctx: ReadableContext,
     name: string,
     includeDeleted = false
   ): Promise<ContentType | null> {
     return this.get(ctx, { name, includeDeleted });
   }
 
-  async getById(ctx: ConvexContext, id: string, includeDeleted = false): Promise<ContentType | null> {
+  async getById(ctx: ReadableContext, id: string, includeDeleted = false): Promise<ContentType | null> {
     return this.get(ctx, { id, includeDeleted });
   }
 
-  async exists(ctx: ConvexContext, name: string, includeDeleted = false): Promise<boolean> {
+  async exists(ctx: ReadableContext, name: string, includeDeleted = false): Promise<boolean> {
     const type = await this.getByName(ctx, name, includeDeleted);
     return type !== null;
   }
 
-  async list(ctx: ConvexContext, args: ListContentTypesArgs = {}): Promise<PaginationResult<ContentType>> {
+  async list(ctx: ReadableContext, args: ListContentTypesArgs = {}): Promise<PaginationResult<ContentType>> {
     return ctx.runQuery(this.api.contentTypes.list, args);
   }
 
-  async listActive(ctx: ConvexContext, paginationOpts?: PaginationOpts): Promise<PaginationResult<ContentType>> {
+  async listActive(ctx: ReadableContext, paginationOpts?: PaginationOpts): Promise<PaginationResult<ContentType>> {
     return this.list(ctx, { isActive: true, includeDeleted: false, paginationOpts });
   }
 
-  async getAll(ctx: ConvexContext, includeInactive = false): Promise<ContentType[]> {
+  async getAll(ctx: ReadableContext, includeInactive = false): Promise<ContentType[]> {
     const result = await this.list(ctx, { isActive: includeInactive ? undefined : true, includeDeleted: false });
     return result.page;
   }
@@ -533,7 +579,7 @@ export class ContentTypesApi {
    * ```
    */
   async count(
-    ctx: ConvexContext,
+    ctx: ReadableContext,
     includeInactive = false
   ): Promise<number> {
     const all = await this.getAll(ctx, includeInactive);
@@ -672,12 +718,12 @@ export class ContentEntriesApi {
     return ctx.runMutation(this.api.contentEntryMutations.deleteEntry, args);
   }
 
-  async get(ctx: ConvexContext, args: GetContentEntryArgs): Promise<ContentEntry | null> {
+  async get(ctx: ReadableContext, args: GetContentEntryArgs): Promise<ContentEntry | null> {
     return ctx.runQuery(this.api.contentEntries.get, args);
   }
 
   /** Looks up by contentTypeId+slug or contentTypeName+slug */
-  async getBySlug(ctx: ConvexContext, args: GetContentEntryBySlugArgs): Promise<ContentEntry | null> {
+  async getBySlug(ctx: ReadableContext, args: GetContentEntryBySlugArgs): Promise<ContentEntry | null> {
     // The wrapper's unified interface adapts to the component's split API
     if (args.contentTypeId) {
       return ctx.runQuery(this.api.contentEntries.getBySlug, {
@@ -698,7 +744,7 @@ export class ContentEntriesApi {
 
   /** Standard Convex pagination format compatible with usePaginatedQuery */
   async list(
-    ctx: ConvexContext,
+    ctx: ReadableContext,
     args: ListContentEntriesArgs
   ): Promise<PaginationResult<ContentEntry>> {
     return ctx.runQuery(this.api.contentEntries.list, args);
@@ -1057,7 +1103,7 @@ export class ContentEntriesApi {
    * ```
    */
   async listWithLocale(
-    ctx: ConvexContext,
+    ctx: ReadableContext,
     args: ListContentEntriesArgs,
     localeOptions: ResolveLocaleContentOptions
   ): Promise<PaginationResult<ContentEntry & LocaleResolvedEntry>> {
@@ -1103,7 +1149,7 @@ export class ContentEntriesApi {
    * ```
    */
   async getWithLocale(
-    ctx: ConvexContext,
+    ctx: ReadableContext,
     args: GetContentEntryArgs,
     localeOptions: ResolveLocaleContentOptions
   ): Promise<(ContentEntry & LocaleResolvedEntry) | null> {
@@ -1138,7 +1184,7 @@ export class ContentEntriesApi {
    * ```
    */
   async getBySlugWithLocale(
-    ctx: ConvexContext,
+    ctx: ReadableContext,
     args: GetContentEntryBySlugArgs,
     localeOptions: ResolveLocaleContentOptions
   ): Promise<(ContentEntry & LocaleResolvedEntry) | null> {
@@ -1533,7 +1579,7 @@ export class VersionsApi {
    * ```
    */
   async getHistory(
-    ctx: ConvexContext,
+    ctx: ReadableContext,
     args: GetVersionHistoryArgs
   ): Promise<PaginationResult<ContentVersion> | null> {
     this.ensureVersioningEnabled();
@@ -1543,7 +1589,7 @@ export class VersionsApi {
   /**
    * Get a specific version by ID or version number.
    *
-   * @param ctx - Convex query context
+   * @param ctx - Convex query or mutation context
    * @param args - Get arguments (entryId required, plus versionId or versionNumber)
    * @returns The version or null if not found
    *
@@ -1563,7 +1609,7 @@ export class VersionsApi {
    * ```
    */
   async get(
-    ctx: ConvexContext,
+    ctx: ReadableContext,
     args: GetVersionArgs
   ): Promise<ContentVersion | null> {
     this.ensureVersioningEnabled();
@@ -1573,7 +1619,7 @@ export class VersionsApi {
   /**
    * Get a version by its version number (convenience method).
    *
-   * @param ctx - Convex query context
+   * @param ctx - Convex query or mutation context
    * @param entryId - The content entry ID
    * @param versionNumber - The version number to retrieve
    * @returns The version or null if not found
@@ -1584,7 +1630,7 @@ export class VersionsApi {
    * ```
    */
   async getByNumber(
-    ctx: ConvexContext,
+    ctx: ReadableContext,
     entryId: string,
     versionNumber: number
   ): Promise<ContentVersion | null> {
@@ -1594,7 +1640,7 @@ export class VersionsApi {
   /**
    * Get a version by its document ID (convenience method).
    *
-   * @param ctx - Convex query context
+   * @param ctx - Convex query or mutation context
    * @param entryId - The content entry ID
    * @param versionId - The version document ID
    * @returns The version or null if not found
@@ -1605,7 +1651,7 @@ export class VersionsApi {
    * ```
    */
   async getById(
-    ctx: ConvexContext,
+    ctx: ReadableContext,
     entryId: string,
     versionId: string
   ): Promise<ContentVersion | null> {
@@ -1615,7 +1661,7 @@ export class VersionsApi {
   /**
    * Get the latest (most recent) version snapshot for an entry.
    *
-   * @param ctx - Convex query context
+   * @param ctx - Convex query or mutation context
    * @param entryId - The content entry ID
    * @returns The latest version or null if no versions exist
    *
@@ -1626,7 +1672,7 @@ export class VersionsApi {
    * ```
    */
   async getLatest(
-    ctx: ConvexContext,
+    ctx: ReadableContext,
     entryId: string
   ): Promise<ContentVersion | null> {
     this.ensureVersioningEnabled();
@@ -1643,7 +1689,7 @@ export class VersionsApi {
    * Searches through version history to find the most recent version
    * that was published (wasPublished = true).
    *
-   * @param ctx - Convex query context
+   * @param ctx - Convex query or mutation context
    * @param entryId - The content entry ID
    * @returns The latest published version or null if none published
    *
@@ -1656,7 +1702,7 @@ export class VersionsApi {
    * ```
    */
   async getLatestPublished(
-    ctx: ConvexContext,
+    ctx: ReadableContext,
     entryId: string
   ): Promise<ContentVersion | null> {
     this.ensureVersioningEnabled();
@@ -1688,7 +1734,7 @@ export class VersionsApi {
   /**
    * Get all published versions for an entry.
    *
-   * @param ctx - Convex query context
+   * @param ctx - Convex query or mutation context
    * @param entryId - The content entry ID
    * @param limit - Maximum number of published versions to return (default: 10)
    * @returns Array of published versions (newest first)
@@ -1700,7 +1746,7 @@ export class VersionsApi {
    * ```
    */
   async getPublishedHistory(
-    ctx: ConvexContext,
+    ctx: ReadableContext,
     entryId: string,
     limit: number = 10
   ): Promise<ContentVersion[]> {
@@ -1761,7 +1807,7 @@ export class VersionsApi {
    * ```
    */
   async compare(
-    ctx: ConvexContext,
+    ctx: ReadableContext,
     args: CompareVersionsArgs
   ): Promise<VersionComparison | null> {
     this.ensureVersioningEnabled();
@@ -1783,7 +1829,7 @@ export class VersionsApi {
    *
    * Useful for seeing what has changed since a particular point in time.
    *
-   * @param ctx - Convex query context
+   * @param ctx - Convex query or mutation context
    * @param entryId - The content entry ID
    * @param versionNumber - The version number to compare against
    * @returns Comparison between the version and current state, or null
@@ -1795,7 +1841,7 @@ export class VersionsApi {
    * ```
    */
   async compareWithCurrent(
-    ctx: ConvexContext,
+    ctx: ReadableContext,
     entryId: string,
     versionNumber: number
   ): Promise<VersionComparison | null> {
@@ -1813,7 +1859,7 @@ export class VersionsApi {
   /**
    * Check if a specific version exists.
    *
-   * @param ctx - Convex query context
+   * @param ctx - Convex query or mutation context
    * @param entryId - The content entry ID
    * @param versionNumber - The version number to check
    * @returns true if the version exists
@@ -1826,7 +1872,7 @@ export class VersionsApi {
    * ```
    */
   async exists(
-    ctx: ConvexContext,
+    ctx: ReadableContext,
     entryId: string,
     versionNumber: number
   ): Promise<boolean> {
@@ -1837,7 +1883,7 @@ export class VersionsApi {
   /**
    * Count total number of versions for an entry.
    *
-   * @param ctx - Convex query context
+   * @param ctx - Convex query or mutation context
    * @param entryId - The content entry ID
    * @returns Total number of version snapshots
    *
@@ -1848,7 +1894,7 @@ export class VersionsApi {
    * ```
    */
   async count(
-    ctx: ConvexContext,
+    ctx: ReadableContext,
     entryId: string
   ): Promise<number> {
     this.ensureVersioningEnabled();
@@ -2212,12 +2258,12 @@ export class MediaAssetsApi {
   /**
    * Get a media asset by ID.
    *
-   * @param ctx - Convex query context
+   * @param ctx - Convex query or mutation context
    * @param args - Get arguments
    * @returns The asset or null if not found
    */
   async get(
-    ctx: ConvexContext,
+    ctx: ReadableContext,
     args: GetMediaAssetArgs
   ): Promise<MediaAsset | null> {
     if (!this.config.features.mediaManagement) {
@@ -2230,12 +2276,12 @@ export class MediaAssetsApi {
   /**
    * List media assets with optional filters.
    *
-   * @param ctx - Convex query context
+   * @param ctx - Convex query or mutation context
    * @param args - Query options
    * @returns Paginated list of assets
    */
   async list(
-    ctx: ConvexContext,
+    ctx: ReadableContext,
     args: ListMediaAssetsArgs = {}
   ): Promise<PaginationResult<MediaAsset>> {
     if (!this.config.features.mediaManagement) {
@@ -2350,7 +2396,7 @@ export class MediaAssetsApi {
    * ```
    */
   async findReferences(
-    ctx: ConvexContext,
+    ctx: ReadableContext,
     args: FindMediaAssetReferencesArgs
   ): Promise<MediaAssetReference[]> {
     if (!this.config.features.mediaManagement) {
@@ -2383,7 +2429,7 @@ export class MediaAssetsApi {
    * ```
    */
   async getTerms(
-    ctx: ConvexContext,
+    ctx: ReadableContext,
     args: { mediaId: string; taxonomyId?: string }
   ): Promise<unknown[]> {
     if (!this.config.features.mediaManagement) {
@@ -2685,12 +2731,12 @@ export class MediaFoldersApi {
   /**
    * Get a media folder by ID.
    *
-   * @param ctx - Convex query context
+   * @param ctx - Convex query or mutation context
    * @param args - Get arguments
    * @returns The folder or null if not found
    */
   async get(
-    ctx: ConvexContext,
+    ctx: ReadableContext,
     args: GetMediaFolderArgs
   ): Promise<MediaFolder | null> {
     if (!this.config.features.mediaManagement) {
@@ -2703,12 +2749,12 @@ export class MediaFoldersApi {
   /**
    * List media folders.
    *
-   * @param ctx - Convex query context
+   * @param ctx - Convex query or mutation context
    * @param args - Optional filter arguments
    * @returns Array of folders
    */
   async list(
-    ctx: ConvexContext,
+    ctx: ReadableContext,
     args: ListMediaFoldersArgs = {}
   ): Promise<MediaFolder[]> {
     if (!this.config.features.mediaManagement) {
@@ -2793,7 +2839,7 @@ export class MediaFoldersApi {
    * ```
    */
   async getByPath(
-    ctx: ConvexContext,
+    ctx: ReadableContext,
     args: GetMediaFolderByPathArgs
   ): Promise<MediaFolder | null> {
     if (!this.config.features.mediaManagement) {
@@ -2811,7 +2857,7 @@ export class MediaFoldersApi {
    *
    * Useful for building folder navigation or selectors.
    *
-   * @param ctx - Convex query context
+   * @param ctx - Convex query or mutation context
    * @param args - Optional filter arguments
    * @returns Array of all folders sorted hierarchically by path
    *
@@ -2825,7 +2871,7 @@ export class MediaFoldersApi {
    * ```
    */
   async getTree(
-    ctx: ConvexContext,
+    ctx: ReadableContext,
     args: GetFolderTreeArgs = {}
   ): Promise<MediaFolder[]> {
     if (!this.config.features.mediaManagement) {
@@ -2939,12 +2985,12 @@ export class MediaVariantsApi {
   /**
    * Get a variant by ID.
    *
-   * @param ctx - Convex query context
+   * @param ctx - Convex query or mutation context
    * @param args - Query arguments
    * @returns The variant with URL or null
    */
   async get(
-    ctx: ConvexContext,
+    ctx: ReadableContext,
     args: { id: string; includeDeleted?: boolean }
   ): Promise<MediaVariantWithUrl | null> {
     if (!this.config.features.mediaManagement) {
@@ -2959,7 +3005,7 @@ export class MediaVariantsApi {
   /**
    * List variants for an asset.
    *
-   * @param ctx - Convex query context
+   * @param ctx - Convex query or mutation context
    * @param args - Query arguments with filters
    * @returns Array of variants with URLs
    *
@@ -2974,7 +3020,7 @@ export class MediaVariantsApi {
    * ```
    */
   async list(
-    ctx: ConvexContext,
+    ctx: ReadableContext,
     args: ListMediaVariantsArgs
   ): Promise<MediaVariantWithUrl[]> {
     if (!this.config.features.mediaManagement) {
@@ -2989,7 +3035,7 @@ export class MediaVariantsApi {
   /**
    * Find the best matching variant for target dimensions.
    *
-   * @param ctx - Convex query context
+   * @param ctx - Convex query or mutation context
    * @param args - Target size and preferences
    * @returns Best matching variant or null
    *
@@ -3004,7 +3050,7 @@ export class MediaVariantsApi {
    * ```
    */
   async getBestVariant(
-    ctx: ConvexContext,
+    ctx: ReadableContext,
     args: GetBestVariantArgs
   ): Promise<(MediaVariantWithUrl & { isOriginal: boolean }) | null> {
     if (!this.config.features.mediaManagement) {
@@ -3019,7 +3065,7 @@ export class MediaVariantsApi {
   /**
    * Get responsive srcset data for HTML img/picture tags.
    *
-   * @param ctx - Convex query context
+   * @param ctx - Convex query or mutation context
    * @param args - Asset ID and optional format filter
    * @returns Srcset data for responsive images
    *
@@ -3035,7 +3081,7 @@ export class MediaVariantsApi {
    * ```
    */
   async getResponsiveSrcset(
-    ctx: ConvexContext,
+    ctx: ReadableContext,
     args: { assetId: string; format?: string }
   ): Promise<ResponsiveSrcsetResult> {
     if (!this.config.features.mediaManagement) {
@@ -3055,7 +3101,7 @@ export class MediaVariantsApi {
    * @returns Asset with variants or null
    */
   async getAssetWithVariants(
-    ctx: ConvexContext,
+    ctx: ReadableContext,
     args: { assetId: string }
   ): Promise<AssetWithVariants | null> {
     if (!this.config.features.mediaManagement) {
@@ -3070,10 +3116,10 @@ export class MediaVariantsApi {
   /**
    * Get available variant presets.
    *
-   * @param ctx - Convex query context
+   * @param ctx - Convex query or mutation context
    * @returns Array of preset configurations
    */
-  async getPresets(ctx: ConvexContext): Promise<VariantPreset[]> {
+  async getPresets(ctx: ReadableContext): Promise<VariantPreset[]> {
     if (!this.config.features.mediaManagement) {
       throw new Error("Media management feature is not enabled");
     }

@@ -60,7 +60,8 @@ import type {
 type Id<TableName extends string> = GenericId<TableName>;
 
 // Import all component modules for testing
-const modules = import.meta.glob("./component/**/*.ts");
+// Uses .js extension for compatibility with compiled output in dist/
+const modules = import.meta.glob("./component/**/*.js");
 
 // =============================================================================
 // Type Definitions

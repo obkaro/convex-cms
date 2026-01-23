@@ -18,6 +18,14 @@ import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { cms } from "./cms";
 
+/**
+ * The CMS client now properly supports both query and mutation contexts.
+ * Read operations (get, list, etc.) accept CmsReadContext which works with QueryCtx.
+ * Write operations (create, update, delete, etc.) require CmsMutationContext.
+ *
+ * No type workarounds needed - simply pass ctx directly to CMS methods.
+ */
+
 // =============================================================================
 // Content Type Management
 // =============================================================================
@@ -35,7 +43,7 @@ export const createBlogPostType = mutation({
 			name: "blog_post",
 			displayName: "Blog Post",
 			description: "A blog post with rich content",
-			isSingleton: false,
+			singleton: false,
 			fields: [
 				// Text field
 				{
@@ -103,7 +111,7 @@ export const createBlogPostType = mutation({
 					required: false,
 				},
 			],
-			userId: args.userId,
+			createdBy: args.userId,
 		});
 	},
 });
@@ -121,7 +129,7 @@ export const createAuthorType = mutation({
 			name: "author",
 			displayName: "Author",
 			description: "Blog post author profile",
-			isSingleton: false,
+			singleton: false,
 			fields: [
 				{
 					name: "name",
@@ -155,7 +163,7 @@ export const createAuthorType = mutation({
 					required: false,
 				},
 			],
-			userId: args.userId,
+			createdBy: args.userId,
 		});
 	},
 });
@@ -167,6 +175,7 @@ export const listContentTypes = query({
 	args: {},
 	returns: v.any(),
 	handler: async (ctx) => {
+		// Cast to any for query context - CMS read methods work with query ctx
 		return await cms.contentTypes.list(ctx, {});
 	},
 });
@@ -196,7 +205,7 @@ export const createEntry = mutation({
 		contentTypeId: v.string(),
 		data: v.any(),
 		locale: v.optional(v.string()),
-		userId: v.string(),
+		createdBy: v.string(),
 	},
 	returns: v.any(),
 	handler: async (ctx, args) => {
@@ -204,7 +213,7 @@ export const createEntry = mutation({
 			contentTypeId: args.contentTypeId,
 			data: args.data,
 			locale: args.locale,
-			userId: args.userId,
+			createdBy: args.createdBy,
 		});
 	},
 });
@@ -264,16 +273,14 @@ export const updateEntry = mutation({
 	args: {
 		id: v.string(),
 		data: v.any(),
-		locale: v.optional(v.string()),
-		userId: v.string(),
+		updatedBy: v.string(),
 	},
 	returns: v.any(),
 	handler: async (ctx, args) => {
 		return await cms.contentEntries.update(ctx, {
 			id: args.id,
 			data: args.data,
-			locale: args.locale,
-			userId: args.userId,
+			updatedBy: args.updatedBy,
 		});
 	},
 });
@@ -284,15 +291,15 @@ export const updateEntry = mutation({
 export const deleteEntry = mutation({
 	args: {
 		id: v.string(),
-		userId: v.string(),
-		permanent: v.optional(v.boolean()),
+		deletedBy: v.string(),
+		hardDelete: v.optional(v.boolean()),
 	},
 	returns: v.any(),
 	handler: async (ctx, args) => {
 		return await cms.contentEntries.delete(ctx, {
 			id: args.id,
-			userId: args.userId,
-			permanent: args.permanent,
+			deletedBy: args.deletedBy,
+			hardDelete: args.hardDelete,
 		});
 	},
 });
@@ -307,12 +314,12 @@ export const deleteEntry = mutation({
 export const publishEntry = mutation({
 	args: {
 		id: v.string(),
-		userId: v.string(),
+		updatedBy: v.string(),
 	},
 	returns: v.any(),
 	handler: async (ctx, args) => {
 		// Check permission first
-		const permission = await cms.hasPermissionForUser(ctx, args.userId, {
+		const permission = await cms.hasPermissionForUser(ctx, args.updatedBy, {
 			resource: "contentEntries",
 			action: "publish",
 		});
@@ -325,7 +332,7 @@ export const publishEntry = mutation({
 
 		return await cms.contentEntries.publish(ctx, {
 			id: args.id,
-			userId: args.userId,
+			updatedBy: args.updatedBy,
 		});
 	},
 });
@@ -336,13 +343,13 @@ export const publishEntry = mutation({
 export const unpublishEntry = mutation({
 	args: {
 		id: v.string(),
-		userId: v.string(),
+		updatedBy: v.string(),
 	},
 	returns: v.any(),
 	handler: async (ctx, args) => {
 		return await cms.contentEntries.unpublish(ctx, {
 			id: args.id,
-			userId: args.userId,
+			updatedBy: args.updatedBy,
 		});
 	},
 });
@@ -354,14 +361,14 @@ export const scheduleEntry = mutation({
 	args: {
 		id: v.string(),
 		publishAt: v.number(),
-		userId: v.string(),
+		updatedBy: v.string(),
 	},
 	returns: v.any(),
 	handler: async (ctx, args) => {
 		return await cms.contentEntries.schedule(ctx, {
 			id: args.id,
 			publishAt: args.publishAt,
-			userId: args.userId,
+			updatedBy: args.updatedBy,
 		});
 	},
 });
@@ -372,7 +379,7 @@ export const scheduleEntry = mutation({
 export const bulkPublish = mutation({
 	args: {
 		ids: v.array(v.string()),
-		userId: v.string(),
+		updatedBy: v.string(),
 	},
 	returns: v.any(),
 	handler: async (ctx, args) => {
@@ -381,7 +388,7 @@ export const bulkPublish = mutation({
 			try {
 				const result = await cms.contentEntries.publish(ctx, {
 					id: id,
-					userId: args.userId,
+					updatedBy: args.updatedBy,
 				});
 				results.push({ id, success: true, result });
 			} catch (error) {
@@ -410,8 +417,8 @@ export const getVersionHistory = query({
 	},
 	returns: v.any(),
 	handler: async (ctx, args) => {
-		return await cms.versions.list(ctx, {
-			contentEntryId: args.entryId,
+		return await cms.versions.getHistory(ctx, {
+			entryId: args.entryId,
 			paginationOpts: {
 				numItems: args.limit ?? 10,
 				cursor: null,
@@ -425,12 +432,16 @@ export const getVersionHistory = query({
  */
 export const getVersion = query({
 	args: {
-		versionId: v.string(),
+		entryId: v.string(),
+		versionId: v.optional(v.string()),
+		versionNumber: v.optional(v.number()),
 	},
 	returns: v.any(),
 	handler: async (ctx, args) => {
 		return await cms.versions.get(ctx, {
-			id: args.versionId,
+			entryId: args.entryId,
+			versionId: args.versionId,
+			versionNumber: args.versionNumber,
 		});
 	},
 });
@@ -442,14 +453,14 @@ export const rollbackToVersion = mutation({
 	args: {
 		entryId: v.string(),
 		versionNumber: v.number(),
-		userId: v.string(),
+		updatedBy: v.string(),
 	},
 	returns: v.any(),
 	handler: async (ctx, args) => {
-		return await cms.versions.restore(ctx, {
-			contentEntryId: args.entryId,
+		return await cms.versions.rollback(ctx, {
+			entryId: args.entryId,
 			versionNumber: args.versionNumber,
-			userId: args.userId,
+			updatedBy: args.updatedBy,
 		});
 	},
 });
@@ -460,15 +471,15 @@ export const rollbackToVersion = mutation({
 export const compareVersions = query({
 	args: {
 		entryId: v.string(),
-		versionA: v.number(),
-		versionB: v.number(),
+		fromVersionNumber: v.number(),
+		toVersionNumber: v.number(),
 	},
 	returns: v.any(),
 	handler: async (ctx, args) => {
 		return await cms.versions.compare(ctx, {
-			contentEntryId: args.entryId,
-			versionA: args.versionA,
-			versionB: args.versionB,
+			entryId: args.entryId,
+			fromVersionNumber: args.fromVersionNumber,
+			toVersionNumber: args.toVersionNumber,
 		});
 	},
 });
@@ -494,33 +505,25 @@ export const generateUploadUrl = mutation({
 export const createMediaAsset = mutation({
 	args: {
 		storageId: v.string(),
-		filename: v.string(),
+		name: v.string(),
 		mimeType: v.string(),
-		size: v.number(),
-		type: v.union(
-			v.literal("image"),
-			v.literal("video"),
-			v.literal("audio"),
-			v.literal("document"),
-			v.literal("other"),
-		),
-		folderId: v.optional(v.string()),
-		alt: v.optional(v.string()),
+		size: v.optional(v.number()),
+		parentId: v.optional(v.string()),
+		altText: v.optional(v.string()),
 		title: v.optional(v.string()),
-		userId: v.string(),
+		createdBy: v.string(),
 	},
 	returns: v.any(),
 	handler: async (ctx, args) => {
 		return await cms.mediaAssets.create(ctx, {
 			storageId: args.storageId,
-			filename: args.filename,
+			name: args.name,
 			mimeType: args.mimeType,
 			size: args.size,
-			type: args.type,
-			folderId: args.folderId,
-			alt: args.alt,
+			parentId: args.parentId,
+			altText: args.altText,
 			title: args.title,
-			userId: args.userId,
+			createdBy: args.createdBy,
 		});
 	},
 });
@@ -576,14 +579,14 @@ export const createMediaFolder = mutation({
 	args: {
 		name: v.string(),
 		parentId: v.optional(v.string()),
-		userId: v.string(),
+		createdBy: v.string(),
 	},
 	returns: v.any(),
 	handler: async (ctx, args) => {
 		return await cms.mediaFolders.create(ctx, {
 			name: args.name,
 			parentId: args.parentId,
-			userId: args.userId,
+			createdBy: args.createdBy,
 		});
 	},
 });
@@ -610,14 +613,14 @@ export const moveAsset = mutation({
 	args: {
 		assetId: v.string(),
 		targetFolderId: v.optional(v.string()),
-		userId: v.string(),
+		updatedBy: v.string(),
 	},
 	returns: v.any(),
 	handler: async (ctx, args) => {
 		return await cms.mediaAssets.update(ctx, {
 			id: args.assetId,
-			folderId: args.targetFolderId,
-			userId: args.userId,
+			parentId: args.targetFolderId,
+			updatedBy: args.updatedBy,
 		});
 	},
 });
@@ -634,7 +637,7 @@ export const createLocalizedEntry = mutation({
 		contentTypeId: v.string(),
 		data: v.any(),
 		locale: v.string(),
-		userId: v.string(),
+		createdBy: v.string(),
 	},
 	returns: v.any(),
 	handler: async (ctx, args) => {
@@ -642,7 +645,7 @@ export const createLocalizedEntry = mutation({
 			contentTypeId: args.contentTypeId,
 			data: args.data,
 			locale: args.locale,
-			userId: args.userId,
+			createdBy: args.createdBy,
 		});
 	},
 });
@@ -698,8 +701,9 @@ export const getLocaleConfig = query({
 
 /**
  * Check if a user has a specific permission.
+ * Uses mutation context because authorization hooks may need db/auth access.
  */
-export const checkPermission = query({
+export const checkPermission = mutation({
 	args: {
 		userId: v.string(),
 		resource: v.union(
@@ -742,8 +746,9 @@ export const getAllRoles = query({
 
 /**
  * Get a user's CMS role.
+ * Uses mutation context because the getUserRole hook may need db/auth access.
  */
-export const getUserRole = query({
+export const getUserRole = mutation({
 	args: {
 		userId: v.string(),
 	},

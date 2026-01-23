@@ -1,6 +1,37 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  /* Tempo - Primary slate blues */
+  --color-tempo-50: #f8fafc;
+  --color-tempo-100: #f1f5f9;
+  --color-tempo-200: #e2e8f0;
+  --color-tempo-300: #cbd5e1;
+  --color-tempo-400: #94a3b8;
+  --color-tempo-500: #64748b;
+  --color-tempo-600: #475569;
+  --color-tempo-700: #334155;
+  --color-tempo-800: #1e293b;
+  --color-tempo-900: #0f172a;
+
+  /* Accent - Warm tones */
+  --color-accent-muted: #f5f0eb;
+  --color-accent-warm: #e8ddd4;
+  --color-accent-coral: #d4a59a;
+  --color-accent-rose: #c9b1a1;
+
+  /* Status colors */
+  --color-status-planned: #94a3b8;
+  --color-status-progress: #60a5fa;
+  --color-status-completed: #86efac;
+  --color-status-feature: #c4b5fd;
+  --color-status-improvement: #93c5fd;
+  --color-status-fix: #fcd34d;
+  --color-status-breaking: #fca5a5;
+
+  /* Fonts */
+  --font-sans: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: "JetBrains Mono", Menlo, Monaco, monospace;
+}
 
 @layer base {
   :root {
@@ -85,7 +116,7 @@
   }
 
   .card-hover {
-    @apply card transition-all duration-200 hover:border-tempo-400 hover:shadow-lg hover:shadow-tempo-200/50;
+    @apply bg-white border-2 border-tempo-200 p-6 transition-all duration-200 hover:border-tempo-400 hover:shadow-lg hover:shadow-tempo-200/50;
   }
 
   /* Section Container */
@@ -136,7 +167,7 @@
   }
 
   .timeline-dot-accent {
-    @apply timeline-dot bg-accent-coral;
+    @apply absolute -left-2 top-0 w-4 h-4 bg-accent-coral border-2 border-white;
   }
 
   /* Status Column Headers */

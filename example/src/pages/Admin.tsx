@@ -16,22 +16,6 @@ import {
 
 type AdminView = "dashboard" | "content" | "content-types" | "media";
 
-interface ContentEntry {
-  _id: string;
-  slug?: string;
-  status: string;
-  data: Record<string, unknown>;
-  contentTypeId: string;
-  updatedAt: number;
-}
-
-interface ContentType {
-  _id: string;
-  name: string;
-  displayName: string;
-  fields?: Array<{ name: string }>;
-}
-
 function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
     draft: "bg-amber-100 text-amber-700 border-amber-200",
@@ -50,11 +34,8 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 function Dashboard({ onNavigate }: { onNavigate: (view: AdminView) => void }) {
-  // Use api.admin.* paths where the functions are defined via defineAdminAPI
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const contentTypes = useQuery((api as any).admin.contentTypes.list);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const entries = useQuery((api as any).admin.entries.list, {
+  const contentTypes = useQuery(api.contentTypes.list, {});
+  const entries = useQuery(api.entries.list, {
     paginationOpts: { numItems: 5, cursor: null },
   });
 
@@ -93,7 +74,7 @@ function Dashboard({ onNavigate }: { onNavigate: (view: AdminView) => void }) {
             </div>
             <div>
               <p className="text-2xl font-bold text-tempo-900">
-                {contentTypes?.length ?? "—"}
+                {contentTypes?.page.length ?? "—"}
               </p>
               <p className="text-sm text-tempo-500">Content Types</p>
             </div>
@@ -133,7 +114,7 @@ function Dashboard({ onNavigate }: { onNavigate: (view: AdminView) => void }) {
             </div>
           ) : entries.page.length > 0 ? (
             <div className="space-y-3">
-              {entries.page.slice(0, 5).map((entry: ContentEntry) => {
+              {entries.page.slice(0, 5).map((entry) => {
                 const data = entry.data as Record<string, unknown>;
                 const title = (data.title as string) || entry.slug || "Untitled";
                 return (
@@ -168,9 +149,9 @@ function Dashboard({ onNavigate }: { onNavigate: (view: AdminView) => void }) {
             <div className="flex items-center justify-center py-8">
               <Loader2 className="w-6 h-6 text-tempo-400 animate-spin" />
             </div>
-          ) : contentTypes.length > 0 ? (
+          ) : contentTypes.page.length > 0 ? (
             <div className="space-y-3">
-              {contentTypes.map((type: ContentType) => (
+              {contentTypes.page.map((type) => (
                 <div
                   key={type._id}
                   className="flex items-center justify-between py-2 border-b border-tempo-100 last:border-0"
@@ -201,20 +182,16 @@ function Dashboard({ onNavigate }: { onNavigate: (view: AdminView) => void }) {
 }
 
 function ContentList() {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const contentTypes = useQuery((api as any).admin.contentTypes.list);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const entries = useQuery((api as any).admin.entries.list, {
+  const contentTypes = useQuery(api.contentTypes.list, {});
+  const entries = useQuery(api.entries.list, {
     paginationOpts: { numItems: 50, cursor: null },
   });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const publishEntry = useMutation((api as any).admin.entries.publish);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const unpublishEntry = useMutation((api as any).admin.entries.unpublish);
+  const publishEntry = useMutation(api.entries.publish);
+  const unpublishEntry = useMutation(api.entries.unpublish);
 
   const [filter, setFilter] = useState<string>("all");
 
-  const filteredEntries = entries?.page.filter((entry: ContentEntry) => {
+  const filteredEntries = entries?.page.filter((entry) => {
     if (filter === "all") return true;
     return entry.status === filter;
   });
@@ -268,11 +245,11 @@ function ContentList() {
               </tr>
             </thead>
             <tbody>
-              {filteredEntries.map((entry: ContentEntry) => {
+              {filteredEntries.map((entry) => {
                 const data = entry.data as Record<string, unknown>;
                 const title = (data.title as string) || entry.slug || "Untitled";
-                const contentType = contentTypes?.find(
-                  (ct: ContentType) => ct._id === entry.contentTypeId
+                const contentType = contentTypes?.page.find(
+                  (ct) => ct._id === entry.contentTypeId
                 );
 
                 return (
@@ -290,7 +267,7 @@ function ContentList() {
                       <StatusBadge status={entry.status} />
                     </td>
                     <td className="px-4 py-3 text-sm text-tempo-500">
-                      {new Date(entry.updatedAt).toLocaleDateString()}
+                      {new Date(entry._creationTime).toLocaleDateString()}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-2">
@@ -336,8 +313,7 @@ function ContentList() {
 }
 
 function ContentTypesList() {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const contentTypes = useQuery((api as any).admin.contentTypes.list);
+  const contentTypes = useQuery(api.contentTypes.list, {});
 
   return (
     <div className="space-y-6">
@@ -355,9 +331,9 @@ function ContentTypesList() {
         <div className="flex items-center justify-center py-12">
           <Loader2 className="w-8 h-8 text-tempo-400 animate-spin" />
         </div>
-      ) : contentTypes.length > 0 ? (
+      ) : contentTypes.page.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {contentTypes.map((type: ContentType) => (
+          {contentTypes.page.map((type) => (
             <div key={type._id} className="card-hover">
               <div className="flex items-start gap-4">
                 <div className="w-10 h-10 bg-purple-100 flex items-center justify-center flex-shrink-0">
@@ -371,7 +347,7 @@ function ContentTypesList() {
                     {type.name}
                   </p>
                   <div className="mt-3 flex flex-wrap gap-1">
-                    {type.fields?.slice(0, 4).map((field: { name: string }) => (
+                    {type.fields?.slice(0, 4).map((field) => (
                       <span
                         key={field.name}
                         className="text-xs bg-tempo-100 text-tempo-600 px-2 py-0.5"
