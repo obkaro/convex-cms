@@ -16,7 +16,7 @@
  *   contentTypeFactory,
  *   contentEntryFactory,
  *   assertContentType,
- * } from "@convex-cms/core/test";
+ * } from "convex-cms/test";
  * import schema from "./schema";
  *
  * const modules = import.meta.glob("./**\/*.ts");
@@ -183,7 +183,7 @@ export type MediaFolderData = Omit<
  * @example
  * ```typescript
  * import { convexTest } from "convex-test";
- * import { register } from "@convex-cms/core/test";
+ * import { register } from "convex-cms/test";
  * import schema from "./schema";
  *
  * const modules = import.meta.glob("./**\/*.ts");

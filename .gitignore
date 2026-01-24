@@ -9,9 +9,6 @@ pnpm-debug.log*
 dist/
 *.tsbuildinfo
 
-# Convex generated files
-**/convex/_generated/
-
 # TanStack Start generated files
 **/routeTree.gen.ts
 **/.vinxi/
@@ -37,6 +34,7 @@ playwright-report/
 .DS_Store
 
 # Automaker artifacts
+.automaker/
 .automaker/events/
 .automaker/features/
 .automaker/features/**/*.bak*

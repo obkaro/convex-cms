@@ -8,7 +8,7 @@
  * @example
  * ```typescript
  * import { v } from "convex/values";
- * import { defineContentType, createContentSchema, createTypedCmsClient } from "@convex-cms/core";
+ * import { defineContentType, createContentSchema, createTypedCmsClient } from "convex-cms";
  * import { components } from "./_generated/api";
  *
  * // Define content types with validators
@@ -629,7 +629,7 @@ export class TypedContentEntriesApiImpl<
  * @example
  * ```typescript
  * import { v } from "convex/values";
- * import { defineContentType, createContentSchema, createTypedCmsClient } from "@convex-cms/core";
+ * import { defineContentType, createContentSchema, createTypedCmsClient } from "convex-cms";
  * import { components } from "./_generated/api";
  *
  * // Define content types

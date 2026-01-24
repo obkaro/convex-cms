@@ -15,9 +15,9 @@
 		"jsx": "react-jsx",
 		"paths": {
 			"~/*": ["./src/*"],
-			"@convex-cms/core": ["../src/client/index.ts"],
-			"@convex-cms/core/react": ["../src/react/index.ts"],
-			"@convex-cms/core/*": ["../src/client/*"]
+			"convex-cms": ["../src/client/index.ts"],
+			"convex-cms/react": ["../src/react/index.ts"],
+			"convex-cms/*": ["../src/client/*"]
 		}
 	},
 	"include": ["src", "convex"],

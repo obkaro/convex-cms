@@ -51,7 +51,7 @@ This document outlines the target users, their goals, use cases, and interaction
 **Key Flow - Blog Setup**:
 ```
 Day 1:
-  npm install @convex-cms/core
+  npm install convex-cms
   → Add to convex.config.ts
   → npx convex dev
   → npx convex-cms admin
@@ -224,7 +224,7 @@ Agent Content Creation:
 
 **Agent Tool Integration**:
 ```typescript
-import { createCmsTools } from "@convex-cms/core";
+import { createCmsTools } from "convex-cms";
 
 const agent = new Agent({
   tools: [
@@ -462,7 +462,7 @@ Integration:
 Developer discovers Convex CMS
          │
          ▼
-    npm install @convex-cms/core
+    npm install convex-cms
          │
          ▼
     Add to convex.config.ts
@@ -692,7 +692,7 @@ Auditor requests content change history
 
 ```bash
 # Install component
-npm install @convex-cms/core
+npm install convex-cms
 
 # Launch admin panel
 npx convex-cms admin

@@ -3235,7 +3235,7 @@ export class MediaVariantsApi {
  *
  * @example
  * ```typescript
- * import { createCmsClient } from "@convex-cms/core";
+ * import { createCmsClient } from "convex-cms";
  * import { components } from "./_generated/api";
  *
  * export const cms = createCmsClient(components.convexCms, {
@@ -3914,7 +3914,7 @@ export interface ResourcePermissionGranted {
  *
  * @example
  * ```typescript
- * import { createCmsClient } from "@convex-cms/core";
+ * import { createCmsClient } from "convex-cms";
  * import { components } from "./_generated/api";
  *
  * // Create with default configuration

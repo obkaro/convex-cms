@@ -1,5 +1,5 @@
 /**
- * @convex-cms/core
+ * convex-cms
  *
  * A developer-first Convex Component for content management with
  * flexible RBAC and AI-ready architecture.
@@ -8,7 +8,7 @@
  * ```typescript
  * // Install the component in convex/convex.config.ts
  * import { defineApp } from "convex/server";
- * import convexCms from "@convex-cms/core/convex.config";
+ * import convexCms from "convex-cms/convex.config";
  *
  * const app = defineApp();
  * app.use(convexCms);
@@ -18,7 +18,7 @@
  * @example
  * ```typescript
  * // Create a configured CMS client with typed methods and RBAC
- * import { createCmsClient } from "@convex-cms/core";
+ * import { createCmsClient } from "convex-cms";
  * import { components } from "./_generated/api";
  *
  * export const cms = createCmsClient(components.convexCms, {
@@ -253,7 +253,7 @@ export {
  *
  * @example
  * ```typescript
- * import { createCmsClient } from "@convex-cms/core";
+ * import { createCmsClient } from "convex-cms";
  * import { components } from "./_generated/api";
  *
  * // Create with default configuration

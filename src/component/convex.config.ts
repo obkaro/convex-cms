@@ -15,7 +15,7 @@ import { defineComponent } from "convex/server";
  * ```typescript
  * // In your app's convex/convex.config.ts:
  * import { defineApp } from "convex/server";
- * import convexCms from "@convex-cms/core/convex.config";
+ * import convexCms from "convex-cms/convex.config";
  *
  * const app = defineApp();
  * app.use(convexCms);
@@ -26,7 +26,7 @@ import { defineComponent } from "convex/server";
  * @example
  * ```typescript
  * // Using the component with configuration:
- * import { createCmsClient, type ComponentConfig } from "@convex-cms/core";
+ * import { createCmsClient, type ComponentConfig } from "convex-cms";
  *
  * const config: ComponentConfig = {
  *   defaultLocale: "en-US",

@@ -12,7 +12,7 @@
  *
  * @example
  * ```typescript
- * import { DEFAULT_ROLES, hasPermission, type RoleName } from '@convex-cms/core';
+ * import { DEFAULT_ROLES, hasPermission, type RoleName } from 'convex-cms';
  *
  * // Check if a role has a specific permission
  * if (hasPermission('editor', { resource: 'contentEntries', action: 'update' })) {

@@ -8,7 +8,7 @@
  * @example
  * ```typescript
  * import { v } from "convex/values";
- * import { defineContentType } from "@convex-cms/core";
+ * import { defineContentType } from "convex-cms";
  *
  * export const blogPost = defineContentType({
  *   name: "blog_post",
@@ -100,7 +100,7 @@ function validateContentTypeName(name: string): void {
  *
  * ```typescript
  * import { v, Infer } from "convex/values";
- * import { defineContentType } from "@convex-cms/core";
+ * import { defineContentType } from "convex-cms";
  *
  * export const blogPost = defineContentType({
  *   name: "blog_post",
@@ -193,7 +193,7 @@ export function defineContentType<
  *
  * @example
  * ```typescript
- * import { createContentSchema } from "@convex-cms/core";
+ * import { createContentSchema } from "convex-cms";
  *
  * export const contentSchema = createContentSchema({
  *   blogPost,

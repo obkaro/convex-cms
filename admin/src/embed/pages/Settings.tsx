@@ -1,25 +1,19 @@
 /**
  * Embed Settings Page
  *
- * CMS configuration and settings.
+ * Thin wrapper around the shared SettingsPage component.
+ * Provides embed navigation and API access.
  */
 
-import { CmsPageHeader } from "~/components/cmsds/CmsPageHeader";
+import { useApi } from "../contexts/ApiContext";
+import { useEmbedNavigation } from "../navigation";
+import { useEmbedAdapter } from "~/lib/embed-adapter";
+import { SettingsPage } from "~/pages";
 
 export function EmbedSettings() {
-  return (
-    <div className="space-y-6">
-      <CmsPageHeader
-        title="Settings"
-        description="Configure your content management system"
-      />
+  const api = useApi();
+  const embedNav = useEmbedNavigation();
+  const navigation = useEmbedAdapter(embedNav);
 
-      <div className="rounded-lg border border-border bg-card p-6">
-        <h3 className="mb-4 font-semibold text-foreground">General Settings</h3>
-        <p className="text-sm text-muted-foreground">
-          Settings configuration is available in the standalone admin application.
-        </p>
-      </div>
-    </div>
-  );
+  return <SettingsPage api={api as any} navigation={navigation} />;
 }

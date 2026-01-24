@@ -1,6 +1,6 @@
 # Convex CMS Example App
 
-A comprehensive example demonstrating all features of `@convex-cms/core`.
+A comprehensive example demonstrating all features of `convex-cms`.
 
 ## Getting Started
 

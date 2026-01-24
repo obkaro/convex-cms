@@ -15,8 +15,8 @@
 		"outDir": "./dist",
 		"rootDir": "./src",
 		"paths": {
-			"@convex-cms/core": ["./src/client/index.ts"],
-			"@convex-cms/core/*": ["./src/*"]
+			"convex-cms": ["./src/client/index.ts"],
+			"convex-cms/*": ["./src/*"]
 		}
 	},
 	"include": ["src/**/*"],

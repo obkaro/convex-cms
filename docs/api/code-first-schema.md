@@ -21,7 +21,7 @@ The code-first approach is ideal when you want:
 
 ```typescript
 import { v } from "convex/values";
-import { defineContentType, createContentSchema, createTypedCmsClient } from "@convex-cms/core";
+import { defineContentType, createContentSchema, createTypedCmsClient } from "convex-cms";
 import { components } from "./_generated/api";
 
 // 1. Define content types with Convex validators
@@ -373,7 +373,7 @@ function toFieldDefinitions(
 After defining content types in code, register them in the database:
 
 ```typescript
-import { toFieldDefinitions } from "@convex-cms/core";
+import { toFieldDefinitions } from "convex-cms";
 
 // In a mutation or setup script:
 const blogPost = defineContentType({ ... });
@@ -397,7 +397,7 @@ await cms.contentTypes.create(ctx, {
 ```typescript
 // convex/schema.ts
 import { v } from "convex/values";
-import { defineContentType, createContentSchema } from "@convex-cms/core";
+import { defineContentType, createContentSchema } from "convex-cms";
 
 export const blogPost = defineContentType({
   name: "blog_post",
@@ -500,7 +500,7 @@ export type AuthorData = Infer<typeof author.validator>;
 
 ```typescript
 // convex/cms.ts
-import { createTypedCmsClient } from "@convex-cms/core";
+import { createTypedCmsClient } from "convex-cms";
 import { components } from "./_generated/api";
 import { contentSchema } from "./schema";
 

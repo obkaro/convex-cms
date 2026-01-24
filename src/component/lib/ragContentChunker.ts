@@ -13,7 +13,7 @@
  *
  * @example
  * ```typescript
- * import { extractContentForRag, chunkContentEntry } from "@convex-cms/core/lib";
+ * import { extractContentForRag, chunkContentEntry } from "convex-cms/lib";
  * import { rag } from "@convex-dev/rag";
  *
  * // In a Convex action

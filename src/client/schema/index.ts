@@ -8,7 +8,7 @@
  *
  * ```typescript
  * import { v, Infer } from "convex/values";
- * import { defineContentType, InferContentType } from "@convex-cms/core";
+ * import { defineContentType, InferContentType } from "convex-cms";
  *
  * // Define a content type with a Convex validator
  * export const blogPost = defineContentType({
@@ -32,7 +32,7 @@
  * ## Creating a Schema
  *
  * ```typescript
- * import { createContentSchema, InferSchema } from "@convex-cms/core";
+ * import { createContentSchema, InferSchema } from "convex-cms";
  *
  * // Combine multiple content types into a schema
  * export const contentSchema = createContentSchema({
@@ -53,7 +53,7 @@
  * ## Using with CMS Client
  *
  * ```typescript
- * import { createCmsClient } from "@convex-cms/core";
+ * import { createCmsClient } from "convex-cms";
  * import { components } from "./_generated/api";
  * import { contentSchema } from "./schema";
  *
@@ -76,7 +76,11 @@
 // Core Functions
 // =============================================================================
 
-export { defineContentType, createContentSchema, toFieldDefinitions } from "./defineContentType.js";
+export {
+	defineContentType,
+	createContentSchema,
+	toFieldDefinitions,
+} from "./defineContentType.js";
 
 // =============================================================================
 // Types
@@ -84,25 +88,28 @@ export { defineContentType, createContentSchema, toFieldDefinitions } from "./de
 
 // Core definition types
 export type {
-  ContentTypeConfig,
-  ContentTypeDefinition,
-  ContentTypeMeta,
-  FieldMeta,
-  FieldRenderAs,
+	ContentTypeConfig,
+	ContentTypeDefinition,
+	ContentTypeMeta,
+	FieldMeta,
+	FieldRenderAs,
 } from "./types.js";
 
 // Type inference utilities
 export type {
-  InferContentType,
-  InferSchema,
-  ContentSchema,
-  SchemaContentTypeNames,
-  SchemaContentType,
-  ContentTypeFieldNames,
+	InferContentType,
+	InferSchema,
+	ContentSchema,
+	SchemaContentTypeNames,
+	SchemaContentType,
+	ContentTypeFieldNames,
 } from "./types.js";
 
 // Schema instance type
-export type { ContentSchemaInstance, DatabaseFieldDefinition } from "./defineContentType.js";
+export type {
+	ContentSchemaInstance,
+	DatabaseFieldDefinition,
+} from "./defineContentType.js";
 
 // Runtime utilities
 export { isContentTypeDefinition } from "./types.js";
@@ -111,26 +118,29 @@ export { isContentTypeDefinition } from "./types.js";
 // Typed Client Factory
 // =============================================================================
 
-export { createTypedCmsClient, TypedContentEntriesApiImpl } from "./typedClient.js";
+export {
+	createTypedCmsClient,
+	TypedContentEntriesApiImpl,
+} from "./typedClient.js";
 
 // =============================================================================
 // Schema Drift Detection
 // =============================================================================
 
 export {
-  detectSchemaDrift,
-  formatDriftReport,
-  hasErrors,
-  filterReportByContentTypes,
+	detectSchemaDrift,
+	formatDriftReport,
+	hasErrors,
+	filterReportByContentTypes,
 } from "./schemaDrift.js";
 
 export type {
-  DriftSeverity,
-  DriftType,
-  DriftIssue,
-  DriftSummary,
-  SchemaDriftReport,
-  DetectDriftOptions,
+	DriftSeverity,
+	DriftType,
+	DriftIssue,
+	DriftSummary,
+	SchemaDriftReport,
+	DetectDriftOptions,
 } from "./schemaDrift.js";
 
 // =============================================================================
@@ -138,15 +148,12 @@ export type {
 // =============================================================================
 
 export {
-  generateTypesFromDatabase,
-  generateTypesFromDefinitions,
-  validateGeneratedCode,
+	generateTypesFromDatabase,
+	generateTypesFromDefinitions,
+	validateGeneratedCode,
 } from "./codegen.js";
 
-export type {
-  CodegenOptions,
-  CodegenResult,
-} from "./codegen.js";
+export type { CodegenOptions, CodegenResult } from "./codegen.js";
 
 // =============================================================================
 // Typed Client Types
@@ -154,16 +161,16 @@ export type {
 
 // Typed content entry types
 export type {
-  TypedContentEntry,
-  TypedPaginationResult,
-  TypedContentEntriesApi,
-  TypedCreateEntryOptions,
-  TypedUpdateEntryOptions,
-  TypedListEntriesOptions,
-  SchemaDataType,
-  ValidContentTypeName,
-  HasContentType,
-  GetContentTypeDefinition,
-  TypedCmsClientConfig,
-  TypedCmsClient,
+	TypedContentEntry,
+	TypedPaginationResult,
+	TypedContentEntriesApi,
+	TypedCreateEntryOptions,
+	TypedUpdateEntryOptions,
+	TypedListEntriesOptions,
+	SchemaDataType,
+	ValidContentTypeName,
+	HasContentType,
+	GetContentTypeDefinition,
+	TypedCmsClientConfig,
+	TypedCmsClient,
 } from "./typedClient.js";

@@ -182,7 +182,7 @@ const paginationOptsValidator = v.object({
  * @example
  * ```typescript
  * // convex/admin.ts
- * import { defineAdminAPI } from "@convex-cms/core";
+ * import { defineAdminAPI } from "convex-cms";
  * import { components } from "./_generated/api";
  *
  * export const { contentTypes, entries, media, stats } = defineAdminAPI(
