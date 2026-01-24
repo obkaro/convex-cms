@@ -88,27 +88,21 @@ export {
   defineAdminAPI,
   type AdminApiOptions,
   type AdminOperation,
-} from "./adminApi.js";
+} from "./admin/index.js";
 
 // --- Admin API Types ---
-export type {
-  AdminApiContract,
-  AdminContentType,
-  AdminContentEntry,
-  AdminMediaItem,
-  AdminMoveMediaAssetsResult,
-  AdminDeleteContentTypeResult,
-  AdminPaginatedResult,
-  PaginatedContentTypes,
-  PaginatedContentEntries,
-  PaginatedMediaItems,
-  // Backwards compatibility aliases
-  ContentTypeDoc,
-  ContentEntryDoc,
-  MediaItemDoc,
-  MediaFolderDoc,
-  MoveMediaAssetsResult,
-} from "./admin-api-types.js";
+// export type {
+//   AdminApi,
+//   AdminContentType,
+//   AdminContentEntry,
+//   AdminMediaItem,
+//   AdminMoveMediaAssetsResult,
+//   AdminDeleteContentTypeResult,
+//   AdminPaginatedResult,
+//   PaginatedContentTypes,
+//   PaginatedContentEntries,
+//   PaginatedMediaItems,
+// } from "./adminApiTypes.js";
 
 // --- CMS Client Factory ---
 import {
@@ -1319,4 +1313,4 @@ export {
   adminConfigSchema,
   type AdminConfig,
   type NavItem,
-} from "./admin-config.js";
+} from "./adminConfig.js";

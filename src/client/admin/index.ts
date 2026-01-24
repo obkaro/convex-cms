@@ -1,0 +1,352 @@
+/**
+ * Admin API - Main Entry Point
+ *
+ * Composes all domain modules into a single defineAdminAPI function.
+ * Provides both flat exports (for pages) and namespaced exports (for components).
+ *
+ * @example
+ * ```typescript
+ * // convex/admin.ts
+ * import { defineAdminAPI } from "convex-cms";
+ * import { components } from "./_generated/api";
+ *
+ * // Export all flat operations for direct use
+ * export const {
+ *   // Flat exports
+ *   listContentTypes,
+ *   getContentType,
+ *   createEntry,
+ *   // ... or use namespaced
+ *   contentTypes,
+ *   entries,
+ *   media,
+ * } = defineAdminAPI(components.convexCms);
+ * ```
+ */
+
+import type { ComponentApi } from "../../component/_generated/component.js";
+import type { AdminApiOptions, AdminOperation, AuthContext } from "./types.js";
+
+import { createDashboardOperations } from "./dashboard.js";
+import { createContentTypesOperations } from "./contentTypes.js";
+import { createEntriesOperations } from "./entries.js";
+import { createBulkOperations } from "./bulk.js";
+import { createTrashOperations } from "./trash.js";
+import { createContentLockOperations } from "./contentLock.js";
+import { createVersionsOperations } from "./versions.js";
+import { createMediaOperations } from "./media.js";
+import { createTaxonomiesOperations } from "./taxonomies.js";
+
+export function defineAdminAPI(
+  component: ComponentApi,
+  options: AdminApiOptions = {}
+) {
+  const { auth } = options;
+
+  const checkAuth = async (
+    ctx: AuthContext,
+    operation: AdminOperation
+  ): Promise<string | null> => {
+    if (auth) {
+      return await auth(ctx, operation);
+    }
+    return null;
+  };
+
+  // Create all domain operations
+  const dashboard = createDashboardOperations(component, checkAuth);
+  const contentTypesOps = createContentTypesOperations(component, checkAuth);
+  const entriesOps = createEntriesOperations(component, checkAuth);
+  const bulkOps = createBulkOperations(component, checkAuth);
+  const trashOps = createTrashOperations(component, checkAuth);
+  const contentLockOps = createContentLockOperations(component, checkAuth);
+  const versionsOps = createVersionsOperations(component, checkAuth);
+  const mediaOps = createMediaOperations(component, checkAuth);
+  const taxonomiesOps = createTaxonomiesOperations(component, checkAuth);
+
+  return {
+    // =========================================================================
+    // FLAT EXPORTS (for pages that need specific operations)
+    // =========================================================================
+
+    // Dashboard
+    getDashboardStats: dashboard.getDashboardStats,
+
+    // Content Types
+    listContentTypes: contentTypesOps.listContentTypes,
+    getContentType: contentTypesOps.getContentType,
+    createContentType: contentTypesOps.createContentType,
+    updateContentType: contentTypesOps.updateContentType,
+    deleteContentType: contentTypesOps.deleteContentType,
+
+    // Entries
+    listEntries: entriesOps.listEntries,
+    getEntry: entriesOps.getEntry,
+    createEntry: entriesOps.createEntry,
+    updateEntry: entriesOps.updateEntry,
+    publishEntry: entriesOps.publishEntry,
+    unpublishEntry: entriesOps.unpublishEntry,
+    deleteEntry: entriesOps.deleteEntry,
+    duplicateEntry: entriesOps.duplicateEntry,
+    scheduleEntry: entriesOps.scheduleEntry,
+    cancelScheduledEntry: entriesOps.cancelScheduledEntry,
+    getScheduledEntries: entriesOps.getScheduledEntries,
+    restoreEntry: entriesOps.restoreEntry,
+    getEntryBySlug: entriesOps.getEntryBySlug,
+    getEntryBySlugAndTypeName: entriesOps.getEntryBySlugAndTypeName,
+
+    // Bulk Operations
+    bulkPublish: bulkOps.bulkPublish,
+    bulkUnpublish: bulkOps.bulkUnpublish,
+    bulkDelete: bulkOps.bulkDelete,
+    bulkUpdate: bulkOps.bulkUpdate,
+    bulkRestore: bulkOps.bulkRestore,
+
+    // Trash
+    getTrashConfig: trashOps.getTrashConfig,
+    listTrash: trashOps.listTrash,
+    getTrashStats: trashOps.getTrashStats,
+    updateTrashConfig: trashOps.updateTrashConfig,
+    emptyTrash: trashOps.emptyTrash,
+    runTrashCleanup: trashOps.runTrashCleanup,
+
+    // Content Lock
+    checkContentLock: contentLockOps.checkContentLock,
+    listLockedContent: contentLockOps.listLockedContent,
+    acquireContentLock: contentLockOps.acquireContentLock,
+    releaseContentLock: contentLockOps.releaseContentLock,
+    renewContentLock: contentLockOps.renewContentLock,
+    forceReleaseContentLock: contentLockOps.forceReleaseContentLock,
+
+    // Versions
+    getVersionHistory: versionsOps.getVersionHistory,
+    getVersion: versionsOps.getVersion,
+    compareVersions: versionsOps.compareVersions,
+    rollbackVersion: versionsOps.rollbackVersion,
+
+    // Media Assets
+    listMediaAssets: mediaOps.listMediaAssets,
+    getMediaAsset: mediaOps.getMediaAsset,
+    createMediaAsset: mediaOps.createMediaAsset,
+    updateMediaAsset: mediaOps.updateMediaAsset,
+    deleteMediaAsset: mediaOps.deleteMediaAsset,
+    restoreMediaAsset: mediaOps.restoreMediaAsset,
+    permanentDeleteMediaAsset: mediaOps.permanentDeleteMediaAsset,
+    bulkPermanentDeleteMediaAssets: mediaOps.bulkPermanentDeleteMediaAssets,
+    moveMediaAssets: mediaOps.moveMediaAssets,
+    getMediaTrashCount: mediaOps.getMediaTrashCount,
+
+    // Media Folders
+    listMediaFolders: mediaOps.listMediaFolders,
+    getMediaFolder: mediaOps.getMediaFolder,
+    getMediaFolderTree: mediaOps.getMediaFolderTree,
+    createMediaFolder: mediaOps.createMediaFolder,
+    updateMediaFolder: mediaOps.updateMediaFolder,
+    moveMediaFolder: mediaOps.moveMediaFolder,
+    deleteMediaFolder: mediaOps.deleteMediaFolder,
+    restoreMediaFolder: mediaOps.restoreMediaFolder,
+
+    // Media Variants
+    listMediaVariants: mediaOps.listMediaVariants,
+    getMediaVariant: mediaOps.getMediaVariant,
+    getBestMediaVariant: mediaOps.getBestMediaVariant,
+    getMediaResponsiveSrcset: mediaOps.getMediaResponsiveSrcset,
+    getMediaVariantPresets: mediaOps.getMediaVariantPresets,
+    getMediaAssetWithVariants: mediaOps.getMediaAssetWithVariants,
+    createMediaVariant: mediaOps.createMediaVariant,
+    requestMediaVariantGeneration: mediaOps.requestMediaVariantGeneration,
+    deleteMediaVariant: mediaOps.deleteMediaVariant,
+    deleteMediaAssetVariants: mediaOps.deleteMediaAssetVariants,
+    generateMediaVariantsFromPresets: mediaOps.generateMediaVariantsFromPresets,
+    restoreMediaVariant: mediaOps.restoreMediaVariant,
+
+    // Upload
+    generateUploadUrl: mediaOps.generateUploadUrl,
+
+    // Taxonomies
+    getTaxonomy: taxonomiesOps.getTaxonomy,
+    listTaxonomies: taxonomiesOps.listTaxonomies,
+    createTaxonomy: taxonomiesOps.createTaxonomy,
+    updateTaxonomy: taxonomiesOps.updateTaxonomy,
+    deleteTaxonomy: taxonomiesOps.deleteTaxonomy,
+    restoreTaxonomy: taxonomiesOps.restoreTaxonomy,
+
+    // Terms
+    getTerm: taxonomiesOps.getTerm,
+    listTerms: taxonomiesOps.listTerms,
+    getTermsHierarchy: taxonomiesOps.getTermsHierarchy,
+    suggestTerms: taxonomiesOps.suggestTerms,
+    countTerms: taxonomiesOps.countTerms,
+    createTerm: taxonomiesOps.createTerm,
+    updateTerm: taxonomiesOps.updateTerm,
+    deleteTerm: taxonomiesOps.deleteTerm,
+    restoreTerm: taxonomiesOps.restoreTerm,
+
+    // Entry-Term Relations
+    getTermsByEntry: taxonomiesOps.getTermsByEntry,
+    getEntriesByTerm: taxonomiesOps.getEntriesByTerm,
+    setEntryTerms: taxonomiesOps.setEntryTerms,
+    addTermToEntry: taxonomiesOps.addTermToEntry,
+    removeTermFromEntry: taxonomiesOps.removeTermFromEntry,
+    createTermAndAddToEntry: taxonomiesOps.createTermAndAddToEntry,
+
+    // Media-Term Relations
+    getTermsByMedia: taxonomiesOps.getTermsByMedia,
+    getMediaByTerm: taxonomiesOps.getMediaByTerm,
+    setMediaTerms: taxonomiesOps.setMediaTerms,
+    addTermToMedia: taxonomiesOps.addTermToMedia,
+    removeTermFromMedia: taxonomiesOps.removeTermFromMedia,
+    createTermAndAddToMedia: taxonomiesOps.createTermAndAddToMedia,
+
+    // =========================================================================
+    // NAMESPACED EXPORTS (for components/modules that work with a domain)
+    // =========================================================================
+
+    stats: {
+      getDashboardStats: dashboard.getDashboardStats,
+    },
+
+    contentTypes: {
+      list: contentTypesOps.listContentTypes,
+      get: contentTypesOps.getContentType,
+      create: contentTypesOps.createContentType,
+      update: contentTypesOps.updateContentType,
+      remove: contentTypesOps.deleteContentType,
+    },
+
+    entries: {
+      list: entriesOps.listEntries,
+      get: entriesOps.getEntry,
+      create: entriesOps.createEntry,
+      update: entriesOps.updateEntry,
+      publish: entriesOps.publishEntry,
+      unpublish: entriesOps.unpublishEntry,
+      remove: entriesOps.deleteEntry,
+      duplicate: entriesOps.duplicateEntry,
+      schedule: entriesOps.scheduleEntry,
+      cancelSchedule: entriesOps.cancelScheduledEntry,
+      getScheduled: entriesOps.getScheduledEntries,
+      restore: entriesOps.restoreEntry,
+      getBySlug: entriesOps.getEntryBySlug,
+      getBySlugAndTypeName: entriesOps.getEntryBySlugAndTypeName,
+    },
+
+    bulk: {
+      publish: bulkOps.bulkPublish,
+      unpublish: bulkOps.bulkUnpublish,
+      delete: bulkOps.bulkDelete,
+      update: bulkOps.bulkUpdate,
+      restore: bulkOps.bulkRestore,
+    },
+
+    trash: {
+      getConfig: trashOps.getTrashConfig,
+      list: trashOps.listTrash,
+      getStats: trashOps.getTrashStats,
+      updateConfig: trashOps.updateTrashConfig,
+      empty: trashOps.emptyTrash,
+      runCleanup: trashOps.runTrashCleanup,
+    },
+
+    contentLock: {
+      check: contentLockOps.checkContentLock,
+      listLocked: contentLockOps.listLockedContent,
+      acquire: contentLockOps.acquireContentLock,
+      release: contentLockOps.releaseContentLock,
+      renew: contentLockOps.renewContentLock,
+      forceRelease: contentLockOps.forceReleaseContentLock,
+    },
+
+    versions: {
+      getHistory: versionsOps.getVersionHistory,
+      get: versionsOps.getVersion,
+      compare: versionsOps.compareVersions,
+      rollback: versionsOps.rollbackVersion,
+    },
+
+    media: {
+      list: mediaOps.listMediaAssets,
+      get: mediaOps.getMediaAsset,
+      create: mediaOps.createMediaAsset,
+      update: mediaOps.updateMediaAsset,
+      remove: mediaOps.deleteMediaAsset,
+      restore: mediaOps.restoreMediaAsset,
+      permanentDelete: mediaOps.permanentDeleteMediaAsset,
+      bulkPermanentDelete: mediaOps.bulkPermanentDeleteMediaAssets,
+      move: mediaOps.moveMediaAssets,
+      getTrashCount: mediaOps.getMediaTrashCount,
+      generateUploadUrl: mediaOps.generateUploadUrl,
+
+      folders: {
+        list: mediaOps.listMediaFolders,
+        get: mediaOps.getMediaFolder,
+        getTree: mediaOps.getMediaFolderTree,
+        create: mediaOps.createMediaFolder,
+        update: mediaOps.updateMediaFolder,
+        move: mediaOps.moveMediaFolder,
+        remove: mediaOps.deleteMediaFolder,
+        restore: mediaOps.restoreMediaFolder,
+      },
+
+      variants: {
+        list: mediaOps.listMediaVariants,
+        get: mediaOps.getMediaVariant,
+        getBest: mediaOps.getBestMediaVariant,
+        getResponsiveSrcset: mediaOps.getMediaResponsiveSrcset,
+        getPresets: mediaOps.getMediaVariantPresets,
+        getAssetWithVariants: mediaOps.getMediaAssetWithVariants,
+        create: mediaOps.createMediaVariant,
+        requestGeneration: mediaOps.requestMediaVariantGeneration,
+        remove: mediaOps.deleteMediaVariant,
+        deleteForAsset: mediaOps.deleteMediaAssetVariants,
+        generateFromPresets: mediaOps.generateMediaVariantsFromPresets,
+        restore: mediaOps.restoreMediaVariant,
+      },
+    },
+
+    taxonomies: {
+      get: taxonomiesOps.getTaxonomy,
+      list: taxonomiesOps.listTaxonomies,
+      create: taxonomiesOps.createTaxonomy,
+      update: taxonomiesOps.updateTaxonomy,
+      remove: taxonomiesOps.deleteTaxonomy,
+      restore: taxonomiesOps.restoreTaxonomy,
+
+      terms: {
+        get: taxonomiesOps.getTerm,
+        list: taxonomiesOps.listTerms,
+        getHierarchy: taxonomiesOps.getTermsHierarchy,
+        suggest: taxonomiesOps.suggestTerms,
+        count: taxonomiesOps.countTerms,
+        create: taxonomiesOps.createTerm,
+        update: taxonomiesOps.updateTerm,
+        remove: taxonomiesOps.deleteTerm,
+        restore: taxonomiesOps.restoreTerm,
+      },
+
+      entryRelations: {
+        getTermsByEntry: taxonomiesOps.getTermsByEntry,
+        getEntriesByTerm: taxonomiesOps.getEntriesByTerm,
+        setTerms: taxonomiesOps.setEntryTerms,
+        addTerm: taxonomiesOps.addTermToEntry,
+        removeTerm: taxonomiesOps.removeTermFromEntry,
+        createAndAdd: taxonomiesOps.createTermAndAddToEntry,
+      },
+
+      mediaRelations: {
+        getTermsByMedia: taxonomiesOps.getTermsByMedia,
+        getMediaByTerm: taxonomiesOps.getMediaByTerm,
+        setTerms: taxonomiesOps.setMediaTerms,
+        addTerm: taxonomiesOps.addTermToMedia,
+        removeTerm: taxonomiesOps.removeTermFromMedia,
+        createAndAdd: taxonomiesOps.createTermAndAddToMedia,
+      },
+    },
+  };
+}
+
+// Re-export types
+export type { AdminApiOptions, AdminOperation } from "./types.js";
+
+// Re-export validators and derived types
+export * from "./validators.js";
