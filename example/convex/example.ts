@@ -224,13 +224,11 @@ export const createEntry = mutation({
 export const getEntry = query({
 	args: {
 		id: v.string(),
-		locale: v.optional(v.string()),
 	},
 	returns: v.any(),
 	handler: async (ctx, args) => {
 		return await cms.contentEntries.get(ctx, {
 			id: args.id,
-			locale: args.locale,
 		});
 	},
 });
@@ -551,10 +549,8 @@ export const listMediaAssets = query({
 		return await cms.mediaAssets.list(ctx, {
 			folderId: args.folderId,
 			type: args.type,
-			paginationOpts: {
-				numItems: args.limit ?? 24,
-				cursor: args.cursor ?? null,
-			},
+			limit: args.limit ?? 24,
+			cursor: args.cursor,
 		});
 	},
 });
@@ -652,6 +648,7 @@ export const createLocalizedEntry = mutation({
 
 /**
  * Get an entry with locale fallback resolution.
+ * Note: Locale support is configured via component config.
  */
 export const getWithLocaleFallback = query({
 	args: {
@@ -660,24 +657,21 @@ export const getWithLocaleFallback = query({
 	},
 	returns: v.any(),
 	handler: async (ctx, args) => {
-		// Use the CMS locale resolution with fallback chain
+		// Get the fallback chain for the requested locale
 		const fallbackChain = cms.locale.getFallbackChain(args.locale);
 
-		// Try each locale in the chain
-		for (const tryLocale of [args.locale, ...fallbackChain]) {
-			const entry = await cms.contentEntries.get(ctx, {
-				id: args.id,
-				locale: tryLocale,
-			});
+		// Get the entry - locale handling is done internally based on config
+		const entry = await cms.contentEntries.get(ctx, {
+			id: args.id,
+		});
 
-			if (entry) {
-				return {
-					entry,
-					resolvedLocale: tryLocale,
-					requestedLocale: args.locale,
-					usedFallback: tryLocale !== args.locale,
-				};
-			}
+		if (entry) {
+			return {
+				entry,
+				resolvedLocale: args.locale,
+				requestedLocale: args.locale,
+				fallbackChain,
+			};
 		}
 
 		return null;
@@ -709,9 +703,8 @@ export const checkPermission = mutation({
 		resource: v.union(
 			v.literal("contentTypes"),
 			v.literal("contentEntries"),
-			v.literal("mediaAssets"),
-			v.literal("mediaFolders"),
-			v.literal("versions"),
+			v.literal("mediaItems"),
+			v.literal("settings"),
 		),
 		action: v.union(
 			v.literal("create"),
@@ -720,8 +713,9 @@ export const checkPermission = mutation({
 			v.literal("delete"),
 			v.literal("publish"),
 			v.literal("unpublish"),
-			v.literal("schedule"),
 			v.literal("restore"),
+			v.literal("manage"),
+			v.literal("move"),
 		),
 	},
 	returns: v.any(),

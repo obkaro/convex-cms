@@ -219,12 +219,13 @@ export function TermTree({
             title="No terms yet"
             description="Add your first term to start organizing content."
             action={
-              allowInlineCreation && (
-                <CmsButton variant="secondary" onClick={() => handleCreateTerm()}>
-                  <Plus className="size-4" />
-                  Add your first term
-                </CmsButton>
-              )
+              allowInlineCreation
+                ? {
+                    label: "Add your first term",
+                    onClick: () => handleCreateTerm(),
+                    variant: "secondary",
+                  }
+                : undefined
             }
           />
         ) : (
@@ -283,7 +284,7 @@ function TermEditModal({
   taxonomyId,
   term,
   parentId,
-  isHierarchical,
+  isHierarchical: _isHierarchical,
   onSave,
   onCancel,
 }: TermEditModalProps) {

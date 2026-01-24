@@ -8,7 +8,6 @@
 import { useState, useCallback } from "react";
 import { useQuery } from "convex/react";
 import { usePermissions } from "~/hooks";
-import { ErrorState, ErrorAlert } from "~/components";
 import { BulkActionBar } from "~/components/BulkActionBar";
 import { CmsPageHeader } from "~/components/cmsds/CmsPageHeader";
 import { CmsToolbar } from "~/components/cmsds/CmsToolbar";
@@ -36,6 +35,7 @@ import { Checkbox } from "~/components/ui/checkbox";
 import { cn } from "~/lib/cn";
 import { Plus, Search, FileText, ChevronDown } from "lucide-react";
 import type { AdminNavigation } from "~/lib/navigation";
+import { CmsAdminApi } from "~/embed/contexts/ApiContext";
 
 type ContentType = {
   _id: string;
@@ -53,10 +53,7 @@ type Entry = {
 };
 
 export interface ContentPageProps {
-  api: {
-    contentTypes: { list: any };
-    entries: { list: any };
-  };
+  api: CmsAdminApi
   navigation: AdminNavigation;
 }
 
@@ -64,34 +61,24 @@ export function ContentPage({ api, navigation }: ContentPageProps) {
   const [selectedTypeId, setSelectedTypeId] = useState<string>("");
   const [selectedStatus, setSelectedStatus] = useState<ContentStatus | "">("");
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [dismissedError, setDismissedError] = useState<
-    "contentTypes" | "entries" | null
-  >(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const { canCreate, canUpdate } = usePermissions();
 
-  const contentTypesResult = useQuery(api.contentTypes.list, { isActive: true });
+  const contentTypesResult = useQuery(api.listContentTypes, { isActive: true });
   const contentTypes: ContentType[] = contentTypesResult?.page ?? [];
-  const contentTypesError = contentTypesResult?.error;
   const isLoadingContentTypes = contentTypesResult === undefined;
 
-  const entriesResult = useQuery(api.entries.list, {
+  const entriesResult = useQuery(api.listEntries, {
     contentTypeId: selectedTypeId || undefined,
     status: selectedStatus || undefined,
     search: searchQuery.trim() || undefined,
     paginationOpts: { numItems: 50, cursor: null },
   });
   const entries: Entry[] = entriesResult?.page ?? [];
-  const entriesError = entriesResult?.error;
   const isLoadingEntries = entriesResult === undefined;
 
   const isLoading = isLoadingContentTypes || isLoadingEntries;
-
-  const handleRetry = useCallback(() => {
-    setDismissedError(null);
-    window.location.reload();
-  }, []);
 
   const handleCreateEntry = (contentTypeId: string) => {
     navigation.navigateToNewEntry(contentTypeId);
@@ -144,22 +131,6 @@ export function ContentPage({ api, navigation }: ContentPageProps) {
     setSelectedIds(new Set());
   }, []);
 
-  if (contentTypesError && entriesError) {
-    return (
-      <div className="space-y-6 p-6">
-        <CmsPageHeader
-          title="Content"
-          description="Browse and manage content entries across all content types."
-        />
-        <ErrorState
-          error={contentTypesError}
-          title="Failed to load content"
-          onRetry={handleRetry}
-        />
-      </div>
-    );
-  }
-
   if (isLoading) {
     return (
       <div className="space-y-6 p-6">
@@ -183,21 +154,6 @@ export function ContentPage({ api, navigation }: ContentPageProps) {
         title="Content"
         description="Browse and manage content entries across all content types."
       />
-
-      {contentTypesError && dismissedError !== "contentTypes" && (
-        <ErrorAlert
-          error={contentTypesError}
-          onDismiss={() => setDismissedError("contentTypes")}
-          onRetry={handleRetry}
-        />
-      )}
-      {entriesError && dismissedError !== "entries" && (
-        <ErrorAlert
-          error={entriesError}
-          onDismiss={() => setDismissedError("entries")}
-          onRetry={handleRetry}
-        />
-      )}
 
       <CmsToolbar
         left={

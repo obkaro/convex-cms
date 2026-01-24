@@ -1,6 +1,6 @@
 import type { FieldRendererProps } from "./types";
 import { TextField } from "./TextField";
-import { TextAreaField } from "./TextAreaField";
+import { TextAreaField as _TextAreaField } from "./TextAreaField";
 import { NumberField } from "./NumberField";
 import { BooleanField } from "./BooleanField";
 import { DateField } from "./DateField";

@@ -5,12 +5,12 @@
  */
 
 import { ChevronLeft, Bell, HelpCircle, User, LogOut, Moon, Sun } from "lucide-react";
-import { useAdminConfig, useTheme, useAuth } from "~/contexts";
+import { useAdminConfig, useTheme, useAuth } from "../../contexts";
 import { useEmbedNavigation } from "../navigation";
 
 export function EmbedHeader() {
   const { goBack, canGoBack, currentRoute } = useEmbedNavigation();
-  const { branding } = useAdminConfig();
+  const { branding: _branding } = useAdminConfig();
   const { theme, setTheme } = useTheme();
   const { user, logout, isAuthenticated } = useAuth();
 

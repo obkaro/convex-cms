@@ -5,7 +5,7 @@ import { ContentEntryEditor } from '~/components/ContentEntryEditor';
 import type { ContentType, ContentEntry } from '~/components/ContentEntryEditor';
 import { usePermissions, useBreadcrumbLabel } from '~/hooks';
 import { CmsEmptyState } from '~/components/cmsds/CmsEmptyState';
-import { CmsButton } from '~/components/cmsds/CmsButton';
+import { CmsButton as _CmsButton } from '~/components/cmsds/CmsButton';
 import { FileText } from 'lucide-react';
 
 export const Route = createFileRoute('/entries/$entryId')({
@@ -77,7 +77,7 @@ function EditEntryPage() {
   }
 
   // Handle successful save
-  const handleSave = (savedEntry: ContentEntry) => {
+  const handleSave = (_savedEntry: ContentEntry) => {
     // Stay on the page but show a success state
     // The component will handle the success feedback
   };

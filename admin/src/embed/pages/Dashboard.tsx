@@ -7,8 +7,8 @@
 
 import { useApi } from "../contexts/ApiContext";
 import { useEmbedNavigation } from "../navigation";
-import { useEmbedAdapter } from "~/lib/embed-adapter";
-import { DashboardPage } from "~/pages";
+import { useEmbedAdapter } from "../../lib/embed-adapter";
+import { DashboardPage } from "../../pages";
 
 export function EmbedDashboard() {
 	const api = useApi();

@@ -15,6 +15,7 @@ import type * as example from "../example.js";
 import type * as http from "../http.js";
 import type * as schemas from "../schemas.js";
 import type * as seed from "../seed.js";
+import type * as settings from "../settings.js";
 import type * as setup from "../setup.js";
 
 import type {
@@ -31,6 +32,7 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   schemas: typeof schemas;
   seed: typeof seed;
+  settings: typeof settings;
   setup: typeof setup;
 }>;
 

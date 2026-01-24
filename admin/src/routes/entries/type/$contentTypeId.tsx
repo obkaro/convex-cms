@@ -97,8 +97,8 @@ function ContentTypeEntriesPage() {
     for (let i = 0; i < selectedTermIds.length && i < 3; i++) {
       const result = results[i]
       if (result?.page) {
-        for (const entry of result.page) {
-          ids.add(entry._id)
+        for (const entryId of result.page) {
+          ids.add(entryId)
         }
       }
     }

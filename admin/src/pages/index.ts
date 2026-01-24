@@ -8,6 +8,7 @@
 export { ContentPage, type ContentPageProps } from "./ContentPage";
 export { ContentTypesPage, type ContentTypesPageProps } from "./ContentTypesPage";
 export { DashboardPage } from "./DashboardPage";
+export { MediaPage, type MediaPageProps } from "./MediaPage";
 export { SettingsPage, type SettingsPageProps } from "./SettingsPage";
 export { TaxonomiesPage, type TaxonomiesPageProps } from "./TaxonomiesPage";
 export { TrashPage, type TrashPageProps } from "./TrashPage";

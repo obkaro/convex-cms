@@ -8,7 +8,7 @@
 import type { ReactNode } from "react";
 import { EmbedSidebar } from "./EmbedSidebar";
 import { EmbedHeader } from "./EmbedHeader";
-import { useAdminConfig } from "~/contexts";
+import { useAdminConfig } from "../../contexts";
 
 interface EmbedLayoutProps {
   children: ReactNode;

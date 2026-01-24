@@ -11,10 +11,10 @@ import { ContentPage } from "~/pages";
 import { useTanStackNavigation } from "~/lib/tanstack-adapter";
 
 export const Route = createFileRoute("/content")({
-  component: ContentRoute,
+	component: ContentRoute,
 });
 
 function ContentRoute() {
-  const navigation = useTanStackNavigation();
-  return <ContentPage api={api} navigation={navigation} />;
+	const navigation = useTanStackNavigation();
+	return <ContentPage api={api.admin} navigation={navigation} />;
 }

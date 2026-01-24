@@ -37,7 +37,7 @@ export function MediaBulkActionBar({
             Move to...
           </CmsButton>
           <CmsButton
-            variant="destructive"
+            variant="danger"
             onClick={onDelete}
             loading={isDeleting}
           >

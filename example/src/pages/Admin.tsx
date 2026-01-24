@@ -13,27 +13,27 @@ import { api } from "../../convex/_generated/api";
 import { CmsAdmin } from "../../../admin/src/embed";
 
 export function Admin() {
-  return (
-    <CmsAdmin
-      api={api}
-      convexUrl={import.meta.env.VITE_CONVEX_URL!}
-      auth={{
-        getUser: () => ({
-          id: "demo-user",
-          name: "Demo User",
-          email: "demo@example.com",
-        }),
-        getUserRole: () => "admin",
-        onLogout: () => {
-          window.location.href = "/";
-        },
-      }}
-      config={{
-        branding: {
-          appName: "Tempo CMS",
-          logoUrl: "/tempo.svg",
-        },
-      }}
-    />
-  );
+	return (
+		<CmsAdmin
+			api={api.admin}
+			convexUrl={import.meta.env.VITE_CONVEX_URL!}
+			auth={{
+				getUser: () => ({
+					id: "demo-user",
+					name: "Demo User",
+					email: "demo@example.com",
+				}),
+				getUserRole: () => "admin",
+				onLogout: () => {
+					window.location.href = "/";
+				},
+			}}
+			config={{
+				branding: {
+					appName: "Tempo CMS",
+					// logoUrl: "/tempo.svg",
+				},
+			}}
+		/>
+	);
 }

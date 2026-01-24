@@ -11,10 +11,10 @@ import { DashboardPage } from "~/pages";
 import { useTanStackNavigation } from "~/lib/tanstack-adapter";
 
 export const Route = createFileRoute("/")({
-  component: DashboardRoute,
+	component: DashboardRoute,
 });
 
 function DashboardRoute() {
-  const navigation = useTanStackNavigation();
-  return <DashboardPage api={api} navigation={navigation} />;
+	const navigation = useTanStackNavigation();
+	return <DashboardPage api={api.admin} navigation={navigation} />;
 }

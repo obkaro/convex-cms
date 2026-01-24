@@ -1,7 +1,7 @@
 import { CmsDialog } from '~/components/cmsds/CmsDialog'
 import { CmsButton } from '~/components/cmsds/CmsButton'
 import { CheckCircle, AlertTriangle } from 'lucide-react'
-import { cn } from '~/lib/cn'
+import { cn as _cn } from '~/lib/cn'
 
 type BulkAction = 'publish' | 'unpublish' | 'delete' | 'archive'
 

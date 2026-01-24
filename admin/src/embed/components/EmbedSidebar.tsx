@@ -6,11 +6,11 @@
  */
 
 import { Layers } from "lucide-react";
-import { cn } from "~/lib/cn";
-import { useAdminConfig } from "~/contexts";
-import { Icon } from "~/lib/icons";
+import { cn } from "../../lib/cn";
+import { useAdminConfig } from "../../contexts";
+import { Icon } from "../../lib/icons";
 import { useEmbedNavigation, type EmbedRoute } from "../navigation";
-import type { NavItem } from "~/lib/admin-config";
+import type { NavItem } from "../../lib/admin-config";
 
 function pathToRoute(path: string): EmbedRoute {
   if (path === "/" || path === "") return "dashboard";

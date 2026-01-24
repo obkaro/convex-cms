@@ -3,12 +3,12 @@ import { useQuery, useMutation } from 'convex/react'
 import { api } from '../../convex/_generated/api'
 import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useSettingsConfig } from '~/contexts'
-import type { Id } from '../../convex/_generated/dataModel'
+// IDs are strings when crossing component boundaries
 import { UploadDropzone, type UploadedFile } from '../components/UploadDropzone'
 import { CmsPageHeader } from '~/components/cmsds/CmsPageHeader'
 import { CmsToolbar } from '~/components/cmsds/CmsToolbar'
 import { CmsEmptyState } from '~/components/cmsds/CmsEmptyState'
-import { CmsSurface } from '~/components/cmsds/CmsSurface'
+import { CmsSurface as _CmsSurface } from '~/components/cmsds/CmsSurface'
 import { CmsButton } from '~/components/cmsds/CmsButton'
 import { TaxonomyFilter } from '~/components/filters/TaxonomyFilter'
 import {
@@ -134,12 +134,12 @@ function MediaPage() {
   }, [settings, navigate])
 
   const [currentFolderId, setCurrentFolderId] = useState<
-    Id<'media_folders'> | undefined
+    string | undefined
   >(undefined)
   const [searchQuery, setSearchQuery] = useState('')
   const [typeFilter, setTypeFilter] = useState<MediaType | ''>('')
   const [selectedTermIds, setSelectedTermIds] = useState<string[]>([])
-  const [selectedAssets, setSelectedAssets] = useState<Set<Id<'media_assets'>>>(
+  const [selectedAssets, setSelectedAssets] = useState<Set<string>>(
     new Set()
   )
   const [isSelectionMode, setIsSelectionMode] = useState(false)
@@ -198,8 +198,8 @@ function MediaPage() {
     for (let i = 0; i < selectedTermIds.length && i < 3; i++) {
       const result = results[i]
       if (result?.page) {
-        for (const media of result.page) {
-          ids.add(media._id)
+        for (const mediaId of result.page) {
+          ids.add(mediaId)
         }
       }
     }
@@ -244,14 +244,14 @@ function MediaPage() {
     return path
   }, [currentFolderId, folderTree])
 
-  const handleFolderClick = useCallback((folderId: Id<'media_folders'>) => {
+  const handleFolderClick = useCallback((folderId: string) => {
     setCurrentFolderId(folderId)
     setSearchQuery('')
   }, [])
 
   const handleNavigateUp = useCallback(() => {
     if (currentFolder?.parentId) {
-      setCurrentFolderId(currentFolder.parentId as Id<'media_folders'>)
+      setCurrentFolderId(currentFolder.parentId as string)
     } else {
       setCurrentFolderId(undefined)
     }
@@ -262,7 +262,7 @@ function MediaPage() {
     setSearchQuery('')
   }, [])
 
-  const handleAssetSelect = useCallback((assetId: Id<'media_assets'>) => {
+  const handleAssetSelect = useCallback((assetId: string) => {
     setSelectedAssets((prev) => {
       const next = new Set(prev)
       if (next.has(assetId)) {
@@ -277,7 +277,7 @@ function MediaPage() {
   const handleSelectAll = useCallback(() => {
     if (!assetsResult?.page) return
     setSelectedAssets(
-      new Set(assetsResult.page.map((a) => a._id as Id<'media_assets'>))
+      new Set(assetsResult.page.map((a) => a._id as string))
     )
   }, [assetsResult?.page])
 
@@ -292,7 +292,7 @@ function MediaPage() {
   }, [])
 
   const handleAssetClick = useCallback(
-    (assetId: Id<'media_assets'>) => {
+    (assetId: string) => {
       if (isSelectionMode) {
         handleAssetSelect(assetId)
       } else {
@@ -506,7 +506,7 @@ function MediaPage() {
                     ? 'bg-primary/10 font-medium text-primary'
                     : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                 )}
-                onClick={() => handleFolderClick(folder._id as Id<'media_folders'>)}
+                onClick={() => handleFolderClick(folder._id as string)}
               >
                 {folder.name}
               </button>
@@ -643,7 +643,7 @@ function MediaPage() {
                     key={folder._id}
                     className="group relative flex flex-col items-center gap-2 rounded-lg border bg-card p-4 text-center transition-colors hover:border-primary/50 hover:bg-muted/50 cursor-pointer"
                     onClick={() =>
-                      handleFolderClick(folder._id as Id<'media_folders'>)
+                      handleFolderClick(folder._id as string)
                     }
                   >
                     <div className="absolute right-2 top-2">
@@ -719,7 +719,7 @@ function MediaPage() {
               )}
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 md:grid-cols-6">
                 {displayedAssets.map((asset) => {
-                  const assetId = asset._id as Id<'media_assets'>
+                  const assetId = asset._id as string
                   const isSelected = selectedAssets.has(assetId)
                   const mediaType = getMediaTypeFromMimeType(asset.mimeType)
 
