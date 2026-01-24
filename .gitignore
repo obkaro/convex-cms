@@ -47,13 +47,10 @@ playwright-report/
 *~
 .DS_Store
 
-# Automaker artifacts
+# Claude Code / Automaker (local development only)
 .automaker/
-.automaker/events/
-.automaker/features/
-.automaker/features/**/*.bak*
-.automaker/features/**/*.json*
-.automaker/features/**/agent-output.md
+.claude/
+CLAUDE.md
 
 # Logs
 logs/
