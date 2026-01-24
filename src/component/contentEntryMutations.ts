@@ -757,7 +757,7 @@ export const unpublishEntry = mutation({
  * Result type for delete operations.
  * Returns the deleted entry with updated deletedAt timestamp.
  */
-const deleteResultDoc = v.object({
+export const deleteResultDoc = v.object({
 	...contentEntryDoc.fields,
 	/** Number of associated versions that were cleaned up */
 	deletedVersionsCount: v.optional(v.number()),

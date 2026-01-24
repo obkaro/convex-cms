@@ -73,11 +73,33 @@ import {
 import { v } from "convex/values";
 import type { ComponentApi } from "../component/_generated/component.js";
 import type { Id } from "../component/_generated/dataModel.js";
+import { omit } from "convex-helpers";
 import {
-  fieldDefinitionValidator,
+  baseFieldDefinition,
+  textFieldDefinitionValidator,
+  numberFieldDefinitionValidator,
+  booleanFieldDefinitionValidator,
+  richTextFieldDefinitionValidator,
+  mediaFieldDefinitionValidator,
+  selectFieldDefinitionValidator,
+  multiSelectFieldDefinitionValidator,
+  categoryFieldDefinitionValidator,
+  jsonFieldDefinitionValidator,
+  dateFieldDefinitionValidator,
+  datetimeFieldDefinitionValidator,
+  referenceFieldDefinitionValidator,
   contentStatusValidator,
   mediaTypeValidator,
+  mediaAssetItemValidator,
+  mediaFolderItemValidator,
 } from "../component/schema.js";
+import {
+  contentTypeDoc,
+  contentEntryDoc,
+} from "../component/validators.js";
+import { deleteContentTypeResult } from "../component/contentTypeMutations.js";
+import { deleteResultDoc as deleteContentEntryResult } from "../component/contentEntryMutations.js";
+import { deleteMediaAssetResult } from "../component/mediaAssetMutations.js";
 
 // =============================================================================
 // Types
@@ -165,6 +187,124 @@ const paginationOptsValidator = v.object({
   cursor: v.union(v.string(), v.null()),
 });
 
+// Admin-specific validators using omit pattern for cross-boundary compatibility
+// IDs become strings when crossing component boundaries
+const adminPaginationResult = <T extends Parameters<typeof v.array>[0]>(
+  itemValidator: T
+) =>
+  v.object({
+    page: v.array(itemValidator),
+    continueCursor: v.union(v.string(), v.null()),
+    isDone: v.boolean(),
+  });
+
+// Admin tags field definition with string taxonomyId (not v.id("taxonomies"))
+const adminTagsFieldDefinitionValidator = v.object({
+  ...baseFieldDefinition,
+  type: v.literal("tags"),
+  options: v.optional(
+    v.object({
+      taxonomyId: v.optional(v.string()),
+      allowCreate: v.optional(v.boolean()),
+      maxTags: v.optional(v.number()),
+      minTags: v.optional(v.number()),
+    })
+  ),
+});
+
+// Admin field definition validator - same as component but with string IDs
+const adminFieldDefinitionValidator = v.union(
+  textFieldDefinitionValidator,
+  numberFieldDefinitionValidator,
+  booleanFieldDefinitionValidator,
+  richTextFieldDefinitionValidator,
+  mediaFieldDefinitionValidator,
+  selectFieldDefinitionValidator,
+  multiSelectFieldDefinitionValidator,
+  adminTagsFieldDefinitionValidator,
+  categoryFieldDefinitionValidator,
+  jsonFieldDefinitionValidator,
+  dateFieldDefinitionValidator,
+  datetimeFieldDefinitionValidator,
+  referenceFieldDefinitionValidator
+);
+
+// Content Types - replace _id with string and use admin field definitions
+const adminContentTypeDoc = v.object({
+  ...omit(contentTypeDoc.fields, ["_id", "fields"]),
+  _id: v.string(),
+  fields: v.array(adminFieldDefinitionValidator),
+});
+
+// Content Entries - replace _id and ID refs with strings
+const adminContentEntryDoc = v.object({
+  ...omit(contentEntryDoc.fields, ["_id", "contentTypeId", "primaryEntryId"]),
+  _id: v.string(),
+  contentTypeId: v.string(),
+  primaryEntryId: v.optional(v.string()),
+});
+
+// Media Items - union of asset and folder
+// Note: base validators don't include _id/_creationTime (those come from doc())
+// We need to omit parentId (both have it) and storageId (asset only) since they're ID types
+const adminMediaAssetDoc = v.object({
+  ...omit(mediaAssetItemValidator.fields, ["parentId", "storageId"]),
+  _id: v.string(),
+  _creationTime: v.number(),
+  parentId: v.optional(v.string()),
+  storageId: v.string(),
+});
+
+const adminMediaFolderDoc = v.object({
+  ...omit(mediaFolderItemValidator.fields, ["parentId"]),
+  _id: v.string(),
+  _creationTime: v.number(),
+  parentId: v.optional(v.string()),
+});
+
+const adminMediaItemDoc = v.union(adminMediaAssetDoc, adminMediaFolderDoc);
+
+// Delete results - replace ID fields with strings
+const adminDeleteContentTypeResult = v.object({
+  ...omit(deleteContentTypeResult.fields, ["deletedId"]),
+  deletedId: v.string(),
+});
+
+const adminDeleteContentEntryResult = v.object({
+  ...omit(deleteContentEntryResult.fields, [
+    "_id",
+    "contentTypeId",
+    "primaryEntryId",
+  ]),
+  _id: v.string(),
+  contentTypeId: v.string(),
+  primaryEntryId: v.optional(v.string()),
+});
+
+const adminDeleteMediaAssetResult = v.object({
+  ...omit(deleteMediaAssetResult.fields, ["_id", "parentId", "storageId"]),
+  _id: v.string(),
+  parentId: v.optional(v.string()),
+  storageId: v.string(),
+});
+
+// Move result - replace ID types with strings
+const adminMoveMediaAssetItemResult = v.object({
+  id: v.string(),
+  success: v.boolean(),
+  error: v.optional(v.string()),
+  previousFolderId: v.optional(v.string()),
+});
+
+const adminMoveMediaAssetsResult = v.object({
+  total: v.number(),
+  succeeded: v.number(),
+  failed: v.number(),
+  targetFolderId: v.optional(v.string()),
+  targetFolderPath: v.optional(v.string()),
+  results: v.array(adminMoveMediaAssetItemResult),
+});
+
 // =============================================================================
 // defineAdminAPI
 // =============================================================================
@@ -215,7 +355,7 @@ export function defineAdminAPI(
       args: {
         isActive: v.optional(v.boolean()),
       },
-      returns: v.any(),
+      returns: adminPaginationResult(adminContentTypeDoc),
       handler: async (ctx, args) => {
         await checkAuth(ctx, { type: "listContentTypes" });
         return await ctx.runQuery(component.contentTypes.list, {
@@ -229,7 +369,7 @@ export function defineAdminAPI(
         id: v.optional(v.string()),
         name: v.optional(v.string()),
       },
-      returns: v.union(v.any(), v.null()),
+      returns: v.union(adminContentTypeDoc, v.null()),
       handler: async (ctx, args) => {
         await checkAuth(ctx, { type: "getContentType", id: args.id ?? "" });
         return await ctx.runQuery(component.contentTypes.get, {
@@ -243,7 +383,7 @@ export function defineAdminAPI(
       args: {
         name: v.string(),
         displayName: v.string(),
-        fields: v.array(fieldDefinitionValidator),
+        fields: v.array(adminFieldDefinitionValidator),
         description: v.optional(v.string()),
         icon: v.optional(v.string()),
         singleton: v.optional(v.boolean()),
@@ -252,7 +392,7 @@ export function defineAdminAPI(
         sortOrder: v.optional(v.number()),
         createdBy: v.string(),
       },
-      returns: v.any(),
+      returns: adminContentTypeDoc,
       handler: async (ctx, args) => {
         await checkAuth(ctx, { type: "createContentType" });
         return await ctx.runMutation(
@@ -277,7 +417,7 @@ export function defineAdminAPI(
       args: {
         id: v.string(),
         displayName: v.optional(v.string()),
-        fields: v.optional(v.array(fieldDefinitionValidator)),
+        fields: v.optional(v.array(adminFieldDefinitionValidator)),
         description: v.optional(v.string()),
         icon: v.optional(v.string()),
         singleton: v.optional(v.boolean()),
@@ -287,7 +427,7 @@ export function defineAdminAPI(
         isActive: v.optional(v.boolean()),
         updatedBy: v.optional(v.string()),
       },
-      returns: v.any(),
+      returns: adminContentTypeDoc,
       handler: async (ctx, args) => {
         await checkAuth(ctx, { type: "updateContentType", id: args.id });
         return await ctx.runMutation(
@@ -316,7 +456,7 @@ export function defineAdminAPI(
         hardDelete: v.optional(v.boolean()),
         deletedBy: v.optional(v.string()),
       },
-      returns: v.any(),
+      returns: adminDeleteContentTypeResult,
       handler: async (ctx, args) => {
         await checkAuth(ctx, { type: "deleteContentType", id: args.id });
         return await ctx.runMutation(
@@ -342,7 +482,7 @@ export function defineAdminAPI(
         locale: v.optional(v.string()),
         paginationOpts: paginationOptsValidator,
       },
-      returns: v.any(),
+      returns: adminPaginationResult(adminContentEntryDoc),
       handler: async (ctx, args) => {
         await checkAuth(ctx, {
           type: "listEntries",
@@ -362,7 +502,7 @@ export function defineAdminAPI(
       args: {
         id: v.string(),
       },
-      returns: v.union(v.any(), v.null()),
+      returns: v.union(adminContentEntryDoc, v.null()),
       handler: async (ctx, args) => {
         await checkAuth(ctx, { type: "getEntry", id: args.id });
         return await ctx.runQuery(component.contentEntries.get, {
@@ -381,7 +521,7 @@ export function defineAdminAPI(
         primaryEntryId: v.optional(v.string()),
         createdBy: v.optional(v.string()),
       },
-      returns: v.any(),
+      returns: adminContentEntryDoc,
       handler: async (ctx, args) => {
         await checkAuth(ctx, {
           type: "createEntry",
@@ -412,7 +552,7 @@ export function defineAdminAPI(
         updatedBy: v.optional(v.string()),
         regenerateSlug: v.optional(v.boolean()),
       },
-      returns: v.any(),
+      returns: adminContentEntryDoc,
       handler: async (ctx, args) => {
         await checkAuth(ctx, { type: "updateEntry", id: args.id });
         return await ctx.runMutation(
@@ -436,7 +576,7 @@ export function defineAdminAPI(
         changeDescription: v.optional(v.string()),
         updatedBy: v.optional(v.string()),
       },
-      returns: v.any(),
+      returns: adminContentEntryDoc,
       handler: async (ctx, args) => {
         await checkAuth(ctx, { type: "publishEntry", id: args.id });
         return await ctx.runMutation(
@@ -455,7 +595,7 @@ export function defineAdminAPI(
         id: v.string(),
         updatedBy: v.optional(v.string()),
       },
-      returns: v.any(),
+      returns: adminContentEntryDoc,
       handler: async (ctx, args) => {
         await checkAuth(ctx, { type: "unpublishEntry", id: args.id });
         return await ctx.runMutation(
@@ -474,7 +614,7 @@ export function defineAdminAPI(
         hardDelete: v.optional(v.boolean()),
         deletedBy: v.optional(v.string()),
       },
-      returns: v.any(),
+      returns: adminDeleteContentEntryResult,
       handler: async (ctx, args) => {
         await checkAuth(ctx, { type: "deleteEntry", id: args.id });
         return await ctx.runMutation(
@@ -494,7 +634,7 @@ export function defineAdminAPI(
         copyMediaReferences: v.optional(v.boolean()),
         createdBy: v.optional(v.string()),
       },
-      returns: v.any(),
+      returns: adminContentEntryDoc,
       handler: async (ctx, args) => {
         await checkAuth(ctx, { type: "duplicateEntry", id: args.id });
         return await ctx.runMutation(
@@ -514,7 +654,7 @@ export function defineAdminAPI(
         publishAt: v.number(),
         updatedBy: v.optional(v.string()),
       },
-      returns: v.any(),
+      returns: adminContentEntryDoc,
       handler: async (ctx, args) => {
         await checkAuth(ctx, { type: "scheduleEntry", id: args.id });
         return await ctx.runMutation(
@@ -533,7 +673,7 @@ export function defineAdminAPI(
         id: v.string(),
         updatedBy: v.optional(v.string()),
       },
-      returns: v.any(),
+      returns: adminContentEntryDoc,
       handler: async (ctx, args) => {
         await checkAuth(ctx, { type: "cancelScheduledEntry", id: args.id });
         return await ctx.runMutation(
@@ -548,7 +688,7 @@ export function defineAdminAPI(
 
     getScheduledEntries: queryGeneric({
       args: {},
-      returns: v.array(v.any()),
+      returns: v.array(adminContentEntryDoc),
       handler: async (ctx) => {
         await checkAuth(ctx, { type: "getScheduledEntries" });
         return await ctx.runQuery(
@@ -568,7 +708,7 @@ export function defineAdminAPI(
         search: v.optional(v.string()),
         paginationOpts: paginationOptsValidator,
       },
-      returns: v.any(),
+      returns: adminPaginationResult(adminMediaItemDoc),
       handler: async (ctx, args) => {
         await checkAuth(ctx, { type: "listMediaAssets" });
         return await ctx.runQuery(component.mediaAssets.list, {
@@ -584,7 +724,7 @@ export function defineAdminAPI(
       args: {
         id: v.string(),
       },
-      returns: v.union(v.any(), v.null()),
+      returns: v.union(adminMediaItemDoc, v.null()),
       handler: async (ctx, args) => {
         await checkAuth(ctx, { type: "getMediaAsset", id: args.id });
         return await ctx.runQuery(component.mediaAssets.get, {
@@ -607,7 +747,7 @@ export function defineAdminAPI(
         altText: v.optional(v.string()),
         createdBy: v.optional(v.string()),
       },
-      returns: v.any(),
+      returns: adminMediaItemDoc,
       handler: async (ctx, args) => {
         await checkAuth(ctx, { type: "createMediaAsset" });
         return await ctx.runMutation(
@@ -639,7 +779,7 @@ export function defineAdminAPI(
         parentId: v.optional(v.string()),
         tags: v.optional(v.array(v.string())),
       },
-      returns: v.any(),
+      returns: adminMediaItemDoc,
       handler: async (ctx, args) => {
         await checkAuth(ctx, { type: "updateMediaAsset", id: args.id });
         return await ctx.runMutation(
@@ -663,7 +803,7 @@ export function defineAdminAPI(
         hardDelete: v.optional(v.boolean()),
         deletedBy: v.optional(v.string()),
       },
-      returns: v.any(),
+      returns: adminDeleteMediaAssetResult,
       handler: async (ctx, args) => {
         await checkAuth(ctx, { type: "deleteMediaAsset", id: args.id });
         return await ctx.runMutation(
@@ -681,7 +821,7 @@ export function defineAdminAPI(
       args: {
         id: v.string(),
       },
-      returns: v.any(),
+      returns: adminMediaItemDoc,
       handler: async (ctx, args) => {
         await checkAuth(ctx, { type: "restoreMediaAsset", id: args.id });
         return await ctx.runMutation(
@@ -698,7 +838,7 @@ export function defineAdminAPI(
         assetIds: v.array(v.string()),
         targetFolderId: v.optional(v.string()),
       },
-      returns: v.any(),
+      returns: adminMoveMediaAssetsResult,
       handler: async (ctx, args) => {
         await checkAuth(ctx, { type: "moveMediaAssets" });
         return await ctx.runMutation(
@@ -718,7 +858,7 @@ export function defineAdminAPI(
       args: {
         parentId: v.optional(v.string()),
       },
-      returns: v.array(v.any()),
+      returns: v.array(adminMediaItemDoc),
       handler: async (ctx, args) => {
         await checkAuth(ctx, { type: "listMediaFolders" });
         return await ctx.runQuery(
@@ -734,7 +874,7 @@ export function defineAdminAPI(
       args: {
         id: v.string(),
       },
-      returns: v.union(v.any(), v.null()),
+      returns: v.union(adminMediaItemDoc, v.null()),
       handler: async (ctx, args) => {
         await checkAuth(ctx, { type: "getMediaFolder", id: args.id });
         return await ctx.runQuery(
@@ -748,7 +888,7 @@ export function defineAdminAPI(
 
     getMediaFolderTree: queryGeneric({
       args: {},
-      returns: v.array(v.any()),
+      returns: v.array(adminMediaItemDoc),
       handler: async (ctx) => {
         await checkAuth(ctx, { type: "getMediaFolderTree" });
         return await ctx.runQuery(
@@ -765,7 +905,7 @@ export function defineAdminAPI(
         description: v.optional(v.string()),
         createdBy: v.optional(v.string()),
       },
-      returns: v.any(),
+      returns: adminMediaItemDoc,
       handler: async (ctx, args) => {
         await checkAuth(ctx, { type: "createMediaFolder" });
         return await ctx.runMutation(
@@ -787,7 +927,7 @@ export function defineAdminAPI(
         description: v.optional(v.string()),
         sortOrder: v.optional(v.number()),
       },
-      returns: v.any(),
+      returns: adminMediaItemDoc,
       handler: async (ctx, args) => {
         await checkAuth(ctx, { type: "updateMediaFolder", id: args.id });
         return await ctx.runMutation(
@@ -807,7 +947,7 @@ export function defineAdminAPI(
         id: v.string(),
         newParentId: v.optional(v.string()),
       },
-      returns: v.any(),
+      returns: adminMediaItemDoc,
       handler: async (ctx, args) => {
         await checkAuth(ctx, { type: "moveMediaFolder", id: args.id });
         return await ctx.runMutation(
@@ -827,7 +967,7 @@ export function defineAdminAPI(
         hardDelete: v.optional(v.boolean()),
         deletedBy: v.optional(v.string()),
       },
-      returns: v.any(),
+      returns: adminMediaItemDoc,
       handler: async (ctx, args) => {
         await checkAuth(ctx, { type: "deleteMediaFolder", id: args.id });
         return await ctx.runMutation(
@@ -847,7 +987,7 @@ export function defineAdminAPI(
         id: v.string(),
         recursive: v.optional(v.boolean()),
       },
-      returns: v.any(),
+      returns: adminMediaItemDoc,
       handler: async (ctx, args) => {
         await checkAuth(ctx, { type: "restoreMediaFolder", id: args.id });
         return await ctx.runMutation(

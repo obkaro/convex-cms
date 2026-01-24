@@ -11,9 +11,9 @@ import { useEmbedAdapter } from "~/lib/embed-adapter";
 import { TaxonomiesPage } from "~/pages";
 
 export function EmbedTaxonomies() {
-  const api = useApi();
-  const embedNav = useEmbedNavigation();
-  const navigation = useEmbedAdapter(embedNav);
+	const api = useApi();
+	const embedNav = useEmbedNavigation();
+	const navigation = useEmbedAdapter(embedNav);
 
-  return <TaxonomiesPage api={api as any} navigation={navigation} />;
+	return <TaxonomiesPage api={api} navigation={navigation} />;
 }

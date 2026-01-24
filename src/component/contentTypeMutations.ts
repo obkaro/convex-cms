@@ -790,7 +790,7 @@ export const updateContentType = mutation({
  * Result type for the delete content type mutation.
  * Includes information about any cascade-deleted entries.
  */
-const deleteContentTypeResult = v.object({
+export const deleteContentTypeResult = v.object({
   /** Whether the deletion was successful */
   success: v.boolean(),
   /** The ID of the deleted content type */

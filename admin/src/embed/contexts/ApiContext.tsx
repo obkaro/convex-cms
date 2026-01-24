@@ -7,7 +7,13 @@
  */
 
 import { createContext, useContext, type ReactNode } from "react";
+import type { AdminApiContract } from "convex-cms";
 
+/**
+ * Legacy API type for backwards compatibility with existing page components.
+ * Uses nested structure with unknown function types.
+ * @deprecated Use AdminApiContract for typed access
+ */
 export type CmsAdminApi = {
   contentTypes: {
     list: unknown;
@@ -107,3 +113,5 @@ export function useApi(): CmsAdminApi {
   }
   return api;
 }
+
+export type { AdminApiContract };

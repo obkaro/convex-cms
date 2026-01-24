@@ -89,7 +89,7 @@ export const variantTypes = ["thumbnail", "responsive", "format"] as const;
 export const variantStatuses = ["pending", "processing", "completed", "failed"] as const;
 export const variantFormats = ["webp", "avif", "jpeg", "png"] as const;
 
-const baseFieldDefinition = {
+export const baseFieldDefinition = {
 	name: v.string(),
 	label: v.string(),
 	required: v.boolean(),

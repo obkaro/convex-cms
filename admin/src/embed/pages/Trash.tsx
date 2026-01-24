@@ -11,9 +11,9 @@ import { useEmbedAdapter } from "~/lib/embed-adapter";
 import { TrashPage } from "~/pages";
 
 export function EmbedTrash() {
-  const api = useApi();
-  const embedNav = useEmbedNavigation();
-  const navigation = useEmbedAdapter(embedNav);
+	const api = useApi();
+	const embedNav = useEmbedNavigation();
+	const navigation = useEmbedAdapter(embedNav);
 
-  return <TrashPage api={api as any} navigation={navigation} />;
+	return <TrashPage api={api} navigation={navigation} />;
 }
