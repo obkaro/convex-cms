@@ -50,6 +50,77 @@ This document explains the architecture of Convex CMS and how it integrates with
 └─────────────────────────────────────────────────────────────────┘
 ```
 
+## Two Integration Paths
+
+Most applications use both paths together:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        Your Convex App                          │
+├─────────────────────────────────────────────────────────────────┤
+│  ┌─────────────────────┐      ┌─────────────────────┐          │
+│  │  Your Functions     │      │   convex/admin.ts   │          │
+│  │  createCmsClient()  │      │  defineAdminAPI()   │          │
+│  │         ↓           │      │         ↓           │          │
+│  │  Typed methods for  │      │  Flat exports for   │          │
+│  │  custom queries     │      │  Admin UI backend   │          │
+│  └──────────┬──────────┘      └──────────┬──────────┘          │
+│             └────────────┬───────────────┘                      │
+│                          ↓                                      │
+│  ┌───────────────────────────────────────────────────────────┐ │
+│  │                  Convex CMS Component                      │ │
+│  │                  (isolated database)                       │ │
+│  └───────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+| Path | Purpose | Use When |
+|------|---------|----------|
+| `createCmsClient()` | Typed methods in your Convex functions | Custom queries, frontend data fetching |
+| `defineAdminAPI()` | Backend functions for Admin UI | Visual content editing |
+
+See [Integration Patterns](../guides/integration-patterns.md) for detailed guidance.
+
+## How Admin UI Works
+
+The Admin UI (both CLI and embed modes) calls functions by their exported names from your `convex/admin.ts`:
+
+```
+┌─────────────────────────┐      ┌─────────────────────────────┐
+│   CLI Mode              │      │   Embed Mode                │
+│   npx convex-cms admin  │      │   <CmsAdmin />              │
+├─────────────────────────┤      ├─────────────────────────────┤
+│ Pre-built UI server     │      │ Component in your app       │
+│ Reads CONVEX_URL        │      │ Uses your ConvexProvider    │
+│ Mock auth for dev       │      │ Your auth integration       │
+└────────────┬────────────┘      └──────────────┬──────────────┘
+             │                                   │
+             │  Both call the same functions:    │
+             │  api.admin.listContentTypes       │
+             │  api.admin.getEntry               │
+             │  api.admin.publishEntry           │
+             └───────────────┬───────────────────┘
+                             ▼
+              ┌──────────────────────────────┐
+              │  Your convex/admin.ts        │
+              │                              │
+              │  export const {              │
+              │    listContentTypes,         │
+              │    getEntry,                 │
+              │    publishEntry,             │
+              │    ...                       │
+              │  } = defineAdminAPI(...)     │
+              └──────────────────────────────┘
+```
+
+### The API Contract
+
+The Admin UI has function references baked in at build time. Your `convex/admin.ts` must export functions with **exact names** that match what the Admin UI expects.
+
+`defineAdminAPI()` creates these exports with the correct names. If you need to customize the admin backend, you can manually create functions with these names, but they must match the expected signatures.
+
+See [Admin API Reference](../api/admin-api.md) for the complete function list.
+
 ## Convex Component Model
 
 Convex CMS is built as a **Convex Component**, which provides:

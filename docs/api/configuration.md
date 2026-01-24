@@ -2,6 +2,83 @@
 
 Complete reference for all Convex CMS configuration options.
 
+---
+
+## Quick Start Configurations
+
+### Development (No Auth)
+
+```typescript
+const cms = createCmsClient(components.convexCms, {
+  permissiveMode: true,
+});
+```
+
+### Production (Basic RBAC)
+
+```typescript
+const cms = createCmsClient(components.convexCms, {
+  getUserRole: async (ctx, { userId }) => {
+    if (!userId) return null;
+    const user = await ctx.db.get(userId);
+    return user?.cmsRole ?? "viewer";
+  },
+});
+```
+
+### Multi-Locale
+
+```typescript
+const cms = createCmsClient(components.convexCms, {
+  defaultLocale: "en",
+  supportedLocales: ["en", "es", "fr"],
+  features: { localization: true },
+  getUserRole: async (ctx, { userId }) => { /* ... */ },
+});
+```
+
+### Minimal (API-Only)
+
+```typescript
+const cms = createCmsClient(components.convexCms, {
+  features: {
+    versioning: false,
+    contentLocking: false,
+    scheduling: false,
+  },
+  permissiveMode: true,
+});
+```
+
+### Code-First (Type-Safe)
+
+```typescript
+import { createTypedCmsClient, createContentSchema, defineContentType } from "convex-cms";
+import { v } from "convex/values";
+
+const blogPost = defineContentType({
+  name: "blog_post",
+  validator: v.object({
+    title: v.string(),
+    content: v.string(),
+  }),
+});
+
+const contentSchema = createContentSchema({ blogPost });
+
+const cms = createTypedCmsClient(components.convexCms, {
+  schema: contentSchema,
+  getUserRole: async (ctx, { userId }) => { /* ... */ },
+});
+
+// Now entry.data.title is typed as string
+const entry = await cms.typedContentEntries.get<"blog_post">(ctx, id);
+```
+
+See [Code-First Schema Reference](./code-first-schema.md) for full documentation.
+
+---
+
 ## Client Configuration
 
 ```typescript

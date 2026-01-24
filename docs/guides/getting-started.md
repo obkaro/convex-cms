@@ -1,6 +1,10 @@
 # Getting Started with Convex CMS
 
-This guide walks you through installing and configuring Convex CMS in your Convex application.
+This guide covers **programmatic usage** with `createCmsClient` — full control over content in your Convex functions.
+
+> **Need a visual editor instead?** See [Admin UI Setup](./admin-ui-setup.md) for the visual content management interface.
+
+---
 
 ## Prerequisites
 
@@ -244,13 +248,9 @@ export default function App() {
 }
 ```
 
-### Step 6: Launch Admin UI
+### Step 6: Add Visual Editing (Optional)
 
-Use the Admin UI to manage content visually:
-
-```bash
-npx convex-cms admin
-```
+For visual content management, add the Admin UI. See [Admin UI Setup](./admin-ui-setup.md) for CLI and embed mode options.
 
 ---
 
@@ -396,14 +396,61 @@ Run `npx convex dev` to regenerate types after making changes to your Convex fun
 
 ---
 
-## Next Steps
+## Using Both Paths Together
 
-Now that you have the basics working:
+Most production applications use **both** integration paths:
 
-1. **[Set up authorization](./authorization.md)** - Add user roles and permissions
-2. **[Learn content modeling](./content-modeling.md)** - Define rich content types
-3. **[Add media management](./media.md)** - Upload and manage images
+- `defineAdminAPI` → Powers the Admin UI for content editors
+- `createCmsClient` → Typed methods for custom frontend queries
+
+Here's a typical setup:
+
+```typescript
+// convex/admin.ts — for Admin UI
+import { defineAdminAPI } from "convex-cms";
+import { components } from "./_generated/api";
+
+export const {
+  listContentTypes,
+  getEntry,
+  publishEntry,
+  // ... all admin functions
+} = defineAdminAPI(components.convexCms, {
+  auth: async (ctx, operation) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthorized");
+    return identity.subject;
+  },
+});
+```
+
+```typescript
+// convex/cms.ts — for your custom functions
+import { createCmsClient } from "convex-cms";
+import { components } from "./_generated/api";
+
+export const cms = createCmsClient(components.convexCms, {
+  permissiveMode: false,
+  getUserRole: async ({ userId }) => {
+    // Map users to CMS roles
+    return "editor";
+  },
+});
+```
+
+Now content editors use the Admin UI while your frontend uses custom queries via `cms.*`.
+
+See [Integration Patterns](./integration-patterns.md) for more detailed examples.
 
 ---
 
-Next: [Content Modeling Guide](./content-modeling.md)
+## Next Steps
+
+1. **[Add the Admin UI](./admin-ui-setup.md)** — Visual interface for content editors
+2. **[Code-First Schema](../api/code-first-schema.md)** — TypeScript-first with full type inference
+3. **[Set up authorization](./authorization.md)** — Add user roles and permissions
+4. **[Learn content modeling](./content-modeling.md)** — Define rich content types
+
+---
+
+Next: [Integration Patterns](./integration-patterns.md)
