@@ -2,6 +2,35 @@
 
 The Convex CMS client provides a typed wrapper around the component's raw functions. This document covers the complete API.
 
+> **Which API should I use?** See the comparison below.
+
+---
+
+## Two Integration Paths
+
+Convex CMS provides two ways to integrate:
+
+| | `createCmsClient` (this doc) | `defineAdminAPI` |
+|---|---|---|
+| **Purpose** | Typed methods for custom functions | Backend for Admin UI |
+| **Returns** | Namespaced object (`cms.contentEntries.*`) | Flat function exports |
+| **Best for** | Custom queries, business logic | Visual content editing |
+| **Auth model** | Pass userId, hooks resolve roles | Callback on every operation |
+
+**Most apps use both:**
+
+```typescript
+// convex/cms.ts — for your custom functions
+export const cms = createCmsClient(components.convexCms, options);
+
+// convex/admin.ts — for Admin UI
+export const { listContentTypes, getEntry, ... } = defineAdminAPI(components.convexCms);
+```
+
+See [Admin API Reference](./admin-api.md) for `defineAdminAPI` documentation.
+
+---
+
 ## Creating the Client
 
 ```typescript

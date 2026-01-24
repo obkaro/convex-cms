@@ -1,132 +1,122 @@
 # Convex CMS Documentation
 
-Welcome to the documentation for `convex-cms` - a developer-first headless CMS built as a Convex Component.
+A headless CMS built as a Convex Component — content management that runs inside your Convex app.
 
-## What is Convex CMS?
+---
 
-Convex CMS is a headless content management system designed for Convex applications:
+## I want to...
 
-- **Type-safe APIs** - Full TypeScript support with generated types
-- **Flexible content modeling** - Define content types with 13 field types
-- **Publishing workflows** - Draft, publish, schedule, and version content
-- **Media management** - Upload, organize, and serve media with variants
-- **Role-based access control** - Fine-grained permissions with custom roles
-- **Multi-locale support** - Content localization with fallback chains
-- **Admin UI** - Ready-to-use React admin interface
+### ...get an admin UI running
 
-## Documentation
+→ **[Admin UI Setup](./guides/admin-ui-setup.md)** — CLI or embedded, 5 minutes
 
-### Getting Started
-- [Getting Started](./guides/getting-started.md) - Install, configure, and build your first CMS app
-- [Admin UI Setup](./guides/admin-ui-setup.md) - Launch the admin interface
+### ...build custom content queries
+
+→ **[Getting Started](./guides/getting-started.md)** — programmatic usage with `createCmsClient`
+
+### ...understand the integration options
+
+→ **[Integration Patterns](./guides/integration-patterns.md)** — which approach fits your use case
+
+### ...define my content structure
+
+- **[Content Modeling](./guides/content-modeling.md)** — define types at runtime or via Admin UI
+- **[Code-First Schema](./api/code-first-schema.md)** — TypeScript-first with full type inference
+
+### ...set up authentication and permissions
+
+→ **[Authorization](./guides/authorization.md)** — RBAC with 4 built-in roles + custom roles
+
+### ...understand how it works
+
+→ **[Architecture Overview](./architecture/overview.md)** — component model, data flow, design
+
+---
+
+## Quick Reference
 
 ### Guides
-- [Content Modeling](./guides/content-modeling.md) - Define content types and work with entries
-- [Media Management](./guides/media.md) - Upload and organize media assets
-- [Authorization](./guides/authorization.md) - Set up roles and permissions
+
+| Guide | Description |
+|-------|-------------|
+| [Admin UI Setup](./guides/admin-ui-setup.md) | CLI and embed modes, auth integration |
+| [Getting Started](./guides/getting-started.md) | First setup with `createCmsClient` |
+| [Integration Patterns](./guides/integration-patterns.md) | Common setups and when to use each |
+| [Content Modeling](./guides/content-modeling.md) | Content types and field definitions |
+| [Media Management](./guides/media.md) | Uploads, folders, and variants |
+| [Authorization](./guides/authorization.md) | Roles, permissions, custom auth |
 
 ### API Reference
-- [Client API](./api/client-api.md) - Complete API reference
-- [Field Types](./api/field-types.md) - All supported field types
-- [Configuration](./api/configuration.md) - All configuration options
+
+| Reference | Description |
+|-----------|-------------|
+| [Admin API](./api/admin-api.md) | `defineAdminAPI` functions for Admin UI |
+| [Client API](./api/client-api.md) | `createCmsClient` methods |
+| [Field Types](./api/field-types.md) | All 13 field types |
+| [Configuration](./api/configuration.md) | All config options |
+| [Code-First Schema](./api/code-first-schema.md) | TypeScript schema definitions |
 
 ### Architecture
-- [Architecture Overview](./architecture/overview.md) - How Convex CMS works
+
+| Document | Description |
+|----------|-------------|
+| [Architecture Overview](./architecture/overview.md) | System design and data flow |
+
+---
+
+## Two Integration Paths
+
+Most apps use both of these together:
+
+| Path | Purpose | Use When |
+|------|---------|----------|
+| `defineAdminAPI()` | Backend for Admin UI | You need visual content editing |
+| `createCmsClient()` | Typed methods for your functions | You need custom queries/mutations |
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        Your Convex App                          │
+├─────────────────────────────────────────────────────────────────┤
+│  ┌─────────────────────┐      ┌─────────────────────┐          │
+│  │  Your Functions     │      │   convex/admin.ts   │          │
+│  │  createCmsClient()  │      │  defineAdminAPI()   │          │
+│  │         ↓           │      │         ↓           │          │
+│  │  Typed methods      │      │  Admin UI backend   │          │
+│  └──────────┬──────────┘      └──────────┬──────────┘          │
+│             └────────────┬───────────────┘                      │
+│                          ↓                                      │
+│  ┌───────────────────────────────────────────────────────────┐ │
+│  │                  Convex CMS Component                      │ │
+│  │                  (isolated database)                       │ │
+│  └───────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+```
 
 ---
 
 ## Key Concepts
 
-### Convex Component Architecture
+### Convex Component
 
 Convex CMS runs as an **isolated component** within your Convex app:
 
-1. **Separate Database** - The CMS has its own tables, isolated from your app's data
-2. **Explicit User Context** - You must pass user information to CMS functions (no `ctx.auth`)
-3. **Composable** - Use alongside other Convex components and your own functions
+- **Separate database** — CMS has its own tables, isolated from your app's data
+- **No `ctx.auth`** — User context is passed via hooks, not accessed directly
+- **Composable** — Use alongside other components and your own functions
 
-```typescript
-// In convex/convex.config.ts
-import { defineApp } from "convex/server";
-import convexCms from "convex-cms/convex.config";
+### Admin UI Modes
 
-const app = defineApp();
-app.use(convexCms);
-export default app;
-```
+| Mode | Command | Best For |
+|------|---------|----------|
+| CLI | `npx convex-cms admin` | Development |
+| Embed | `<CmsAdmin api={api.admin} />` | Production |
 
-### Client Wrapper Pattern
-
-Use a typed client wrapper for all CMS operations:
-
-```typescript
-import { createCmsClient } from "convex-cms";
-import { components } from "./_generated/api";
-
-const cms = createCmsClient(components.convexCms, {
-  defaultLocale: "en",
-  features: {
-    versioning: true,
-    localization: true,
-  },
-  // Map user IDs to CMS roles (note: no ctx parameter)
-  getUserRole: async ({ userId }) => {
-    return "editor";  // Your role lookup logic
-  },
-});
-
-// Use typed methods
-const entry = await cms.contentEntries.create(ctx, {
-  contentTypeId: typeId,
-  data: { title: "Hello World" },
-});
-```
-
----
-
-## Quick Example
-
-```typescript
-// convex/cms.ts - Configure the CMS client
-import { createCmsClient } from "convex-cms";
-import { components } from "./_generated/api";
-
-export const cms = createCmsClient(components.convexCms, {
-  permissiveMode: true,  // For development only
-});
-
-// convex/blog.ts - Use the CMS
-import { query, mutation } from "./_generated/server";
-import { cms } from "./cms";
-
-export const getPosts = query({
-  handler: async (ctx) => {
-    const result = await cms.contentEntries.list(ctx, {
-      status: "published",
-    });
-    return result.items;
-  },
-});
-
-export const createPost = mutation({
-  args: { title: v.string(), content: v.string() },
-  handler: async (ctx, args) => {
-    return await cms.contentEntries.create(ctx, {
-      contentTypeId: blogTypeId,
-      data: args,
-    });
-  },
-});
-```
+Both call the same functions from your `convex/admin.ts`.
 
 ---
 
 ## Support
 
-- [GitHub Issues](https://github.com/obkaro/convex-cms/issues) - Bug reports and feature requests
-- [Discord Community](https://discord.gg/convex) - Chat with other users
-- [Convex Documentation](https://docs.convex.dev) - Learn about Convex
-
----
-
-Next: [Getting Started Guide](./guides/getting-started.md)
+- [GitHub Issues](https://github.com/obkaro/convex-cms/issues) — Bug reports and feature requests
+- [Discord Community](https://discord.gg/convex) — Chat with other users
+- [Convex Documentation](https://docs.convex.dev) — Learn about Convex

@@ -1,353 +1,440 @@
 # Admin UI Setup
 
-The Convex CMS Admin UI is a ready-to-use React application for managing your content. This guide covers how to set it up and customize it.
+The Convex CMS Admin UI provides a visual interface for managing content. There are two ways to run it:
 
-## Quick Start with NPX
+| Mode | Best For | How It Works |
+|------|----------|--------------|
+| **CLI Mode** | Development | Pre-built UI, connects to your Convex deployment |
+| **Embed Mode** | Production | Component in your React app, your auth integration |
 
-The fastest way to launch the Admin UI:
+Both modes call the same backend functions from your `convex/admin.ts`.
+
+---
+
+## Prerequisites
+
+Before using the Admin UI, you need the backend functions it calls.
+
+### 1. Install convex-cms
+
+```bash
+npm install convex-cms
+```
+
+### 2. Add the Component
+
+```typescript
+// convex/convex.config.ts
+import { defineApp } from "convex/server";
+import convexCms from "convex-cms/convex.config";
+
+const app = defineApp();
+app.use(convexCms);
+export default app;
+```
+
+### 3. Create Admin API Functions
+
+```bash
+npx convex-cms init
+```
+
+This creates `convex/admin.ts` with all the functions the Admin UI needs. The file exports functions like `listContentTypes`, `getEntry`, `publishEntry`, etc.
+
+### 4. Start Convex
+
+```bash
+npx convex dev
+```
+
+---
+
+## CLI Mode
+
+The CLI runs a pre-built Admin UI that connects to your Convex deployment.
 
 ```bash
 npx convex-cms admin
 ```
 
-This command:
-1. Detects your Convex deployment URL from `.env.local`
-2. Starts a local development server
-3. Opens the Admin UI in your browser
+### How It Works
 
-## Admin UI Features
-
-The Admin UI provides:
-
-- **Content Type Management** - Create and edit content type schemas visually
-- **Content Entry Editor** - WYSIWYG editing with all field types
-- **Media Library** - Upload, organize, and browse media assets
-- **Version History** - View and rollback to previous versions
-- **Publishing Workflow** - Draft, publish, schedule, and unpublish
-- **Search & Filter** - Find content quickly
-- **Bulk Operations** - Publish, unpublish, or delete multiple entries
-
-## Routes Overview
-
-| Route | Description |
-|-------|-------------|
-| `/` | Dashboard with recent activity |
-| `/content-types` | Manage content type definitions |
-| `/content` | Browse all content entries |
-| `/entries/:id` | Edit a specific entry |
-| `/entries/new/:typeId` | Create new entry of a type |
-| `/entries/type/:typeId` | Entries filtered by type |
-| `/media` | Media library browser |
-| `/settings` | CMS configuration |
-
-## Authentication Setup
-
-The Admin UI uses a pluggable authentication system. You need to configure it based on your app's auth provider.
-
-### Option 1: Development Mode (Mock Auth)
-
-For local development without auth setup:
-
-```typescript
-// admin/src/contexts/AuthContext.tsx
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Mock user for development
-  const mockUser = {
-    id: "dev-user-123",
-    email: "dev@example.com",
-    name: "Developer",
-    role: "admin",
-  };
-
-  return (
-    <AuthContext.Provider value={{
-      user: mockUser,
-      isAuthenticated: true,
-      isLoading: false,
-      login: async () => {},
-      logout: async () => {},
-    }}>
-      {children}
-    </AuthContext.Provider>
-  );
-};
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  Pre-built Admin UI (localhost:3000)                            │
+│                                                                 │
+│  Makes requests to:                                             │
+│  • api.admin.listContentTypes                                   │
+│  • api.admin.getEntry                                           │
+│  • api.admin.publishEntry                                       │
+│  • ...                                                          │
+│                                                                 │
+│                         ▼                                       │
+│                  Your CONVEX_URL                                │
+│                  (from .env.local)                              │
+│                                                                 │
+│                         ▼                                       │
+│              ┌──────────────────────┐                           │
+│              │  convex/admin.ts     │                           │
+│              │  defineAdminAPI()    │                           │
+│              └──────────────────────┘                           │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-### Option 2: Clerk Authentication
+The CLI detects your Convex URL from:
+1. `--url` command line argument
+2. `CONVEX_URL` environment variable
+3. `VITE_CONVEX_URL` environment variable
+4. `.env.local` file
+5. `.env` file
 
-If using Clerk:
-
-```typescript
-// admin/src/contexts/AuthContext.tsx
-import { useUser, useClerk } from "@clerk/clerk-react";
-
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, isLoaded, isSignedIn } = useUser();
-  const { signOut } = useClerk();
-
-  const authUser = user ? {
-    id: user.id,
-    email: user.primaryEmailAddress?.emailAddress ?? "",
-    name: user.fullName ?? user.firstName ?? "User",
-    role: user.publicMetadata?.cmsRole as string ?? "viewer",
-  } : null;
-
-  return (
-    <AuthContext.Provider value={{
-      user: authUser,
-      isAuthenticated: isSignedIn ?? false,
-      isLoading: !isLoaded,
-      login: async () => {
-        // Redirect to Clerk sign-in
-        window.location.href = "/sign-in";
-      },
-      logout: async () => {
-        await signOut();
-      },
-    }}>
-      {children}
-    </AuthContext.Provider>
-  );
-};
-```
-
-### Option 3: Custom Auth Provider
-
-Integrate with your own auth system:
-
-```typescript
-// admin/src/contexts/AuthContext.tsx
-import { useQuery } from "convex/react";
-import { api } from "../convex/_generated/api";
-
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Get current user from your Convex backend
-  const currentUser = useQuery(api.users.getCurrentUser);
-
-  return (
-    <AuthContext.Provider value={{
-      user: currentUser ? {
-        id: currentUser._id,
-        email: currentUser.email,
-        name: currentUser.name,
-        role: currentUser.cmsRole,
-      } : null,
-      isAuthenticated: !!currentUser,
-      isLoading: currentUser === undefined,
-      login: async () => {
-        // Your login logic
-      },
-      logout: async () => {
-        // Your logout logic
-      },
-    }}>
-      {children}
-    </AuthContext.Provider>
-  );
-};
-```
-
-## Embedding in Your App
-
-You can embed the Admin UI within your existing application:
-
-### As a Route
-
-```typescript
-// In your TanStack Router setup
-import { createFileRoute } from "@tanstack/react-router";
-import { AdminUI } from "@convex-cms/admin";
-
-export const Route = createFileRoute("/admin")({
-  component: () => <AdminUI />,
-});
-```
-
-### As a Standalone Page
-
-```typescript
-// pages/admin.tsx (Next.js example)
-import dynamic from "next/dynamic";
-
-const AdminUI = dynamic(() => import("@convex-cms/admin"), {
-  ssr: false, // Admin UI requires client-side rendering
-});
-
-export default function AdminPage() {
-  return <AdminUI />;
-}
-```
-
-## Customization
-
-### Custom Theme
-
-Override CSS variables to match your brand:
-
-```css
-/* admin/src/styles/custom.css */
-:root {
-  --cms-primary: #6366f1;
-  --cms-primary-hover: #4f46e5;
-  --cms-background: #ffffff;
-  --cms-surface: #f8fafc;
-  --cms-text: #1e293b;
-  --cms-text-muted: #64748b;
-  --cms-border: #e2e8f0;
-  --cms-error: #ef4444;
-  --cms-success: #22c55e;
-  --cms-warning: #f59e0b;
-}
-
-/* Dark mode */
-[data-theme="dark"] {
-  --cms-background: #0f172a;
-  --cms-surface: #1e293b;
-  --cms-text: #f8fafc;
-  --cms-text-muted: #94a3b8;
-  --cms-border: #334155;
-}
-```
-
-### Custom Field Components
-
-Register custom field renderers:
-
-```typescript
-// admin/src/components/fields/CustomFieldRenderer.tsx
-import { registerFieldRenderer } from "@convex-cms/admin";
-
-// Custom renderer for a "color" field type
-const ColorField: React.FC<FieldProps> = ({ value, onChange, field }) => {
-  return (
-    <div className="color-field">
-      <input
-        type="color"
-        value={value ?? "#000000"}
-        onChange={(e) => onChange(e.target.value)}
-      />
-      <span>{value}</span>
-    </div>
-  );
-};
-
-registerFieldRenderer("color", ColorField);
-```
-
-### Custom Dashboard Widgets
-
-Add widgets to the dashboard:
-
-```typescript
-// admin/src/components/Dashboard.tsx
-import { DashboardWidget } from "@convex-cms/admin";
-
-export function CustomDashboard() {
-  return (
-    <div className="dashboard-grid">
-      <DashboardWidget title="Recent Posts">
-        <RecentPostsList />
-      </DashboardWidget>
-
-      <DashboardWidget title="Analytics">
-        <AnalyticsChart />
-      </DashboardWidget>
-
-      <DashboardWidget title="Quick Actions">
-        <QuickActionButtons />
-      </DashboardWidget>
-    </div>
-  );
-}
-```
-
-## Configuration Options
-
-The Admin UI accepts configuration via environment variables or props:
+### CLI Options
 
 ```bash
-# .env.local
-VITE_CONVEX_URL=https://your-deployment.convex.cloud
-VITE_CMS_DEFAULT_LOCALE=en
-VITE_CMS_ENABLE_MEDIA_VARIANTS=true
+npx convex-cms admin              # Default port 3000
+npx convex-cms admin --port 4000  # Custom port
+npx convex-cms admin --url <url>  # Explicit Convex URL
+npx convex-cms admin --demo       # Demo mode with mock auth
+npx convex-cms admin --no-open    # Don't open browser
 ```
 
-Or pass as props:
+### Demo Mode
+
+For quick testing without auth setup:
+
+```bash
+npx convex-cms admin --demo
+```
+
+This uses mock authentication with a demo admin user.
+
+---
+
+## Embed Mode
+
+Embed the Admin UI in your React application for production use.
+
+```tsx
+import { CmsAdmin } from "convex-cms/admin/embed";
+import { api } from "./convex/_generated/api";
+
+function AdminPage() {
+  return (
+    <CmsAdmin
+      api={api.admin}
+      convexUrl={import.meta.env.VITE_CONVEX_URL}
+      auth={{
+        getUser: () => ({
+          id: currentUser.id,
+          name: currentUser.name,
+          email: currentUser.email,
+        }),
+        getUserRole: (userId) => getUserCmsRole(userId),
+        onLogout: () => signOut(),
+      }}
+    />
+  );
+}
+```
+
+### CmsAdmin Props
+
+| Prop | Type | Required | Description |
+|------|------|----------|-------------|
+| `api` | `CmsAdminApi` | Yes | Your `api.admin` from generated types |
+| `convexUrl` | `string` | Yes | Your Convex deployment URL |
+| `auth` | `CmsAdminAuthConfig` | Yes | Authentication configuration |
+| `config` | `Partial<AdminConfig>` | No | UI customization |
+| `basePath` | `string` | No | Base URL path (default: `/admin`) |
+| `className` | `string` | No | CSS class for the container |
+| `initialRoute` | `EmbedRoute` | No | Starting route (default: `dashboard`) |
+| `onNavigate` | `function` | No | Callback when navigation occurs |
+
+### Auth Configuration
 
 ```typescript
-<AdminUI
-  config={{
-    defaultLocale: "en",
-    enableMediaVariants: true,
-    maxUploadSize: 10 * 1024 * 1024, // 10MB
-    allowedMediaTypes: ["image/*", "video/*", "application/pdf"],
-  }}
+interface CmsAdminAuthConfig {
+  // Return the current user, or null if not logged in
+  getUser: () => CmsAdminUser | null | Promise<CmsAdminUser | null>;
+
+  // Return the user's CMS role: "admin", "editor", "author", or "viewer"
+  getUserRole: (userId: string) => string | null | Promise<string | null>;
+
+  // Called when user clicks logout
+  onLogout?: () => void | Promise<void>;
+}
+
+interface CmsAdminUser {
+  id: string;
+  name?: string;
+  email?: string;
+  avatarUrl?: string;
+}
+```
+
+---
+
+## Authentication Examples
+
+### With Clerk
+
+```tsx
+import { useUser, useClerk } from "@clerk/clerk-react";
+import { CmsAdmin } from "convex-cms/admin/embed";
+import { api } from "./convex/_generated/api";
+
+function AdminPage() {
+  const { user, isLoaded } = useUser();
+  const { signOut } = useClerk();
+
+  if (!isLoaded) return <div>Loading...</div>;
+  if (!user) return <div>Please sign in</div>;
+
+  return (
+    <CmsAdmin
+      api={api.admin}
+      convexUrl={import.meta.env.VITE_CONVEX_URL}
+      auth={{
+        getUser: () => ({
+          id: user.id,
+          name: user.fullName ?? undefined,
+          email: user.primaryEmailAddress?.emailAddress,
+          avatarUrl: user.imageUrl,
+        }),
+        getUserRole: () => {
+          // Get role from Clerk public metadata
+          return (user.publicMetadata?.cmsRole as string) ?? "viewer";
+        },
+        onLogout: () => signOut(),
+      }}
+    />
+  );
+}
+```
+
+### With Convex Auth
+
+```tsx
+import { useConvexAuth } from "convex/react";
+import { useQuery } from "convex/react";
+import { CmsAdmin } from "convex-cms/admin/embed";
+import { api } from "./convex/_generated/api";
+
+function AdminPage() {
+  const { isAuthenticated, isLoading } = useConvexAuth();
+  const user = useQuery(api.users.me);
+
+  if (isLoading) return <div>Loading...</div>;
+  if (!isAuthenticated) return <div>Please sign in</div>;
+
+  return (
+    <CmsAdmin
+      api={api.admin}
+      convexUrl={import.meta.env.VITE_CONVEX_URL}
+      auth={{
+        getUser: () => user ? {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+        } : null,
+        getUserRole: () => user?.cmsRole ?? null,
+        onLogout: async () => {
+          // Your logout logic
+        },
+      }}
+    />
+  );
+}
+```
+
+### With Custom Auth
+
+```tsx
+import { useAuth } from "./your-auth-provider";
+import { CmsAdmin } from "convex-cms/admin/embed";
+import { api } from "./convex/_generated/api";
+
+function AdminPage() {
+  const { user, logout, loading } = useAuth();
+
+  if (loading) return <div>Loading...</div>;
+  if (!user) return <div>Please sign in</div>;
+
+  return (
+    <CmsAdmin
+      api={api.admin}
+      convexUrl={import.meta.env.VITE_CONVEX_URL}
+      auth={{
+        getUser: () => ({
+          id: user.id,
+          name: user.name,
+          email: user.email,
+        }),
+        getUserRole: async (userId) => {
+          // Fetch role from your backend
+          const response = await fetch(`/api/users/${userId}/role`);
+          const { role } = await response.json();
+          return role;
+        },
+        onLogout: logout,
+      }}
+    />
+  );
+}
+```
+
+---
+
+## Backend Authentication
+
+For production, also validate authentication on the backend:
+
+```typescript
+// convex/admin.ts
+import { defineAdminAPI } from "convex-cms";
+import { components } from "./_generated/api";
+
+export const {
+  listContentTypes,
+  getEntry,
+  // ... all exports
+} = defineAdminAPI(components.convexCms, {
+  auth: async (ctx, operation) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+
+    // Optional: check operation type for fine-grained control
+    if (operation.type === "deleteContentType") {
+      // Only allow admins to delete content types
+      const isAdmin = await checkUserIsAdmin(identity.subject);
+      if (!isAdmin) {
+        throw new Error("Only admins can delete content types");
+      }
+    }
+
+    return identity.subject;
+  },
+});
+```
+
+See [Admin API Reference](../api/admin-api.md) for all operation types.
+
+---
+
+## UI Configuration
+
+Customize the Admin UI appearance and behavior:
+
+```tsx
+import { CmsAdmin, defineAdminConfig } from "convex-cms/admin/embed";
+
+const config = defineAdminConfig({
+  branding: {
+    appName: "My CMS",
+    logo: "/logo.svg",
+    favicon: "/favicon.ico",
+  },
+
+  layout: {
+    sidebarWidth: 280,
+    sidebarCollapsible: true,
+  },
+
+  navigation: {
+    showDashboard: true,
+    showContent: true,
+    showMedia: true,
+    showTaxonomies: true,
+    showContentTypes: true,
+    showTrash: true,
+    showSettings: true,
+
+    // Add custom navigation items
+    customItems: [
+      {
+        id: "analytics",
+        path: "/analytics",
+        label: "Analytics",
+        icon: "BarChart",
+        section: "main",
+      },
+    ],
+  },
+
+  theme: {
+    mode: "system", // "light" | "dark" | "system"
+    allowModeSwitch: true,
+  },
+});
+
+<CmsAdmin
+  api={api.admin}
+  convexUrl={import.meta.env.VITE_CONVEX_URL}
+  auth={authConfig}
+  config={config}
 />
 ```
 
-## Role-Based UI Visibility
+---
 
-The Admin UI automatically shows/hides features based on user permissions:
+## Admin UI Features
 
-| Feature | Required Permission |
-|---------|-------------------|
-| Content Types menu | `contentTypes.read` |
-| Create Content Type | `contentTypes.create` |
-| Edit Content Type | `contentTypes.update` |
-| Delete Content Type | `contentTypes.delete` |
-| Media Library | `mediaAssets.read` |
-| Upload Media | `mediaAssets.create` |
-| Settings Page | `settings.read` |
-| Publish Entry | `contentEntries.publish` |
+| Feature | Description |
+|---------|-------------|
+| **Dashboard** | Overview with quick stats and navigation |
+| **Content Types** | Define schemas with 13 field types |
+| **Content Editor** | Edit entries with field-specific editors |
+| **Media Library** | Upload, organize in folders, manage variants |
+| **Taxonomies** | Tags, categories, hierarchical terms |
+| **Version History** | View and rollback to previous versions |
+| **Publishing** | Draft → Scheduled → Published workflow |
+| **Bulk Operations** | Publish, unpublish, delete multiple items |
+| **Trash** | Soft-deleted items with restore option |
+| **Content Locking** | Prevent editing conflicts |
 
-## Development Workflow
-
-1. **Start the Admin UI dev server:**
-   ```bash
-   cd admin
-   npm run dev
-   ```
-
-2. **Start Convex dev server (in another terminal):**
-   ```bash
-   npx convex dev
-   ```
-
-3. **Access the UI** at `http://localhost:5173`
-
-## Building for Production
-
-Build the Admin UI for deployment:
-
-```bash
-cd admin
-npm run build
-```
-
-This creates a static build in `admin/dist/` that can be deployed to any static hosting service.
+---
 
 ## Troubleshooting
 
 ### "Convex URL not found"
 
-Ensure your `.env.local` file contains `CONVEX_URL` or `VITE_CONVEX_URL`.
+Ensure your environment has the Convex URL:
 
-### Components not loading
+```bash
+# .env.local
+CONVEX_URL=https://your-deployment.convex.cloud
+# or
+VITE_CONVEX_URL=https://your-deployment.convex.cloud
+```
 
-The Admin UI requires TanStack Router. Ensure it's properly configured in `admin/src/routeTree.gen.ts`.
+### "Function not found" errors
 
-### Auth not working
+The Admin UI expects specific function names. Ensure you've run:
 
-1. Check your AuthContext implementation
-2. Verify the user object includes `id`, `email`, `name`, and `role`
-3. Ensure the role matches one defined in your CMS config
+```bash
+npx convex-cms init
+```
+
+And that your `convex/admin.ts` exports all required functions. See [Admin API Reference](../api/admin-api.md) for the complete list.
+
+### Auth not working in embed mode
+
+1. Check that `getUser` returns a valid user object with `id`
+2. Check that `getUserRole` returns one of: `admin`, `editor`, `author`, `viewer`
+3. Check browser console for errors
 
 ### Media uploads failing
 
-1. Check the `generateUploadUrl` mutation is accessible
-2. Verify file size limits in your configuration
-3. Ensure CORS is configured for your Convex deployment
+1. Ensure `generateUploadUrl` is exported from `convex/admin.ts`
+2. Check file size limits (default 50MB)
+3. Verify CORS settings for your Convex deployment
 
 ---
 
-Next: [Content Types Guide](./content-types.md)
+## See Also
+
+- [Admin API Reference](../api/admin-api.md) — All admin functions
+- [Authorization](./authorization.md) — Roles and permissions
+- [Integration Patterns](./integration-patterns.md) — Common setups

@@ -1,26 +1,84 @@
 # Convex CMS
 
-A developer-first headless CMS built as a [Convex Component](https://docs.convex.dev/components).
+A headless CMS built as a [Convex Component](https://docs.convex.dev/components) — content management that runs inside your Convex app.
 
-## Features
+## Choose Your Path
 
-- **Type-safe APIs** - Full TypeScript support with generated types
-- **Flexible content modeling** - Define content types with 13 field types
-- **Publishing workflows** - Draft, publish, schedule, and version content
-- **Media management** - Upload, organize, and serve media with variants
-- **Role-based access control** - Fine-grained permissions with custom roles
-- **Multi-locale support** - Content localization with fallback chains
-- **Admin UI** - Ready-to-use React admin interface (CLI or embeddable)
+### Need an Admin Interface?
 
-## Installation
+Use **`defineAdminAPI`** — one line creates all the backend functions for a working admin UI.
+
+```
+Your App                         Admin UI
+    │                               │
+    └── convex/admin.ts ────────────┘
+        defineAdminAPI()
+            │
+            ├── listContentTypes
+            ├── getEntry
+            ├── publishEntry
+            └── ... (30+ functions)
+                    │
+                    ▼
+            CMS Component
+```
+
+→ **[Admin UI Setup Guide](./docs/guides/admin-ui-setup.md)**
+
+### Building Custom Content Logic?
+
+Use **`createCmsClient`** — full programmatic control with typed methods in your Convex functions.
+
+```
+Your Convex Functions
+    │
+    └── cms.contentEntries.list(ctx, { status: "published" })
+        cms.contentTypes.create(ctx, { name: "blog", ... })
+        cms.mediaAssets.upload(ctx, { ... })
+            │
+            ▼
+        CMS Component
+```
+
+→ **[Getting Started Guide](./docs/guides/getting-started.md)**
+
+### Want Full Type Safety?
+
+Use **code-first schemas** — define content types with Convex validators, get TypeScript inference.
+
+```typescript
+const blogPost = defineContentType({
+  name: "blog_post",
+  validator: v.object({
+    title: v.string(),
+    content: v.string(),
+  }),
+});
+
+// TypeScript knows entry.data.title is string
+const entry = await cms.typedContentEntries.get<"blog_post">(ctx, id);
+```
+
+→ **[Code-First Schema Reference](./docs/api/code-first-schema.md)**
+
+### Need Both?
+
+**Most apps use both.** This is the typical setup:
+
+- `defineAdminAPI` powers the admin interface for content editors
+- `createCmsClient` gives you typed methods for custom queries on your frontend
+
+They work together through the same CMS component.
+
+## Quick Start
+
+### 1. Install
 
 ```bash
 npm install convex-cms
 ```
 
-## Quick Start
-
-### 1. Configure Convex Component
+### 2. Add the Component
 
 ```typescript
 // convex/convex.config.ts
@@ -32,158 +90,51 @@ app.use(convexCms);
 export default app;
 ```
 
-### 2. Initialize Admin API
+### 3. Choose Your Setup
 
-```bash
-npx convex-cms init
-```
+**For Admin UI:** Run `npx convex-cms init` then `npx convex-cms admin`
+→ [Full Admin UI Setup](./docs/guides/admin-ui-setup.md)
 
-This creates `convex/admin.ts` with all the admin functions the UI needs.
+**For Custom Functions:** Create a CMS client and use it in your functions
+→ [Full Getting Started Guide](./docs/guides/getting-started.md)
 
-### 3. Start Development
+## What's Included
 
-```bash
-npx convex dev
-```
+- **13 field types** — text, richText, media, reference, select, and more
+- **Publishing workflows** — draft → scheduled → published with version history
+- **Media management** — uploads, folders, variants, and metadata
+- **RBAC** — 4 built-in roles + custom roles with fine-grained permissions
+- **Multi-locale** — content localization with fallback chains
+- **Admin UI** — pre-built React interface (CLI or embeddable)
+- **Agent tools** — Zod schemas for AI integration
 
-### 4. Access Admin UI
+## Admin UI Modes
 
-```bash
-npx convex-cms admin
-```
+| Mode | Command | Best For |
+|------|---------|----------|
+| **CLI** | `npx convex-cms admin` | Development |
+| **Embed** | `<CmsAdmin api={api.admin} />` | Production |
 
-This opens the CMS admin interface at http://localhost:3000.
-
-## Admin UI Options
-
-### Option 1: Standalone CLI (Development)
-
-Perfect for quick access during development:
-
-```bash
-npx convex-cms admin
-npx convex-cms admin --port 4000      # Custom port
-npx convex-cms admin --demo           # Demo mode with mock data
-```
-
-### Option 2: Embed in Your App (Production)
-
-For production deployments, embed the admin UI in your application:
-
-```tsx
-import { CmsAdmin } from "convex-cms-admin";
-
-function AdminPage() {
-  return (
-    <CmsAdmin
-      convexUrl={process.env.VITE_CONVEX_URL}
-      auth={{
-        getUser: () => yourAuthProvider.getUser(),
-        getUserRole: (id) => yourAuthProvider.getRole(id),
-        onLogout: () => yourAuthProvider.signOut(),
-      }}
-      config={{
-        branding: {
-          appName: "My CMS",
-          logoUrl: "/logo.svg",
-        },
-      }}
-    />
-  );
-}
-```
-
-## Using the CMS Client
-
-For programmatic access in your Convex functions:
-
-```typescript
-// convex/cms.ts
-import { createCmsClient } from "convex-cms";
-import { components } from "./_generated/api";
-
-export const cms = createCmsClient(components.convexCms, {
-  defaultLocale: "en",
-  features: {
-    versioning: true,
-    localization: true,
-  },
-});
-```
-
-```typescript
-// convex/blog.ts
-import { query, mutation } from "./_generated/server";
-import { v } from "convex/values";
-import { cms } from "./cms";
-
-export const getPosts = query({
-  handler: async (ctx) => {
-    const result = await cms.contentEntries.list(ctx, {
-      status: "published",
-    });
-    return result.items;
-  },
-});
-
-export const createPost = mutation({
-  args: { title: v.string(), content: v.string() },
-  handler: async (ctx, args) => {
-    return await cms.contentEntries.create(ctx, {
-      contentTypeId: blogTypeId,
-      data: args,
-    });
-  },
-});
-```
-
-## Auth Integration
-
-The admin UI is auth-agnostic - integrate with any provider:
-
-### Frontend Auth Config
-
-```typescript
-<CmsAdmin
-  auth={{
-    // Return current user for display
-    getUser: () => ({
-      id: currentUser.id,
-      name: currentUser.name,
-      email: currentUser.email,
-    }),
-    // Map user ID to CMS role
-    getUserRole: (userId) => userRoles[userId] ?? null,
-    // Handle logout
-    onLogout: () => signOut(),
-  }}
-/>
-```
-
-### Backend Auth (Optional)
-
-Add auth validation to admin operations:
-
-```typescript
-// convex/admin.ts
-export const { ... } = defineAdminAPI(components.convexCms, {
-  auth: async (ctx, operation) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthorized");
-
-    // Optionally check operation.type for fine-grained access
-    return identity.subject;
-  },
-});
-```
+Both modes call the same functions from your `convex/admin.ts`.
 
 ## Documentation
 
-- [Getting Started Guide](./docs/guides/getting-started.md)
-- [Content Modeling](./docs/guides/content-modeling.md)
-- [Media Management](./docs/guides/media.md)
-- [Authorization](./docs/guides/authorization.md)
-- [API Reference](./docs/api/client-api.md)
+| Guide | Description |
+|-------|-------------|
+| [Admin UI Setup](./docs/guides/admin-ui-setup.md) | CLI and embed modes, auth integration |
+| [Getting Started](./docs/guides/getting-started.md) | Programmatic usage with createCmsClient |
+| [Integration Patterns](./docs/guides/integration-patterns.md) | Common setups and when to use each |
+| [Content Modeling](./docs/guides/content-modeling.md) | Content types and field definitions |
+| [Authorization](./docs/guides/authorization.md) | Roles, permissions, and custom auth |
+| [Media Management](./docs/guides/media.md) | Uploads, folders, and variants |
+
+| Reference | Description |
+|-----------|-------------|
+| [Client API](./docs/api/client-api.md) | createCmsClient methods |
+| [Admin API](./docs/api/admin-api.md) | defineAdminAPI functions |
+| [Code-First Schema](./docs/api/code-first-schema.md) | TypeScript-first content types |
+| [Field Types](./docs/api/field-types.md) | All 13 field types |
+| [Configuration](./docs/api/configuration.md) | All config options |
 
 ## Requirements
 
