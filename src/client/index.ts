@@ -104,8 +104,8 @@ import {
 import {
   type TypedComponentApi,
   type CmsClient,
-  type CmsReadContext,
-  type CmsMutationContext,
+  // type CmsReadContext,
+  // type CmsMutationContext,
   type ConvexContext,
   type PermissionCheckOptions,
   type UserPermissionResult,
