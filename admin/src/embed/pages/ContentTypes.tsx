@@ -7,8 +7,8 @@
 
 import { useApi } from "../contexts/ApiContext";
 import { useEmbedNavigation } from "../navigation";
-import { useEmbedAdapter } from "~/lib/embed-adapter";
-import { ContentTypesPage } from "~/pages";
+import { useEmbedAdapter } from "../../lib/embed-adapter";
+import { ContentTypesPage } from "../../pages";
 
 export function EmbedContentTypes() {
 	const api = useApi();

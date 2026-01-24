@@ -9,7 +9,7 @@ import { useSettingsConfig } from '~/contexts'
 import { CmsButton } from '~/components/cmsds/CmsButton'
 import { CmsStatusBadge } from '~/components/cmsds/CmsStatusBadge'
 import { CmsDialog, CmsConfirmDialog } from '~/components/cmsds/CmsDialog'
-import { Badge } from '~/components/ui/badge'
+import { Badge as _Badge } from '~/components/ui/badge'
 import { Input } from '~/components/ui/input'
 import {
   CheckCircle,
@@ -171,7 +171,7 @@ export function ContentEntryEditor({
   const [fieldErrors, setFieldErrors] = useState<Record<string, FieldError>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isDirty, setIsDirty] = useState(false)
-  const [lastSavedData, setLastSavedData] = useState<Record<
+  const [_lastSavedData, setLastSavedData] = useState<Record<
     string,
     unknown
   > | null>(entry ? { ...entry.data } : null)
@@ -500,7 +500,7 @@ export function ContentEntryEditor({
     }
   }, [entry, publishEntry, onSave])
 
-  const handleUnpublish = useCallback(async () => {
+  const _handleUnpublish = useCallback(async () => {
     if (!entry) return
 
     setIsPublishing(true)

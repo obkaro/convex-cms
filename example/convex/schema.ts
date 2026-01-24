@@ -37,4 +37,19 @@ export default defineSchema({
   })
     .index("by_email", ["email"])
     .index("by_role", ["cmsRole"]),
+
+  /**
+   * Settings table for CMS configuration (singleton).
+   */
+  settings: defineTable({
+    defaultLocale: v.string(),
+    availableLocales: v.array(v.string()),
+    features: v.object({
+      versioning: v.boolean(),
+      scheduling: v.boolean(),
+      localization: v.boolean(),
+      mediaManagement: v.boolean(),
+    }),
+    updatedBy: v.optional(v.string()),
+  }),
 });

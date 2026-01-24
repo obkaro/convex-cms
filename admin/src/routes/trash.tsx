@@ -11,10 +11,10 @@ import { TrashPage } from "~/pages";
 import { useTanStackNavigation } from "~/lib/tanstack-adapter";
 
 export const Route = createFileRoute("/trash")({
-  component: TrashRoute,
+	component: TrashRoute,
 });
 
 function TrashRoute() {
-  const navigation = useTanStackNavigation();
-  return <TrashPage api={api} navigation={navigation} />;
+	const navigation = useTanStackNavigation();
+	return <TrashPage api={api.admin} navigation={navigation} />;
 }

@@ -1,6 +1,6 @@
 import { createContext, useContext, type ReactNode } from "react";
-import type { AdminConfig, NavItem } from "~/lib/admin-config";
-import { getVisibleNavItems } from "~/lib/admin-config";
+import type { AdminConfig, NavItem } from "../lib/admin-config";
+import { getVisibleNavItems } from "../lib/admin-config";
 
 interface AdminConfigContextValue extends AdminConfig {
   navItems: { main: NavItem[]; config: NavItem[] };

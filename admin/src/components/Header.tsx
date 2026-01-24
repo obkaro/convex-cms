@@ -29,7 +29,7 @@ import {
   HelpCircle,
   Home,
   LogOut,
-  Settings,
+  Settings as _Settings,
   User,
   ChevronDown,
   ExternalLink,
@@ -37,7 +37,7 @@ import {
   Code,
   MessageSquare,
 } from 'lucide-react'
-import { cn } from '~/lib/cn'
+import { cn as _cn } from '~/lib/cn'
 import { Fragment } from 'react'
 
 interface BreadcrumbData {

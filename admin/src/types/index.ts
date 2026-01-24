@@ -1,81 +1,221 @@
 /**
  * Admin UI Type Definitions
  *
- * Uses Doc<> types from the generated dataModel for document types.
- * Only defines extended types that add admin-specific properties.
+ * Since the admin UI has its own Convex schema (only settings table),
+ * we define CMS entity types locally rather than using Doc<> from generated types.
+ * These types mirror the CMS component's document structure.
  */
 
-import type { Doc, Id } from "../../convex/_generated/dataModel";
-
 // =============================================================================
-// Document Types (aliases for clarity)
+// Field Definition Types
 // =============================================================================
 
-export type ContentType = Doc<"contentTypes">;
-export type ContentEntry = Doc<"contentEntries">;
-export type ContentVersion = Doc<"contentVersions">;
-export type MediaItem = Doc<"mediaItems">;
-export type MediaVariant = Doc<"mediaVariants">;
-export type Taxonomy = Doc<"taxonomies">;
-export type TaxonomyTerm = Doc<"taxonomyTerms">;
+export type FieldType =
+  | "text"
+  | "number"
+  | "boolean"
+  | "richText"
+  | "media"
+  | "select"
+  | "multiSelect"
+  | "tags"
+  | "category"
+  | "json"
+  | "date"
+  | "datetime"
+  | "reference";
+
+export interface FieldDefinition {
+  name: string;
+  displayName: string;
+  type: FieldType;
+  required?: boolean;
+  description?: string;
+  options?: Record<string, unknown>;
+}
 
 // =============================================================================
-// Extended Types (admin-specific additions)
+// Content Type
 // =============================================================================
 
-/**
- * Content type with entry count added by list query.
- */
+export interface ContentType {
+  _id: string;
+  _creationTime: number;
+  name: string;
+  displayName: string;
+  description?: string;
+  icon?: string;
+  fields: FieldDefinition[];
+  singleton: boolean;
+  slugField?: string;
+  titleField?: string;
+  sortOrder: number;
+  isActive: boolean;
+  createdBy: string;
+  updatedBy?: string;
+}
+
 export type ContentTypeWithCount = ContentType & {
   entryCount?: number;
 };
 
-/**
- * Taxonomy term with nested children for tree display.
- */
+// =============================================================================
+// Content Entry
+// =============================================================================
+
+export type ContentStatus = "draft" | "published" | "scheduled" | "archived";
+
+export interface ContentEntry {
+  _id: string;
+  _creationTime: number;
+  contentTypeId: string;
+  slug?: string;
+  data: Record<string, unknown>;
+  status: ContentStatus;
+  version: number;
+  locale?: string;
+  primaryEntryId?: string;
+  publishedAt?: number;
+  scheduledPublishAt?: number;
+  archivedAt?: number;
+  createdBy?: string;
+  updatedBy?: string;
+  deletedAt?: number;
+  deletedBy?: string;
+}
+
+// =============================================================================
+// Content Version
+// =============================================================================
+
+export interface ContentVersion {
+  _id: string;
+  _creationTime: number;
+  entryId: string;
+  version: number;
+  data: Record<string, unknown>;
+  status: ContentStatus;
+  changeDescription?: string;
+  createdBy?: string;
+}
+
+// =============================================================================
+// Media Item
+// =============================================================================
+
+export type MediaItemKind = "asset" | "folder";
+export type MediaType = "image" | "video" | "audio" | "document" | "other";
+
+export interface MediaItem {
+  _id: string;
+  _creationTime: number;
+  kind: MediaItemKind;
+  name: string;
+  parentId?: string;
+  path?: string;
+  sortOrder?: number;
+  createdBy?: string;
+  deletedAt?: number;
+  deletedBy?: string;
+  // Asset-specific fields
+  storageId?: string;
+  mimeType?: string;
+  size?: number;
+  type?: MediaType;
+  width?: number;
+  height?: number;
+  duration?: number;
+  title?: string;
+  description?: string;
+  altText?: string;
+  tags?: string[];
+  // Folder-specific fields
+  folderDescription?: string;
+}
+
+// =============================================================================
+// Media Variant
+// =============================================================================
+
+export interface MediaVariant {
+  _id: string;
+  _creationTime: number;
+  assetId: string;
+  name: string;
+  storageId: string;
+  width?: number;
+  height?: number;
+  format?: string;
+}
+
+// =============================================================================
+// Taxonomy
+// =============================================================================
+
+export interface Taxonomy {
+  _id: string;
+  _creationTime: number;
+  name: string;
+  displayName: string;
+  description?: string;
+  isHierarchical: boolean;
+  allowInlineCreation: boolean;
+  isActive: boolean;
+  icon?: string;
+  sortOrder?: number;
+  createdBy?: string;
+  deletedAt?: number;
+  deletedBy?: string;
+}
+
+// =============================================================================
+// Taxonomy Term
+// =============================================================================
+
+export interface TaxonomyTerm {
+  _id: string;
+  _creationTime: number;
+  taxonomyId: string;
+  name: string;
+  slug: string;
+  description?: string;
+  parentId?: string;
+  sortOrder?: number;
+  color?: string;
+  metadata?: Record<string, unknown>;
+  createdBy?: string;
+  deletedAt?: number;
+  deletedBy?: string;
+}
+
 export type TaxonomyTermWithChildren = TaxonomyTerm & {
   children?: TaxonomyTermWithChildren[];
 };
 
 // =============================================================================
-// Extracted Field Types (inferred from document types)
+// ID Types (string aliases for documentation)
 // =============================================================================
 
-export type ContentStatus = ContentEntry["status"];
-
-// =============================================================================
-// ID Types (aliases for clarity)
-// =============================================================================
-
-export type ContentTypeId = Id<"contentTypes">;
-export type ContentEntryId = Id<"contentEntries">;
-export type ContentVersionId = Id<"contentVersions">;
-export type MediaItemId = Id<"mediaItems">;
-export type MediaVariantId = Id<"mediaVariants">;
-export type TaxonomyId = Id<"taxonomies">;
-export type TaxonomyTermId = Id<"taxonomyTerms">;
+export type ContentTypeId = string;
+export type ContentEntryId = string;
+export type ContentVersionId = string;
+export type MediaItemId = string;
+export type MediaVariantId = string;
+export type TaxonomyId = string;
+export type TaxonomyTermId = string;
 
 // =============================================================================
 // Type Assertion Helpers
 // =============================================================================
 
-/**
- * Type assertion for string to TaxonomyId at API boundaries.
- */
 export function asTaxonomyId(id: string): TaxonomyId {
-  return id as unknown as TaxonomyId;
+  return id;
 }
 
-/**
- * Type assertion for string to TaxonomyTermId at API boundaries.
- */
 export function asTaxonomyTermId(id: string): TaxonomyTermId {
-  return id as unknown as TaxonomyTermId;
+  return id;
 }
 
-/**
- * Type assertion for string array to TaxonomyTermId array.
- */
 export function asTaxonomyTermIds(ids: string[]): TaxonomyTermId[] {
-  return ids as unknown as TaxonomyTermId[];
+  return ids;
 }

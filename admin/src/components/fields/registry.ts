@@ -7,7 +7,7 @@
  */
 
 import type { ComponentType } from "react";
-import type { BaseFieldProps, FieldRendererProps } from "./types";
+import type { BaseFieldProps, FieldRendererProps as _FieldRendererProps } from "./types";
 
 export type FieldRendererComponent = ComponentType<BaseFieldProps<unknown>>;
 

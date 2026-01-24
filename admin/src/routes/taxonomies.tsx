@@ -11,10 +11,10 @@ import { TaxonomiesPage } from "~/pages";
 import { useTanStackNavigation } from "~/lib/tanstack-adapter";
 
 export const Route = createFileRoute("/taxonomies")({
-  component: TaxonomiesRoute,
+	component: TaxonomiesRoute,
 });
 
 function TaxonomiesRoute() {
-  const navigation = useTanStackNavigation();
-  return <TaxonomiesPage api={api} navigation={navigation} />;
+	const navigation = useTanStackNavigation();
+	return <TaxonomiesPage api={api.admin} navigation={navigation} />;
 }

@@ -1,691 +1,196 @@
 /**
- * Flat Admin API for CMS Admin UI
+ * Admin API for CMS Admin UI
  *
- * This file exports all admin functions with flat naming convention.
- * Used by the embedded admin UI (`CmsAdmin` component).
- *
- * Users setting up their own deployment should use `defineAdminAPI` from convex-cms:
- *
- * @example
- * ```typescript
- * // convex/admin.ts
- * import { defineAdminAPI } from "convex-cms";
- * import { components } from "./_generated/api";
- *
- * export const {
- *   listContentTypes,
- *   getContentType,
- *   // ... etc
- * } = defineAdminAPI(components.convexCms);
- * ```
+ * Uses defineAdminAPI to expose all CMS component operations.
+ * Settings operations remain separate as they use the local admin database.
  */
 
-import { v } from "convex/values";
-import { query, mutation } from "./_generated/server";
+import { defineAdminAPI } from "../../src/client/admin/index.js";
 import { components } from "./_generated/api";
 
-const paginationOptsValidator = v.object({
-  numItems: v.number(),
-  cursor: v.union(v.string(), v.null()),
-});
+// Create admin API with all component-based operations
+const adminApi = defineAdminAPI(components.convexCms);
+
+// =============================================================================
+// Dashboard
+// =============================================================================
+
+export const getDashboardStats = adminApi.getDashboardStats;
 
 // =============================================================================
 // Content Types
 // =============================================================================
 
-export const listContentTypes = query({
-  args: {
-    isActive: v.optional(v.boolean()),
-  },
-  handler: async (ctx, args) => {
-    const result = await ctx.runQuery(components.convexCms.contentTypes.list, {
-      isActive: args.isActive,
-    });
-    return result;
-  },
-});
-
-export const getContentType = query({
-  args: {
-    id: v.optional(v.string()),
-    name: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    if (args.id && (!/^[a-z0-9]+$/i.test(args.id) || args.id.length < 10)) {
-      return null;
-    }
-    try {
-      return await ctx.runQuery(components.convexCms.contentTypes.get, {
-        id: args.id,
-        name: args.name,
-      });
-    } catch {
-      return null;
-    }
-  },
-});
-
-export const createContentType = mutation({
-  args: {
-    name: v.string(),
-    displayName: v.string(),
-    fields: v.array(v.any()),
-    description: v.optional(v.string()),
-    icon: v.optional(v.string()),
-    singleton: v.optional(v.boolean()),
-    slugField: v.optional(v.string()),
-    titleField: v.optional(v.string()),
-    sortOrder: v.optional(v.number()),
-    createdBy: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    return await ctx.runMutation(
-      components.convexCms.contentTypeMutations.createContentType,
-      {
-        ...args,
-        createdBy: args.createdBy ?? "system",
-      }
-    );
-  },
-});
-
-export const updateContentType = mutation({
-  args: {
-    id: v.string(),
-    displayName: v.optional(v.string()),
-    fields: v.optional(v.array(v.any())),
-    description: v.optional(v.string()),
-    icon: v.optional(v.string()),
-    singleton: v.optional(v.boolean()),
-    slugField: v.optional(v.string()),
-    titleField: v.optional(v.string()),
-    sortOrder: v.optional(v.number()),
-    isActive: v.optional(v.boolean()),
-    updatedBy: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    return await ctx.runMutation(
-      components.convexCms.contentTypeMutations.updateContentType,
-      args
-    );
-  },
-});
-
-export const deleteContentType = mutation({
-  args: {
-    id: v.string(),
-    cascade: v.optional(v.boolean()),
-    hardDelete: v.optional(v.boolean()),
-    deletedBy: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    return await ctx.runMutation(
-      components.convexCms.contentTypeMutations.deleteContentType,
-      args
-    );
-  },
-});
+export const listContentTypes = adminApi.listContentTypes;
+export const getContentType = adminApi.getContentType;
+export const createContentType = adminApi.createContentType;
+export const updateContentType = adminApi.updateContentType;
+export const deleteContentType = adminApi.deleteContentType;
 
 // =============================================================================
 // Content Entries
 // =============================================================================
 
-export const listEntries = query({
-  args: {
-    contentTypeId: v.optional(v.string()),
-    status: v.optional(v.string()),
-    search: v.optional(v.string()),
-    locale: v.optional(v.string()),
-    paginationOpts: paginationOptsValidator,
-  },
-  handler: async (ctx, args) => {
-    return await ctx.runQuery(components.convexCms.contentEntries.list, {
-      contentTypeId: args.contentTypeId,
-      status: args.status as "draft" | "published" | "scheduled" | "archived" | undefined,
-      search: args.search,
-      locale: args.locale,
-      paginationOpts: args.paginationOpts,
-    });
-  },
-});
+export const listEntries = adminApi.listEntries;
+export const getEntry = adminApi.getEntry;
+export const createEntry = adminApi.createEntry;
+export const updateEntry = adminApi.updateEntry;
+export const publishEntry = adminApi.publishEntry;
+export const unpublishEntry = adminApi.unpublishEntry;
+export const deleteEntry = adminApi.deleteEntry;
+export const duplicateEntry = adminApi.duplicateEntry;
+export const scheduleEntry = adminApi.scheduleEntry;
+export const cancelScheduledEntry = adminApi.cancelScheduledEntry;
+export const getScheduledEntries = adminApi.getScheduledEntries;
+export const restoreEntry = adminApi.restoreEntry;
+export const getEntryBySlug = adminApi.getEntryBySlug;
+export const getEntryBySlugAndTypeName = adminApi.getEntryBySlugAndTypeName;
 
-export const getEntry = query({
-  args: {
-    id: v.string(),
-  },
-  handler: async (ctx, args) => {
-    return await ctx.runQuery(components.convexCms.contentEntries.get, {
-      id: args.id,
-    });
-  },
-});
+// =============================================================================
+// Bulk Operations
+// =============================================================================
 
-export const createEntry = mutation({
-  args: {
-    contentTypeId: v.string(),
-    data: v.any(),
-    slug: v.optional(v.string()),
-    status: v.optional(v.string()),
-    locale: v.optional(v.string()),
-    primaryEntryId: v.optional(v.string()),
-    createdBy: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    return await ctx.runMutation(
-      components.convexCms.contentEntryMutations.createEntry,
-      {
-        contentTypeId: args.contentTypeId,
-        data: args.data,
-        slug: args.slug,
-        status: args.status as "draft" | "published" | "scheduled" | "archived" | undefined,
-        locale: args.locale,
-        primaryEntryId: args.primaryEntryId,
-        createdBy: args.createdBy,
-      }
-    );
-  },
-});
+export const bulkPublish = adminApi.bulkPublish;
+export const bulkUnpublish = adminApi.bulkUnpublish;
+export const bulkDelete = adminApi.bulkDelete;
+export const bulkUpdate = adminApi.bulkUpdate;
+export const bulkRestore = adminApi.bulkRestore;
 
-export const updateEntry = mutation({
-  args: {
-    id: v.string(),
-    data: v.optional(v.any()),
-    slug: v.optional(v.string()),
-    status: v.optional(v.string()),
-    scheduledPublishAt: v.optional(v.number()),
-    updatedBy: v.optional(v.string()),
-    regenerateSlug: v.optional(v.boolean()),
-  },
-  handler: async (ctx, args) => {
-    return await ctx.runMutation(
-      components.convexCms.contentEntryMutations.updateEntry,
-      {
-        id: args.id,
-        data: args.data,
-        slug: args.slug,
-        status: args.status as "draft" | "published" | "scheduled" | "archived" | undefined,
-        scheduledPublishAt: args.scheduledPublishAt,
-        updatedBy: args.updatedBy,
-        regenerateSlug: args.regenerateSlug,
-      }
-    );
-  },
-});
+// =============================================================================
+// Trash
+// =============================================================================
 
-export const publishEntry = mutation({
-  args: {
-    id: v.string(),
-    changeDescription: v.optional(v.string()),
-    updatedBy: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    return await ctx.runMutation(
-      components.convexCms.contentEntryMutations.publishEntry,
-      {
-        id: args.id,
-        changeDescription: args.changeDescription,
-        updatedBy: args.updatedBy,
-      }
-    );
-  },
-});
+export const getTrashConfig = adminApi.getTrashConfig;
+export const listTrash = adminApi.listTrash;
+export const getTrashStats = adminApi.getTrashStats;
+export const updateTrashConfig = adminApi.updateTrashConfig;
+export const emptyTrash = adminApi.emptyTrash;
+export const runTrashCleanup = adminApi.runTrashCleanup;
 
-export const unpublishEntry = mutation({
-  args: {
-    id: v.string(),
-    updatedBy: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    return await ctx.runMutation(
-      components.convexCms.contentEntryMutations.unpublishEntry,
-      {
-        id: args.id,
-        updatedBy: args.updatedBy,
-      }
-    );
-  },
-});
+// =============================================================================
+// Content Lock
+// =============================================================================
 
-export const deleteEntry = mutation({
-  args: {
-    id: v.string(),
-    hardDelete: v.optional(v.boolean()),
-    deletedBy: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    return await ctx.runMutation(
-      components.convexCms.contentEntryMutations.deleteEntry,
-      {
-        id: args.id,
-        hardDelete: args.hardDelete,
-        deletedBy: args.deletedBy,
-      }
-    );
-  },
-});
+export const checkContentLock = adminApi.checkContentLock;
+export const listLockedContent = adminApi.listLockedContent;
+export const acquireContentLock = adminApi.acquireContentLock;
+export const releaseContentLock = adminApi.releaseContentLock;
+export const renewContentLock = adminApi.renewContentLock;
+export const forceReleaseContentLock = adminApi.forceReleaseContentLock;
 
-export const duplicateEntry = mutation({
-  args: {
-    id: v.string(),
-    copyMediaReferences: v.optional(v.boolean()),
-    createdBy: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    return await ctx.runMutation(
-      components.convexCms.contentEntryMutations.duplicateEntry,
-      {
-        sourceEntryId: args.id,
-        copyMediaReferences: args.copyMediaReferences,
-        createdBy: args.createdBy,
-      }
-    );
-  },
-});
+// =============================================================================
+// Versions
+// =============================================================================
 
-export const scheduleEntry = mutation({
-  args: {
-    id: v.string(),
-    publishAt: v.number(),
-    updatedBy: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    return await ctx.runMutation(
-      components.convexCms.scheduledPublish.scheduleEntry,
-      {
-        id: args.id,
-        publishAt: args.publishAt,
-        updatedBy: args.updatedBy,
-      }
-    );
-  },
-});
-
-export const cancelScheduledEntry = mutation({
-  args: {
-    id: v.string(),
-    updatedBy: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    return await ctx.runMutation(
-      components.convexCms.scheduledPublish.cancelScheduledPublish,
-      {
-        id: args.id,
-        updatedBy: args.updatedBy,
-      }
-    );
-  },
-});
-
-export const getScheduledEntries = query({
-  args: {},
-  handler: async (ctx) => {
-    return await ctx.runQuery(
-      components.convexCms.scheduledPublish.getScheduledEntries,
-      {}
-    );
-  },
-});
+export const getVersionHistory = adminApi.getVersionHistory;
+export const getVersion = adminApi.getVersion;
+export const compareVersions = adminApi.compareVersions;
+export const rollbackVersion = adminApi.rollbackVersion;
 
 // =============================================================================
 // Media Assets
 // =============================================================================
 
-export const listMediaAssets = query({
-  args: {
-    folderId: v.optional(v.string()),
-    type: v.optional(v.string()),
-    search: v.optional(v.string()),
-    paginationOpts: paginationOptsValidator,
-  },
-  handler: async (ctx, args) => {
-    return await ctx.runQuery(components.convexCms.mediaAssets.list, {
-      folderId: args.folderId,
-      type: args.type as "image" | "video" | "audio" | "document" | "other" | undefined,
-      search: args.search,
-      paginationOpts: args.paginationOpts,
-    });
-  },
-});
-
-export const getMediaAsset = query({
-  args: {
-    id: v.string(),
-  },
-  handler: async (ctx, args) => {
-    return await ctx.runQuery(components.convexCms.mediaAssets.get, {
-      id: args.id,
-    });
-  },
-});
-
-export const createMediaAsset = mutation({
-  args: {
-    storageId: v.string(),
-    name: v.string(),
-    mimeType: v.string(),
-    size: v.number(),
-    parentId: v.optional(v.string()),
-    width: v.optional(v.number()),
-    height: v.optional(v.number()),
-    title: v.optional(v.string()),
-    description: v.optional(v.string()),
-    altText: v.optional(v.string()),
-    createdBy: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    return await ctx.runMutation(
-      components.convexCms.mediaAssetMutations.createMediaAsset,
-      {
-        storageId: args.storageId as unknown as import("./_generated/dataModel").Id<"_storage">,
-        name: args.name,
-        mimeType: args.mimeType,
-        size: args.size,
-        parentId: args.parentId as unknown as import("./_generated/dataModel").Id<"mediaItems"> | undefined,
-        width: args.width,
-        height: args.height,
-        title: args.title,
-        description: args.description,
-        altText: args.altText,
-        createdBy: args.createdBy,
-      }
-    );
-  },
-});
-
-export const updateMediaAsset = mutation({
-  args: {
-    id: v.string(),
-    name: v.optional(v.string()),
-    title: v.optional(v.string()),
-    description: v.optional(v.string()),
-    altText: v.optional(v.string()),
-    parentId: v.optional(v.string()),
-    tags: v.optional(v.array(v.string())),
-  },
-  handler: async (ctx, args) => {
-    return await ctx.runMutation(
-      components.convexCms.mediaAssetMutations.updateMediaAsset,
-      {
-        id: args.id as unknown as import("./_generated/dataModel").Id<"mediaItems">,
-        name: args.name,
-        title: args.title,
-        description: args.description,
-        altText: args.altText,
-        parentId: args.parentId as unknown as import("./_generated/dataModel").Id<"mediaItems"> | undefined,
-        tags: args.tags,
-      }
-    );
-  },
-});
-
-export const deleteMediaAsset = mutation({
-  args: {
-    id: v.string(),
-    hardDelete: v.optional(v.boolean()),
-    deletedBy: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    return await ctx.runMutation(
-      components.convexCms.mediaAssetMutations.deleteMediaAsset,
-      {
-        id: args.id,
-        hardDelete: args.hardDelete,
-        deletedBy: args.deletedBy,
-      }
-    );
-  },
-});
-
-export const restoreMediaAsset = mutation({
-  args: {
-    id: v.string(),
-  },
-  handler: async (ctx, args) => {
-    return await ctx.runMutation(
-      components.convexCms.mediaAssetMutations.restoreMediaAsset,
-      {
-        id: args.id,
-      }
-    );
-  },
-});
-
-export const moveMediaAssets = mutation({
-  args: {
-    assetIds: v.array(v.string()),
-    targetFolderId: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    return await ctx.runMutation(
-      components.convexCms.mediaAssetMutations.moveMediaAssets,
-      {
-        assetIds: args.assetIds,
-        targetFolderId: args.targetFolderId,
-      }
-    );
-  },
-});
+export const listMediaAssets = adminApi.listMediaAssets;
+export const getMediaAsset = adminApi.getMediaAsset;
+export const createMediaAsset = adminApi.createMediaAsset;
+export const updateMediaAsset = adminApi.updateMediaAsset;
+export const deleteMediaAsset = adminApi.deleteMediaAsset;
+export const restoreMediaAsset = adminApi.restoreMediaAsset;
+export const permanentDeleteMediaAsset = adminApi.permanentDeleteMediaAsset;
+export const bulkPermanentDeleteMediaAssets = adminApi.bulkPermanentDeleteMediaAssets;
+export const moveMediaAssets = adminApi.moveMediaAssets;
+export const getMediaTrashCount = adminApi.getMediaTrashCount;
 
 // =============================================================================
 // Media Folders
 // =============================================================================
 
-export const listMediaFolders = query({
-  args: {
-    parentId: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    return await ctx.runQuery(
-      components.convexCms.mediaFolderMutations.listMediaFolders,
-      {
-        parentId: args.parentId,
-      }
-    );
-  },
-});
+export const listMediaFolders = adminApi.listMediaFolders;
+export const getMediaFolder = adminApi.getMediaFolder;
+export const getMediaFolderTree = adminApi.getMediaFolderTree;
+export const createMediaFolder = adminApi.createMediaFolder;
+export const updateMediaFolder = adminApi.updateMediaFolder;
+export const moveMediaFolder = adminApi.moveMediaFolder;
+export const deleteMediaFolder = adminApi.deleteMediaFolder;
+export const restoreMediaFolder = adminApi.restoreMediaFolder;
 
-export const getMediaFolder = query({
-  args: {
-    id: v.string(),
-  },
-  handler: async (ctx, args) => {
-    return await ctx.runQuery(
-      components.convexCms.mediaFolderMutations.getMediaFolder,
-      {
-        id: args.id,
-      }
-    );
-  },
-});
+// =============================================================================
+// Media Variants
+// =============================================================================
 
-export const getMediaFolderTree = query({
-  args: {},
-  handler: async (ctx) => {
-    return await ctx.runQuery(
-      components.convexCms.mediaFolderMutations.getFolderTree,
-      {}
-    );
-  },
-});
-
-export const createMediaFolder = mutation({
-  args: {
-    name: v.string(),
-    parentId: v.optional(v.string()),
-    description: v.optional(v.string()),
-    createdBy: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    return await ctx.runMutation(
-      components.convexCms.mediaFolderMutations.createMediaFolder,
-      {
-        name: args.name,
-        parentId: args.parentId,
-        description: args.description,
-        createdBy: args.createdBy,
-      }
-    );
-  },
-});
-
-export const updateMediaFolder = mutation({
-  args: {
-    id: v.string(),
-    name: v.optional(v.string()),
-    description: v.optional(v.string()),
-    sortOrder: v.optional(v.number()),
-  },
-  handler: async (ctx, args) => {
-    return await ctx.runMutation(
-      components.convexCms.mediaFolderMutations.updateMediaFolder,
-      {
-        id: args.id,
-        name: args.name,
-        description: args.description,
-        sortOrder: args.sortOrder,
-      }
-    );
-  },
-});
-
-export const moveMediaFolder = mutation({
-  args: {
-    id: v.string(),
-    newParentId: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    return await ctx.runMutation(
-      components.convexCms.mediaFolderMutations.moveMediaFolder,
-      {
-        id: args.id,
-        newParentId: args.newParentId,
-      }
-    );
-  },
-});
-
-export const deleteMediaFolder = mutation({
-  args: {
-    id: v.string(),
-    recursive: v.optional(v.boolean()),
-    hardDelete: v.optional(v.boolean()),
-    deletedBy: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    return await ctx.runMutation(
-      components.convexCms.mediaFolderMutations.deleteMediaFolder,
-      {
-        id: args.id,
-        recursive: args.recursive,
-        hardDelete: args.hardDelete,
-        deletedBy: args.deletedBy,
-      }
-    );
-  },
-});
-
-export const restoreMediaFolder = mutation({
-  args: {
-    id: v.string(),
-    recursive: v.optional(v.boolean()),
-  },
-  handler: async (ctx, args) => {
-    return await ctx.runMutation(
-      components.convexCms.mediaFolderMutations.restoreMediaFolder,
-      {
-        id: args.id,
-        recursive: args.recursive,
-      }
-    );
-  },
-});
+export const listMediaVariants = adminApi.listMediaVariants;
+export const getMediaVariant = adminApi.getMediaVariant;
+export const getBestMediaVariant = adminApi.getBestMediaVariant;
+export const getMediaResponsiveSrcset = adminApi.getMediaResponsiveSrcset;
+export const getMediaVariantPresets = adminApi.getMediaVariantPresets;
+export const getMediaAssetWithVariants = adminApi.getMediaAssetWithVariants;
+export const createMediaVariant = adminApi.createMediaVariant;
+export const requestMediaVariantGeneration = adminApi.requestMediaVariantGeneration;
+export const deleteMediaVariant = adminApi.deleteMediaVariant;
+export const deleteMediaAssetVariants = adminApi.deleteMediaAssetVariants;
+export const generateMediaVariantsFromPresets = adminApi.generateMediaVariantsFromPresets;
+export const restoreMediaVariant = adminApi.restoreMediaVariant;
 
 // =============================================================================
 // Upload
 // =============================================================================
 
-export const generateUploadUrl = mutation({
-  args: {},
-  handler: async (ctx) => {
-    return await ctx.storage.generateUploadUrl();
-  },
-});
+export const generateUploadUrl = adminApi.generateUploadUrl;
 
 // =============================================================================
-// Dashboard Stats
+// Taxonomies
 // =============================================================================
 
-export const getDashboardStats = query({
-  args: {},
-  handler: async (ctx) => {
-    const contentTypesResult = await ctx.runQuery(
-      components.convexCms.contentTypes.list,
-      {}
-    );
-    const contentTypes = contentTypesResult.page || [];
+export const getTaxonomy = adminApi.getTaxonomy;
+export const listTaxonomies = adminApi.listTaxonomies;
+export const createTaxonomy = adminApi.createTaxonomy;
+export const updateTaxonomy = adminApi.updateTaxonomy;
+export const deleteTaxonomy = adminApi.deleteTaxonomy;
+export const restoreTaxonomy = adminApi.restoreTaxonomy;
 
-    const entriesResult = await ctx.runQuery(
-      components.convexCms.contentEntries.list,
-      {
-        paginationOpts: { numItems: 1000, cursor: null },
-      }
-    );
+// =============================================================================
+// Terms
+// =============================================================================
 
-    const mediaResult = await ctx.runQuery(components.convexCms.mediaAssets.list, {
-      paginationOpts: { numItems: 1000, cursor: null },
-    });
+export const getTerm = adminApi.getTerm;
+export const listTerms = adminApi.listTerms;
+export const getTermsHierarchy = adminApi.getTermsHierarchy;
+export const suggestTerms = adminApi.suggestTerms;
+export const countTerms = adminApi.countTerms;
+export const createTerm = adminApi.createTerm;
+export const updateTerm = adminApi.updateTerm;
+export const deleteTerm = adminApi.deleteTerm;
+export const restoreTerm = adminApi.restoreTerm;
 
-    const activeContentTypes = contentTypes.filter(
-      (ct: { isActive: boolean }) => ct.isActive
-    ).length;
+// =============================================================================
+// Entry-Term Relations
+// =============================================================================
 
-    const entries = entriesResult.page || [];
-    const publishedEntries = entries.filter(
-      (e: { status: string }) => e.status === "published"
-    ).length;
-    const draftEntries = entries.filter(
-      (e: { status: string }) => e.status === "draft"
-    ).length;
-    const scheduledEntries = entries.filter(
-      (e: { status: string }) => e.status === "scheduled"
-    ).length;
+export const getTermsByEntry = adminApi.getTermsByEntry;
+export const getEntriesByTerm = adminApi.getEntriesByTerm;
+export const setEntryTerms = adminApi.setEntryTerms;
+export const addTermToEntry = adminApi.addTermToEntry;
+export const removeTermFromEntry = adminApi.removeTermFromEntry;
+export const createTermAndAddToEntry = adminApi.createTermAndAddToEntry;
 
-    const mediaAssets = (mediaResult.page || []) as Array<{
-      kind: string;
-      mimeType?: string;
-    }>;
-    const assets = mediaAssets.filter((m) => m.kind === "asset");
-    const images = assets.filter((m) =>
-      m.mimeType?.startsWith("image/")
-    ).length;
-    const videos = assets.filter((m) =>
-      m.mimeType?.startsWith("video/")
-    ).length;
-    const documents = assets.filter(
-      (m) =>
-        m.mimeType?.startsWith("application/pdf") ||
-        m.mimeType?.includes("document") ||
-        m.mimeType?.includes("sheet") ||
-        m.mimeType?.includes("presentation")
-    ).length;
+// =============================================================================
+// Media-Term Relations
+// =============================================================================
 
-    return {
-      contentTypes: {
-        total: contentTypes.length,
-        active: activeContentTypes,
-      },
-      entries: {
-        total: entries.length,
-        published: publishedEntries,
-        draft: draftEntries,
-        scheduled: scheduledEntries,
-      },
-      media: {
-        total: mediaAssets.length,
-        images,
-        videos,
-        documents,
-      },
-    };
-  },
-});
+export const getTermsByMedia = adminApi.getTermsByMedia;
+export const getMediaByTerm = adminApi.getMediaByTerm;
+export const setMediaTerms = adminApi.setMediaTerms;
+export const addTermToMedia = adminApi.addTermToMedia;
+export const removeTermFromMedia = adminApi.removeTermFromMedia;
+export const createTermAndAddToMedia = adminApi.createTermAndAddToMedia;
+
+// =============================================================================
+// Settings (uses local admin database - not part of defineAdminAPI)
+// =============================================================================
+
+export {
+  get as getSettings,
+  update as updateSettings,
+  reset as resetSettings,
+} from "./settings";

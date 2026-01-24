@@ -11,10 +11,10 @@ import { SettingsPage } from "~/pages";
 import { useTanStackNavigation } from "~/lib/tanstack-adapter";
 
 export const Route = createFileRoute("/settings")({
-  component: SettingsRoute,
+	component: SettingsRoute,
 });
 
 function SettingsRoute() {
-  const navigation = useTanStackNavigation();
-  return <SettingsPage api={api} navigation={navigation} />;
+	const navigation = useTanStackNavigation();
+	return <SettingsPage api={api.admin} navigation={navigation} />;
 }

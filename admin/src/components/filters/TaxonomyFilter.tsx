@@ -107,7 +107,7 @@ export function TaxonomyFilter({
   )
 
   const displayTaxonomyName = activeTaxonomy?.displayName ?? taxonomies[0]?.displayName ?? 'Tags'
-  const isLoading = taxonomiesResult === undefined || (targetTaxonomyId && termsResult === undefined)
+  const isLoading = taxonomiesResult === undefined || (!!targetTaxonomyId && termsResult === undefined)
   const hasNoTaxonomies = taxonomies.length === 0 && taxonomiesResult !== undefined
 
   if (hasNoTaxonomies) {

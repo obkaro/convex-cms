@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react'
 import { useQuery } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
-import type { Id } from '../../../convex/_generated/dataModel'
+// IDs are strings when crossing component boundaries
 import { FieldWrapper } from './FieldWrapper'
 import type { BaseFieldProps } from './types'
 import { UploadDropzone, type UploadedFile } from '../UploadDropzone'
@@ -106,7 +106,7 @@ export function MediaField({
 
   const selectedAsset = useQuery(
     api.media.getAsset,
-    value ? { id: value as Id<'media_assets'> } : 'skip'
+    value ? { id: value } : 'skip'
   )
 
   const assetsResult = useQuery(
