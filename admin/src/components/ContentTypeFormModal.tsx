@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import type { FieldType, ContentType } from "@convex-cms/core/types";
+import type { FieldType, ContentType } from "convex-cms/types";
 import { CmsDialog } from "~/components/cmsds/CmsDialog";
 import { CmsButton } from "~/components/cmsds/CmsButton";
 import { Input } from "~/components/ui/input";
@@ -417,15 +417,11 @@ export function ContentTypeFormModal({
 					error instanceof Error
 						? error.message
 						: isEditing
-							? "Failed to update content type"
-							: "Failed to create content type";
+						? "Failed to update content type"
+						: "Failed to create content type";
 
 				// Check for breaking changes error
-				if (
-					isEditing &&
-					!force &&
-					message.includes("breaking change")
-				) {
+				if (isEditing && !force && message.includes("breaking change")) {
 					const changes = parseBreakingChanges(message);
 					setBreakingChanges(changes);
 					setShowBreakingWarning(true);
@@ -513,410 +509,418 @@ export function ContentTypeFormModal({
 
 	return (
 		<>
-		<CmsDialog
-			open={isOpen}
-			onOpenChange={(open) => !open && handleClose()}
-			title={isEditing ? "Edit Content Type" : "Create Content Type"}
-			size="2xl"
-			footer={
-				<>
-					<CmsButton
-						variant="outline"
-						onClick={handleClose}
-						disabled={isSubmitting}
-					>
-						Cancel
-					</CmsButton>
-					<CmsButton
-						variant="primary"
-						onClick={handleSubmit}
-						disabled={validationErrors.length > 0}
-						loading={isSubmitting}
-						data-testid={isEditing ? "update-content-type-submit" : "create-content-type-submit"}
-					>
-						{isEditing ? "Save Changes" : "Create Content Type"}
-					</CmsButton>
-				</>
-			}
-		>
-			<form onSubmit={handleSubmit} className="space-y-6">
-				{/* Basic Info Section */}
-				<div className="space-y-4">
-					<h4 className="text-sm font-semibold text-foreground">
-						Basic Information
-					</h4>
-
-					<div className="space-y-2">
-						<Label htmlFor="displayName">
-							Display Name <span className="text-destructive">*</span>
-						</Label>
-						<Input
-							id="displayName"
-							value={displayName}
-							onChange={(e) => handleDisplayNameChange(e.target.value)}
-							placeholder="e.g., Blog Post"
-							disabled={isSubmitting}
-							autoFocus
-							data-testid="display-name-input"
-						/>
-					</div>
-
-					<div className="space-y-2">
-						<Label htmlFor="machineName">
-							System Name <span className="text-destructive">*</span>
-						</Label>
-						<Input
-							id="machineName"
-							value={machineName}
-							onChange={(e) => handleMachineNameChange(e.target.value)}
-							placeholder="e.g., blog_post"
-							disabled={isSubmitting || isEditing}
-							className={cn(
-								!isValidMachineName(machineName) &&
-									machineName &&
-									"border-destructive",
-							)}
-							data-testid="machine-name-input"
-						/>
-						<p className="text-xs text-muted-foreground">
-							{isEditing
-								? "System name cannot be changed after creation"
-								: "Lowercase letters, numbers, and underscores only. Used in API queries."}
-						</p>
-					</div>
-
-					<div className="space-y-2">
-						<Label htmlFor="description">Description</Label>
-						<Textarea
-							id="description"
-							value={description}
-							onChange={(e) => setDescription(e.target.value)}
-							placeholder="Optional description of this content type"
-							disabled={isSubmitting}
-							rows={2}
-						/>
-					</div>
-
-					<div className="flex items-center gap-2">
-						<Checkbox
-							id="singleton"
-							checked={singleton}
-							onCheckedChange={(checked) => setSingleton(checked as boolean)}
-							disabled={isSubmitting}
-						/>
-						<Label htmlFor="singleton" className="cursor-pointer">
-							Singleton (only one entry allowed)
-						</Label>
-					</div>
-				</div>
-
-				{/* Fields Section */}
-				<div className="space-y-4">
-					<div className="flex items-center justify-between">
-						<h4 className="text-sm font-semibold text-foreground">Fields</h4>
+			<CmsDialog
+				open={isOpen}
+				onOpenChange={(open) => !open && handleClose()}
+				title={isEditing ? "Edit Content Type" : "Create Content Type"}
+				size="2xl"
+				footer={
+					<>
 						<CmsButton
-							type="button"
-							variant="secondary"
-							size="sm"
-							onClick={addField}
+							variant="outline"
+							onClick={handleClose}
 							disabled={isSubmitting}
-							data-testid="add-field-button"
 						>
-							<Plus className="size-3.5" />
-							Add Field
+							Cancel
 						</CmsButton>
-					</div>
-
-					<div className="space-y-2">
-						{fields.map((field, index) => (
-							<div
-								key={index}
-								className={cn(
-									"flex cursor-pointer items-center gap-2 rounded-lg border p-2 transition-colors hover:bg-muted/50",
-									activeFieldIndex === index && "border-primary bg-primary/5",
-								)}
-								onClick={() => {
-									setActiveFieldIndex(index);
-									setShowFieldEditor(true);
-								}}
-								data-testid={`field-item-${index}`}
-							>
-								<div className="flex flex-col gap-0.5">
-									{index > 0 && (
-										<button
-											type="button"
-											onClick={(e) => {
-												e.stopPropagation();
-												moveField(index, index - 1);
-											}}
-											className="rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
-										>
-											<ChevronUp className="size-3" />
-										</button>
-									)}
-									{index < fields.length - 1 && (
-										<button
-											type="button"
-											onClick={(e) => {
-												e.stopPropagation();
-												moveField(index, index + 1);
-											}}
-											className="rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
-										>
-											<ChevronDown className="size-3" />
-										</button>
-									)}
-								</div>
-
-								<div className="flex size-8 items-center justify-center rounded bg-muted text-muted-foreground">
-									{FIELD_TYPE_INFO[field.type].icon}
-								</div>
-
-								<div className="min-w-0 flex-1">
-									<p className="truncate text-sm font-medium">{field.label}</p>
-									<p className="text-xs text-muted-foreground">
-										{FIELD_TYPE_INFO[field.type].label}
-										{field.required && " *"}
-									</p>
-								</div>
-
-								<button
-									type="button"
-									onClick={(e) => {
-										e.stopPropagation();
-										removeField(index);
-									}}
-									disabled={isSubmitting || fields.length === 1}
-									className="rounded p-1 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
-								>
-									<X className="size-4" />
-								</button>
-							</div>
-						))}
-					</div>
-
-					{/* Field Editor Panel */}
-					{showFieldEditor && activeField && activeFieldIndex !== null && (
-						<div
-							className="rounded-lg border bg-muted/30 p-4"
-							data-testid="field-editor"
+						<CmsButton
+							variant="primary"
+							onClick={handleSubmit}
+							disabled={validationErrors.length > 0}
+							loading={isSubmitting}
+							data-testid={
+								isEditing
+									? "update-content-type-submit"
+									: "create-content-type-submit"
+							}
 						>
-							<div className="mb-4 flex items-center justify-between">
-								<h5 className="font-medium">Edit Field: {activeField.label}</h5>
-								<button
-									type="button"
-									onClick={() => {
-										setShowFieldEditor(false);
-										setActiveFieldIndex(null);
-									}}
-									className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
-								>
-									<X className="size-4" />
-								</button>
-							</div>
-
-							<div className="space-y-4">
-								<div className="space-y-2">
-									<Label htmlFor="fieldLabel">
-										Label <span className="text-destructive">*</span>
-									</Label>
-									<Input
-										id="fieldLabel"
-										value={activeField.label}
-										onChange={(e) =>
-											updateField(activeFieldIndex, {
-												label: e.target.value,
-												name: machineNameManuallyEdited
-													? activeField.name
-													: generateMachineName(e.target.value) ||
-													  activeField.name,
-											})
-										}
-										disabled={isSubmitting}
-										data-testid="field-label-input"
-									/>
-								</div>
-
-								<div className="space-y-2">
-									<Label htmlFor="fieldName">
-										Name <span className="text-destructive">*</span>
-									</Label>
-									<Input
-										id="fieldName"
-										value={activeField.name}
-										onChange={(e) =>
-											updateField(activeFieldIndex, {
-												name: e.target.value
-													.toLowerCase()
-													.replace(/[^a-z0-9_]/g, ""),
-											})
-										}
-										disabled={isSubmitting}
-										data-testid="field-name-input"
-									/>
-								</div>
-
-								<div className="space-y-2">
-									<Label htmlFor="fieldType">
-										Type <span className="text-destructive">*</span>
-									</Label>
-									<Select
-										value={activeField.type}
-										onValueChange={(value) =>
-											updateField(activeFieldIndex, {
-												type: value as FieldType,
-												options: undefined,
-											})
-										}
-										disabled={isSubmitting}
-									>
-										<SelectTrigger data-testid="field-type-select">
-											<SelectValue />
-										</SelectTrigger>
-										<SelectContent>
-											{Object.entries(FIELD_TYPE_INFO).map(([type, info]) => (
-												<SelectItem key={type} value={type}>
-													<div className="flex items-center gap-2">
-														{info.icon}
-														<span>{info.label}</span>
-														<span className="text-muted-foreground">
-															- {info.description}
-														</span>
-													</div>
-												</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
-								</div>
-
-								<div className="flex items-center gap-2">
-									<Checkbox
-										id="fieldRequired"
-										checked={activeField.required}
-										onCheckedChange={(checked) =>
-											updateField(activeFieldIndex, {
-												required: checked as boolean,
-											})
-										}
-										disabled={isSubmitting}
-									/>
-									<Label htmlFor="fieldRequired" className="cursor-pointer">
-										Required
-									</Label>
-								</div>
-
-								<div className="space-y-2">
-									<Label htmlFor="fieldDescription">Help Text</Label>
-									<Input
-										id="fieldDescription"
-										value={activeField.description || ""}
-										onChange={(e) =>
-											updateField(activeFieldIndex, {
-												description: e.target.value || undefined,
-											})
-										}
-										placeholder="Help text shown below the field"
-										disabled={isSubmitting}
-									/>
-								</div>
-
-								{(activeField.type === "select" ||
-									activeField.type === "multiSelect") && (
-									<SelectOptionsEditor
-										options={activeField.options?.options || []}
-										onChange={(options) =>
-											updateField(activeFieldIndex, {
-												options: { ...activeField.options, options },
-											})
-										}
-										disabled={isSubmitting}
-									/>
-								)}
-							</div>
-						</div>
-					)}
-				</div>
-
-				{/* Display Settings */}
-				{textFields.length > 0 && (
+							{isEditing ? "Save Changes" : "Create Content Type"}
+						</CmsButton>
+					</>
+				}
+			>
+				<form onSubmit={handleSubmit} className="space-y-6">
+					{/* Basic Info Section */}
 					<div className="space-y-4">
 						<h4 className="text-sm font-semibold text-foreground">
-							Display Settings
+							Basic Information
 						</h4>
 
 						<div className="space-y-2">
-							<Label htmlFor="titleField">Title Field</Label>
-							<Select
-								value={titleField || "none"}
-								onValueChange={(v) => setTitleField(v === "none" ? "" : v)}
+							<Label htmlFor="displayName">
+								Display Name <span className="text-destructive">*</span>
+							</Label>
+							<Input
+								id="displayName"
+								value={displayName}
+								onChange={(e) => handleDisplayNameChange(e.target.value)}
+								placeholder="e.g., Blog Post"
 								disabled={isSubmitting}
-							>
-								<SelectTrigger>
-									<SelectValue placeholder="None" />
-								</SelectTrigger>
-								<SelectContent>
-									<SelectItem value="none">None</SelectItem>
-									{textFields.map((field) => (
-										<SelectItem key={field.name} value={field.name}>
-											{field.label}
-										</SelectItem>
-									))}
-								</SelectContent>
-							</Select>
+								autoFocus
+								data-testid="display-name-input"
+							/>
+						</div>
+
+						<div className="space-y-2">
+							<Label htmlFor="machineName">
+								System Name <span className="text-destructive">*</span>
+							</Label>
+							<Input
+								id="machineName"
+								value={machineName}
+								onChange={(e) => handleMachineNameChange(e.target.value)}
+								placeholder="e.g., blog_post"
+								disabled={isSubmitting || isEditing}
+								className={cn(
+									!isValidMachineName(machineName) &&
+										machineName &&
+										"border-destructive",
+								)}
+								data-testid="machine-name-input"
+							/>
 							<p className="text-xs text-muted-foreground">
-								Field to display as the entry title in lists
+								{isEditing
+									? "System name cannot be changed after creation"
+									: "Lowercase letters, numbers, and underscores only. Used in API queries."}
 							</p>
 						</div>
 
 						<div className="space-y-2">
-							<Label htmlFor="slugField">Slug Field</Label>
-							<Select
-								value={slugField || "none"}
-								onValueChange={(v) => setSlugField(v === "none" ? "" : v)}
+							<Label htmlFor="description">Description</Label>
+							<Textarea
+								id="description"
+								value={description}
+								onChange={(e) => setDescription(e.target.value)}
+								placeholder="Optional description of this content type"
 								disabled={isSubmitting}
-							>
-								<SelectTrigger>
-									<SelectValue placeholder="None (auto-generate)" />
-								</SelectTrigger>
-								<SelectContent>
-									<SelectItem value="none">None (auto-generate)</SelectItem>
-									{textFields.map((field) => (
-										<SelectItem key={field.name} value={field.name}>
-											{field.label}
-										</SelectItem>
-									))}
-								</SelectContent>
-							</Select>
-							<p className="text-xs text-muted-foreground">
-								Field to use for generating URL-friendly slugs
-							</p>
+								rows={2}
+							/>
+						</div>
+
+						<div className="flex items-center gap-2">
+							<Checkbox
+								id="singleton"
+								checked={singleton}
+								onCheckedChange={(checked) => setSingleton(checked as boolean)}
+								disabled={isSubmitting}
+							/>
+							<Label htmlFor="singleton" className="cursor-pointer">
+								Singleton (only one entry allowed)
+							</Label>
 						</div>
 					</div>
-				)}
 
-				{submitError && (
-					<div
-						className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800"
-						role="alert"
-						data-testid="submit-error"
-					>
-						{submitError}
+					{/* Fields Section */}
+					<div className="space-y-4">
+						<div className="flex items-center justify-between">
+							<h4 className="text-sm font-semibold text-foreground">Fields</h4>
+							<CmsButton
+								type="button"
+								variant="secondary"
+								size="sm"
+								onClick={addField}
+								disabled={isSubmitting}
+								data-testid="add-field-button"
+							>
+								<Plus className="size-3.5" />
+								Add Field
+							</CmsButton>
+						</div>
+
+						<div className="space-y-2">
+							{fields.map((field, index) => (
+								<div
+									key={index}
+									className={cn(
+										"flex cursor-pointer items-center gap-2 rounded-lg border p-2 transition-colors hover:bg-muted/50",
+										activeFieldIndex === index && "border-primary bg-primary/5",
+									)}
+									onClick={() => {
+										setActiveFieldIndex(index);
+										setShowFieldEditor(true);
+									}}
+									data-testid={`field-item-${index}`}
+								>
+									<div className="flex flex-col gap-0.5">
+										{index > 0 && (
+											<button
+												type="button"
+												onClick={(e) => {
+													e.stopPropagation();
+													moveField(index, index - 1);
+												}}
+												className="rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+											>
+												<ChevronUp className="size-3" />
+											</button>
+										)}
+										{index < fields.length - 1 && (
+											<button
+												type="button"
+												onClick={(e) => {
+													e.stopPropagation();
+													moveField(index, index + 1);
+												}}
+												className="rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+											>
+												<ChevronDown className="size-3" />
+											</button>
+										)}
+									</div>
+
+									<div className="flex size-8 items-center justify-center rounded bg-muted text-muted-foreground">
+										{FIELD_TYPE_INFO[field.type].icon}
+									</div>
+
+									<div className="min-w-0 flex-1">
+										<p className="truncate text-sm font-medium">
+											{field.label}
+										</p>
+										<p className="text-xs text-muted-foreground">
+											{FIELD_TYPE_INFO[field.type].label}
+											{field.required && " *"}
+										</p>
+									</div>
+
+									<button
+										type="button"
+										onClick={(e) => {
+											e.stopPropagation();
+											removeField(index);
+										}}
+										disabled={isSubmitting || fields.length === 1}
+										className="rounded p-1 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
+									>
+										<X className="size-4" />
+									</button>
+								</div>
+							))}
+						</div>
+
+						{/* Field Editor Panel */}
+						{showFieldEditor && activeField && activeFieldIndex !== null && (
+							<div
+								className="rounded-lg border bg-muted/30 p-4"
+								data-testid="field-editor"
+							>
+								<div className="mb-4 flex items-center justify-between">
+									<h5 className="font-medium">
+										Edit Field: {activeField.label}
+									</h5>
+									<button
+										type="button"
+										onClick={() => {
+											setShowFieldEditor(false);
+											setActiveFieldIndex(null);
+										}}
+										className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+									>
+										<X className="size-4" />
+									</button>
+								</div>
+
+								<div className="space-y-4">
+									<div className="space-y-2">
+										<Label htmlFor="fieldLabel">
+											Label <span className="text-destructive">*</span>
+										</Label>
+										<Input
+											id="fieldLabel"
+											value={activeField.label}
+											onChange={(e) =>
+												updateField(activeFieldIndex, {
+													label: e.target.value,
+													name: machineNameManuallyEdited
+														? activeField.name
+														: generateMachineName(e.target.value) ||
+														  activeField.name,
+												})
+											}
+											disabled={isSubmitting}
+											data-testid="field-label-input"
+										/>
+									</div>
+
+									<div className="space-y-2">
+										<Label htmlFor="fieldName">
+											Name <span className="text-destructive">*</span>
+										</Label>
+										<Input
+											id="fieldName"
+											value={activeField.name}
+											onChange={(e) =>
+												updateField(activeFieldIndex, {
+													name: e.target.value
+														.toLowerCase()
+														.replace(/[^a-z0-9_]/g, ""),
+												})
+											}
+											disabled={isSubmitting}
+											data-testid="field-name-input"
+										/>
+									</div>
+
+									<div className="space-y-2">
+										<Label htmlFor="fieldType">
+											Type <span className="text-destructive">*</span>
+										</Label>
+										<Select
+											value={activeField.type}
+											onValueChange={(value) =>
+												updateField(activeFieldIndex, {
+													type: value as FieldType,
+													options: undefined,
+												})
+											}
+											disabled={isSubmitting}
+										>
+											<SelectTrigger data-testid="field-type-select">
+												<SelectValue />
+											</SelectTrigger>
+											<SelectContent>
+												{Object.entries(FIELD_TYPE_INFO).map(([type, info]) => (
+													<SelectItem key={type} value={type}>
+														<div className="flex items-center gap-2">
+															{info.icon}
+															<span>{info.label}</span>
+															<span className="text-muted-foreground">
+																- {info.description}
+															</span>
+														</div>
+													</SelectItem>
+												))}
+											</SelectContent>
+										</Select>
+									</div>
+
+									<div className="flex items-center gap-2">
+										<Checkbox
+											id="fieldRequired"
+											checked={activeField.required}
+											onCheckedChange={(checked) =>
+												updateField(activeFieldIndex, {
+													required: checked as boolean,
+												})
+											}
+											disabled={isSubmitting}
+										/>
+										<Label htmlFor="fieldRequired" className="cursor-pointer">
+											Required
+										</Label>
+									</div>
+
+									<div className="space-y-2">
+										<Label htmlFor="fieldDescription">Help Text</Label>
+										<Input
+											id="fieldDescription"
+											value={activeField.description || ""}
+											onChange={(e) =>
+												updateField(activeFieldIndex, {
+													description: e.target.value || undefined,
+												})
+											}
+											placeholder="Help text shown below the field"
+											disabled={isSubmitting}
+										/>
+									</div>
+
+									{(activeField.type === "select" ||
+										activeField.type === "multiSelect") && (
+										<SelectOptionsEditor
+											options={activeField.options?.options || []}
+											onChange={(options) =>
+												updateField(activeFieldIndex, {
+													options: { ...activeField.options, options },
+												})
+											}
+											disabled={isSubmitting}
+										/>
+									)}
+								</div>
+							</div>
+						)}
 					</div>
-				)}
-			</form>
-		</CmsDialog>
 
-		<BreakingChangesWarningDialog
-			isOpen={showBreakingWarning}
-			onClose={() => setShowBreakingWarning(false)}
-			breakingChanges={breakingChanges}
-			onForceUpdate={handleForceUpdate}
-			onCancel={() => {
-				setShowBreakingWarning(false);
-				setBreakingChanges([]);
-			}}
-			isLoading={isForceUpdating}
-		/>
+					{/* Display Settings */}
+					{textFields.length > 0 && (
+						<div className="space-y-4">
+							<h4 className="text-sm font-semibold text-foreground">
+								Display Settings
+							</h4>
+
+							<div className="space-y-2">
+								<Label htmlFor="titleField">Title Field</Label>
+								<Select
+									value={titleField || "none"}
+									onValueChange={(v) => setTitleField(v === "none" ? "" : v)}
+									disabled={isSubmitting}
+								>
+									<SelectTrigger>
+										<SelectValue placeholder="None" />
+									</SelectTrigger>
+									<SelectContent>
+										<SelectItem value="none">None</SelectItem>
+										{textFields.map((field) => (
+											<SelectItem key={field.name} value={field.name}>
+												{field.label}
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
+								<p className="text-xs text-muted-foreground">
+									Field to display as the entry title in lists
+								</p>
+							</div>
+
+							<div className="space-y-2">
+								<Label htmlFor="slugField">Slug Field</Label>
+								<Select
+									value={slugField || "none"}
+									onValueChange={(v) => setSlugField(v === "none" ? "" : v)}
+									disabled={isSubmitting}
+								>
+									<SelectTrigger>
+										<SelectValue placeholder="None (auto-generate)" />
+									</SelectTrigger>
+									<SelectContent>
+										<SelectItem value="none">None (auto-generate)</SelectItem>
+										{textFields.map((field) => (
+											<SelectItem key={field.name} value={field.name}>
+												{field.label}
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
+								<p className="text-xs text-muted-foreground">
+									Field to use for generating URL-friendly slugs
+								</p>
+							</div>
+						</div>
+					)}
+
+					{submitError && (
+						<div
+							className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800"
+							role="alert"
+							data-testid="submit-error"
+						>
+							{submitError}
+						</div>
+					)}
+				</form>
+			</CmsDialog>
+
+			<BreakingChangesWarningDialog
+				isOpen={showBreakingWarning}
+				onClose={() => setShowBreakingWarning(false)}
+				breakingChanges={breakingChanges}
+				onForceUpdate={handleForceUpdate}
+				onCancel={() => {
+					setShowBreakingWarning(false);
+					setBreakingChanges([]);
+				}}
+				isLoading={isForceUpdating}
+			/>
 		</>
 	);
 }

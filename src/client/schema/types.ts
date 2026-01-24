@@ -7,7 +7,7 @@
  * @example
  * ```typescript
  * import { v, Infer } from "convex/values";
- * import { defineContentType, InferContentType } from "@convex-cms/core";
+ * import { defineContentType, InferContentType } from "convex-cms";
  *
  * export const blogPost = defineContentType({
  *   name: "blog_post",

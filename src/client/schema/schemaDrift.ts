@@ -6,7 +6,7 @@
  *
  * @example
  * ```typescript
- * import { detectSchemaDrift } from "@convex-cms/core";
+ * import { detectSchemaDrift } from "convex-cms";
  *
  * const report = await detectSchemaDrift(ctx, cms, contentSchema);
  *

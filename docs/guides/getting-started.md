@@ -13,7 +13,7 @@ This guide walks you through installing and configuring Convex CMS in your Conve
 ### 1. Install the Package
 
 ```bash
-npm install @convex-cms/core
+npm install convex-cms
 ```
 
 ### 2. Configure the Convex Component
@@ -22,7 +22,7 @@ In your `convex/convex.config.ts`, add the CMS component:
 
 ```typescript
 import { defineApp } from "convex/server";
-import convexCms from "@convex-cms/core/convex.config";
+import convexCms from "convex-cms/convex.config";
 
 const app = defineApp();
 app.use(convexCms);
@@ -45,7 +45,7 @@ This creates the necessary type definitions including the component API.
 Create a file to configure and export your CMS client. This is typically `convex/cms.ts`:
 
 ```typescript
-import { createCmsClient } from "@convex-cms/core";
+import { createCmsClient } from "convex-cms";
 import { components } from "./_generated/api";
 
 // Basic configuration for development
@@ -261,7 +261,7 @@ The tutorial above uses the **imperative API** (runtime content type creation). 
 ```typescript
 // convex/cms.ts
 import { v } from "convex/values";
-import { defineContentType, createContentSchema, createTypedCmsClient } from "@convex-cms/core";
+import { defineContentType, createContentSchema, createTypedCmsClient } from "convex-cms";
 import { components } from "./_generated/api";
 
 // Define content types with Convex validators

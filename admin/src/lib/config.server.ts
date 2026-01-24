@@ -16,7 +16,7 @@ import { loadAdminConfig } from "./loadAdminConfig";
  *
  * @example
  * // cms-admin.config.ts
- * import { defineAdminConfig } from "@convex-cms/core";
+ * import { defineAdminConfig } from "convex-cms";
  *
  * export default defineAdminConfig({
  *   branding: { appName: "My CMS" },
@@ -24,30 +24,30 @@ import { loadAdminConfig } from "./loadAdminConfig";
  * });
  */
 export const getServerConfig = createServerFn({ method: "GET" }).handler(
-  async () => {
-    let adminConfig: Partial<AdminConfig> = {};
+	async () => {
+		let adminConfig: Partial<AdminConfig> = {};
 
-    const configEnv = process.env.CONVEX_CMS_ADMIN_CONFIG;
-    if (configEnv) {
-      try {
-        adminConfig = JSON.parse(configEnv) as Partial<AdminConfig>;
-      } catch {
-        console.warn("Failed to parse CONVEX_CMS_ADMIN_CONFIG as JSON");
-      }
-    } else {
-      try {
-        adminConfig = await loadAdminConfig();
-      } catch (error) {
-        console.warn("Failed to load admin config from file:", error);
-      }
-    }
+		const configEnv = process.env.CONVEX_CMS_ADMIN_CONFIG;
+		if (configEnv) {
+			try {
+				adminConfig = JSON.parse(configEnv) as Partial<AdminConfig>;
+			} catch {
+				console.warn("Failed to parse CONVEX_CMS_ADMIN_CONFIG as JSON");
+			}
+		} else {
+			try {
+				adminConfig = await loadAdminConfig();
+			} catch (error) {
+				console.warn("Failed to load admin config from file:", error);
+			}
+		}
 
-    return {
-      convexUrl: process.env.CONVEX_URL || process.env.VITE_CONVEX_URL || "",
-      authMode: process.env.AUTH_MODE || process.env.VITE_AUTH_MODE || "demo",
-      adminConfig,
-    };
-  }
+		return {
+			convexUrl: process.env.CONVEX_URL || process.env.VITE_CONVEX_URL || "",
+			authMode: process.env.AUTH_MODE || process.env.VITE_AUTH_MODE || "demo",
+			adminConfig,
+		};
+	},
 );
 
 /**

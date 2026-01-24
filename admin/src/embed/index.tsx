@@ -54,6 +54,8 @@ import {
   EmbedContentTypes,
   EmbedMedia,
   EmbedSettings,
+  EmbedTrash,
+  EmbedTaxonomies,
 } from "./pages";
 
 function adaptAuthConfig(auth: CmsAdminAuthConfig): {
@@ -113,10 +115,12 @@ function EmbedRouter() {
         return <EmbedMedia />;
       case "settings":
         return <EmbedSettings />;
+      case "taxonomies":
+        return <EmbedTaxonomies />;
+      case "trash":
+        return <EmbedTrash />;
       case "entries":
         return <EmbedContent />;
-      case "taxonomies":
-      case "trash":
       default:
         return <EmbedDashboard />;
     }

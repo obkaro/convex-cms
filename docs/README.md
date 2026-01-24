@@ -1,6 +1,6 @@
 # Convex CMS Documentation
 
-Welcome to the documentation for `@convex-cms/core` - a developer-first headless CMS built as a Convex Component.
+Welcome to the documentation for `convex-cms` - a developer-first headless CMS built as a Convex Component.
 
 ## What is Convex CMS?
 
@@ -48,7 +48,7 @@ Convex CMS runs as an **isolated component** within your Convex app:
 ```typescript
 // In convex/convex.config.ts
 import { defineApp } from "convex/server";
-import convexCms from "@convex-cms/core/convex.config";
+import convexCms from "convex-cms/convex.config";
 
 const app = defineApp();
 app.use(convexCms);
@@ -60,7 +60,7 @@ export default app;
 Use a typed client wrapper for all CMS operations:
 
 ```typescript
-import { createCmsClient } from "@convex-cms/core";
+import { createCmsClient } from "convex-cms";
 import { components } from "./_generated/api";
 
 const cms = createCmsClient(components.convexCms, {
@@ -88,7 +88,7 @@ const entry = await cms.contentEntries.create(ctx, {
 
 ```typescript
 // convex/cms.ts - Configure the CMS client
-import { createCmsClient } from "@convex-cms/core";
+import { createCmsClient } from "convex-cms";
 import { components } from "./_generated/api";
 
 export const cms = createCmsClient(components.convexCms, {

@@ -6,7 +6,7 @@
  *
  * @example
  * // cms-admin.config.ts
- * import { defineAdminConfig } from "@convex-cms/core";
+ * import { defineAdminConfig } from "convex-cms";
  *
  * export default defineAdminConfig({
  *   branding: {
@@ -103,7 +103,7 @@ export type AdminConfig = z.infer<typeof adminConfigSchema>;
  *
  * @example
  * // Code-first config file approach (cms-admin.config.ts)
- * import { defineAdminConfig } from "@convex-cms/core";
+ * import { defineAdminConfig } from "convex-cms";
  *
  * export default defineAdminConfig({
  *   branding: { appName: "My CMS" },

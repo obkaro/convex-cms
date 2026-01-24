@@ -19,7 +19,7 @@ Authorization works through:
 For development without auth:
 
 ```typescript
-import { createCmsClient } from "@convex-cms/core";
+import { createCmsClient } from "convex-cms";
 import { components } from "./_generated/api";
 
 const cms = createCmsClient(components.convexCms, {
@@ -34,7 +34,7 @@ const cms = createCmsClient(components.convexCms, {
 The `getUserRole` hook receives `ctx` as its first argument, allowing you to query your database directly to determine user roles.
 
 ```typescript
-import { createCmsClient } from "@convex-cms/core";
+import { createCmsClient } from "convex-cms";
 import { components } from "./_generated/api";
 
 const cms = createCmsClient(components.convexCms, {

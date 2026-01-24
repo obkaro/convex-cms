@@ -35,6 +35,7 @@ export interface EmbedNavigationContextValue {
   navigate: (route: EmbedRoute, params?: Record<string, string>) => void;
   navigateToEntry: (entryId: string) => void;
   navigateToContentType: (contentTypeId: string) => void;
+  navigateToNewEntry: (contentTypeId: string) => void;
   goBack: () => void;
   canGoBack: boolean;
 }
@@ -118,6 +119,13 @@ export function EmbedNavigationProvider({
     [navigate]
   );
 
+  const navigateToNewEntry = useCallback(
+    (contentTypeId: string) => {
+      navigate("entries", { contentTypeId, action: "new" });
+    },
+    [navigate]
+  );
+
   const goBack = useCallback(() => {
     if (currentIndex > 0) {
       setCurrentIndex(currentIndex - 1);
@@ -130,6 +138,7 @@ export function EmbedNavigationProvider({
     navigate,
     navigateToEntry,
     navigateToContentType,
+    navigateToNewEntry,
     goBack,
     canGoBack: currentIndex > 0,
   };

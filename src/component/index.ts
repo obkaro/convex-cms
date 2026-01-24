@@ -2,7 +2,7 @@
  * Convex CMS Component - Internal Exports
  *
  * This file exports validators and utilities for use within the component.
- * External consumers should use the client API from @convex-cms/core instead.
+ * External consumers should use the client API from convex-cms instead.
  */
 
 // Schema and Convex validators

@@ -1,5 +1,5 @@
 /**
- * @convex-cms/core Agent Tools
+ * convex-cms Agent Tools
  *
  * Tool-compatible function wrappers for @convex-dev/agent integration.
  * Provides structured tool definitions with clear parameter schemas for
@@ -8,7 +8,7 @@
  * @example
  * ```typescript
  * import { Agent } from "@convex-dev/agent";
- * import { createCmsTools } from "@convex-cms/core";
+ * import { createCmsTools } from "convex-cms";
  * import { components } from "./_generated/api";
  *
  * const cmsTools = createCmsTools(components.convexCms);
@@ -23,7 +23,7 @@
  * @example
  * ```typescript
  * // Use individual tools
- * import { createCmsTools } from "@convex-cms/core";
+ * import { createCmsTools } from "convex-cms";
  *
  * const { createContentEntry, listContentEntries, publishEntry } = createCmsTools(api);
  *
@@ -587,7 +587,7 @@ export interface CreateCmsToolsOptions {
  * @example
  * ```typescript
  * import { Agent } from "@convex-dev/agent";
- * import { createCmsTools } from "@convex-cms/core";
+ * import { createCmsTools } from "convex-cms";
  * import { components } from "./_generated/api";
  *
  * // Create all CMS tools

@@ -12,7 +12,7 @@
  *
  * @example
  * // cms-admin.config.ts
- * import { defineAdminConfig } from "@convex-cms/core";
+ * import { defineAdminConfig } from "convex-cms";
  *
  * export default defineAdminConfig({
  *   branding: { appName: "My CMS" },
@@ -26,67 +26,67 @@ import { resolve, dirname } from "path";
 import type { AdminConfig } from "./admin-config";
 
 const CONFIG_FILE_NAMES = [
-  "cms-admin.config.ts",
-  "cms-admin.config.js",
-  "cms-admin.config.mjs",
+	"cms-admin.config.ts",
+	"cms-admin.config.js",
+	"cms-admin.config.mjs",
 ];
 
 let cachedConfig: Partial<AdminConfig> | null = null;
 let cachedConfigPath: string | null = null;
 
 function findProjectRoot(startDir: string): string {
-  let dir = startDir;
-  while (dir !== dirname(dir)) {
-    if (existsSync(resolve(dir, "package.json"))) {
-      return dir;
-    }
-    dir = dirname(dir);
-  }
-  return startDir;
+	let dir = startDir;
+	while (dir !== dirname(dir)) {
+		if (existsSync(resolve(dir, "package.json"))) {
+			return dir;
+		}
+		dir = dirname(dir);
+	}
+	return startDir;
 }
 
 export async function loadAdminConfig(
-  cwd?: string
+	cwd?: string,
 ): Promise<Partial<AdminConfig>> {
-  const projectRoot = cwd ?? findProjectRoot(process.cwd());
+	const projectRoot = cwd ?? findProjectRoot(process.cwd());
 
-  for (const fileName of CONFIG_FILE_NAMES) {
-    const configPath = resolve(projectRoot, fileName);
-    if (existsSync(configPath)) {
-      if (cachedConfig && cachedConfigPath === configPath) {
-        return cachedConfig;
-      }
+	for (const fileName of CONFIG_FILE_NAMES) {
+		const configPath = resolve(projectRoot, fileName);
+		if (existsSync(configPath)) {
+			if (cachedConfig && cachedConfigPath === configPath) {
+				return cachedConfig;
+			}
 
-      try {
-        const configUrl = pathToFileURL(configPath).href;
-        let loadedConfig: Partial<AdminConfig>;
+			try {
+				const configUrl = pathToFileURL(configPath).href;
+				let loadedConfig: Partial<AdminConfig>;
 
-        if (configPath.endsWith(".ts")) {
-          const importPath = `${configUrl}?ts=${Date.now()}`;
-          const configModule = await import(importPath);
-          loadedConfig = configModule.default ?? configModule;
-        } else {
-          const configModule = await import(configUrl);
-          loadedConfig = configModule.default ?? configModule;
-        }
+				if (configPath.endsWith(".ts")) {
+					const importPath = `${configUrl}?ts=${Date.now()}`;
+					const configModule = await import(importPath);
+					loadedConfig = configModule.default ?? configModule;
+				} else {
+					const configModule = await import(configUrl);
+					loadedConfig = configModule.default ?? configModule;
+				}
 
-        cachedConfig = loadedConfig;
-        cachedConfigPath = configPath;
-        return loadedConfig;
-      } catch (error) {
-        console.warn(`Failed to load ${fileName}:`, error);
-      }
-    }
-  }
+				cachedConfig = loadedConfig;
+				cachedConfigPath = configPath;
+				return loadedConfig;
+			} catch (error) {
+				console.warn(`Failed to load ${fileName}:`, error);
+			}
+		}
+	}
 
-  return {};
+	return {};
 }
 
 export function clearConfigCache(): void {
-  cachedConfig = null;
-  cachedConfigPath = null;
+	cachedConfig = null;
+	cachedConfigPath = null;
 }
 
 export function getConfigPath(): string | null {
-  return cachedConfigPath;
+	return cachedConfigPath;
 }

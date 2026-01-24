@@ -3,7 +3,7 @@ import {
   useMediaUploadQueue,
   type UploadQueueFile,
   type UploadQueueFileStatus,
-} from '@convex-cms/core/react'
+} from 'convex-cms/react'
 import type { FunctionReference } from 'convex/server'
 import { CmsButton } from '~/components/cmsds/CmsButton'
 import { cn } from '~/lib/cn'

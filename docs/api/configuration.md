@@ -5,7 +5,7 @@ Complete reference for all Convex CMS configuration options.
 ## Client Configuration
 
 ```typescript
-import { createCmsClient } from "@convex-cms/core";
+import { createCmsClient } from "convex-cms";
 import { components } from "./_generated/api";
 
 const cms = createCmsClient(components.convexCms, {
@@ -329,7 +329,7 @@ rateLimitHooks: {
 ## Complete Example
 
 ```typescript
-import { createCmsClient } from "@convex-cms/core";
+import { createCmsClient } from "convex-cms";
 import { components } from "./_generated/api";
 
 export const cms = createCmsClient(components.convexCms, {

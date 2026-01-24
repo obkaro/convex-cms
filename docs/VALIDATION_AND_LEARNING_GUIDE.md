@@ -1,6 +1,6 @@
 # Convex CMS Component: Comprehensive Validation and Learning Guide
 
-This guide provides a systematic approach to understanding and validating every feature of the `@convex-cms/core` component. Use it to explore the codebase, understand how each feature works, and manually validate that everything functions correctly.
+This guide provides a systematic approach to understanding and validating every feature of the `convex-cms` component. Use it to explore the codebase, understand how each feature works, and manually validate that everything functions correctly.
 
 ---
 

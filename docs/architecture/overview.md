@@ -71,7 +71,7 @@ Convex CMS is built as a **Convex Component**, which provides:
 ```typescript
 // Your app installs the component
 import { defineApp } from "convex/server";
-import convexCms from "@convex-cms/core/convex.config";
+import convexCms from "convex-cms/convex.config";
 
 const app = defineApp();
 app.use(convexCms);  // Mount the CMS component
