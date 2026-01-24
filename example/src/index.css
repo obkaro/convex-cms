@@ -1,4 +1,15 @@
 @import "tailwindcss";
+/* convex-cms admin styles - imports must come before @source */
+@import "../../admin/src/styles/theme.css";
+@import "../../admin/src/styles/tailwind-config.css";
+
+/*
+   Consumer usage (in production):
+   @import "convex-cms/admin/theme.css";
+   @import "convex-cms/admin/tailwind-config.css";
+   @source "convex-cms/admin/src";
+*/
+@source "../../admin/src";
 
 @theme {
   /* Tempo - Primary slate blues */
