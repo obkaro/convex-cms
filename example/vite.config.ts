@@ -10,8 +10,9 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      // Resolve admin package's internal aliases when importing from admin source
       "~": path.resolve(__dirname, "../admin/src"),
+      "convex-cms/react": path.resolve(__dirname, "../src/react/index.ts"),
+      "convex-cms": path.resolve(__dirname, "../src/client/index.ts"),
     },
   },
 });

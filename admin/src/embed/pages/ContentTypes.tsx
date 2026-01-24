@@ -11,9 +11,9 @@ import { useEmbedAdapter } from "~/lib/embed-adapter";
 import { ContentTypesPage } from "~/pages";
 
 export function EmbedContentTypes() {
-  const api = useApi();
-  const embedNav = useEmbedNavigation();
-  const navigation = useEmbedAdapter(embedNav);
+	const api = useApi();
+	const embedNav = useEmbedNavigation();
+	const navigation = useEmbedAdapter(embedNav);
 
-  return <ContentTypesPage api={api as any} navigation={navigation} />;
+	return <ContentTypesPage api={api} navigation={navigation} />;
 }

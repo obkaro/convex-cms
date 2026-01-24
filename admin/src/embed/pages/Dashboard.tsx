@@ -11,9 +11,9 @@ import { useEmbedAdapter } from "~/lib/embed-adapter";
 import { DashboardPage } from "~/pages";
 
 export function EmbedDashboard() {
-  const api = useApi();
-  const embedNav = useEmbedNavigation();
-  const navigation = useEmbedAdapter(embedNav);
+	const api = useApi();
+	const embedNav = useEmbedNavigation();
+	const navigation = useEmbedAdapter(embedNav);
 
-  return <DashboardPage api={api as any} navigation={navigation} />;
+	return <DashboardPage api={api} navigation={navigation} />;
 }

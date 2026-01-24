@@ -11,9 +11,9 @@ import { useEmbedAdapter } from "~/lib/embed-adapter";
 import { SettingsPage } from "~/pages";
 
 export function EmbedSettings() {
-  const api = useApi();
-  const embedNav = useEmbedNavigation();
-  const navigation = useEmbedAdapter(embedNav);
+	const api = useApi();
+	const embedNav = useEmbedNavigation();
+	const navigation = useEmbedAdapter(embedNav);
 
-  return <SettingsPage api={api as any} navigation={navigation} />;
+	return <SettingsPage api={api} navigation={navigation} />;
 }

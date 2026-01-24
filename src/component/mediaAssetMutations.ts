@@ -53,7 +53,7 @@ import { isDeleted } from "./lib/softDelete.js";
 // Delete Media Asset Result Type
 // =============================================================================
 
-const deleteMediaAssetResult = v.object({
+export const deleteMediaAssetResult = v.object({
 	...mediaAssetItemValidator.fields,
 	_id: v.id("mediaItems"),
 	_creationTime: v.number(),

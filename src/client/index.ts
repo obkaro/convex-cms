@@ -90,6 +90,26 @@ export {
   type AdminOperation,
 } from "./adminApi.js";
 
+// --- Admin API Types ---
+export type {
+  AdminApiContract,
+  AdminContentType,
+  AdminContentEntry,
+  AdminMediaItem,
+  AdminMoveMediaAssetsResult,
+  AdminDeleteContentTypeResult,
+  AdminPaginatedResult,
+  PaginatedContentTypes,
+  PaginatedContentEntries,
+  PaginatedMediaItems,
+  // Backwards compatibility aliases
+  ContentTypeDoc,
+  ContentEntryDoc,
+  MediaItemDoc,
+  MediaFolderDoc,
+  MoveMediaAssetsResult,
+} from "./admin-api-types.js";
+
 // --- CMS Client Factory ---
 import {
   type ComponentConfig,
