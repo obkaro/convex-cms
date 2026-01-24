@@ -11,8 +11,12 @@ export default defineConfig({
   resolve: {
     alias: {
       "~": path.resolve(__dirname, "../admin/src"),
+      "convex-cms/admin": path.resolve(__dirname, "../admin/src/embed"),
       "convex-cms/react": path.resolve(__dirname, "../src/react/index.ts"),
       "convex-cms": path.resolve(__dirname, "../src/client/index.ts"),
+      // Deduplicate React - ensure admin uses example's React instance
+      "react": path.resolve(__dirname, "node_modules/react"),
+      "react-dom": path.resolve(__dirname, "node_modules/react-dom"),
     },
   },
 });

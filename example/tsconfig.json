@@ -18,7 +18,17 @@
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+
+    /* Path aliases */
+    "baseUrl": ".",
+    "paths": {
+      "~/*": ["../admin/src/*"],
+      "convex-cms/admin": ["../admin/src/embed/index.tsx"],
+      "convex-cms/react": ["../src/react/index.ts"],
+      "convex-cms/types": ["../src/client/types.ts"],
+      "convex-cms": ["../src/client/index.ts"]
+    }
   },
-  "include": ["src", "convex"]
+  "include": ["src", "convex", "../admin/src"]
 }

@@ -10,7 +10,7 @@
  */
 
 import { api } from "../../convex/_generated/api";
-import { CmsAdmin } from "../../../admin/src/embed";
+import { CmsAdmin } from "convex-cms/admin";
 
 export function Admin() {
 	return (
