@@ -20,5 +20,5 @@
 		}
 	},
 	"include": ["src/**/*"],
-	"exclude": ["node_modules", "dist", "example", "**/_generated/**"]
+	"exclude": ["node_modules", "dist", "example", "admin", "**/_generated/**"]
 }
