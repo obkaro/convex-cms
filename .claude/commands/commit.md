@@ -13,6 +13,7 @@ Context: $ARGUMENTS
 1. **Check status**: Run `git status` to see staged/unstaged changes
 2. **Review history**: Run `git log -5 --oneline` to match project's commit style
 3. **Show diff**: Run `git diff --cached` (staged) or `git diff` (unstaged)
+4. **Review changes thorougly**: Review all the changes and updates fully.
 
 ## Red Flag Detection
 
