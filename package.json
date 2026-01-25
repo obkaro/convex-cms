@@ -4,7 +4,8 @@
   "description": "A developer-first Convex Component for content management with flexible RBAC and AI-ready architecture",
   "type": "module",
   "workspaces": [
-    "admin"
+    "admin",
+    "example"
   ],
   "main": "./dist/client/index.js",
   "module": "./dist/client/index.js",

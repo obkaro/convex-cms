@@ -500,26 +500,6 @@ export function ContentEntryEditor({
     }
   }, [entry, publishEntry, onSave])
 
-  const _handleUnpublish = useCallback(async () => {
-    if (!entry) return
-
-    setIsPublishing(true)
-    setPublishError(null)
-
-    try {
-      const draftEntry = (await unpublishEntry({
-        id: entry._id,
-      })) as ContentEntry
-      onSave?.(draftEntry)
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'Failed to unpublish'
-      setPublishError(message)
-    } finally {
-      setIsPublishing(false)
-    }
-  }, [entry, unpublishEntry, onSave])
-
   const handleSchedule = useCallback(async () => {
     if (!entry) return
 

@@ -18,14 +18,6 @@ type QueryCtx = Pick<GenericQueryCtx<GenericDataModel>, "runQuery">;
 
 import type { ComponentApi as GeneratedComponentApi } from "../component/_generated/component.js";
 
-/** @internal Bridges wrapper's simplified types to generated Convex types */
-function _callMutation<
-  T extends ConvexFunctionReference<"mutation", "public" | "internal">,
-  A extends Record<string, unknown> = Record<string, unknown>
->(ctx: MutationCtx, fn: T, args: A): Promise<FunctionReturnType<T>> {
-  return ctx.runMutation(fn, args as OptionalRestArgs<T>[0]);
-}
-
 /** @internal */
 function callQuery<
   T extends ConvexFunctionReference<"query", "public" | "internal">,

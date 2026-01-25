@@ -25,7 +25,7 @@ import { Label } from "~/components/ui/label";
 import { Badge } from "~/components/ui/badge";
 import { Alert, AlertDescription } from "~/components/ui/alert";
 import { cn } from "~/lib/cn";
-import { AlertTriangle, Check, X, Sun, Moon, Monitor, Lock, Info } from "lucide-react";
+import { Check, X, Sun, Moon, Monitor, Lock, Info } from "lucide-react";
 import type { AdminNavigation } from "~/lib/navigation";
 import { CmsAdminApi } from "~/embed/contexts/ApiContext";
 

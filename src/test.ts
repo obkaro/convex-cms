@@ -1231,18 +1231,14 @@ export const mediaAssetFactory = {
 // Media Folder Factories
 // =============================================================================
 
-let _folderCounter = 0;
-
 /**
  * Factory functions for creating test media folder data.
  */
 export const mediaFolderFactory = {
 	/**
-	 * Reset the internal counter used for generating unique folder names.
+	 * Reset counter (no-op, kept for API compatibility).
 	 */
-	resetCounter(): void {
-		_folderCounter = 0;
-	},
+	resetCounter(): void {},
 
 	/**
 	 * Create a root-level folder.

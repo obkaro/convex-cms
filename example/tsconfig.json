@@ -30,5 +30,5 @@
       "convex-cms": ["../src/client/index.ts"]
     }
   },
-  "include": ["src", "convex", "../admin/src"]
+  "include": ["src", "convex"]
 }

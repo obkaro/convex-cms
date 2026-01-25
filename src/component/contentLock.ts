@@ -113,7 +113,6 @@ export const checkLock = query({
 			throw new Error(`Content entry not found: ${id}`);
 		}
 
-		const _now = Date.now();
 		const hasLock =
 			entry.lockedBy !== undefined && entry.lockExpiresAt !== undefined;
 		const isActive = hasLock && isLockActive(entry.lockExpiresAt);
@@ -157,7 +156,6 @@ export const listLockedEntries = query({
 	}),
 	handler: async (ctx, args) => {
 		const { contentTypeId, lockedBy, paginationOpts } = args;
-		const _now = Date.now();
 
 		// Query entries with locks using the by_locked index
 		const query = ctx.db.query("contentEntries").withIndex("by_locked");

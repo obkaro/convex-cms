@@ -437,7 +437,7 @@ function inferFieldType(validatorType: string): string {
  * @internal
  */
 function buildFieldOptions(
-  field: ExtractedField,
+  _field: ExtractedField,
   meta: FieldMeta
 ): Record<string, unknown> | undefined {
   const options: Record<string, unknown> = {};

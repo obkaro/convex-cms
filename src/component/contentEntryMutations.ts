@@ -204,7 +204,6 @@ export const createEntry = mutation({
 		searchText = searchText.trim() || undefined;
 
 		// Create the entry
-		const _now = Date.now();
 		const entryId = await ctx.db.insert("contentEntries", {
 			contentTypeId,
 			slug: uniqueSlug,

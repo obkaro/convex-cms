@@ -1281,8 +1281,6 @@ async function handleCustomSortQuery(
   const fetchLimit = (numItems + 1) * fetchMultiplier;
 
   // Collect results from the stream
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const _allResults: any[] = [];
   let hasMore = false;
 
   // Use filterWith to apply filters while collecting results
