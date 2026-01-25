@@ -4,8 +4,7 @@
   "description": "A developer-first Convex Component for content management with flexible RBAC and AI-ready architecture",
   "type": "module",
   "workspaces": [
-    "admin",
-    "example"
+    "admin"
   ],
   "main": "./dist/client/index.js",
   "module": "./dist/client/index.js",
@@ -66,28 +65,28 @@
     "convex-cms": "./dist/cli/index.js"
   },
   "scripts": {
-    "build": "npm run build:component && npm run build:cli && npm run build:admin",
+    "build": "pnpm build:component && pnpm build:cli && pnpm build:admin",
     "build:component": "tsc --project tsconfig.build.json",
-    "build:codegen": "npx convex codegen --component-dir ./src/component && npm run build",
+    "build:codegen": "pnpm convex codegen --component-dir ./src/component && pnpm build",
     "build:cli": "tsc --project tsconfig.cli.json",
-    "build:admin": "cd admin && npm run build && rm -rf ../admin-dist && cp -r .output ../admin-dist",
-    "build:clean": "rm -rf dist *.tsbuildinfo && npm run build:codegen",
+    "build:admin": "cd admin && pnpm build && rm -rf ../admin-dist && cp -r .output ../admin-dist",
+    "build:clean": "rm -rf dist *.tsbuildinfo && pnpm build:codegen",
     "dev": "npm-run-all2 --parallel dev:*",
-    "dev:component": "npx convex codegen --component-dir ./src/component --watch",
+    "dev:component": "pnpm convex codegen --component-dir ./src/component",
     "dev:build": "tsc --project tsconfig.build.json --watch",
-    "dev:example": "cd example && npx convex dev",
-    "dev:watch": "chokidar 'src/**/*.ts' -c 'npm run build:component' --silent",
+    "dev:example": "cd example && pnpm convex dev",
+    "dev:watch": "chokidar 'src/**/*.ts' -c 'pnpm build:component' --silent",
     "test": "vitest run --typecheck",
     "test:watch": "vitest --typecheck",
     "lint": "eslint src/",
     "typecheck": "tsc --noEmit",
-    "typecheck:all": "tsc --noEmit && cd example && npx tsc --noEmit",
-    "codegen": "npx convex codegen --component-dir ./src/component",
-    "codegen:all": "npm run codegen && npm run build:component && cd example && npx convex codegen && cd ../admin && npx convex codegen",
-    "verify": "npm run codegen:all && npm run typecheck:all && npm run lint && npm test",
-    "preversion": "npm run verify",
-    "alpha": "npm version prerelease --preid=alpha && npm publish --tag alpha && git push --follow-tags",
-    "release": "npm version patch && npm publish && git push --follow-tags"
+    "typecheck:all": "tsc --noEmit && cd example && pnpm tsc --noEmit",
+    "codegen": "pnpm convex codegen --component-dir ./src/component",
+    "codegen:all": "pnpm codegen && pnpm build:component && cd example && pnpm convex codegen && cd ../admin && pnpm convex codegen",
+    "verify": "pnpm codegen:all && pnpm typecheck:all && pnpm lint && pnpm test",
+    "preversion": "pnpm verify",
+    "alpha": "pnpm version prerelease --preid=alpha && pnpm publish --tag alpha && git push --follow-tags",
+    "release": "pnpm version patch && pnpm publish && git push --follow-tags"
   },
   "keywords": [
     "convex",

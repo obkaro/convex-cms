@@ -18,7 +18,7 @@ Before using the Admin UI, you need the backend functions it calls.
 ### 1. Install convex-cms
 
 ```bash
-npm install convex-cms
+pnpm add convex-cms
 ```
 
 ### 2. Add the Component
@@ -36,7 +36,7 @@ export default app;
 ### 3. Create Admin API Functions
 
 ```bash
-npx convex-cms init
+pnpm convex-cms init
 ```
 
 This creates `convex/admin.ts` with all the functions the Admin UI needs. The file exports functions like `listContentTypes`, `getEntry`, `publishEntry`, etc.
@@ -44,7 +44,7 @@ This creates `convex/admin.ts` with all the functions the Admin UI needs. The fi
 ### 4. Start Convex
 
 ```bash
-npx convex dev
+pnpm convex dev
 ```
 
 ---
@@ -54,7 +54,7 @@ npx convex dev
 The CLI runs a pre-built Admin UI that connects to your Convex deployment.
 
 ```bash
-npx convex-cms admin
+pnpm convex-cms admin
 ```
 
 ### How It Works
@@ -91,11 +91,11 @@ The CLI detects your Convex URL from:
 ### CLI Options
 
 ```bash
-npx convex-cms admin              # Default port 3000
-npx convex-cms admin --port 4000  # Custom port
-npx convex-cms admin --url <url>  # Explicit Convex URL
-npx convex-cms admin --demo       # Demo mode with mock auth
-npx convex-cms admin --no-open    # Don't open browser
+pnpm convex-cms admin              # Default port 3000
+pnpm convex-cms admin --port 4000  # Custom port
+pnpm convex-cms admin --url <url>  # Explicit Convex URL
+pnpm convex-cms admin --demo       # Demo mode with mock auth
+pnpm convex-cms admin --no-open    # Don't open browser
 ```
 
 ### Demo Mode
@@ -103,7 +103,7 @@ npx convex-cms admin --no-open    # Don't open browser
 For quick testing without auth setup:
 
 ```bash
-npx convex-cms admin --demo
+pnpm convex-cms admin --demo
 ```
 
 This uses mock authentication with a demo admin user.
@@ -414,7 +414,7 @@ VITE_CONVEX_URL=https://your-deployment.convex.cloud
 The Admin UI expects specific function names. Ensure you've run:
 
 ```bash
-npx convex-cms init
+pnpm convex-cms init
 ```
 
 And that your `convex/admin.ts` exports all required functions. See [Admin API Reference](../api/admin-api.md) for the complete list.

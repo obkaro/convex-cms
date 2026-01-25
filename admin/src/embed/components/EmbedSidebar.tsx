@@ -5,11 +5,18 @@
  * the EmbedNavigation context for navigation instead of TanStack Router.
  */
 
-import { Layers } from "lucide-react";
+import { useQuery } from "convex/react";
+import { Layers, ChevronDown } from "lucide-react";
 import { cn } from "../../lib/cn";
 import { useAdminConfig } from "../../contexts";
 import { Icon } from "../../lib/icons";
 import { useEmbedNavigation, type EmbedRoute } from "../navigation";
+import { useApi } from "../contexts/ApiContext";
+import {
+  Collapsible,
+  CollapsibleTrigger,
+  CollapsibleContent,
+} from "../../components/ui/collapsible";
 import type { NavItem } from "../../lib/admin-config";
 
 function pathToRoute(path: string): EmbedRoute {
@@ -25,43 +32,120 @@ function pathToRoute(path: string): EmbedRoute {
 }
 
 export function EmbedSidebar() {
-  const { currentPath, navigate } = useEmbedNavigation();
+  const { currentPath, navigate, navigateToContentType } = useEmbedNavigation();
   const config = useAdminConfig();
   const { navItems, branding, layout } = config;
+  const api = useApi();
+
+  const contentTypesResult = useQuery(api.listContentTypes, {
+    isActive: true,
+  });
+  const contentTypes = contentTypesResult?.page ?? [];
+
+  const normalizedPath = currentPath.replace(/^\/admin/, "");
 
   const isActive = (path: string, exact?: boolean) => {
-    const normalizedCurrent = currentPath.replace(/^\/admin/, "");
     if (exact) {
-      return normalizedCurrent === path;
+      return normalizedPath === path;
     }
-    return normalizedCurrent.startsWith(path);
+    return normalizedPath.startsWith(path);
   };
+
+  const isContentActive =
+    normalizedPath === "/content" ||
+    normalizedPath.startsWith("/entries/type/") ||
+    normalizedPath.startsWith("/entries/new/") ||
+    normalizedPath.startsWith("/entries/");
 
   const handleNavClick = (item: NavItem) => {
     const route = pathToRoute(item.path);
     navigate(route);
   };
 
-  const renderNavItem = (item: NavItem) => (
-    <button
-      key={item.id}
-      type="button"
-      onClick={() => handleNavClick(item)}
-      className={cn(
-        "flex w-full items-center gap-3 rounded-md px-2 py-2 text-left text-sm font-medium transition-colors",
-        isActive(item.path, item.exact)
-          ? "bg-sidebar-accent text-sidebar-accent-foreground"
-          : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
-      )}
-    >
-      <Icon name={item.icon} className="size-5" />
-      <span className="flex-1">{item.label}</span>
-      {item.badge && (
-        <span className="rounded-full bg-sidebar-primary px-2 py-0.5 text-xs text-sidebar-primary-foreground">
-          {item.badge}
-        </span>
-      )}
-    </button>
+  const renderNavItem = (item: NavItem) => {
+    if (item.id === "content") {
+      return renderContentMenu(item);
+    }
+
+    return (
+      <button
+        key={item.id}
+        type="button"
+        onClick={() => handleNavClick(item)}
+        className={cn(
+          "flex w-full items-center gap-3 rounded-md px-2 py-2 text-left text-sm font-medium transition-colors",
+          isActive(item.path, item.exact)
+            ? "bg-sidebar-accent text-sidebar-accent-foreground"
+            : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+        )}
+      >
+        <Icon name={item.icon} className="size-5" />
+        <span className="flex-1">{item.label}</span>
+        {item.badge && (
+          <span className="rounded-full bg-sidebar-primary px-2 py-0.5 text-xs text-sidebar-primary-foreground">
+            {item.badge}
+          </span>
+        )}
+      </button>
+    );
+  };
+
+  const renderContentMenu = (item: NavItem) => (
+    <Collapsible key={item.id} defaultOpen={isContentActive}>
+      <CollapsibleTrigger
+        className={cn(
+          "flex w-full items-center gap-3 rounded-md px-2 py-2 text-sm font-medium transition-colors",
+          isContentActive
+            ? "bg-sidebar-accent text-sidebar-accent-foreground"
+            : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground",
+          "group"
+        )}
+      >
+        <Icon name={item.icon} className="size-5" />
+        <span className="flex-1 text-left">{item.label}</span>
+        <ChevronDown className="size-4 transition-transform duration-200 group-data-[state=open]:rotate-180" />
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <div className="ml-5 mt-1 space-y-1 border-l border-sidebar-border pl-3">
+          <button
+            type="button"
+            onClick={() => navigate("content")}
+            className={cn(
+              "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors",
+              normalizedPath === "/content"
+                ? "bg-sidebar-accent/60 text-sidebar-accent-foreground"
+                : "text-sidebar-foreground/80 hover:bg-sidebar-accent/30 hover:text-sidebar-accent-foreground"
+            )}
+          >
+            All Entries
+          </button>
+          {contentTypes.map((type) => (
+            <button
+              key={type._id}
+              type="button"
+              onClick={() => navigateToContentType(type._id)}
+              className={cn(
+                "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors",
+                normalizedPath === `/entries/type/${type._id}`
+                  ? "bg-sidebar-accent/60 text-sidebar-accent-foreground"
+                  : "text-sidebar-foreground/80 hover:bg-sidebar-accent/30 hover:text-sidebar-accent-foreground"
+              )}
+            >
+              {type.displayName}
+            </button>
+          ))}
+          {contentTypes.length === 0 && contentTypesResult !== undefined && (
+            <button
+              type="button"
+              onClick={() => navigate("content-types")}
+              className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-sidebar-foreground/60 hover:bg-sidebar-accent/30 hover:text-sidebar-accent-foreground"
+            >
+              + Create content type
+            </button>
+          )}
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
   );
 
   const sidebarWidth = layout.sidebarWidth;

@@ -17,7 +17,7 @@ This guide covers **programmatic usage** with `createCmsClient` — full control
 ### 1. Install the Package
 
 ```bash
-npm install convex-cms
+pnpm add convex-cms
 ```
 
 ### 2. Configure the Convex Component
@@ -39,7 +39,7 @@ export default app;
 Run the Convex dev server to generate types:
 
 ```bash
-npx convex dev
+pnpm convex dev
 ```
 
 This creates the necessary type definitions including the component API.
@@ -189,25 +189,25 @@ export const publishPost = mutation({
 Start the Convex dev server if not already running:
 
 ```bash
-npx convex dev
+pnpm convex dev
 ```
 
 In another terminal, run the setup:
 
 ```bash
-npx convex run setup:setupBlog
+pnpm convex run setup:setupBlog
 ```
 
 ### Step 4: Create Your First Post
 
 ```bash
-npx convex run blog:createPost '{"title": "Hello World", "content": "<p>My first post!</p>"}'
+pnpm convex run blog:createPost '{"title": "Hello World", "content": "<p>My first post!</p>"}'
 ```
 
 Copy the returned ID and publish it:
 
 ```bash
-npx convex run blog:publishPost '{"id": "YOUR_ENTRY_ID"}'
+pnpm convex run blog:publishPost '{"id": "YOUR_ENTRY_ID"}'
 ```
 
 ### Step 5: Build the Frontend
@@ -392,7 +392,7 @@ If you're getting auth errors:
 
 ### Type errors
 
-Run `npx convex dev` to regenerate types after making changes to your Convex functions.
+Run `pnpm convex dev` to regenerate types after making changes to your Convex functions.
 
 ---
 

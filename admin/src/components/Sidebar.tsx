@@ -1,8 +1,15 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Layers } from "lucide-react";
+import { useQuery } from "convex/react";
+import { Layers, ChevronDown } from "lucide-react";
 import { cn } from "~/lib/cn";
 import { useAdminConfig } from "~/contexts";
 import { Icon } from "~/lib/icons";
+import { api } from "../../convex/_generated/api";
+import {
+  Collapsible,
+  CollapsibleTrigger,
+  CollapsibleContent,
+} from "~/components/ui/collapsible";
 import type { NavItem } from "~/lib/admin-config";
 
 export function Sidebar() {
@@ -11,6 +18,11 @@ export function Sidebar() {
   const config = useAdminConfig();
   const { navItems, branding, layout } = config;
 
+  const contentTypesResult = useQuery(api.admin.listContentTypes, {
+    isActive: true,
+  });
+  const contentTypes = contentTypesResult?.page ?? [];
+
   const isActive = (to: string, exact?: boolean) => {
     if (exact) {
       return currentPath === to;
@@ -18,25 +30,93 @@ export function Sidebar() {
     return currentPath.startsWith(to);
   };
 
-  const renderNavItem = (item: NavItem) => (
-    <Link
-      key={item.id}
-      to={item.path}
-      className={cn(
-        "flex items-center gap-3 rounded-md px-2 py-2 text-sm font-medium transition-colors",
-        isActive(item.path, item.exact)
-          ? "bg-sidebar-accent text-sidebar-accent-foreground"
-          : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
-      )}
-    >
-      <Icon name={item.icon} className="size-5" />
-      <span className="flex-1">{item.label}</span>
-      {item.badge && (
-        <span className="rounded-full bg-sidebar-primary px-2 py-0.5 text-xs text-sidebar-primary-foreground">
-          {item.badge}
-        </span>
-      )}
-    </Link>
+  const isContentActive =
+    currentPath === "/content" ||
+    currentPath.startsWith("/entries/type/") ||
+    currentPath.startsWith("/entries/new/") ||
+    currentPath.startsWith("/entries/");
+
+  const renderNavItem = (item: NavItem) => {
+    if (item.id === "content") {
+      return renderContentMenu(item);
+    }
+
+    return (
+      <Link
+        key={item.id}
+        to={item.path}
+        className={cn(
+          "flex items-center gap-3 rounded-md px-2 py-2 text-sm font-medium transition-colors",
+          isActive(item.path, item.exact)
+            ? "bg-sidebar-accent text-sidebar-accent-foreground"
+            : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+        )}
+      >
+        <Icon name={item.icon} className="size-5" />
+        <span className="flex-1">{item.label}</span>
+        {item.badge && (
+          <span className="rounded-full bg-sidebar-primary px-2 py-0.5 text-xs text-sidebar-primary-foreground">
+            {item.badge}
+          </span>
+        )}
+      </Link>
+    );
+  };
+
+  const renderContentMenu = (item: NavItem) => (
+    <Collapsible key={item.id} defaultOpen={isContentActive}>
+      <CollapsibleTrigger
+        className={cn(
+          "flex w-full items-center gap-3 rounded-md px-2 py-2 text-sm font-medium transition-colors",
+          isContentActive
+            ? "bg-sidebar-accent text-sidebar-accent-foreground"
+            : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground",
+          "group"
+        )}
+      >
+        <Icon name={item.icon} className="size-5" />
+        <span className="flex-1 text-left">{item.label}</span>
+        <ChevronDown className="size-4 transition-transform duration-200 group-data-[state=open]:rotate-180" />
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <div className="ml-5 mt-1 space-y-1 border-l border-sidebar-border pl-3">
+          <Link
+            to="/content"
+            className={cn(
+              "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors",
+              currentPath === "/content"
+                ? "bg-sidebar-accent/60 text-sidebar-accent-foreground"
+                : "text-sidebar-foreground/80 hover:bg-sidebar-accent/30 hover:text-sidebar-accent-foreground"
+            )}
+          >
+            All Entries
+          </Link>
+          {contentTypes.map((type) => (
+            <Link
+              key={type._id}
+              to="/entries/type/$contentTypeId"
+              params={{ contentTypeId: type._id }}
+              className={cn(
+                "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors",
+                currentPath === `/entries/type/${type._id}`
+                  ? "bg-sidebar-accent/60 text-sidebar-accent-foreground"
+                  : "text-sidebar-foreground/80 hover:bg-sidebar-accent/30 hover:text-sidebar-accent-foreground"
+              )}
+            >
+              {type.displayName}
+            </Link>
+          ))}
+          {contentTypes.length === 0 && contentTypesResult !== undefined && (
+            <Link
+              to="/content-types"
+              className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-sidebar-foreground/60 hover:bg-sidebar-accent/30 hover:text-sidebar-accent-foreground"
+            >
+              + Create content type
+            </Link>
+          )}
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
   );
 
   const sidebarWidth = layout.sidebarWidth;

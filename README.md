@@ -87,7 +87,7 @@ They work together through the same CMS component.
 ### 1. Install
 
 ```bash
-npm install convex-cms
+pnpm add convex-cms
 ```
 
 ### 2. Add the Component
@@ -104,7 +104,7 @@ export default app;
 
 ### 3. Choose Your Setup
 
-**For Admin UI:** Run `npx convex-cms init` then `npx convex-cms admin`
+**For Admin UI:** Run `pnpm convex-cms init` then `pnpm convex-cms admin`
 → [Full Admin UI Setup](./docs/guides/admin-ui-setup.md)
 
 **For Custom Functions:** Create a CMS client and use it in your functions
@@ -144,7 +144,7 @@ export default app;
 
 | Mode | Command | Best For |
 |------|---------|----------|
-| **CLI** | `npx convex-cms admin` | Development |
+| **CLI** | `pnpm convex-cms admin` | Development |
 | **Embed** | `<CmsAdmin api={api.admin} />` | Production |
 
 Both modes call the same functions from your `convex/admin.ts`.

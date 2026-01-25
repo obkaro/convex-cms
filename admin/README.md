@@ -13,7 +13,7 @@ The Admin UI for Convex CMS, built with TanStack Start and React.
 
 ```bash
 cd admin
-npm install
+pnpm install
 ```
 
 ### Development
@@ -21,7 +21,7 @@ npm install
 1. Start the Convex development server:
 
 ```bash
-npx convex dev
+pnpm convex dev
 ```
 
 This will generate the Convex API types and provide a `VITE_CONVEX_URL`.
@@ -36,13 +36,13 @@ cp .env.example .env
 3. Start the development server:
 
 ```bash
-npm run dev:vite
+pnpm dev:vite
 ```
 
 Or run both Convex and Vite together:
 
 ```bash
-npm run dev
+pnpm dev
 ```
 
 4. Open [http://localhost:3000](http://localhost:3000) in your browser.
@@ -75,12 +75,12 @@ admin/
 
 ## Available Scripts
 
-- `npm run dev` - Start Convex and Vite development servers
-- `npm run dev:vite` - Start only the Vite development server
-- `npm run dev:convex` - Start only the Convex development server
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
-- `npm run typecheck` - Run TypeScript type checking
+- `pnpm dev` - Start Convex and Vite development servers
+- `pnpm dev:vite` - Start only the Vite development server
+- `pnpm dev:convex` - Start only the Convex development server
+- `pnpm build` - Build for production
+- `pnpm preview` - Preview production build
+- `pnpm typecheck` - Run TypeScript type checking
 
 ## Features
 

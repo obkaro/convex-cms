@@ -615,7 +615,7 @@ export interface CreateCmsToolsOptions {
 export function createCmsTools(
   componentApi: ComponentApi,
   options: CreateCmsToolsOptions = {}
-) {
+): Record<string, unknown> {
   const { defaultUserId } = options;
 
   // ==========================================================================

@@ -428,7 +428,7 @@ export const {
 } = defineAdminAPI(components.convexCms);
 ```
 
-Run `npx convex-cms admin` to access the Admin UI.
+Run `pnpm convex-cms admin` to access the Admin UI.
 
 ---
 

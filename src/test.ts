@@ -1,4 +1,3 @@
-/// <reference types="vite/client" />
 /**
  * Test helpers for the Convex CMS component.
  *
@@ -45,6 +44,12 @@
  *
  * @module
  */
+
+declare global {
+	interface ImportMeta {
+		glob: (pattern: string) => Record<string, () => Promise<unknown>>;
+	}
+}
 
 import type { TestConvex } from "convex-test";
 import type { GenericSchema, SchemaDefinition } from "convex/server";
