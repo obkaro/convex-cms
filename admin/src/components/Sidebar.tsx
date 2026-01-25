@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useQuery } from "convex/react";
 import { Layers, ChevronDown } from "lucide-react";
@@ -10,6 +11,7 @@ import {
   CollapsibleTrigger,
   CollapsibleContent,
 } from "~/components/ui/collapsible";
+import { ContentTypeFormModal } from "~/components/ContentTypeFormModal";
 import type { NavItem } from "~/lib/admin-config";
 
 export function Sidebar() {
@@ -17,6 +19,8 @@ export function Sidebar() {
   const currentPath = routerState.location.pathname;
   const config = useAdminConfig();
   const { navItems, branding, layout } = config;
+
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const contentTypesResult = useQuery(api.admin.listContentTypes, {
     isActive: true,
@@ -107,12 +111,13 @@ export function Sidebar() {
             </Link>
           ))}
           {contentTypes.length === 0 && contentTypesResult !== undefined && (
-            <Link
-              to="/content-types"
-              className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-sidebar-foreground/60 hover:bg-sidebar-accent/30 hover:text-sidebar-accent-foreground"
+            <button
+              type="button"
+              onClick={() => setIsCreateModalOpen(true)}
+              className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-sidebar-foreground/60 hover:bg-sidebar-accent/30 hover:text-sidebar-accent-foreground"
             >
               + Create content type
-            </Link>
+            </button>
           )}
         </div>
       </CollapsibleContent>
@@ -122,49 +127,56 @@ export function Sidebar() {
   const sidebarWidth = layout.sidebarWidth;
 
   return (
-    <aside
-      className="fixed inset-y-0 left-0 z-50 flex flex-col border-r border-sidebar-border bg-sidebar"
-      style={{ width: sidebarWidth }}
-    >
-      <div className="flex h-14 items-center gap-2 border-b border-sidebar-border px-4">
-        <Link to="/" className="flex items-center gap-2 font-semibold text-sidebar-foreground">
-          {branding.logo ? (
-            <img src={branding.logo} alt={branding.appName} className="size-8" />
-          ) : (
-            <div className="flex size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-              <Layers className="size-4" />
+    <>
+      <aside
+        className="fixed inset-y-0 left-0 z-50 flex flex-col border-r border-sidebar-border bg-sidebar"
+        style={{ width: sidebarWidth }}
+      >
+        <div className="flex h-14 items-center gap-2 border-b border-sidebar-border px-4">
+          <Link to="/" className="flex items-center gap-2 font-semibold text-sidebar-foreground">
+            {branding.logo ? (
+              <img src={branding.logo} alt={branding.appName} className="size-8" />
+            ) : (
+              <div className="flex size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+                <Layers className="size-4" />
+              </div>
+            )}
+            <span className="text-base">{branding.appName}</span>
+          </Link>
+        </div>
+
+        <nav className="flex-1 space-y-6 overflow-y-auto p-4">
+          {navItems.main.length > 0 && (
+            <div className="space-y-1">
+              <span className="px-2 text-xs font-medium uppercase tracking-wider text-sidebar-foreground/60">
+                Main
+              </span>
+              <div className="space-y-1 pt-2">{navItems.main.map(renderNavItem)}</div>
             </div>
           )}
-          <span className="text-base">{branding.appName}</span>
-        </Link>
-      </div>
 
-      <nav className="flex-1 space-y-6 overflow-y-auto p-4">
-        {navItems.main.length > 0 && (
-          <div className="space-y-1">
-            <span className="px-2 text-xs font-medium uppercase tracking-wider text-sidebar-foreground/60">
-              Main
-            </span>
-            <div className="space-y-1 pt-2">{navItems.main.map(renderNavItem)}</div>
+          {navItems.config.length > 0 && (
+            <div className="space-y-1">
+              <span className="px-2 text-xs font-medium uppercase tracking-wider text-sidebar-foreground/60">
+                Configuration
+              </span>
+              <div className="space-y-1 pt-2">{navItems.config.map(renderNavItem)}</div>
+            </div>
+          )}
+        </nav>
+
+        <div className="border-t border-sidebar-border p-4">
+          <div className="flex items-center justify-between text-xs text-sidebar-foreground/60">
+            <span>Version</span>
+            <span className="font-mono">0.1.0</span>
           </div>
-        )}
-
-        {navItems.config.length > 0 && (
-          <div className="space-y-1">
-            <span className="px-2 text-xs font-medium uppercase tracking-wider text-sidebar-foreground/60">
-              Configuration
-            </span>
-            <div className="space-y-1 pt-2">{navItems.config.map(renderNavItem)}</div>
-          </div>
-        )}
-      </nav>
-
-      <div className="border-t border-sidebar-border p-4">
-        <div className="flex items-center justify-between text-xs text-sidebar-foreground/60">
-          <span>Version</span>
-          <span className="font-mono">0.1.0</span>
         </div>
-      </div>
-    </aside>
+      </aside>
+
+      <ContentTypeFormModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+      />
+    </>
   );
 }
