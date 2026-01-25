@@ -3,87 +3,9 @@
 [![npm version](https://badge.fury.io/js/convex-cms.svg)](https://www.npmjs.com/package/convex-cms)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-> **Alpha Status (v0.0.6)** — Actively developed. APIs may change. [Report issues](https://github.com/obkaro/convex-cms/issues).
+> **Alpha (v0.0.6)** Actively developed. APIs may change. [Report issues](https://github.com/obkaro/convex-cms/issues).
 
-A headless CMS built as a [Convex Component](https://docs.convex.dev/components) — content management that runs inside your Convex app.
-
-## Why Convex CMS?
-
-If you're building on Convex and need content management, this is the most integrated option:
-
-- **Zero infrastructure** — Runs entirely within your Convex deployment
-- **True real-time** — Content updates via Convex subscriptions, not polling
-- **Type-safe** — Code-first schemas with full TypeScript inference
-- **Component isolation** — Separate database tables, versioned independently
-- **Agent-native** — 23 pre-built tools for AI agent integration via `@convex-dev/agent`
-
-## Choose Your Path
-
-### Need an Admin Interface?
-
-Use **`defineAdminAPI`** — one line creates all the backend functions for a working admin UI.
-
-```
-Your App                         Admin UI
-    │                               │
-    └── convex/admin.ts ────────────┘
-        defineAdminAPI()
-            │
-            ├── listContentTypes
-            ├── getEntry
-            ├── publishEntry
-            └── ... (60+ functions across 11 domains)
-                    │
-                    ▼
-            CMS Component
-```
-
-→ **[Admin UI Setup Guide](./docs/guides/admin-ui-setup.md)**
-
-### Building Custom Content Logic?
-
-Use **`createCmsClient`** — full programmatic control with typed methods in your Convex functions.
-
-```
-Your Convex Functions
-    │
-    └── cms.contentEntries.list(ctx, { status: "published" })
-        cms.contentTypes.create(ctx, { name: "blog", ... })
-        cms.mediaAssets.upload(ctx, { ... })
-            │
-            ▼
-        CMS Component
-```
-
-→ **[Getting Started Guide](./docs/guides/getting-started.md)**
-
-### Want Full Type Safety?
-
-Use **code-first schemas** — define content types with Convex validators, get TypeScript inference.
-
-```typescript
-const blogPost = defineContentType({
-  name: "blog_post",
-  validator: v.object({
-    title: v.string(),
-    content: v.string(),
-  }),
-});
-
-// TypeScript knows entry.data.title is string
-const entry = await cms.typedContentEntries.get<"blog_post">(ctx, id);
-```
-
-→ **[Code-First Schema Reference](./docs/api/code-first-schema.md)**
-
-### Need Both?
-
-**Most apps use both.** This is the typical setup:
-
-- `defineAdminAPI` powers the admin interface for content editors
-- `createCmsClient` gives you typed methods for custom queries on your frontend
-
-They work together through the same CMS component.
+A headless CMS built as a [Convex Component](https://docs.convex.dev/components). Content management that runs inside your Convex app.
 
 ## Quick Start
 
@@ -113,35 +35,72 @@ export default app;
 **For Custom Functions:** Create a CMS client and use it in your functions
 → [Full Getting Started Guide](./docs/guides/getting-started.md)
 
+## Why Convex CMS?
+
+If you're building on Convex and need content management, this is the most integrated option:
+
+- **Zero infrastructure.** Runs entirely within your Convex deployment
+- **True real-time.** Content updates via Convex subscriptions, not polling
+- **Type-safe.** Code-first schemas with full TypeScript inference
+- **Component isolation.** Separate database tables, versioned independently
+- **Agent-native.** 23 pre-built tools for AI agent integration via `@convex-dev/agent`
+
+## Features
+
+| Feature | What it does |
+|---------|--------------|
+| **Code-first config** | Define content types in TypeScript with full type inference |
+| **UI-defined config** | Create and modify content types through the admin interface |
+| **CMS Client** | Programmatic access via `createCmsClient` for custom queries and mutations |
+| **Admin API** | Pre-built functions via `defineAdminAPI` that power the admin UI |
+| **CLI Admin UI** | Run `npx convex-cms admin` for local development |
+| **Embedded Admin UI** | Ship the admin interface as part of your React app |
+
+Any combination of these features works together seamlessly. Pick what fits your workflow.
+
+## In Practice
+
+**Full control over the editorial experience?**  
+Code-first config + CMS Client. You define the schema in TypeScript and build exactly the UI you want.
+
+**Ship fast with a ready-made admin?**  
+Code-first config + Admin API + Embedded Admin UI. Type-safe schemas with a working admin interface out of the box.
+
+**Content team needs to modify schemas without deploys?**  
+UI-defined config + Admin API + Embedded Admin UI. Non-developers can add fields and content types.
+
+**Automated content pipelines?**  
+CMS Client + agent tools. 23 pre-built tools for AI-driven workflows.
+
 ## What's Included
 
 ### Core Content
-- **13 field types** — text, richText, number, boolean, date, datetime, select, multiSelect, reference, media, json, tags, category
-- **Publishing workflows** — draft → scheduled → published with version history
-- **Content versioning** — Snapshots, comparison, and rollback
-- **Scheduled publishing** — Convex scheduler integration for future publish dates
+- **13 field types.** text, richText, number, boolean, date, datetime, select, multiSelect, reference, media, json, tags, category
+- **Publishing workflows.** Draft → scheduled → published with version history
+- **Content versioning.** Snapshots, comparison, and rollback
+- **Scheduled publishing.** Convex scheduler integration for future publish dates
 
 ### Media Management
-- **File uploads** — Direct to Convex storage with folder organization
-- **Image variants** — Automatic resizing and format conversion
-- **Metadata & tagging** — Alt text, descriptions, taxonomy support
+- **File uploads.** Direct to Convex storage with folder organization
+- **Image variants.** Automatic resizing and format conversion
+- **Metadata & tagging.** Alt text, descriptions, taxonomy support
 
 ### Organization
-- **Taxonomies** — Hierarchical categories and flat tags
-- **Content locking** — Prevent concurrent edit conflicts
-- **Soft delete & trash** — Configurable retention with restore
+- **Taxonomies.** Hierarchical categories and flat tags
+- **Content locking.** Prevent concurrent edit conflicts
+- **Soft delete & trash.** Configurable retention with restore
 
 ### Integration
-- **RBAC** — 4 built-in roles + custom roles with fine-grained permissions
-- **Multi-locale** — Content localization with fallback chains
-- **Webhooks** — Event-driven integration with external systems
-- **Event system** — All mutations emit events for async processing
-- **Agent tools** — 23 pre-built tools with Zod schemas for AI integration
-- **Query builder** — Fluent API for complex content queries
+- **RBAC.** 4 built-in roles + custom roles with fine-grained permissions
+- **Multi-locale.** Content localization with fallback chains
+- **Webhooks.** Event-driven integration with external systems
+- **Event system.** All mutations emit events for async processing
+- **Agent tools.** 23 pre-built tools with Zod schemas for AI integration
+- **Query builder.** Fluent API for complex content queries
 
 ### Admin UI
-- **Pre-built React interface** — CLI mode for development, embeddable for production
-- **Visual content editing** — Rich text, media picker, reference selector
+- **Pre-built React interface.** CLI mode for development, embeddable for production
+- **Visual content editing.** Rich text, media picker, reference selector
 
 ## Admin UI Modes
 
