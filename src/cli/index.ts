@@ -13,7 +13,11 @@ program
 program
   .command("init")
   .description("Initialize CMS admin API in your Convex project")
-  .option("-f, --force", "Overwrite existing convex/admin.ts")
+  .option("-f, --force", "Overwrite existing files")
+  .option(
+    "-t, --template <template>",
+    "Schema template (blog, docs, landing, blank)"
+  )
   .action(initCommand);
 
 program

@@ -213,6 +213,7 @@
     "zod": "^4.3.6"
   },
   "dependencies": {
+    "@clack/prompts": "^0.10.0",
     "commander": "^14.0.2",
     "convex-helpers": "^0.1.111",
     "open": "^11.0.0"
