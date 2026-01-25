@@ -188,8 +188,8 @@ export function ContentTypeFormModal({
 	const [showBreakingWarning, setShowBreakingWarning] = useState(false);
 	const [isForceUpdating, setIsForceUpdating] = useState(false);
 
-	const createContentType = useMutation(api.contentTypes.create);
-	const updateContentType = useMutation(api.contentTypes.update);
+	const createContentType = useMutation(api.admin.createContentType);
+	const updateContentType = useMutation(api.admin.updateContentType);
 
 	// Populate form when editing
 	useEffect(() => {

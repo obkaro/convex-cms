@@ -4,7 +4,7 @@ import { api } from "../../convex/_generated/api";
 import type { AdminConfig } from "~/lib/admin-config";
 import { AdminConfigProvider } from "./AdminConfigContext";
 
-type Settings = NonNullable<typeof api.settings.get._returnType>;
+type Settings = NonNullable<typeof api.admin.getSettings._returnType>;
 
 interface SettingsConfigContextValue {
   baseConfig: AdminConfig;
@@ -20,7 +20,7 @@ export function SettingsConfigProvider({
   baseConfig: AdminConfig;
   children: ReactNode;
 }) {
-  const settings = useQuery(api.settings.get);
+  const settings = useQuery(api.admin.getSettings);
 
   const mergedConfig = useMemo((): AdminConfig => {
     if (!settings) return baseConfig;

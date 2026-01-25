@@ -536,6 +536,5 @@ const result = await cms.contentEntries.list(ctx, {
 
 See also:
 - [Code-First Schema Reference](../api/code-first-schema.md)
-- [Database Schema Reference](./database-schema.md)
-- [Authorization Hooks](./authorization-hooks.md)
-- [Performance Guide](./performance.md)
+- [Authorization Guide](../guides/authorization.md)
+- [Configuration Reference](../api/configuration.md)

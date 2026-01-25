@@ -14,6 +14,10 @@ A headless CMS built as a Convex Component — content management that runs insi
 
 → **[Getting Started](./guides/getting-started.md)** — programmatic usage with `createCmsClient`
 
+### ...write complex queries with filters
+
+→ **[Query Builder](./guides/query-builder.md)** — fluent API for filtering, sorting, pagination
+
 ### ...understand the integration options
 
 → **[Integration Patterns](./guides/integration-patterns.md)** — which approach fits your use case
@@ -22,6 +26,14 @@ A headless CMS built as a Convex Component — content management that runs insi
 
 - **[Content Modeling](./guides/content-modeling.md)** — define types at runtime or via Admin UI
 - **[Code-First Schema](./api/code-first-schema.md)** — TypeScript-first with full type inference
+
+### ...organize content with categories and tags
+
+→ **[Taxonomies](./guides/taxonomies.md)** — hierarchical categories and flat tags
+
+### ...integrate with AI agents
+
+→ **[Agent Tools](./guides/agent-tools.md)** — 23 pre-built tools with Zod schemas
 
 ### ...set up authentication and permissions
 
@@ -39,19 +51,23 @@ A headless CMS built as a Convex Component — content management that runs insi
 
 | Guide | Description |
 |-------|-------------|
-| [Admin UI Setup](./guides/admin-ui-setup.md) | CLI and embed modes, auth integration |
 | [Getting Started](./guides/getting-started.md) | First setup with `createCmsClient` |
-| [Integration Patterns](./guides/integration-patterns.md) | Common setups and when to use each |
+| [Admin UI Setup](./guides/admin-ui-setup.md) | CLI and embed modes, auth integration |
 | [Content Modeling](./guides/content-modeling.md) | Content types and field definitions |
+| [Query Builder](./guides/query-builder.md) | Fluent API for complex queries |
+| [Taxonomies](./guides/taxonomies.md) | Categories, tags, and content organization |
 | [Media Management](./guides/media.md) | Uploads, folders, and variants |
 | [Authorization](./guides/authorization.md) | Roles, permissions, custom auth |
+| [Agent Tools](./guides/agent-tools.md) | AI agent integration |
+| [Content Locking](./guides/content-locking.md) | Prevent concurrent edit conflicts |
+| [Integration Patterns](./guides/integration-patterns.md) | Common setups and when to use each |
 
 ### API Reference
 
 | Reference | Description |
 |-----------|-------------|
-| [Admin API](./api/admin-api.md) | `defineAdminAPI` functions for Admin UI |
-| [Client API](./api/client-api.md) | `createCmsClient` methods |
+| [Admin API](./api/admin-api.md) | 60+ `defineAdminAPI` functions across 11 domains |
+| [Client API](./api/client-api.md) | `createCmsClient` methods and query builder |
 | [Field Types](./api/field-types.md) | All 13 field types |
 | [Configuration](./api/configuration.md) | All config options |
 | [Code-First Schema](./api/code-first-schema.md) | TypeScript schema definitions |

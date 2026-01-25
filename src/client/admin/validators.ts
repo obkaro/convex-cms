@@ -188,12 +188,31 @@ export const adminCompareVersionsResult = v.object({
 // Media Item Validators (Admin versions with string IDs)
 // =============================================================================
 
+export const adminOptimizationHintsDoc = v.object({
+  isResizable: v.boolean(),
+  aspectRatio: v.optional(v.number()),
+  hasTransparency: v.optional(v.boolean()),
+  isVector: v.optional(v.boolean()),
+  suggestedMaxWidth: v.optional(v.number()),
+  durationSeconds: v.optional(v.number()),
+});
+
 export const adminMediaAssetDoc = v.object({
   ...omit(mediaAssetItemValidator.fields, ["parentId", "storageId"]),
   _id: v.string(),
   _creationTime: v.number(),
   parentId: v.optional(v.string()),
   storageId: v.string(),
+});
+
+export const adminMediaAssetWithUrlDoc = v.object({
+  ...omit(mediaAssetItemValidator.fields, ["parentId", "storageId"]),
+  _id: v.string(),
+  _creationTime: v.number(),
+  parentId: v.optional(v.string()),
+  storageId: v.string(),
+  url: v.union(v.string(), v.null()),
+  optimizationHints: adminOptimizationHintsDoc,
 });
 
 export const adminMediaFolderDoc = v.object({
@@ -204,6 +223,8 @@ export const adminMediaFolderDoc = v.object({
 });
 
 export const adminMediaItemDoc = v.union(adminMediaAssetDoc, adminMediaFolderDoc);
+
+export const adminMediaItemWithUrlDoc = v.union(adminMediaAssetWithUrlDoc, adminMediaFolderDoc);
 
 export const adminDeleteMediaAssetResult = v.object({
   ...omit(deleteMediaAssetResult.fields, ["_id", "parentId", "storageId"]),
@@ -444,8 +465,11 @@ export type AdminContentTypeWithCount = Infer<typeof adminContentTypeWithCountDo
 export type AdminContentEntry = Infer<typeof adminContentEntryDoc>;
 export type AdminContentVersion = Infer<typeof adminContentVersionDoc>;
 export type AdminMediaItem = Infer<typeof adminMediaItemDoc>;
+export type AdminMediaItemWithUrl = Infer<typeof adminMediaItemWithUrlDoc>;
 export type AdminMediaAsset = Infer<typeof adminMediaAssetDoc>;
+export type AdminMediaAssetWithUrl = Infer<typeof adminMediaAssetWithUrlDoc>;
 export type AdminMediaFolder = Infer<typeof adminMediaFolderDoc>;
+export type AdminOptimizationHints = Infer<typeof adminOptimizationHintsDoc>;
 export type AdminMediaVariant = Infer<typeof adminMediaVariantDoc>;
 export type AdminMediaVariantWithUrl = Infer<typeof adminMediaVariantWithUrlDoc>;
 export type AdminTaxonomy = Infer<typeof adminTaxonomyDoc>;

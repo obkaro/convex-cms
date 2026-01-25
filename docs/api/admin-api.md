@@ -1,6 +1,8 @@
 # Admin API Reference
 
-The Admin API provides backend functions for the CMS Admin UI. Use `defineAdminAPI` to create these functions in your Convex app.
+The Admin API provides **60+ backend functions** across **11 domains** for the CMS Admin UI. Use `defineAdminAPI` to create these functions in your Convex app.
+
+**Domains:** Dashboard (1) • Settings (3) • Content Types (5) • Entries (15) • Bulk Ops (5) • Trash (6) • Content Lock (6) • Versions (4) • Media Assets (11) • Media Folders (8) • Media Variants (12) • Taxonomies (6) • Terms (9) • Entry-Term (6) • Media-Term (6)
 
 ## Overview
 
@@ -467,4 +469,6 @@ export const {
 
 - [Admin UI Setup](../guides/admin-ui-setup.md) — CLI and embed modes
 - [Authorization](../guides/authorization.md) — RBAC and custom roles
+- [Content Locking](../guides/content-locking.md) — Prevent concurrent edit conflicts
+- [Taxonomies](../guides/taxonomies.md) — Categories, tags, and organization
 - [Client API](./client-api.md) — `createCmsClient` for custom functions

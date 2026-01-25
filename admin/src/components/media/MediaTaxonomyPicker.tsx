@@ -42,14 +42,14 @@ export function MediaTaxonomyPicker({
   const suggestionsRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
-  const currentTerms = useQuery(api.taxonomies.getTermsByMedia, {
+  const currentTerms = useQuery(api.admin.getTermsByMedia, {
     mediaId,
     taxonomyId,
   })
 
   const selectedTermIds = currentTerms?.map((t: TaxonomyTermDisplay) => t._id) ?? []
 
-  const suggestionsResult = useQuery(api.taxonomies.suggestTerms, {
+  const suggestionsResult = useQuery(api.admin.suggestTerms, {
     taxonomyId,
     query: inputValue,
     limit: 10,
@@ -57,8 +57,8 @@ export function MediaTaxonomyPicker({
   })
   const suggestions = (suggestionsResult ?? []) as TaxonomyTermDisplay[]
 
-  const setMediaTermsMutation = useMutation(api.taxonomies.setMediaTerms)
-  const createTermMutation = useMutation(api.taxonomies.createTermAndAddToMedia)
+  const setMediaTermsMutation = useMutation(api.admin.setMediaTerms)
+  const createTermMutation = useMutation(api.admin.createTermAndAddToMedia)
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {

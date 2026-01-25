@@ -186,11 +186,9 @@ export const removeTermFromMedia = adminApi.removeTermFromMedia;
 export const createTermAndAddToMedia = adminApi.createTermAndAddToMedia;
 
 // =============================================================================
-// Settings (uses local admin database - not part of defineAdminAPI)
+// Settings
 // =============================================================================
 
-export {
-  get as getSettings,
-  update as updateSettings,
-  reset as resetSettings,
-} from "./settings";
+export const getSettings = adminApi.getSettings;
+export const updateSettings = adminApi.updateSettings;
+export const resetSettings = adminApi.resetSettings;

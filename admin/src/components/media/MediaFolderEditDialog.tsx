@@ -31,7 +31,7 @@ export function MediaFolderEditDialog({
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState('')
 
-  const updateFolder = useMutation(api.media.updateFolder)
+  const updateFolder = useMutation(api.admin.updateMediaFolder)
 
   useEffect(() => {
     if (folder) {

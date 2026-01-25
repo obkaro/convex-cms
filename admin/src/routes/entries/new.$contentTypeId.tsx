@@ -15,7 +15,7 @@ function NewEntryPage() {
   const { contentTypeId } = Route.useParams();
   const navigate = useNavigate();
 
-  const contentType = useQuery(api.contentTypes.get, { id: contentTypeId });
+  const contentType = useQuery(api.admin.getContentType, { id: contentTypeId });
 
   useBreadcrumbLabel(
     `/entries/new/${contentTypeId}`,

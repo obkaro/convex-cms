@@ -578,6 +578,43 @@ authorizationHooks: {
 
 ---
 
+## Implementation Notes
+
+### RBAC Coverage
+
+The RBAC system is fully implemented for all core operations:
+
+| Domain | Full RBAC | Notes |
+|--------|-----------|-------|
+| Content Types | ✓ | All CRUD operations |
+| Content Entries | ✓ | Including publish, schedule, duplicate |
+| Media Assets | ✓ | Upload, update, delete |
+| Media Folders | ✓ | Create, move, delete |
+| Media Variants | ✓ | Generation and access |
+| Taxonomies | ✓ | Create, update, delete |
+| Taxonomy Terms | ✓ | Full term management |
+| Versions | ✓ | View and rollback |
+| Bulk Operations | ✓ | Checked per-entry |
+| Content Locking | ✓ | Acquire, release, force-release |
+| Settings | ✓ | Admin only by default |
+
+### Scope Enforcement
+
+The `scope` field in permissions controls access:
+
+- `"all"` — Can access any resource
+- `"own"` — Can only access resources where `createdBy` matches `userId`
+
+Scope is enforced server-side for:
+- `contentEntries.update`
+- `contentEntries.delete`
+- `contentEntries.publish`
+- `contentEntries.unpublish`
+- `mediaAssets.update`
+- `mediaAssets.delete`
+
+---
+
 See also:
 - [Configuration Reference](../api/configuration.md)
 - [Media Management Guide](./media.md)

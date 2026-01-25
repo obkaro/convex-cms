@@ -105,12 +105,12 @@ export function MediaField({
   const allowedMimeTypes = field.options?.allowedMimeTypes ?? []
 
   const selectedAsset = useQuery(
-    api.media.getAsset,
+    api.admin.getMediaAsset,
     value ? { id: value } : 'skip'
   )
 
   const assetsResult = useQuery(
-    api.media.listAssets,
+    api.admin.listMediaAssets,
     showPicker
       ? {
           type: typeFilter
@@ -345,8 +345,8 @@ export function MediaField({
 
             <TabsContent value="upload" className="mt-4">
               <UploadDropzone
-                generateUploadUrl={api.media.generateUploadUrl}
-                createAsset={api.media.createAsset}
+                generateUploadUrl={api.admin.generateUploadUrl}
+                createAsset={api.admin.createMediaAsset}
                 onUploadComplete={handleUploadComplete}
                 allowedMimeTypes={allowedMimeTypes}
                 maxFileSize={field.options?.maxFileSize}

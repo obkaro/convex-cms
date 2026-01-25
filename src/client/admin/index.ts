@@ -26,6 +26,7 @@
 
 import type { ComponentApi } from "../../component/_generated/component.js";
 import type { AdminApiOptions, AdminOperation, AuthContext } from "./types.js";
+import { isUnifiedCmsConfig, extractAdminConfig, type UnifiedCmsConfig } from "../config.js";
 
 import { createDashboardOperations } from "./dashboard.js";
 import { createContentTypesOperations } from "./contentTypes.js";
@@ -36,12 +37,18 @@ import { createContentLockOperations } from "./contentLock.js";
 import { createVersionsOperations } from "./versions.js";
 import { createMediaOperations } from "./media.js";
 import { createTaxonomiesOperations } from "./taxonomies.js";
+import { createSettingsOperations } from "./settings.js";
 
 export function defineAdminAPI(
   component: ComponentApi,
-  options: AdminApiOptions = {}
+  options: AdminApiOptions | UnifiedCmsConfig = {}
 ) {
-  const { auth } = options;
+  // Normalize unified config to AdminApiOptions if needed
+  const resolvedOptions = isUnifiedCmsConfig(options)
+    ? extractAdminConfig(options)
+    : options;
+
+  const { auth, features } = resolvedOptions;
 
   const checkAuth = async (
     ctx: AuthContext,
@@ -63,6 +70,7 @@ export function defineAdminAPI(
   const versionsOps = createVersionsOperations(component, checkAuth);
   const mediaOps = createMediaOperations(component, checkAuth);
   const taxonomiesOps = createTaxonomiesOperations(component, checkAuth);
+  const settingsOps = createSettingsOperations(component, checkAuth, { features });
 
   return {
     // =========================================================================
@@ -71,6 +79,11 @@ export function defineAdminAPI(
 
     // Dashboard
     getDashboardStats: dashboard.getDashboardStats,
+
+    // Settings
+    getSettings: settingsOps.getSettings,
+    updateSettings: settingsOps.updateSettings,
+    resetSettings: settingsOps.resetSettings,
 
     // Content Types
     listContentTypes: contentTypesOps.listContentTypes,
@@ -204,6 +217,12 @@ export function defineAdminAPI(
 
     stats: {
       getDashboardStats: dashboard.getDashboardStats,
+    },
+
+    settings: {
+      get: settingsOps.getSettings,
+      update: settingsOps.updateSettings,
+      reset: settingsOps.resetSettings,
     },
 
     contentTypes: {
@@ -346,7 +365,12 @@ export function defineAdminAPI(
 }
 
 // Re-export types
-export type { AdminApiOptions, AdminOperation } from "./types.js";
+export type {
+  AdminApiOptions,
+  AdminOperation,
+  FeatureFlagsConfig,
+  ResolvedFeatureFlags,
+} from "./types.js";
 
 // Re-export validators and derived types
 export * from "./validators.js";

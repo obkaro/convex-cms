@@ -49,7 +49,7 @@ export function TaxonomyFilter({
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
 
-  const taxonomiesResult = useQuery(api.taxonomies.list, { isActive: true })
+  const taxonomiesResult = useQuery(api.admin.listTaxonomies, { isActive: true })
   const taxonomies = taxonomiesResult?.page ?? []
 
   const activeTaxonomy = useMemo(() => {
@@ -62,7 +62,7 @@ export function TaxonomyFilter({
   const targetTaxonomyId = taxonomyId ?? taxonomies[0]?._id
 
   const termsResult = useQuery(
-    api.taxonomies.listTerms,
+    api.admin.listTerms,
     targetTaxonomyId
       ? {
           taxonomyId: targetTaxonomyId,

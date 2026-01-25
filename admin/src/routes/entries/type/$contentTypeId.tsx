@@ -50,7 +50,7 @@ function ContentTypeEntriesPage() {
 
   const { canCreate, canUpdate, canDelete } = usePermissions()
 
-  const deleteEntry = useMutation(api.entries.remove)
+  const deleteEntry = useMutation(api.admin.deleteEntry)
 
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [entryToDelete, setEntryToDelete] = useState<{ _id: string; title: string } | null>(null)
@@ -65,11 +65,11 @@ function ContentTypeEntriesPage() {
     return () => clearTimeout(timer)
   }, [searchQuery])
 
-  const contentType = useQuery(api.contentTypes.get, { id: contentTypeId })
+  const contentType = useQuery(api.admin.getContentType, { id: contentTypeId })
 
   useBreadcrumbLabel(`/entries/type/${contentTypeId}`, contentType?.displayName)
 
-  const entriesResult = useQuery(api.entries.list, {
+  const entriesResult = useQuery(api.admin.listEntries, {
     contentTypeId: contentTypeId,
     status: selectedStatus === 'all' ? undefined : selectedStatus,
     search: debouncedSearch || undefined,
@@ -78,15 +78,15 @@ function ContentTypeEntriesPage() {
   const allEntries = entriesResult?.page ?? []
 
   const entriesByTermResult0 = useQuery(
-    api.taxonomies.getEntriesByTerm,
+    api.admin.getEntriesByTerm,
     selectedTermIds[0] ? { termId: selectedTermIds[0] } : 'skip'
   )
   const entriesByTermResult1 = useQuery(
-    api.taxonomies.getEntriesByTerm,
+    api.admin.getEntriesByTerm,
     selectedTermIds[1] ? { termId: selectedTermIds[1] } : 'skip'
   )
   const entriesByTermResult2 = useQuery(
-    api.taxonomies.getEntriesByTerm,
+    api.admin.getEntriesByTerm,
     selectedTermIds[2] ? { termId: selectedTermIds[2] } : 'skip'
   )
 

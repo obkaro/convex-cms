@@ -38,9 +38,9 @@ export function MediaAssetEditDialog({
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState('')
 
-  const updateAsset = useMutation(api.media.updateAsset)
+  const updateAsset = useMutation(api.admin.updateMediaAsset)
 
-  const taxonomiesResult = useQuery(api.taxonomies.list, {
+  const taxonomiesResult = useQuery(api.admin.listTaxonomies, {
     isActive: true,
     paginationOpts: { numItems: 50, cursor: null },
   })

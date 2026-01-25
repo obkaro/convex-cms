@@ -4168,6 +4168,64 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         Name
       >;
     };
+    settings: {
+      getSettings: FunctionReference<
+        "query",
+        "internal",
+        {
+          features?: {
+            localization: boolean;
+            mediaManagement: boolean;
+            scheduling: boolean;
+            versioning: boolean;
+          };
+        },
+        {
+          _creationTime?: number;
+          _id: string | null;
+          availableLocales: Array<string>;
+          defaultLocale: string;
+          features: {
+            localization: boolean;
+            mediaManagement: boolean;
+            scheduling: boolean;
+            versioning: boolean;
+          };
+          updatedBy?: string;
+        },
+        Name
+      >;
+      resetSettings: FunctionReference<
+        "mutation",
+        "internal",
+        { updatedBy?: string },
+        {
+          _creationTime: number;
+          _id: string;
+          availableLocales: Array<string>;
+          defaultLocale: string;
+          updatedBy?: string;
+        },
+        Name
+      >;
+      updateSettings: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          availableLocales?: Array<string>;
+          defaultLocale?: string;
+          updatedBy?: string;
+        },
+        {
+          _creationTime: number;
+          _id: string;
+          availableLocales: Array<string>;
+          defaultLocale: string;
+          updatedBy?: string;
+        },
+        Name
+      >;
+    };
     taxonomies: {
       countTerms: FunctionReference<
         "query",

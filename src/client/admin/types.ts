@@ -131,6 +131,17 @@ export type AdminOperation =
   | { type: "createTermAndAddToMedia"; mediaId: string };
 
 /**
+ * Feature flags for CMS functionality.
+ * Used to enable/disable features at configuration time.
+ */
+export interface FeatureFlagsConfig {
+  versioning?: boolean;
+  scheduling?: boolean;
+  localization?: boolean;
+  mediaManagement?: boolean;
+}
+
+/**
  * Options for configuring the admin API.
  */
 export interface AdminApiOptions {
@@ -156,6 +167,28 @@ export interface AdminApiOptions {
     ctx: { auth: Auth },
     operation: AdminOperation
   ) => Promise<string | null>;
+
+  /**
+   * Feature flags for the CMS.
+   *
+   * Features defined here are read-only in the admin UI.
+   * Unspecified features use defaults:
+   * - versioning: true
+   * - scheduling: true
+   * - localization: false
+   * - mediaManagement: true
+   *
+   * @example
+   * ```typescript
+   * features: {
+   *   versioning: true,
+   *   scheduling: true,
+   *   localization: false,  // explicitly disabled
+   *   // mediaManagement uses default (true)
+   * }
+   * ```
+   */
+  features?: FeatureFlagsConfig;
 }
 
 /**
@@ -163,4 +196,14 @@ export interface AdminApiOptions {
  */
 export interface AuthContext {
   auth: Auth;
+}
+
+/**
+ * Resolved feature flags with all values defined.
+ */
+export interface ResolvedFeatureFlags {
+  versioning: boolean;
+  scheduling: boolean;
+  localization: boolean;
+  mediaManagement: boolean;
 }

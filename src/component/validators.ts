@@ -569,6 +569,24 @@ export const taxonomyTermDoc = doc(schema, "taxonomyTerms");
 export const contentEntryTagDoc = doc(schema, "contentEntryTags");
 export const webhookConfigDoc = doc(schema, "webhookConfigs");
 export const webhookDeliveryDoc = doc(schema, "webhookDeliveries");
+export const cmsSettingsDoc = doc(schema, "cmsSettings");
+
+// =============================================================================
+// Settings Validators
+// =============================================================================
+
+export const featureFlagsValidator = v.object({
+	versioning: v.boolean(),
+	scheduling: v.boolean(),
+	localization: v.boolean(),
+	mediaManagement: v.boolean(),
+});
+
+export const updateCmsSettingsArgs = v.object({
+	defaultLocale: v.optional(v.string()),
+	availableLocales: v.optional(v.array(v.string())),
+	updatedBy: v.optional(v.string()),
+});
 
 export const mediaAssetReference = v.object({
 	entryId: v.id("contentEntries"),
@@ -947,4 +965,9 @@ export type CleanupEventsArgs = Infer<typeof cleanupEventsArgs>;
 
 // Media asset reference
 export type MediaAssetReference = Infer<typeof mediaAssetReference>;
+
+// Settings
+export type CmsSettingsDoc = Infer<typeof cmsSettingsDoc>;
+export type FeatureFlags = Infer<typeof featureFlagsValidator>;
+export type UpdateCmsSettingsArgs = Infer<typeof updateCmsSettingsArgs>;
 

@@ -597,6 +597,11 @@ const schema = defineSchema({
 		.index("by_status", ["status"])
 		.index("by_next_retry", ["status", "nextRetryAt"])
 		.index("by_webhook_and_status", ["webhookId", "status"]),
+	cmsSettings: defineTable({
+		defaultLocale: v.string(),
+		availableLocales: v.array(v.string()),
+		updatedBy: v.optional(v.string()),
+	}),
 });
 
 export default schema;
@@ -614,4 +619,5 @@ export const {
 	cmsEvents,
 	webhookConfigs,
 	webhookDeliveries,
+	cmsSettings,
 } = schema.tables;

@@ -34,8 +34,8 @@ export function MediaMoveModal({
   const [isMoving, setIsMoving] = useState(false)
   const [error, setError] = useState('')
 
-  const folderTree = useQuery(api.media.getFolderTree, {})
-  const moveAssets = useMutation(api.media.moveAssets)
+  const folderTree = useQuery(api.admin.getMediaFolderTree, {})
+  const moveAssets = useMutation(api.admin.moveMediaAssets)
 
   const sortedFolders = useMemo(() => {
     if (!folderTree) return []

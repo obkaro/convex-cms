@@ -27,6 +27,10 @@
       "types": "./dist/client/types.d.ts",
       "default": "./dist/client/types.js"
     },
+    "./config": {
+      "types": "./dist/client/config.d.ts",
+      "default": "./dist/client/config.js"
+    },
     "./react": {
       "types": "./dist/react/index.d.ts",
       "default": "./dist/react/index.js"
@@ -76,7 +80,11 @@
     "test:watch": "vitest --typecheck",
     "lint": "eslint src/",
     "typecheck": "tsc --noEmit",
-    "preversion": "npm run build:clean && npm run test && npm run lint && npm run typecheck",
+    "typecheck:all": "tsc --noEmit && cd example && npx tsc --noEmit",
+    "codegen": "npx convex codegen --component-dir ./src/component",
+    "codegen:all": "npm run codegen && npm run build:component && cd example && npx convex codegen && cd ../admin && npx convex codegen",
+    "verify": "npm run codegen:all && npm run typecheck:all && npm run lint && npm test",
+    "preversion": "npm run verify",
     "alpha": "npm version prerelease --preid=alpha && npm publish --tag alpha && git push --follow-tags",
     "release": "npm version patch && npm publish && git push --follow-tags"
   },

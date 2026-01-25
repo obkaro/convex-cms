@@ -444,13 +444,62 @@ See [Integration Patterns](./integration-patterns.md) for more detailed examples
 
 ---
 
-## Next Steps
+## Query Builder
 
-1. **[Add the Admin UI](./admin-ui-setup.md)** — Visual interface for content editors
-2. **[Code-First Schema](../api/code-first-schema.md)** — TypeScript-first with full type inference
-3. **[Set up authorization](./authorization.md)** — Add user roles and permissions
-4. **[Learn content modeling](./content-modeling.md)** — Define rich content types
+For complex queries, use the fluent query builder:
+
+```typescript
+// Published posts with filters
+const featured = await cms.contentEntries
+  .query()
+  .contentType("blog_post")
+  .published()
+  .where("featured", "eq", true)
+  .orderBy("_creationTime", "desc")
+  .limit(5)
+  .execute(ctx);
+
+// Pagination
+const page1 = await cms.contentEntries
+  .query()
+  .contentType("blog_post")
+  .published()
+  .limit(10)
+  .execute(ctx);
+
+if (!page1.isDone) {
+  const page2 = await cms.contentEntries
+    .query()
+    .contentType("blog_post")
+    .published()
+    .limit(10)
+    .cursor(page1.continueCursor)
+    .execute(ctx);
+}
+
+// First matching entry
+const latest = await cms.contentEntries
+  .query()
+  .contentType("blog_post")
+  .published()
+  .newestFirst()
+  .first(ctx);
+```
+
+See [Query Builder Guide](./query-builder.md) for the full API.
 
 ---
 
-Next: [Integration Patterns](./integration-patterns.md)
+## Next Steps
+
+1. **[Query Builder](./query-builder.md)** — Fluent API for complex queries
+2. **[Add the Admin UI](./admin-ui-setup.md)** — Visual interface for content editors
+3. **[Code-First Schema](../api/code-first-schema.md)** — TypeScript-first with full type inference
+4. **[Set up authorization](./authorization.md)** — Add user roles and permissions
+5. **[Learn content modeling](./content-modeling.md)** — Define rich content types
+6. **[Taxonomies](./taxonomies.md)** — Organize content with categories and tags
+7. **[Agent Tools](./agent-tools.md)** — Integrate with AI agents
+
+---
+
+Next: [Query Builder](./query-builder.md)

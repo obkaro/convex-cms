@@ -121,6 +121,11 @@ export {
   getResourceEventsArgs,
   markEventsProcessedArgs,
   cleanupEventsArgs,
+
+  // Settings validators
+  cmsSettingsDoc,
+  featureFlagsValidator,
+  updateCmsSettingsArgs,
 } from "./validators.js";
 
 // Runtime validation functions
@@ -489,3 +494,10 @@ export {
   // Default configuration
   DEFAULT_INDEXER_CONFIG,
 } from "./ragContentIndexer.js";
+
+// Settings Types
+export type {
+  CmsSettingsDoc,
+  FeatureFlags,
+  UpdateCmsSettingsArgs,
+} from "./validators.js";

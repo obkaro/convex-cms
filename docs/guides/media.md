@@ -288,7 +288,7 @@ await cms.mediaAssets.update(ctx, {
 });
 ```
 
-### Add Tags
+### Add Tags (Simple)
 
 ```typescript
 await cms.mediaAssets.update(ctx, {
@@ -296,6 +296,30 @@ await cms.mediaAssets.update(ctx, {
   tags: ["blog", "featured", "2026"],
 });
 ```
+
+### Taxonomy-Based Tagging
+
+For more structured organization, use taxonomies:
+
+```typescript
+// Add a term to a media asset
+await cms.mediaAssetTags.addTerm(ctx, {
+  mediaId: assetId,
+  termId: landscapeCategoryId,
+});
+
+// Get all terms for a media asset
+const terms = await cms.mediaAssetTags.getByMedia(ctx, {
+  mediaId: assetId,
+});
+
+// Find media with a specific term
+const landscapeImages = await cms.mediaAssetTags.getMediaByTerm(ctx, {
+  termId: landscapeCategoryId,
+});
+```
+
+See [Taxonomies Guide](./taxonomies.md) for creating taxonomies and managing terms.
 
 ---
 
@@ -474,6 +498,7 @@ const folders = {
 ---
 
 See also:
+- [Taxonomies Guide](./taxonomies.md) — Organize media with categories and tags
 - [Client API Reference](../api/client-api.md)
 - [Content Modeling Guide](./content-modeling.md)
 

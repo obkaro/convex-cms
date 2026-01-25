@@ -27,10 +27,10 @@ export function BulkActionBar({
     errors?: string[]
   } | null>(null)
 
-  const bulkPublish = useMutation(api.bulkOperations.bulkPublish)
-  const bulkUnpublish = useMutation(api.bulkOperations.bulkUnpublish)
-  const bulkDelete = useMutation(api.bulkOperations.bulkDelete)
-  const bulkUpdate = useMutation(api.bulkOperations.bulkUpdate)
+  const bulkPublish = useMutation(api.admin.bulkPublish)
+  const bulkUnpublish = useMutation(api.admin.bulkUnpublish)
+  const bulkDelete = useMutation(api.admin.bulkDelete)
+  const bulkUpdate = useMutation(api.admin.bulkUpdate)
 
   const handleAction = useCallback((action: BulkAction) => {
     setActiveAction(action)

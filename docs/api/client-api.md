@@ -85,11 +85,16 @@ interface CmsClientConfig {
 The client organizes methods into namespaces:
 
 - `cms.contentTypes` - Content type operations
-- `cms.contentEntries` - Entry operations
+- `cms.contentEntries` - Entry operations (includes query builder)
 - `cms.versions` - Version history
 - `cms.mediaAssets` - Media files
 - `cms.mediaFolders` - Folder organization
 - `cms.mediaVariants` - Image variants
+- `cms.taxonomies` - Taxonomy definitions
+- `cms.taxonomyTerms` - Tags and categories
+- `cms.contentEntryTags` - Entry-term associations
+- `cms.mediaAssetTags` - Media-term associations
+- `cms.contentLock` - Content locking for concurrent editing
 - `cms.locale` - Locale configuration and resolution
 
 ---
@@ -318,6 +323,52 @@ const copy = await cms.contentEntries.duplicate(ctx, {
   slug?: string;                   // Custom slug for copy
 });
 ```
+
+### Query Builder
+
+The query builder provides a fluent API for complex queries. Access it via `cms.contentEntries.query()`:
+
+```typescript
+// Basic query
+const posts = await cms.contentEntries
+  .query()
+  .contentType("blog_post")
+  .published()
+  .limit(10)
+  .execute(ctx);
+
+// Complex query with filters
+const featured = await cms.contentEntries
+  .query()
+  .contentType("blog_post")
+  .published()
+  .where("category", "eq", "technology")
+  .where("featured", "eq", true)
+  .orderBy("_creationTime", "desc")
+  .limit(5)
+  .execute(ctx);
+
+// Pagination
+const page1 = await cms.contentEntries
+  .query()
+  .contentType("blog_post")
+  .limit(20)
+  .execute(ctx);
+
+const page2 = await cms.contentEntries
+  .query()
+  .contentType("blog_post")
+  .limit(20)
+  .cursor(page1.continueCursor)
+  .execute(ctx);
+
+// Terminal methods
+const first = await query.first(ctx);     // First result or null
+const exists = await query.exists(ctx);   // Boolean
+const all = await query.all(ctx);         // All results (paginated internally)
+```
+
+See [Query Builder Guide](../guides/query-builder.md) for the complete API.
 
 ### Bulk Operations
 
@@ -1045,6 +1096,10 @@ interface CodegenOptions {
 ---
 
 See also:
-- [Code-First Schema](./code-first-schema.md)
-- [Field Types Reference](./field-types.md)
-- [Configuration Reference](./configuration.md)
+- [Query Builder Guide](../guides/query-builder.md) — Fluent API for complex queries
+- [Taxonomies Guide](../guides/taxonomies.md) — Categories, tags, and organization
+- [Agent Tools Guide](../guides/agent-tools.md) — AI agent integration
+- [Content Locking Guide](../guides/content-locking.md) — Concurrent edit prevention
+- [Code-First Schema Reference](./code-first-schema.md) — TypeScript-first content types
+- [Field Types Reference](./field-types.md) — All 13 field types
+- [Configuration Reference](./configuration.md) — All config options

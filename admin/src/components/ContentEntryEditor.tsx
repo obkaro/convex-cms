@@ -188,14 +188,14 @@ export function ContentEntryEditor({
   const formDataRef = useRef(formData)
   formDataRef.current = formData
 
-  const createEntry = useMutation(api.entries.create)
-  const updateEntry = useMutation(api.entries.update)
-  const publishEntry = useMutation(api.entries.publish)
-  const unpublishEntry = useMutation(api.entries.unpublish)
-  const scheduleEntry = useMutation(api.entries.schedule)
-  const cancelScheduleEntry = useMutation(api.entries.cancelSchedule)
-  const deleteEntryMutation = useMutation(api.entries.remove)
-  const duplicateEntryMutation = useMutation(api.entries.duplicate)
+  const createEntry = useMutation(api.admin.createEntry)
+  const updateEntry = useMutation(api.admin.updateEntry)
+  const publishEntry = useMutation(api.admin.publishEntry)
+  const unpublishEntry = useMutation(api.admin.unpublishEntry)
+  const scheduleEntry = useMutation(api.admin.scheduleEntry)
+  const cancelScheduleEntry = useMutation(api.admin.cancelScheduledEntry)
+  const deleteEntryMutation = useMutation(api.admin.deleteEntry)
+  const duplicateEntryMutation = useMutation(api.admin.duplicateEntry)
 
   const [showScheduleModal, setShowScheduleModal] = useState(false)
   const [scheduleDateTime, setScheduleDateTime] = useState<string>(() => {

@@ -1,8 +1,8 @@
 /**
  * Admin API for CMS Admin UI
  *
- * This file exports namespaced Convex functions that the admin UI calls.
- * Each namespace becomes an API path (e.g., api.contentTypes.list).
+ * Uses the unified config pattern - all CMS settings are defined
+ * once in cms.config.ts and shared with the client API.
  *
  * Usage:
  * 1. Run your Convex dev server: `npx convex dev`
@@ -12,199 +12,191 @@
 
 import { defineAdminAPI } from "convex-cms";
 import { components } from "./_generated/api";
+import cmsConfig from "./cms.config";
 
-const adminApi = defineAdminAPI(components.convexCms, {
-	// No auth callback for demo - add one in production
-	// auth: async (ctx, operation) => {
-	//   const identity = await ctx.auth.getUserIdentity();
-	//   if (!identity) throw new Error("Not authenticated");
-	//   return identity.subject;
-	// },
-});
+const admin = defineAdminAPI(components.convexCms, cmsConfig);
 
 // =============================================================================
 // Dashboard
 // =============================================================================
 
-export const getDashboardStats = adminApi.getDashboardStats;
+export const getDashboardStats = admin.getDashboardStats;
 
 // =============================================================================
 // Content Types
 // =============================================================================
 
-export const listContentTypes = adminApi.listContentTypes;
-export const getContentType = adminApi.getContentType;
-export const createContentType = adminApi.createContentType;
-export const updateContentType = adminApi.updateContentType;
-export const deleteContentType = adminApi.deleteContentType;
+export const listContentTypes = admin.listContentTypes;
+export const getContentType = admin.getContentType;
+export const createContentType = admin.createContentType;
+export const updateContentType = admin.updateContentType;
+export const deleteContentType = admin.deleteContentType;
 
 // =============================================================================
 // Content Entries
 // =============================================================================
 
-export const listEntries = adminApi.listEntries;
-export const getEntry = adminApi.getEntry;
-export const createEntry = adminApi.createEntry;
-export const updateEntry = adminApi.updateEntry;
-export const publishEntry = adminApi.publishEntry;
-export const unpublishEntry = adminApi.unpublishEntry;
-export const deleteEntry = adminApi.deleteEntry;
-export const duplicateEntry = adminApi.duplicateEntry;
-export const scheduleEntry = adminApi.scheduleEntry;
-export const cancelScheduledEntry = adminApi.cancelScheduledEntry;
-export const getScheduledEntries = adminApi.getScheduledEntries;
-export const restoreEntry = adminApi.restoreEntry;
-export const getEntryBySlug = adminApi.getEntryBySlug;
-export const getEntryBySlugAndTypeName = adminApi.getEntryBySlugAndTypeName;
+export const listEntries = admin.listEntries;
+export const getEntry = admin.getEntry;
+export const createEntry = admin.createEntry;
+export const updateEntry = admin.updateEntry;
+export const publishEntry = admin.publishEntry;
+export const unpublishEntry = admin.unpublishEntry;
+export const deleteEntry = admin.deleteEntry;
+export const duplicateEntry = admin.duplicateEntry;
+export const scheduleEntry = admin.scheduleEntry;
+export const cancelScheduledEntry = admin.cancelScheduledEntry;
+export const getScheduledEntries = admin.getScheduledEntries;
+export const restoreEntry = admin.restoreEntry;
+export const getEntryBySlug = admin.getEntryBySlug;
+export const getEntryBySlugAndTypeName = admin.getEntryBySlugAndTypeName;
 
 // =============================================================================
 // Bulk Operations
 // =============================================================================
 
-export const bulkPublish = adminApi.bulkPublish;
-export const bulkUnpublish = adminApi.bulkUnpublish;
-export const bulkDelete = adminApi.bulkDelete;
-export const bulkUpdate = adminApi.bulkUpdate;
-export const bulkRestore = adminApi.bulkRestore;
+export const bulkPublish = admin.bulkPublish;
+export const bulkUnpublish = admin.bulkUnpublish;
+export const bulkDelete = admin.bulkDelete;
+export const bulkUpdate = admin.bulkUpdate;
+export const bulkRestore = admin.bulkRestore;
 
 // =============================================================================
 // Trash
 // =============================================================================
 
-export const getTrashConfig = adminApi.getTrashConfig;
-export const listTrash = adminApi.listTrash;
-export const getTrashStats = adminApi.getTrashStats;
-export const updateTrashConfig = adminApi.updateTrashConfig;
-export const emptyTrash = adminApi.emptyTrash;
-export const runTrashCleanup = adminApi.runTrashCleanup;
+export const getTrashConfig = admin.getTrashConfig;
+export const listTrash = admin.listTrash;
+export const getTrashStats = admin.getTrashStats;
+export const updateTrashConfig = admin.updateTrashConfig;
+export const emptyTrash = admin.emptyTrash;
+export const runTrashCleanup = admin.runTrashCleanup;
 
 // =============================================================================
 // Content Lock
 // =============================================================================
 
-export const checkContentLock = adminApi.checkContentLock;
-export const listLockedContent = adminApi.listLockedContent;
-export const acquireContentLock = adminApi.acquireContentLock;
-export const releaseContentLock = adminApi.releaseContentLock;
-export const renewContentLock = adminApi.renewContentLock;
-export const forceReleaseContentLock = adminApi.forceReleaseContentLock;
+export const checkContentLock = admin.checkContentLock;
+export const listLockedContent = admin.listLockedContent;
+export const acquireContentLock = admin.acquireContentLock;
+export const releaseContentLock = admin.releaseContentLock;
+export const renewContentLock = admin.renewContentLock;
+export const forceReleaseContentLock = admin.forceReleaseContentLock;
 
 // =============================================================================
 // Versions
 // =============================================================================
 
-export const getVersionHistory = adminApi.getVersionHistory;
-export const getVersion = adminApi.getVersion;
-export const compareVersions = adminApi.compareVersions;
-export const rollbackVersion = adminApi.rollbackVersion;
+export const getVersionHistory = admin.getVersionHistory;
+export const getVersion = admin.getVersion;
+export const compareVersions = admin.compareVersions;
+export const rollbackVersion = admin.rollbackVersion;
 
 // =============================================================================
 // Media Assets
 // =============================================================================
 
-export const listMediaAssets = adminApi.listMediaAssets;
-export const getMediaAsset = adminApi.getMediaAsset;
-export const createMediaAsset = adminApi.createMediaAsset;
-export const updateMediaAsset = adminApi.updateMediaAsset;
-export const deleteMediaAsset = adminApi.deleteMediaAsset;
-export const restoreMediaAsset = adminApi.restoreMediaAsset;
-export const permanentDeleteMediaAsset = adminApi.permanentDeleteMediaAsset;
+export const listMediaAssets = admin.listMediaAssets;
+export const getMediaAsset = admin.getMediaAsset;
+export const createMediaAsset = admin.createMediaAsset;
+export const updateMediaAsset = admin.updateMediaAsset;
+export const deleteMediaAsset = admin.deleteMediaAsset;
+export const restoreMediaAsset = admin.restoreMediaAsset;
+export const permanentDeleteMediaAsset = admin.permanentDeleteMediaAsset;
 export const bulkPermanentDeleteMediaAssets =
-	adminApi.bulkPermanentDeleteMediaAssets;
-export const moveMediaAssets = adminApi.moveMediaAssets;
-export const getMediaTrashCount = adminApi.getMediaTrashCount;
+	admin.bulkPermanentDeleteMediaAssets;
+export const moveMediaAssets = admin.moveMediaAssets;
+export const getMediaTrashCount = admin.getMediaTrashCount;
 
 // =============================================================================
 // Media Folders
 // =============================================================================
 
-export const listMediaFolders = adminApi.listMediaFolders;
-export const getMediaFolder = adminApi.getMediaFolder;
-export const getMediaFolderTree = adminApi.getMediaFolderTree;
-export const createMediaFolder = adminApi.createMediaFolder;
-export const updateMediaFolder = adminApi.updateMediaFolder;
-export const moveMediaFolder = adminApi.moveMediaFolder;
-export const deleteMediaFolder = adminApi.deleteMediaFolder;
-export const restoreMediaFolder = adminApi.restoreMediaFolder;
+export const listMediaFolders = admin.listMediaFolders;
+export const getMediaFolder = admin.getMediaFolder;
+export const getMediaFolderTree = admin.getMediaFolderTree;
+export const createMediaFolder = admin.createMediaFolder;
+export const updateMediaFolder = admin.updateMediaFolder;
+export const moveMediaFolder = admin.moveMediaFolder;
+export const deleteMediaFolder = admin.deleteMediaFolder;
+export const restoreMediaFolder = admin.restoreMediaFolder;
 
 // =============================================================================
 // Media Variants
 // =============================================================================
 
-export const listMediaVariants = adminApi.listMediaVariants;
-export const getMediaVariant = adminApi.getMediaVariant;
-export const getBestMediaVariant = adminApi.getBestMediaVariant;
-export const getMediaResponsiveSrcset = adminApi.getMediaResponsiveSrcset;
-export const getMediaVariantPresets = adminApi.getMediaVariantPresets;
-export const getMediaAssetWithVariants = adminApi.getMediaAssetWithVariants;
-export const createMediaVariant = adminApi.createMediaVariant;
+export const listMediaVariants = admin.listMediaVariants;
+export const getMediaVariant = admin.getMediaVariant;
+export const getBestMediaVariant = admin.getBestMediaVariant;
+export const getMediaResponsiveSrcset = admin.getMediaResponsiveSrcset;
+export const getMediaVariantPresets = admin.getMediaVariantPresets;
+export const getMediaAssetWithVariants = admin.getMediaAssetWithVariants;
+export const createMediaVariant = admin.createMediaVariant;
 export const requestMediaVariantGeneration =
-	adminApi.requestMediaVariantGeneration;
-export const deleteMediaVariant = adminApi.deleteMediaVariant;
-export const deleteMediaAssetVariants = adminApi.deleteMediaAssetVariants;
+	admin.requestMediaVariantGeneration;
+export const deleteMediaVariant = admin.deleteMediaVariant;
+export const deleteMediaAssetVariants = admin.deleteMediaAssetVariants;
 export const generateMediaVariantsFromPresets =
-	adminApi.generateMediaVariantsFromPresets;
-export const restoreMediaVariant = adminApi.restoreMediaVariant;
+	admin.generateMediaVariantsFromPresets;
+export const restoreMediaVariant = admin.restoreMediaVariant;
 
 // =============================================================================
 // Upload
 // =============================================================================
 
-export const generateUploadUrl = adminApi.generateUploadUrl;
+export const generateUploadUrl = admin.generateUploadUrl;
 
 // =============================================================================
 // Taxonomies
 // =============================================================================
 
-export const getTaxonomy = adminApi.getTaxonomy;
-export const listTaxonomies = adminApi.listTaxonomies;
-export const createTaxonomy = adminApi.createTaxonomy;
-export const updateTaxonomy = adminApi.updateTaxonomy;
-export const deleteTaxonomy = adminApi.deleteTaxonomy;
-export const restoreTaxonomy = adminApi.restoreTaxonomy;
+export const getTaxonomy = admin.getTaxonomy;
+export const listTaxonomies = admin.listTaxonomies;
+export const createTaxonomy = admin.createTaxonomy;
+export const updateTaxonomy = admin.updateTaxonomy;
+export const deleteTaxonomy = admin.deleteTaxonomy;
+export const restoreTaxonomy = admin.restoreTaxonomy;
 
 // =============================================================================
 // Terms
 // =============================================================================
 
-export const getTerm = adminApi.getTerm;
-export const listTerms = adminApi.listTerms;
-export const getTermsHierarchy = adminApi.getTermsHierarchy;
-export const suggestTerms = adminApi.suggestTerms;
-export const countTerms = adminApi.countTerms;
-export const createTerm = adminApi.createTerm;
-export const updateTerm = adminApi.updateTerm;
-export const deleteTerm = adminApi.deleteTerm;
-export const restoreTerm = adminApi.restoreTerm;
+export const getTerm = admin.getTerm;
+export const listTerms = admin.listTerms;
+export const getTermsHierarchy = admin.getTermsHierarchy;
+export const suggestTerms = admin.suggestTerms;
+export const countTerms = admin.countTerms;
+export const createTerm = admin.createTerm;
+export const updateTerm = admin.updateTerm;
+export const deleteTerm = admin.deleteTerm;
+export const restoreTerm = admin.restoreTerm;
 
 // =============================================================================
 // Entry-Term Relations
 // =============================================================================
 
-export const getTermsByEntry = adminApi.getTermsByEntry;
-export const getEntriesByTerm = adminApi.getEntriesByTerm;
-export const setEntryTerms = adminApi.setEntryTerms;
-export const addTermToEntry = adminApi.addTermToEntry;
-export const removeTermFromEntry = adminApi.removeTermFromEntry;
-export const createTermAndAddToEntry = adminApi.createTermAndAddToEntry;
+export const getTermsByEntry = admin.getTermsByEntry;
+export const getEntriesByTerm = admin.getEntriesByTerm;
+export const setEntryTerms = admin.setEntryTerms;
+export const addTermToEntry = admin.addTermToEntry;
+export const removeTermFromEntry = admin.removeTermFromEntry;
+export const createTermAndAddToEntry = admin.createTermAndAddToEntry;
 
 // =============================================================================
 // Media-Term Relations
 // =============================================================================
 
-export const getTermsByMedia = adminApi.getTermsByMedia;
-export const getMediaByTerm = adminApi.getMediaByTerm;
-export const setMediaTerms = adminApi.setMediaTerms;
-export const addTermToMedia = adminApi.addTermToMedia;
-export const removeTermFromMedia = adminApi.removeTermFromMedia;
-export const createTermAndAddToMedia = adminApi.createTermAndAddToMedia;
+export const getTermsByMedia = admin.getTermsByMedia;
+export const getMediaByTerm = admin.getMediaByTerm;
+export const setMediaTerms = admin.setMediaTerms;
+export const addTermToMedia = admin.addTermToMedia;
+export const removeTermFromMedia = admin.removeTermFromMedia;
+export const createTermAndAddToMedia = admin.createTermAndAddToMedia;
 
 // =============================================================================
-// Settings (uses local database, not component)
+// Settings
 // =============================================================================
 
-export {
-	get as getSettings,
-	update as updateSettings,
-	reset as resetSettings,
-} from "./settings";
+export const getSettings = admin.getSettings;
+export const updateSettings = admin.updateSettings;
+export const resetSettings = admin.resetSettings;

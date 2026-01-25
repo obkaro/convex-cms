@@ -15,7 +15,6 @@ import type * as example from "../example.js";
 import type * as http from "../http.js";
 import type * as schemas from "../schemas.js";
 import type * as seed from "../seed.js";
-import type * as settings from "../settings.js";
 import type * as setup from "../setup.js";
 
 import type {
@@ -32,7 +31,6 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   schemas: typeof schemas;
   seed: typeof seed;
-  settings: typeof settings;
   setup: typeof setup;
 }>;
 
@@ -4118,6 +4116,61 @@ export declare const components: {
           status: string;
           updatedBy?: string;
           version: number;
+        }
+      >;
+    };
+    settings: {
+      getSettings: FunctionReference<
+        "query",
+        "internal",
+        {
+          features?: {
+            localization: boolean;
+            mediaManagement: boolean;
+            scheduling: boolean;
+            versioning: boolean;
+          };
+        },
+        {
+          _creationTime?: number;
+          _id: string | null;
+          availableLocales: Array<string>;
+          defaultLocale: string;
+          features: {
+            localization: boolean;
+            mediaManagement: boolean;
+            scheduling: boolean;
+            versioning: boolean;
+          };
+          updatedBy?: string;
+        }
+      >;
+      resetSettings: FunctionReference<
+        "mutation",
+        "internal",
+        { updatedBy?: string },
+        {
+          _creationTime: number;
+          _id: string;
+          availableLocales: Array<string>;
+          defaultLocale: string;
+          updatedBy?: string;
+        }
+      >;
+      updateSettings: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          availableLocales?: Array<string>;
+          defaultLocale?: string;
+          updatedBy?: string;
+        },
+        {
+          _creationTime: number;
+          _id: string;
+          availableLocales: Array<string>;
+          defaultLocale: string;
+          updatedBy?: string;
         }
       >;
     };

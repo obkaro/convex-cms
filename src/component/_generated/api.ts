@@ -46,6 +46,7 @@ import type * as ragContentIndexer from "../ragContentIndexer.js";
 import type * as rateLimitHooks from "../rateLimitHooks.js";
 import type * as roles from "../roles.js";
 import type * as scheduledPublish from "../scheduledPublish.js";
+import type * as settings from "../settings.js";
 import type * as taxonomies from "../taxonomies.js";
 import type * as taxonomyMutations from "../taxonomyMutations.js";
 import type * as trash from "../trash.js";
@@ -101,6 +102,7 @@ const fullApi: ApiFromModules<{
   rateLimitHooks: typeof rateLimitHooks;
   roles: typeof roles;
   scheduledPublish: typeof scheduledPublish;
+  settings: typeof settings;
   taxonomies: typeof taxonomies;
   taxonomyMutations: typeof taxonomyMutations;
   trash: typeof trash;

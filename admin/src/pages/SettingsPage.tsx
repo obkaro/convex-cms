@@ -5,11 +5,11 @@
  * Used by both CLI routes and embed pages.
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { RouteGuard } from "~/components";
 import { usePermissions } from "~/hooks";
-import { useSettingsConfig, useTheme } from "~/contexts";
+import { useAdminConfig, useTheme } from "~/contexts";
 import { CmsPageHeader } from "~/components/cmsds/CmsPageHeader";
 import { CmsSurface } from "~/components/cmsds/CmsSurface";
 import { CmsButton } from "~/components/cmsds/CmsButton";
@@ -25,23 +25,39 @@ import { Label } from "~/components/ui/label";
 import { Badge } from "~/components/ui/badge";
 import { Alert, AlertDescription } from "~/components/ui/alert";
 import { cn } from "~/lib/cn";
-import { AlertTriangle, Check, X, Sun, Moon, Monitor } from "lucide-react";
+import { AlertTriangle, Check, X, Sun, Moon, Monitor, Lock, Info } from "lucide-react";
 import type { AdminNavigation } from "~/lib/navigation";
 import { CmsAdminApi } from "~/embed/contexts/ApiContext";
+
+interface FeatureFlags {
+	versioning: boolean;
+	scheduling: boolean;
+	localization: boolean;
+	mediaManagement: boolean;
+}
 
 interface Settings {
 	_id: string | null;
 	defaultLocale: string;
 	availableLocales: string[];
-	features: {
-		versioning: boolean;
-		scheduling: boolean;
-		localization: boolean;
-		mediaManagement: boolean;
-	};
+	features: FeatureFlags;
 	updatedBy?: string;
 	_creationTime?: number;
 }
+
+const DEFAULT_FEATURES: FeatureFlags = {
+	versioning: true,
+	scheduling: true,
+	localization: false,
+	mediaManagement: true,
+};
+
+const DEFAULT_SETTINGS: Settings = {
+	_id: null,
+	defaultLocale: "en",
+	availableLocales: ["en", "es", "fr", "de"],
+	features: DEFAULT_FEATURES,
+};
 
 const LOCALE_OPTIONS = [
 	{ value: "en", label: "English (en)" },
@@ -116,28 +132,55 @@ export function SettingsPage({
 }: SettingsPageProps) {
 	const { canManageSettings } = usePermissions();
 	const canEdit = canManageSettings();
-	const { baseConfig } = useSettingsConfig();
+	const adminConfig = useAdminConfig();
 
-	const settings = useQuery(api.getSettings, {});
-	const updateSettings = useMutation(api.updateSettings);
-	const resetSettings = useMutation(api.resetSettings);
+	const isConfigured = useMemo(() => {
+		return typeof api.getSettings === "function";
+	}, [api]);
+
+	const settings = useQuery(
+		isConfigured ? api.getSettings : ("skip" as unknown as typeof api.getSettings),
+		isConfigured ? {} : "skip"
+	);
+
+	const updateSettingsMutation = useMutation(
+		api.updateSettings ?? ((() => {}) as unknown as typeof api.updateSettings)
+	);
+	const resetSettingsMutation = useMutation(
+		api.resetSettings ?? ((() => {}) as unknown as typeof api.resetSettings)
+	);
 
 	const [formData, setFormData] = useState<Settings | null>(null);
 	const [isDirty, setIsDirty] = useState(false);
 	const [feedbackStatus, setFeedbackStatus] = useState<FeedbackStatus>("idle");
 	const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-	useEffect(() => {
-		if (settings && !formData) {
-			setFormData(settings as Settings);
-		}
-	}, [settings, formData]);
+	const normalizedSettings = useMemo((): Settings | null => {
+		if (!settings) return null;
+		return {
+			_id: settings._id ?? null,
+			defaultLocale: settings.defaultLocale ?? DEFAULT_SETTINGS.defaultLocale,
+			availableLocales: settings.availableLocales ?? DEFAULT_SETTINGS.availableLocales,
+			features: {
+				...DEFAULT_FEATURES,
+				...(settings.features ?? {}),
+			},
+			updatedBy: settings.updatedBy,
+			_creationTime: settings._creationTime,
+		};
+	}, [settings]);
 
 	useEffect(() => {
-		if (settings && !isDirty) {
-			setFormData(settings as Settings);
+		if (normalizedSettings && !formData) {
+			setFormData(normalizedSettings);
 		}
-	}, [settings, isDirty]);
+	}, [normalizedSettings, formData]);
+
+	useEffect(() => {
+		if (normalizedSettings && !isDirty) {
+			setFormData(normalizedSettings);
+		}
+	}, [normalizedSettings, isDirty]);
 
 	const handleLocaleChange = useCallback(
 		(value: string) => {
@@ -153,33 +196,15 @@ export function SettingsPage({
 		[formData],
 	);
 
-	const handleFeatureChange = useCallback(
-		(feature: keyof Settings["features"]) => {
-			if (!formData) return;
-
-			setFormData({
-				...formData,
-				features: {
-					...formData.features,
-					[feature]: !formData.features[feature],
-				},
-			});
-			setIsDirty(true);
-			setFeedbackStatus("idle");
-		},
-		[formData],
-	);
-
 	const handleSave = useCallback(async () => {
-		if (!formData || !isDirty) return;
+		if (!formData || !isDirty || !isConfigured || !api.updateSettings) return;
 
 		setFeedbackStatus("saving");
 		setErrorMessage(null);
 
 		try {
-			await updateSettings({
+			await updateSettingsMutation({
 				defaultLocale: formData.defaultLocale,
-				features: formData.features,
 			});
 
 			setFeedbackStatus("saved");
@@ -194,9 +219,11 @@ export function SettingsPage({
 				error instanceof Error ? error.message : "Failed to save settings",
 			);
 		}
-	}, [formData, isDirty, updateSettings]);
+	}, [formData, isDirty, isConfigured, api.updateSettings, updateSettingsMutation]);
 
 	const handleReset = useCallback(async () => {
+		if (!isConfigured || !api.resetSettings) return;
+
 		const confirmed = window.confirm(
 			"Are you sure you want to reset all settings to their defaults? This action cannot be undone.",
 		);
@@ -207,8 +234,17 @@ export function SettingsPage({
 		setErrorMessage(null);
 
 		try {
-			const newSettings = await resetSettings({});
-			setFormData(newSettings as Settings);
+			const newSettings = await resetSettingsMutation({});
+			setFormData({
+				...DEFAULT_SETTINGS,
+				_id: (newSettings as Settings)?._id ?? null,
+				defaultLocale: (newSettings as Settings)?.defaultLocale ?? DEFAULT_SETTINGS.defaultLocale,
+				availableLocales: (newSettings as Settings)?.availableLocales ?? DEFAULT_SETTINGS.availableLocales,
+				features: {
+					...DEFAULT_FEATURES,
+					...((newSettings as Settings)?.features ?? {}),
+				},
+			});
 			setFeedbackStatus("saved");
 			setIsDirty(false);
 
@@ -221,16 +257,81 @@ export function SettingsPage({
 				error instanceof Error ? error.message : "Failed to reset settings",
 			);
 		}
-	}, [resetSettings]);
+	}, [isConfigured, api.resetSettings, resetSettingsMutation]);
 
 	const handleDiscard = useCallback(() => {
-		if (settings) {
-			setFormData(settings as Settings);
+		if (normalizedSettings) {
+			setFormData(normalizedSettings);
 			setIsDirty(false);
 			setFeedbackStatus("idle");
 			setErrorMessage(null);
 		}
-	}, [settings]);
+	}, [normalizedSettings]);
+
+	if (!isConfigured) {
+		return (
+			<RouteGuard
+				requiredPermission={{ resource: "settings", action: "manage" }}
+			>
+				<div className="space-y-6 p-6">
+					<CmsPageHeader
+						title="Settings"
+						description="Configure your CMS settings and preferences."
+					/>
+
+					<div className="space-y-6">
+						<AppearanceSection />
+
+						<Alert>
+							<Info className="size-4" />
+							<AlertDescription>
+								<strong>Settings not configured.</strong> To enable CMS settings, export{" "}
+								<code className="rounded bg-muted px-1 py-0.5 text-xs">getSettings</code>,{" "}
+								<code className="rounded bg-muted px-1 py-0.5 text-xs">updateSettings</code>, and{" "}
+								<code className="rounded bg-muted px-1 py-0.5 text-xs">resetSettings</code> from your{" "}
+								<code className="rounded bg-muted px-1 py-0.5 text-xs">convex/admin.ts</code> file.
+							</AlertDescription>
+						</Alert>
+
+						<CmsSurface elevation="base" className="p-6">
+							<div className="mb-4 flex items-center gap-2">
+								<h2 className="text-lg font-semibold text-foreground">Features</h2>
+								<Badge variant="secondary" className="gap-1">
+									<Lock className="size-3" />
+									Default values
+								</Badge>
+							</div>
+							<p className="mb-4 text-sm text-muted-foreground">
+								Showing default feature flags. Configure settings in your admin API to customize.
+							</p>
+							<div className="space-y-4">
+								{(["versioning", "scheduling", "localization", "mediaManagement"] as const).map((feature) => (
+									<div key={feature} className="flex items-center justify-between opacity-75">
+										<div>
+											<Label className="text-sm font-medium capitalize">{feature}</Label>
+										</div>
+										<Switch checked={DEFAULT_FEATURES[feature]} disabled={true} />
+									</div>
+								))}
+							</div>
+						</CmsSurface>
+
+						<CmsSurface elevation="base" className="p-6">
+							<h2 className="mb-4 text-lg font-semibold text-foreground">API</h2>
+							<div className="space-y-4">
+								<div>
+									<Label className="text-sm font-medium">Convex Deployment URL</Label>
+									<code className="mt-1 block rounded-md bg-muted px-3 py-2 text-sm">
+										{import.meta.env.VITE_CONVEX_URL || "Not configured"}
+									</code>
+								</div>
+							</div>
+						</CmsSurface>
+					</div>
+				</div>
+			</RouteGuard>
+		);
+	}
 
 	if (settings === undefined) {
 		return (
@@ -253,26 +354,8 @@ export function SettingsPage({
 		);
 	}
 
-	if (settings === null && !formData) {
-		return (
-			<RouteGuard
-				requiredPermission={{ resource: "settings", action: "manage" }}
-			>
-				<div className="space-y-6 p-6">
-					<CmsPageHeader
-						title="Settings"
-						description="Configure your CMS settings and preferences."
-					/>
-					<Alert variant="destructive">
-						<AlertTriangle className="size-4" />
-						<AlertDescription>
-							Failed to load settings. Please try refreshing the page.
-						</AlertDescription>
-					</Alert>
-				</div>
-			</RouteGuard>
-		);
-	}
+	const displayData = formData ?? normalizedSettings ?? DEFAULT_SETTINGS;
+	const features = displayData.features ?? DEFAULT_FEATURES;
 
 	return (
 		<RouteGuard requiredPermission={{ resource: "settings", action: "manage" }}>
@@ -283,7 +366,7 @@ export function SettingsPage({
 						description="Configure your CMS settings and preferences."
 					/>
 
-					{canEdit && (
+					{canEdit && api.updateSettings && (
 						<div className="flex items-center gap-3">
 							{feedbackStatus === "saved" && (
 								<Badge
@@ -325,7 +408,7 @@ export function SettingsPage({
 				<div className="space-y-6">
 					<AppearanceSection />
 
-					{formData?.features.localization && (
+					{features.localization && (
 						<CmsSurface elevation="base" className="p-6">
 							<h2 className="mb-4 text-lg font-semibold text-foreground">
 								General
@@ -341,9 +424,9 @@ export function SettingsPage({
 										</p>
 									</div>
 									<Select
-										value={formData?.defaultLocale || "en"}
+										value={displayData.defaultLocale}
 										onValueChange={handleLocaleChange}
-										disabled={!canEdit || feedbackStatus === "saving"}
+										disabled={!canEdit || feedbackStatus === "saving" || !api.updateSettings}
 									>
 										<SelectTrigger className="w-48">
 											<SelectValue />
@@ -362,76 +445,56 @@ export function SettingsPage({
 					)}
 
 					<CmsSurface elevation="base" className="p-6">
-						<h2 className="mb-4 text-lg font-semibold text-foreground">
-							Features
-						</h2>
+						<div className="mb-4 flex items-center gap-2">
+							<h2 className="text-lg font-semibold text-foreground">Features</h2>
+							<Badge variant="secondary" className="gap-1">
+								<Lock className="size-3" />
+								Configured in code
+							</Badge>
+						</div>
+						<p className="mb-4 text-sm text-muted-foreground">
+							Feature flags are defined in your Convex configuration and cannot be changed from the UI.
+						</p>
 						<div className="space-y-4">
-							<div className="flex items-center justify-between">
+							<div className="flex items-center justify-between opacity-75">
 								<div>
-									<Label className="text-sm font-medium">
-										Enable Versioning
-									</Label>
+									<Label className="text-sm font-medium">Versioning</Label>
 									<p className="text-sm text-muted-foreground">
-										Track content history and enable rollback to previous
-										versions
+										Track content history and enable rollback to previous versions
 									</p>
 								</div>
-								<Switch
-									checked={formData?.features.versioning ?? true}
-									onCheckedChange={() => handleFeatureChange("versioning")}
-									disabled={!canEdit || feedbackStatus === "saving"}
-								/>
+								<Switch checked={features.versioning} disabled={true} />
 							</div>
 
-							<div className="flex items-center justify-between">
+							<div className="flex items-center justify-between opacity-75">
 								<div>
-									<Label className="text-sm font-medium">
-										Enable Scheduling
-									</Label>
+									<Label className="text-sm font-medium">Scheduling</Label>
 									<p className="text-sm text-muted-foreground">
 										Schedule content to publish at a future date and time
 									</p>
 								</div>
-								<Switch
-									checked={formData?.features.scheduling ?? true}
-									onCheckedChange={() => handleFeatureChange("scheduling")}
-									disabled={!canEdit || feedbackStatus === "saving"}
-								/>
+								<Switch checked={features.scheduling} disabled={true} />
 							</div>
 
-							<div className="flex items-center justify-between">
+							<div className="flex items-center justify-between opacity-75">
 								<div>
-									<Label className="text-sm font-medium">
-										Enable Localization
-									</Label>
+									<Label className="text-sm font-medium">Localization</Label>
 									<p className="text-sm text-muted-foreground">
 										Support multiple languages for content entries
 									</p>
 								</div>
-								<Switch
-									checked={formData?.features.localization ?? false}
-									onCheckedChange={() => handleFeatureChange("localization")}
-									disabled={!canEdit || feedbackStatus === "saving"}
-								/>
+								<Switch checked={features.localization} disabled={true} />
 							</div>
 
-							{baseConfig.navigation.showMedia && (
-								<div className="flex items-center justify-between">
+							{adminConfig.navigation.showMedia && (
+								<div className="flex items-center justify-between opacity-75">
 									<div>
-										<Label className="text-sm font-medium">
-											Enable Media Management
-										</Label>
+										<Label className="text-sm font-medium">Media Management</Label>
 										<p className="text-sm text-muted-foreground">
 											Use the built-in media library for image and file uploads
 										</p>
 									</div>
-									<Switch
-										checked={formData?.features.mediaManagement ?? true}
-										onCheckedChange={() =>
-											handleFeatureChange("mediaManagement")
-										}
-										disabled={!canEdit || feedbackStatus === "saving"}
-									/>
+									<Switch checked={features.mediaManagement} disabled={true} />
 								</div>
 							)}
 						</div>
@@ -451,7 +514,7 @@ export function SettingsPage({
 						</div>
 					</CmsSurface>
 
-					{canEdit && (
+					{canEdit && api.resetSettings && (
 						<CmsSurface
 							elevation="base"
 							className="border-red-200 p-6 dark:border-red-900"

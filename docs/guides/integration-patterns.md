@@ -7,19 +7,23 @@ This guide covers common ways to integrate Convex CMS into your application.
 ## Decision Tree
 
 ```
-Do you need a visual content editor?
+Will AI agents manage content?
 │
-├── Yes
-│   │
-│   └── Do you have your own React app with auth?
-│       │
-│       ├── Yes → Pattern 3: Admin UI + Custom Functions (most common)
-│       │
-│       └── No → Pattern 1: Admin UI Only
+├── Yes → Pattern 5: Agent Integration (with optional Admin UI)
 │
 └── No
     │
-    └── Pattern 2: Custom Functions Only
+    └── Do you need a visual content editor?
+        │
+        ├── Yes
+        │   │
+        │   └── Do you have your own React app with auth?
+        │       │
+        │       ├── Yes → Pattern 3: Admin UI + Custom Functions (most common)
+        │       │
+        │       └── No → Pattern 1: Admin UI Only
+        │
+        └── No → Pattern 2: Custom Functions Only
 ```
 
 ---
@@ -290,6 +294,97 @@ export const cms = createCmsClient(components.convexCms, {
 
 ---
 
+## Pattern 5: Agent Integration
+
+**Use when:** AI agents creating/managing content, automated content workflows
+
+**Setup:**
+- `createCmsTools` for pre-built agent tools
+- Use with `@convex-dev/agent` or custom agent frameworks
+- Optional Admin UI for human oversight
+
+### Example
+
+```typescript
+// convex/agentTools.ts
+import { createCmsTools } from "convex-cms";
+import { components } from "./_generated/api";
+
+export const cmsTools = createCmsTools(components.convexCms, {
+  defaultUserId: "content-agent",
+});
+```
+
+```typescript
+// convex/contentAgent.ts
+import { Agent } from "@convex-dev/agent";
+import { components } from "./_generated/api";
+import { cmsTools } from "./agentTools";
+
+export const contentAgent = new Agent(components.agent, {
+  name: "Content Manager",
+  languageModel: openai.chat("gpt-4o"),
+  tools: cmsTools,
+  systemPrompt: `You are a content management assistant. You can:
+- Create, update, and publish content entries
+- Organize content with tags and categories
+- Search for existing content
+- Perform bulk operations on content`,
+});
+```
+
+```typescript
+// convex/chat.ts - Use agent in a conversation
+import { mutation } from "./_generated/server";
+import { contentAgent } from "./contentAgent";
+
+export const chat = mutation({
+  args: { message: v.string() },
+  handler: async (ctx, { message }) => {
+    const result = await contentAgent.run(ctx, {
+      messages: [{ role: "user", content: message }],
+    });
+    return result;
+  },
+});
+```
+
+### Selective Tool Access
+
+Give agents only the tools they need:
+
+```typescript
+// Read-only research agent
+const { listContentEntries, searchContent, getContentEntry } =
+  createCmsTools(components.convexCms);
+
+const researchAgent = new Agent(components.agent, {
+  name: "Content Researcher",
+  tools: { listContentEntries, searchContent, getContentEntry },
+});
+
+// Publishing workflow agent
+const { publishEntry, unpublishEntry, scheduleEntry, bulkPublish } =
+  createCmsTools(components.convexCms);
+
+const publishingAgent = new Agent(components.agent, {
+  name: "Publishing Workflow",
+  tools: { publishEntry, unpublishEntry, scheduleEntry, bulkPublish },
+});
+```
+
+### When to use
+
+- AI-generated content at scale
+- Automated content workflows
+- Chat interfaces for content management
+- Content migration and bulk operations
+- Agents that assist human editors
+
+See [Agent Tools Guide](./agent-tools.md) for full documentation.
+
+---
+
 ## Comparison Table
 
 | Pattern | Admin UI | Custom Functions | Complexity | Use Case |
@@ -298,6 +393,7 @@ export const cms = createCmsClient(components.convexCms, {
 | **2. Custom Only** | ✗ | ✓ | Low | APIs, scripts |
 | **3. Both** | ✓ | ✓ | Medium | Most apps |
 | **4. Multi-Tenant** | ✓/✗ | ✓ | High | SaaS platforms |
+| **5. Agent Integration** | Optional | ✓ | Medium | AI-driven content |
 
 ---
 
@@ -340,5 +436,7 @@ Run `npx convex-cms admin` to access the Admin UI.
 
 - [Admin UI Setup](./admin-ui-setup.md) — CLI and embed modes
 - [Getting Started](./getting-started.md) — `createCmsClient` usage
+- [Agent Tools](./agent-tools.md) — AI agent integration with Zod schemas
+- [Query Builder](./query-builder.md) — Fluent API for complex queries
 - [Code-First Schema](../api/code-first-schema.md) — TypeScript-first content types with full type inference
 - [Authorization](./authorization.md) — RBAC and custom roles

@@ -42,10 +42,10 @@ export function TermTree({
   const [error, setError] = useState<string | null>(null)
 
   const termsQuery = isHierarchical
-    ? useQuery(api.taxonomies.getTermsHierarchy, { taxonomyId })
-    : useQuery(api.taxonomies.listTerms, { taxonomyId })
+    ? useQuery(api.admin.getTermsHierarchy, { taxonomyId })
+    : useQuery(api.admin.listTerms, { taxonomyId })
 
-  const deleteTerm = useMutation(api.taxonomies.deleteTerm)
+  const deleteTerm = useMutation(api.admin.deleteTerm)
 
   const terms = (
     isHierarchical ? termsQuery : (termsQuery as { page?: Term[] })?.page
@@ -304,8 +304,8 @@ function TermEditModal({
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(false)
 
-  const createTerm = useMutation(api.taxonomies.createTerm)
-  const updateTerm = useMutation(api.taxonomies.updateTerm)
+  const createTerm = useMutation(api.admin.createTerm)
+  const updateTerm = useMutation(api.admin.updateTerm)
 
   const handleChange = useCallback(
     (field: keyof typeof formData, value: string | number) => {

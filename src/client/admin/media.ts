@@ -11,6 +11,7 @@ import type { ComponentApi } from "../../component/_generated/component.js";
 import type { AuthContext, AdminOperation } from "./types.js";
 import {
   adminMediaItemDoc,
+  adminMediaItemWithUrlDoc,
   adminDeleteMediaAssetResult,
   adminMoveMediaAssetsResult,
   adminMediaVariantDoc,
@@ -43,7 +44,7 @@ export function createMediaOperations(
         deletedOnly: v.optional(v.boolean()),
         paginationOpts: paginationOptsValidator,
       },
-      returns: adminPaginationResult(adminMediaItemDoc),
+      returns: adminPaginationResult(adminMediaItemWithUrlDoc),
       handler: async (ctx, args) => {
         await checkAuth(ctx, { type: "listMediaAssets" });
         return await ctx.runQuery(component.mediaAssets.list, args);
@@ -54,7 +55,7 @@ export function createMediaOperations(
       args: {
         id: v.string(),
       },
-      returns: v.union(adminMediaItemDoc, v.null()),
+      returns: v.union(adminMediaItemWithUrlDoc, v.null()),
       handler: async (ctx, args) => {
         await checkAuth(ctx, { type: "getMediaAsset", id: args.id });
         return await ctx.runQuery(component.mediaAssets.get, args);

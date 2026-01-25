@@ -47,7 +47,7 @@ export function VersionCompare({
   onClose,
   onRollback,
 }: VersionCompareProps) {
-  const comparisonQuery = useQuery(api.versions.compare, {
+  const comparisonQuery = useQuery(api.admin.compareVersions, {
     entryId,
     fromVersionNumber: fromVersion,
     toVersionNumber: toVersion,

@@ -52,7 +52,7 @@ export function CategoryField({
   const containerRef = useRef<HTMLDivElement>(null)
 
   const hierarchyResult = useQuery(
-    api.taxonomies.getTermsHierarchy,
+    api.admin.getTermsHierarchy,
     taxonomyId ? { taxonomyId: asTaxonomyId(taxonomyId) } : 'skip'
   )
   const categoryTree = (hierarchyResult ?? []) as CategoryTerm[]

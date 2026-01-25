@@ -17,10 +17,10 @@ function EditEntryPage() {
   const navigate = useNavigate();
   const { canDelete } = usePermissions();
 
-  const entry = useQuery(api.entries.get, { id: entryId });
+  const entry = useQuery(api.admin.getEntry, { id: entryId });
 
   const contentType = useQuery(
-    api.contentTypes.get,
+    api.admin.getContentType,
     entry ? { id: entry.contentTypeId } : 'skip'
   );
 

@@ -51,7 +51,7 @@ export function TagField({
   const containerRef = useRef<HTMLDivElement>(null)
 
   const suggestionsResult = useQuery(
-    api.taxonomies.suggestTerms,
+    api.admin.suggestTerms,
     taxonomyId
       ? {
           taxonomyId: asTaxonomyId(taxonomyId),
@@ -64,7 +64,7 @@ export function TagField({
   const suggestions = suggestionsResult ?? []
 
   const selectedTermsResult = useQuery(
-    api.taxonomies.listTerms,
+    api.admin.listTerms,
     taxonomyId && value && value.length > 0
       ? {
           taxonomyId: asTaxonomyId(taxonomyId),
@@ -82,7 +82,7 @@ export function TagField({
     }
   }
 
-  const createTermMutation = useMutation(api.taxonomies.createTerm)
+  const createTermMutation = useMutation(api.admin.createTerm)
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {

@@ -49,8 +49,8 @@ export function TaxonomyEditor({
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(false)
 
-  const createTaxonomy = useMutation(api.taxonomies.createTaxonomy)
-  const updateTaxonomy = useMutation(api.taxonomies.updateTaxonomy)
+  const createTaxonomy = useMutation(api.admin.createTaxonomy)
+  const updateTaxonomy = useMutation(api.admin.updateTaxonomy)
 
   useEffect(() => {
     if (taxonomy) {

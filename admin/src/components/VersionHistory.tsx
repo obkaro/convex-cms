@@ -42,12 +42,12 @@ export function VersionHistory({
   const [rollbackError, setRollbackError] = useState<string | null>(null)
   const [rollbackSuccess, setRollbackSuccess] = useState(false)
 
-  const versionsQuery = useQuery(api.versions.getHistory, {
+  const versionsQuery = useQuery(api.admin.getVersionHistory, {
     entryId,
     paginationOpts: { numItems: 50, cursor: null },
   })
 
-  const rollbackMutation = useMutation(api.versions.rollback)
+  const rollbackMutation = useMutation(api.admin.rollbackVersion)
 
   const versions = (versionsQuery?.page ?? []) as VersionItem[]
   const isLoading = versionsQuery === undefined

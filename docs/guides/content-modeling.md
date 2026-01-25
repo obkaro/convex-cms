@@ -336,6 +336,41 @@ Arbitrary JSON data.
 }
 ```
 
+### tags
+
+Flat tags from a taxonomy.
+
+```typescript
+{
+  name: "tags",
+  type: "tags",
+  options: {
+    taxonomyName: "blog_tags",
+    allowInlineCreation: true,  // Create new tags on the fly
+    maxTags: 10,
+  },
+}
+```
+
+### category
+
+Hierarchical category selection from a taxonomy.
+
+```typescript
+{
+  name: "category",
+  type: "category",
+  required: true,
+  options: {
+    taxonomyName: "product_categories",
+    multiple: false,
+    depth: 2,  // Only show top 2 levels in picker
+  },
+}
+```
+
+See [Taxonomies Guide](./taxonomies.md) for creating taxonomies and managing tags/categories.
+
 ---
 
 ## Singleton Mode
@@ -655,11 +690,13 @@ await cms.contentTypes.delete(ctx, {
 ---
 
 See also:
-- [Code-First Schema Reference](../api/code-first-schema.md) - Type-safe schema definition
-- [Field Types Reference](../api/field-types.md)
+- [Code-First Schema Reference](../api/code-first-schema.md) — Type-safe schema definition
+- [Field Types Reference](../api/field-types.md) — All 13 field types
+- [Taxonomies Guide](./taxonomies.md) — Categories and tags
+- [Query Builder Guide](./query-builder.md) — Fluent API for querying content
 - [Client API Reference](../api/client-api.md)
 - [Media Guide](./media.md)
 
 ---
 
-Next: [Media Management Guide](./media.md)
+Next: [Query Builder Guide](./query-builder.md)

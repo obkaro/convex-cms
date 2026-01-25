@@ -116,6 +116,12 @@ import {
 } from "./types.js";
 
 import {
+  isUnifiedCmsConfig,
+  extractClientConfig,
+  type UnifiedCmsConfig,
+} from "./config.js";
+
+import {
   type TypedComponentApi,
   type CmsClient,
   // type CmsReadContext,
@@ -327,22 +333,27 @@ export {
  */
 export function createCmsClient(
   componentApi: TypedComponentApi,
-  config?: ComponentConfig
+  config?: ComponentConfig | UnifiedCmsConfig
 ): CmsClient {
+  // Normalize unified config to ComponentConfig if needed
+  const resolvedInputConfig = config && isUnifiedCmsConfig(config)
+    ? extractClientConfig(config)
+    : config;
+
   // Validate required hooks at initialization time (fail-fast)
-  validateRequiredHooks(config);
+  validateRequiredHooks(resolvedInputConfig);
 
   // Register custom field types if provided
-  if (config?.fieldTypes && config.fieldTypes.length > 0) {
+  if (resolvedInputConfig?.fieldTypes && resolvedInputConfig.fieldTypes.length > 0) {
     const { registerFieldTypes } = require("./field-types.js");
-    registerFieldTypes(config.fieldTypes);
+    registerFieldTypes(resolvedInputConfig.fieldTypes);
   }
 
-  const resolvedConfig = resolveConfig(config);
+  const resolvedConfig = resolveConfig(resolvedInputConfig);
   // Store the getUserRole hook from the original config (not resolved)
-  const getUserRoleHook = config?.getUserRole;
+  const getUserRoleHook = resolvedInputConfig?.getUserRole;
   // Store authorization hooks from config
-  const authHooks = config?.authorizationHooks;
+  const authHooks = resolvedInputConfig?.authorizationHooks;
 
   // Create authorization helper for API classes (only if getUserRole is configured)
   const authHelper: AuthorizationHelper | undefined = getUserRoleHook
@@ -1314,3 +1325,17 @@ export {
   type AdminConfig,
   type NavItem,
 } from "./adminConfig.js";
+
+// --- Unified CMS Configuration ---
+export {
+  defineCmsConfig,
+  isUnifiedCmsConfig,
+  extractClientConfig,
+  extractAdminConfig,
+  extractUiConfig,
+  type UnifiedCmsConfig,
+  type SharedCmsConfig,
+  type ClientCmsConfig,
+  type AdminApiCmsConfig,
+  type UiCmsConfig,
+} from "./config.js";

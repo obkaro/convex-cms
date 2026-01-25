@@ -75,7 +75,7 @@ export function ReferenceField({
     return Array.isArray(value) ? value : [value]
   }, [value])
 
-  const contentTypes = useQuery(api.contentTypes.list, {
+  const contentTypes = useQuery(api.admin.listContentTypes, {
     isActive: true,
     includeEntryCounts: false,
   })
@@ -91,12 +91,12 @@ export function ReferenceField({
   }, [contentTypes?.page, allowedContentTypes])
 
   const selectedEntry = useQuery(
-    api.entries.get,
+    api.admin.getEntry,
     selectedIds.length === 1 ? { id: selectedIds[0] } : 'skip'
   )
 
   const selectedEntries = useQuery(
-    api.entries.list,
+    api.admin.listEntries,
     selectedIds.length > 1
       ? {
           paginationOpts: { numItems: 100, cursor: null },
@@ -110,7 +110,7 @@ export function ReferenceField({
   }, [selectedEntries?.page, selectedIds])
 
   const entriesResult = useQuery(
-    api.entries.list,
+    api.admin.listEntries,
     showPicker
       ? {
           contentTypeId: contentTypeFilter || undefined,
