@@ -1,23 +1,21 @@
 /**
  * Unified CMS Configuration
  *
- * This file demonstrates the unified configuration pattern where CMS settings
- * are defined once and used by both createCmsClient and defineAdminAPI.
+ * This file contains all CMS settings that are shared between the client
+ * and admin APIs. Content types are defined in cms.ts using cms.defineContent()
+ * and automatically registered in the in-memory registry.
  *
  * Benefits:
  * - Single source of truth for features, locales, and limits
  * - No duplication between client and admin configurations
  * - Type-safe configuration with full IntelliSense support
+ * - Content types automatically available via registry (no import needed)
  */
 
 import { defineCmsConfig } from "convex-cms";
 import type { Id } from "./_generated/dataModel";
 
 export default defineCmsConfig({
-	// =========================================================================
-	// SHARED - Used by both createCmsClient and defineAdminAPI
-	// =========================================================================
-
 	features: {
 		versioning: true,
 		scheduling: true,
@@ -52,9 +50,7 @@ export default defineCmsConfig({
 		maxVersionsPerEntry: 50,
 	},
 
-	// =========================================================================
-	// CLIENT-SPECIFIC - Only used by createCmsClient
-	// =========================================================================
+	// Client specific - used by your custom functions
 
 	client: {
 		customRoles: [
@@ -124,9 +120,7 @@ export default defineCmsConfig({
 		},
 	},
 
-	// =========================================================================
-	// ADMIN-SPECIFIC - Only used by defineAdminAPI
-	// =========================================================================
+	// Admin specific - used by admin functions
 
 	admin: {
 		// No auth callback for demo - add one in production:
