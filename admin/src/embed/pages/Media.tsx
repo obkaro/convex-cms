@@ -8,12 +8,14 @@
 import { useApi } from "../contexts/ApiContext";
 import { useEmbedNavigation } from "../navigation";
 import { useEmbedAdapter } from "../../lib/embed-adapter";
+import { useSettingsConfig } from "../../contexts";
 import { MediaPage } from "../../pages";
 
 export function EmbedMedia() {
 	const api = useApi();
 	const embedNav = useEmbedNavigation();
 	const navigation = useEmbedAdapter(embedNav);
+	const { settings } = useSettingsConfig();
 
-	return <MediaPage api={api} navigation={navigation} />;
+	return <MediaPage api={api} navigation={navigation} settings={settings} />;
 }
