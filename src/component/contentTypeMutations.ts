@@ -81,11 +81,12 @@ interface FieldValidationError {
 
 /**
  * Validates the name format for content types and fields.
- * Names must be valid identifiers: lowercase letters, numbers, and underscores.
- * Must start with a letter and be 1-64 characters.
+ * Names must be valid identifiers: letters, numbers, and underscores.
+ * Must start with a lowercase letter and be 1-64 characters.
+ * Supports both snake_case and camelCase conventions.
  */
 function isValidName(name: string): boolean {
-  const namePattern = /^[a-z][a-z0-9_]{0,63}$/;
+  const namePattern = /^[a-z][a-zA-Z0-9_]{0,63}$/;
   return namePattern.test(name);
 }
 
@@ -342,7 +343,7 @@ function validateFieldDefinitions(
     if (field.name && !isValidName(field.name)) {
       errors.push({
         fieldName: field.name,
-        message: `Field name "${field.name}" must start with a lowercase letter and contain only lowercase letters, numbers, and underscores (max 64 chars)`,
+        message: `Field name "${field.name}" must start with a lowercase letter and contain only letters, numbers, and underscores (max 64 chars)`,
         code: "INVALID_FIELD_NAME",
       });
     }

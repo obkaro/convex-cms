@@ -26,6 +26,7 @@ import {
   type AdminContentTypeWithSource,
   type AdminContentTypeWithSourceAndCount,
 } from "./validators.js";
+import type { DatabaseFieldDefinition } from "../schema/defineContentType.js";
 
 /**
  * Content type source indicator.
@@ -33,6 +34,261 @@ import {
  * - "database": Defined in the database via admin UI
  */
 export type ContentTypeSource = "code" | "database";
+
+/**
+ * Drift severity levels.
+ */
+export type DriftSeverity = "error" | "warning" | "info";
+
+/**
+ * Types of schema drift that can be detected.
+ */
+export type DriftType =
+  | "CONTENT_TYPE_MISSING_IN_DB"
+  | "CONTENT_TYPE_MISSING_IN_CODE"
+  | "FIELD_MISSING_IN_DB"
+  | "FIELD_MISSING_IN_CODE"
+  | "FIELD_TYPE_MISMATCH"
+  | "FIELD_REQUIRED_MISMATCH";
+
+/**
+ * A single schema drift issue.
+ */
+export interface DriftIssue {
+  type: DriftType;
+  severity: DriftSeverity;
+  contentTypeName: string;
+  fieldName?: string;
+  message: string;
+}
+
+/**
+ * Validator for drift issue.
+ */
+const driftIssueValidator = v.object({
+  type: v.union(
+    v.literal("CONTENT_TYPE_MISSING_IN_DB"),
+    v.literal("CONTENT_TYPE_MISSING_IN_CODE"),
+    v.literal("FIELD_MISSING_IN_DB"),
+    v.literal("FIELD_MISSING_IN_CODE"),
+    v.literal("FIELD_TYPE_MISMATCH"),
+    v.literal("FIELD_REQUIRED_MISMATCH")
+  ),
+  severity: v.union(v.literal("error"), v.literal("warning"), v.literal("info")),
+  contentTypeName: v.string(),
+  fieldName: v.optional(v.string()),
+  message: v.string(),
+});
+
+/**
+ * Compares code-defined and database-defined content types to detect drift.
+ */
+function detectDrift(
+  codeTypes: ContentTypeDefinition[],
+  dbTypes: Array<{
+    name: string;
+    createdBy?: string;
+    fields: Array<{ name: string; type: string; required: boolean }>;
+  }>
+): DriftIssue[] {
+  const issues: DriftIssue[] = [];
+
+  const codeTypeMap = new Map(codeTypes.map((t) => [t.slug, t]));
+  const dbTypeMap = new Map(dbTypes.map((t) => [t.name, t]));
+
+  // Check code types against database
+  for (const codeType of codeTypes) {
+    const dbType = dbTypeMap.get(codeType.slug);
+
+    if (!dbType) {
+      issues.push({
+        type: "CONTENT_TYPE_MISSING_IN_DB",
+        severity: "warning",
+        contentTypeName: codeType.slug,
+        message: `Content type "${codeType.slug}" is defined in code but not synced to database. Call syncCodeDefinedTypes to sync.`,
+      });
+      continue;
+    }
+
+    // Only compare fields for code-created types (avoid comparing UI-created types)
+    if (dbType.createdBy !== "code") {
+      continue;
+    }
+
+    // Compare fields
+    const codeFields = toFieldDefinitions(codeType);
+    const codeFieldMap = new Map(codeFields.map((f) => [f.name, f]));
+    const dbFieldMap = new Map(dbType.fields.map((f) => [f.name, f]));
+
+    // Check for fields in code but not in DB
+    for (const codeField of codeFields) {
+      const dbField = dbFieldMap.get(codeField.name);
+
+      if (!dbField) {
+        issues.push({
+          type: "FIELD_MISSING_IN_DB",
+          severity: "error",
+          contentTypeName: codeType.slug,
+          fieldName: codeField.name,
+          message: `Field "${codeField.name}" is defined in code but not in database for "${codeType.slug}".`,
+        });
+        continue;
+      }
+
+      // Check type mismatch
+      if (codeField.type !== dbField.type) {
+        issues.push({
+          type: "FIELD_TYPE_MISMATCH",
+          severity: "error",
+          contentTypeName: codeType.slug,
+          fieldName: codeField.name,
+          message: `Field "${codeField.name}" type mismatch: code="${codeField.type}", db="${dbField.type}".`,
+        });
+      }
+
+      // Check required mismatch
+      if (codeField.required !== dbField.required) {
+        issues.push({
+          type: "FIELD_REQUIRED_MISMATCH",
+          severity: "warning",
+          contentTypeName: codeType.slug,
+          fieldName: codeField.name,
+          message: `Field "${codeField.name}" required mismatch: code=${codeField.required}, db=${dbField.required}.`,
+        });
+      }
+    }
+
+    // Check for fields in DB but not in code
+    for (const dbField of dbType.fields) {
+      if (!codeFieldMap.has(dbField.name)) {
+        issues.push({
+          type: "FIELD_MISSING_IN_CODE",
+          severity: "warning",
+          contentTypeName: codeType.slug,
+          fieldName: dbField.name,
+          message: `Field "${dbField.name}" exists in database but not in code for "${codeType.slug}".`,
+        });
+      }
+    }
+  }
+
+  // Check for code-created DB types that are no longer in code
+  for (const dbType of dbTypes) {
+    if (dbType.createdBy === "code" && !codeTypeMap.has(dbType.name)) {
+      issues.push({
+        type: "CONTENT_TYPE_MISSING_IN_CODE",
+        severity: "warning",
+        contentTypeName: dbType.name,
+        message: `Content type "${dbType.name}" was code-defined but is no longer in code registry.`,
+      });
+    }
+  }
+
+  return issues;
+}
+
+/**
+ * Compare two field definition arrays to detect if they have changed.
+ * Compares field names, types, required status, and options.
+ */
+function fieldsHaveChanged(
+  existingFields: Array<{ name: string; type: string; required: boolean; options?: Record<string, unknown> }>,
+  newFields: DatabaseFieldDefinition[]
+): boolean {
+  if (existingFields.length !== newFields.length) {
+    return true;
+  }
+
+  const existingMap = new Map(existingFields.map((f) => [f.name, f]));
+
+  for (const newField of newFields) {
+    const existing = existingMap.get(newField.name);
+    if (!existing) {
+      return true;
+    }
+    if (existing.type !== newField.type) {
+      return true;
+    }
+    if (existing.required !== newField.required) {
+      return true;
+    }
+    if (JSON.stringify(existing.options) !== JSON.stringify(newField.options)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+export interface SyncResult {
+  created: number;
+  updated: number;
+  unchanged: number;
+}
+
+/**
+ * Syncs all code-defined content types to the database.
+ * Creates new DB records for types not in DB, updates existing code-defined
+ * types if their schema has changed.
+ *
+ * This ensures the database schema stays in sync with code definitions,
+ * preventing drift that could cause validation issues.
+ */
+async function syncCodeDefinedTypes(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ctx: any,
+  component: ComponentApi
+): Promise<SyncResult> {
+  const codeTypes = getAllCodeDefinedTypes();
+  const result: SyncResult = { created: 0, updated: 0, unchanged: 0 };
+
+  for (const codeType of codeTypes) {
+    const existing = await ctx.runQuery(component.contentTypes.get, {
+      name: codeType.slug,
+    });
+
+    const newFields = toFieldDefinitions(codeType);
+
+    if (!existing) {
+      await ctx.runMutation(component.contentTypeMutations.createContentType, {
+        name: codeType.slug,
+        displayName: codeType.meta.displayName || codeType.name,
+        description: codeType.meta.description,
+        icon: codeType.meta.icon,
+        singleton: codeType.meta.singleton ?? false,
+        titleField: codeType.meta.titleField,
+        slugField: codeType.meta.slugField,
+        sortOrder: codeType.meta.sortOrder ?? 0,
+        fields: newFields as never,
+        createdBy: "code",
+      });
+      result.created++;
+    } else if (existing.createdBy === "code") {
+      if (fieldsHaveChanged(existing.fields, newFields)) {
+        await ctx.runMutation(component.contentTypeMutations.updateContentType, {
+          id: existing._id,
+          displayName: codeType.meta.displayName || codeType.name,
+          description: codeType.meta.description,
+          icon: codeType.meta.icon,
+          singleton: codeType.meta.singleton ?? false,
+          titleField: codeType.meta.titleField,
+          slugField: codeType.meta.slugField,
+          sortOrder: codeType.meta.sortOrder ?? 0,
+          fields: newFields as never,
+          updatedBy: "code",
+          force: true,
+        });
+        result.updated++;
+      } else {
+        result.unchanged++;
+      }
+    } else {
+      result.unchanged++;
+    }
+  }
+
+  return result;
+}
 
 /**
  * Helper to convert a code-defined type to the admin API format.
@@ -61,6 +317,32 @@ export function createContentTypesOperations(
   checkAuth: (ctx: AuthContext, operation: AdminOperation) => Promise<string | null>
 ) {
   return {
+    syncCodeDefinedTypes: mutationGeneric({
+      args: {},
+      returns: v.object({
+        created: v.number(),
+        updated: v.number(),
+        unchanged: v.number(),
+      }),
+      handler: async (ctx) => {
+        await checkAuth(ctx, { type: "syncContentTypes" });
+        return await syncCodeDefinedTypes(ctx, component);
+      },
+    }),
+
+    checkSchemaDrift: queryGeneric({
+      args: {},
+      returns: v.array(driftIssueValidator),
+      handler: async (ctx): Promise<DriftIssue[]> => {
+        await checkAuth(ctx, { type: "checkSchemaDrift" });
+
+        const codeTypes = getAllCodeDefinedTypes();
+        const dbResult = await ctx.runQuery(component.contentTypes.list, {});
+
+        return detectDrift(codeTypes, dbResult.page);
+      },
+    }),
+
     listContentTypes: queryGeneric({
       args: {
         isActive: v.optional(v.boolean()),
@@ -75,7 +357,7 @@ export function createContentTypesOperations(
 
         // Query registry at runtime for code-defined types
         const codeDefinedTypes = getAllCodeDefinedTypes();
-        const codeTypeNames = new Set(codeDefinedTypes.map((t) => t.name));
+        const codeTypeSlugs = new Set(codeDefinedTypes.map((t) => t.slug));
 
         // Get database-defined types
         const dbResult = await ctx.runQuery(component.contentTypes.list, {
@@ -83,8 +365,9 @@ export function createContentTypesOperations(
         });
 
         // Filter out DB types that are also code-defined (code takes precedence)
+        // Compare by slug since DB stores slug in `name` field
         const dbTypesFiltered = dbResult.page
-          .filter((t) => !codeTypeNames.has(t.name))
+          .filter((t) => !codeTypeSlugs.has(t.name))
           .map((t) => ({
             ...t,
             source: "database" as const,

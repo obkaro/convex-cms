@@ -18,6 +18,8 @@ export const getContentType = adminApi.getContentType;
 export const createContentType = adminApi.createContentType;
 export const updateContentType = adminApi.updateContentType;
 export const deleteContentType = adminApi.deleteContentType;
+export const syncCodeDefinedTypes = adminApi.syncCodeDefinedTypes;
+export const checkSchemaDrift = adminApi.checkSchemaDrift;
 
 // =============================================================================
 // Content Entries

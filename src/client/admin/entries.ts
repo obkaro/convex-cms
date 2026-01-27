@@ -15,6 +15,8 @@ import {
   contentStatusValidator,
   paginationOptsValidator,
 } from "./validators.js";
+import { getCodeDefinedType } from "../registry.js";
+import { toFieldDefinitions } from "../schema/defineContentType.js";
 
 export function createEntriesOperations(
   component: ComponentApi,
@@ -83,6 +85,37 @@ export function createEntriesOperations(
       returns: adminContentEntryDoc,
       handler: async (ctx, args) => {
         await checkAuth(ctx, { type: "createEntry", contentTypeName: args.contentTypeName });
+
+        // Ensure code-defined content types exist in the database
+        const codeType = getCodeDefinedType(args.contentTypeName);
+        if (codeType) {
+          // Check if it already exists in DB
+          const existing = await ctx.runQuery(component.contentTypes.get, {
+            name: args.contentTypeName,
+          });
+
+          if (!existing) {
+            // Create the database record for the code-defined type
+            await ctx.runMutation(
+              component.contentTypeMutations.createContentType,
+              {
+                name: codeType.slug,
+                displayName: codeType.meta.displayName || codeType.name,
+                description: codeType.meta.description,
+                icon: codeType.meta.icon,
+                singleton: codeType.meta.singleton ?? false,
+                titleField: codeType.meta.titleField,
+                slugField: codeType.meta.slugField,
+                sortOrder: codeType.meta.sortOrder ?? 0,
+                // toFieldDefinitions returns the correct structure, but with string type field
+                // The component validator accepts the specific union, which is compatible at runtime
+                fields: toFieldDefinitions(codeType) as never,
+                createdBy: "code",
+              }
+            );
+          }
+        }
+
         return await ctx.runMutation(
           component.contentEntryMutations.createEntry,
           args

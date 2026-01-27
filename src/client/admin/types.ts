@@ -23,6 +23,8 @@ export type AdminOperation =
   | { type: "createContentType" }
   | { type: "updateContentType"; id: string }
   | { type: "deleteContentType"; id: string }
+  | { type: "syncContentTypes" }
+  | { type: "checkSchemaDrift" }
   // Entries
   | { type: "listEntries"; contentTypeName?: string }
   | { type: "getEntry"; id: string }

@@ -11,6 +11,8 @@ export const {
 	createContentType,
 	updateContentType,
 	deleteContentType,
+	syncCodeDefinedTypes,
+	checkSchemaDrift,
 	// Content Entries
 	listEntries,
 	getEntry,

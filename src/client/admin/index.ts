@@ -181,6 +181,8 @@ function createAdminAPIImpl(
     createContentType: contentTypesOps.createContentType,
     updateContentType: contentTypesOps.updateContentType,
     deleteContentType: contentTypesOps.deleteContentType,
+    syncCodeDefinedTypes: contentTypesOps.syncCodeDefinedTypes,
+    checkSchemaDrift: contentTypesOps.checkSchemaDrift,
 
     // Entries
     listEntries: entriesOps.listEntries,
@@ -321,6 +323,8 @@ function createAdminAPIImpl(
       create: contentTypesOps.createContentType,
       update: contentTypesOps.updateContentType,
       remove: contentTypesOps.deleteContentType,
+      sync: contentTypesOps.syncCodeDefinedTypes,
+      checkDrift: contentTypesOps.checkSchemaDrift,
     },
 
     entries: {
