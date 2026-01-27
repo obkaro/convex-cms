@@ -4,28 +4,49 @@
  * Composes all domain modules into a single defineAdminAPI function.
  * Provides both flat exports (for pages) and namespaced exports (for components).
  *
- * @example
+ * @example Basic usage
  * ```typescript
  * // convex/admin.ts
  * import { defineAdminAPI } from "convex-cms";
  * import { components } from "./_generated/api";
  *
- * // Export all flat operations for direct use
  * export const {
- *   // Flat exports
  *   listContentTypes,
  *   getContentType,
  *   createEntry,
- *   // ... or use namespaced
  *   contentTypes,
  *   entries,
  *   media,
  * } = defineAdminAPI(components.convexCms);
  * ```
+ *
+ * @example Type-safe content type names
+ * ```typescript
+ * // convex/admin.ts
+ * import { defineAdminAPI } from "convex-cms";
+ * import { components } from "./_generated/api";
+ * import { blogPost, author } from "./cms"; // Your content type helpers
+ *
+ * export const {
+ *   listEntries,
+ *   createEntry,
+ * } = defineAdminAPI(components.convexCms, {
+ *   contentTypes: { blogPost, author },
+ * });
+ *
+ * // Now TypeScript provides autocomplete:
+ * // listEntries(ctx, { contentTypeName: "blog_post" }) ← autocomplete works!
+ * ```
  */
 
 import type { ComponentApi } from "../../component/_generated/component.js";
-import type { AdminApiOptions, AdminOperation, AuthContext } from "./types.js";
+import type {
+  AdminApiOptions,
+  AdminOperation,
+  AuthContext,
+  ContentTypeHelpersSchema,
+  TypedAdminApiOptions,
+} from "./types.js";
 import { isUnifiedCmsConfig, extractAdminConfig, type UnifiedCmsConfig } from "../config.js";
 
 import { createDashboardOperations } from "./dashboard.js";
@@ -39,9 +60,42 @@ import { createMediaOperations } from "./media.js";
 import { createTaxonomiesOperations } from "./taxonomies.js";
 import { createSettingsOperations } from "./settings.js";
 
-export function defineAdminAPI(
+/**
+ * Creates the admin API with all CRUD operations for content management.
+ *
+ * The returned API provides properly typed Convex function references that can be:
+ * - Exported directly from your convex/admin.ts file
+ * - Called via ctx.runQuery/ctx.runMutation in other Convex functions
+ * - Used with useQuery/useMutation hooks in the frontend
+ *
+ * @param component - The CMS component API
+ * @param options - Configuration options
+ * @returns Admin API operations as Convex function references
+ *
+ * @example
+ * ```typescript
+ * // convex/admin.ts
+ * export const { listEntries, createEntry, publishEntry } = defineAdminAPI(
+ *   components.convexCms,
+ *   { contentTypes: { blogPost, author } }
+ * );
+ *
+ * // In another Convex function
+ * const entries = await ctx.runQuery(listEntries, { contentTypeName: "blog_post" });
+ * ```
+ */
+export function defineAdminAPI<
+  T extends ContentTypeHelpersSchema = Record<string, never>
+>(
   component: ComponentApi,
-  options: AdminApiOptions | UnifiedCmsConfig = {}
+  options?: AdminApiOptions | UnifiedCmsConfig | TypedAdminApiOptions<T>
+): ReturnType<typeof createAdminAPIImpl> {
+  return createAdminAPIImpl(component, options ?? {});
+}
+
+function createAdminAPIImpl(
+  component: ComponentApi,
+  options: AdminApiOptions | UnifiedCmsConfig | TypedAdminApiOptions<ContentTypeHelpersSchema> = {}
 ) {
   // Normalize unified config to AdminApiOptions if needed
   const resolvedOptions = isUnifiedCmsConfig(options)
@@ -363,6 +417,9 @@ export function defineAdminAPI(
     },
   };
 }
+
+// Base admin API type - inferred from implementation
+export type BaseAdminAPI = ReturnType<typeof createAdminAPIImpl>;
 
 // Re-export types
 export type {

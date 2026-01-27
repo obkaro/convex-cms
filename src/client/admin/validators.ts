@@ -122,6 +122,26 @@ export const adminContentTypeWithCountDoc = v.object({
   entryCount: v.optional(v.number()),
 });
 
+export const contentTypeSourceValidator = v.union(
+  v.literal("code"),
+  v.literal("database")
+);
+
+export const adminContentTypeWithSourceDoc = v.object({
+  ...omit(contentTypeDoc.fields, ["_id", "fields"]),
+  _id: v.string(),
+  fields: v.array(adminFieldDefinitionValidator),
+  source: contentTypeSourceValidator,
+});
+
+export const adminContentTypeWithSourceAndCountDoc = v.object({
+  ...omit(contentTypeDoc.fields, ["_id", "fields"]),
+  _id: v.string(),
+  fields: v.array(adminFieldDefinitionValidator),
+  source: contentTypeSourceValidator,
+  entryCount: v.optional(v.number()),
+});
+
 export const adminDeleteContentTypeResult = v.object({
   ...omit(deleteContentTypeResult.fields, ["deletedId"]),
   deletedId: v.string(),
@@ -132,20 +152,17 @@ export const adminDeleteContentTypeResult = v.object({
 // =============================================================================
 
 export const adminContentEntryDoc = v.object({
-  ...omit(contentEntryDoc.fields, ["_id", "contentTypeId", "primaryEntryId"]),
+  ...omit(contentEntryDoc.fields, ["_id", "primaryEntryId"]),
   _id: v.string(),
-  contentTypeId: v.string(),
   primaryEntryId: v.optional(v.string()),
 });
 
 export const adminDeleteContentEntryResult = v.object({
   ...omit(deleteContentEntryResult.fields, [
     "_id",
-    "contentTypeId",
     "primaryEntryId",
   ]),
   _id: v.string(),
-  contentTypeId: v.string(),
   primaryEntryId: v.optional(v.string()),
 });
 
@@ -462,6 +479,9 @@ export const adminSettingsDoc = v.object({
 
 export type AdminContentType = Infer<typeof adminContentTypeDoc>;
 export type AdminContentTypeWithCount = Infer<typeof adminContentTypeWithCountDoc>;
+export type AdminContentTypeWithSource = Infer<typeof adminContentTypeWithSourceDoc>;
+export type AdminContentTypeWithSourceAndCount = Infer<typeof adminContentTypeWithSourceAndCountDoc>;
+export type ContentTypeSource = Infer<typeof contentTypeSourceValidator>;
 export type AdminContentEntry = Infer<typeof adminContentEntryDoc>;
 export type AdminContentVersion = Infer<typeof adminContentVersionDoc>;
 export type AdminMediaItem = Infer<typeof adminMediaItemDoc>;

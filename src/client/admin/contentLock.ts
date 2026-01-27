@@ -35,7 +35,7 @@ export function createContentLockOperations(
 
     listLockedContent: queryGeneric({
       args: {
-        contentTypeId: v.optional(v.string()),
+        contentTypeName: v.optional(v.string()),
         lockedBy: v.optional(v.string()),
         paginationOpts: paginationOptsValidator,
       },

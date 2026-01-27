@@ -24,9 +24,9 @@ export type AdminOperation =
   | { type: "updateContentType"; id: string }
   | { type: "deleteContentType"; id: string }
   // Entries
-  | { type: "listEntries"; contentTypeId?: string }
+  | { type: "listEntries"; contentTypeName?: string }
   | { type: "getEntry"; id: string }
-  | { type: "createEntry"; contentTypeId: string }
+  | { type: "createEntry"; contentTypeName: string }
   | { type: "updateEntry"; id: string }
   | { type: "publishEntry"; id: string }
   | { type: "unpublishEntry"; id: string }
@@ -36,7 +36,7 @@ export type AdminOperation =
   | { type: "cancelScheduledEntry"; id: string }
   | { type: "getScheduledEntries" }
   | { type: "restoreEntry"; id: string }
-  | { type: "getEntryBySlug"; contentTypeId: string; slug: string }
+  | { type: "getEntryBySlug"; contentTypeName: string; slug: string }
   | { type: "getEntryBySlugAndTypeName"; contentTypeName: string; slug: string }
   // Bulk Operations
   | { type: "bulkPublish" }
@@ -207,3 +207,192 @@ export interface ResolvedFeatureFlags {
   localization: boolean;
   mediaManagement: boolean;
 }
+
+// =============================================================================
+// Type-Safe Content Type Inference
+// =============================================================================
+
+/**
+ * Base interface for any object with a slug property.
+ * This allows both ContentTypeDefinition and ContentTypeHelpers to be used.
+ */
+export interface HasSlug {
+  readonly slug: string;
+}
+
+/**
+ * A record of content types with slugs, keyed by any string.
+ * This accepts both ContentTypeDefinition and ContentTypeHelpers.
+ *
+ * @example
+ * ```typescript
+ * // Using defineContentType directly
+ * const roadmapItem = defineContentType({ name: "Roadmap Item", ... });
+ * defineAdminAPI(component, { contentTypes: { roadmapItem } });
+ *
+ * // Using createCms().defineContent()
+ * const blogPost = cms.defineContent({ name: "Blog Post", ... });
+ * defineAdminAPI(component, { contentTypes: { blogPost } });
+ * ```
+ */
+export type ContentTypeHelpersSchema = Record<string, HasSlug>;
+
+/**
+ * Extracts the union of all slug strings from a ContentTypeHelpersSchema.
+ *
+ * @example
+ * ```typescript
+ * const contentTypes = { blogPost, author };
+ * type Slugs = ContentTypeSlugs<typeof contentTypes>;
+ * // "blog_post" | "author"
+ * ```
+ */
+export type ContentTypeSlugs<T extends ContentTypeHelpersSchema> = {
+  [K in keyof T]: T[K]["slug"];
+}[keyof T];
+
+/**
+ * Options for type-safe admin API with content type inference.
+ */
+export interface TypedAdminApiOptions<T extends ContentTypeHelpersSchema> extends AdminApiOptions {
+  /**
+   * Content type helpers for TypeScript inference.
+   * Pass the helpers created by cms.defineContent() to enable
+   * autocomplete for contentTypeName arguments.
+   */
+  contentTypes: T;
+}
+
+// =============================================================================
+// Typed Admin API Return Type
+// =============================================================================
+
+// Keys that need typed contentTypeName overrides for autocomplete
+type TypedFlatMethodKeys =
+  | "listEntries"
+  | "createEntry"
+  | "getEntryBySlug"
+  | "getEntryBySlugAndTypeName"
+  | "getScheduledEntries";
+
+/**
+ * Typed overrides for flat methods that take contentTypeName.
+ */
+type TypedFlatMethodOverrides<T extends ContentTypeHelpersSchema> = {
+  listEntries: TypedListEntriesQuery<T>;
+  createEntry: TypedCreateEntryMutation<T>;
+  getEntryBySlug: TypedGetEntryBySlugQuery<T>;
+  getEntryBySlugAndTypeName: TypedGetEntryBySlugQuery<T>;
+  getScheduledEntries: TypedGetScheduledEntriesQuery<T>;
+};
+
+/**
+ * Typed admin API with content type name inference.
+ *
+ * This type extends the base admin API (inferred from implementation)
+ * and overrides only the methods that benefit from contentTypeName autocomplete.
+ * All other methods retain their proper types from the implementation.
+ *
+ * @typeParam TBase - The base admin API type (inferred from createAdminAPIImpl)
+ * @typeParam T - The content type helpers schema for type inference
+ */
+export type TypedAdminAPI<
+  T extends ContentTypeHelpersSchema,
+  TBase = Record<string, unknown>
+> = Omit<TBase, TypedFlatMethodKeys | "entries"> &
+  TypedFlatMethodOverrides<T> & {
+    entries: TBase extends { entries: infer E }
+      ? Omit<E, "list" | "create" | "getBySlug" | "getBySlugAndTypeName" | "getScheduled"> & {
+          list: TypedListEntriesQuery<T>;
+          create: TypedCreateEntryMutation<T>;
+          getBySlug: TypedGetEntryBySlugQuery<T>;
+          getBySlugAndTypeName: TypedGetEntryBySlugQuery<T>;
+          getScheduled: TypedGetScheduledEntriesQuery<T>;
+        }
+      : unknown;
+  };
+
+// Typed query/mutation function signatures
+type TypedListEntriesQuery<T extends ContentTypeHelpersSchema> = {
+  (ctx: unknown, args: {
+    contentTypeName?: ContentTypeSlugs<T>;
+    status?: "draft" | "published" | "archived" | "scheduled";
+    search?: string;
+    locale?: string;
+    paginationOpts: { numItems: number; cursor: string | null };
+  }): Promise<{
+    page: Array<{
+      _id: string;
+      _creationTime: number;
+      contentTypeName: string;
+      slug: string;
+      status: "draft" | "published" | "archived" | "scheduled";
+      data: Record<string, unknown>;
+      version: number;
+      locale?: string;
+      primaryEntryId?: string;
+    }>;
+    continueCursor: string | null;
+    isDone: boolean;
+  }>;
+};
+
+type TypedCreateEntryMutation<T extends ContentTypeHelpersSchema> = {
+  (ctx: unknown, args: {
+    contentTypeName: ContentTypeSlugs<T>;
+    data: Record<string, unknown>;
+    slug?: string;
+    status?: "draft" | "published" | "archived" | "scheduled";
+    locale?: string;
+    primaryEntryId?: string;
+    createdBy?: string;
+  }): Promise<{
+    _id: string;
+    _creationTime: number;
+    contentTypeName: string;
+    slug: string;
+    status: "draft" | "published" | "archived" | "scheduled";
+    data: Record<string, unknown>;
+    version: number;
+    locale?: string;
+    primaryEntryId?: string;
+  }>;
+};
+
+type TypedGetEntryBySlugQuery<T extends ContentTypeHelpersSchema> = {
+  (ctx: unknown, args: {
+    contentTypeName: ContentTypeSlugs<T>;
+    slug: string;
+    status?: "draft" | "published" | "archived" | "scheduled";
+    includeDeleted?: boolean;
+  }): Promise<{
+    _id: string;
+    _creationTime: number;
+    contentTypeName: string;
+    slug: string;
+    status: "draft" | "published" | "archived" | "scheduled";
+    data: Record<string, unknown>;
+    version: number;
+    locale?: string;
+    primaryEntryId?: string;
+  } | null>;
+};
+
+type TypedGetScheduledEntriesQuery<T extends ContentTypeHelpersSchema> = {
+  (ctx: unknown, args: {
+    from?: number;
+    to?: number;
+    contentTypeName?: ContentTypeSlugs<T>;
+  }): Promise<Array<{
+    _id: string;
+    _creationTime: number;
+    contentTypeName: string;
+    slug: string;
+    status: "draft" | "published" | "archived" | "scheduled";
+    data: Record<string, unknown>;
+    version: number;
+    locale?: string;
+    primaryEntryId?: string;
+    scheduledPublishAt?: number;
+  }>>;
+};
