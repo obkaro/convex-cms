@@ -16,12 +16,12 @@ export function Hero() {
 				<div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
 					{/* Left: Headline */}
 					<div className="lg:col-span-7 animate-fade-up">
-						<p className="text-label mb-6">Building in public</p>
+						<p className="text-label mb-6">Building Tempo</p>
 
 						<h1 className="display-xl mb-8">
-							Async work,
+							Async work
 							<br />
-							<span className="text-slate-400">your rhythm.</span>
+							<span className="text-slate-400">tracked to your rhythm.</span>
 						</h1>
 
 						<p className="text-body-lg max-w-lg mb-10">

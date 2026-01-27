@@ -7,7 +7,7 @@
 
 @theme {
   /* Typography - Editorial/Industrial */
-  --font-display: "Instrument Serif", Georgia, serif;
+  --font-display: "Crimson Pro", Georgia, serif;
   --font-sans: "Satoshi", system-ui, -apple-system, sans-serif;
   --font-mono: "JetBrains Mono", Menlo, Monaco, monospace;
 
@@ -103,12 +103,12 @@
 
   /* Typography */
   .display-xl {
-    @apply text-5xl md:text-6xl lg:text-7xl font-normal leading-[1.05] tracking-tight text-slate-900;
+    @apply text-5xl md:text-6xl lg:text-7xl font-normal leading-[1.1] tracking-normal text-slate-900;
     font-family: var(--font-display);
   }
 
   .display-lg {
-    @apply text-4xl md:text-5xl font-normal leading-tight tracking-tight text-slate-900;
+    @apply text-4xl md:text-5xl font-normal leading-tight tracking-normal text-slate-900;
     font-family: var(--font-display);
   }
 
