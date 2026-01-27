@@ -102,7 +102,7 @@ export function BulkOperationModal({
         <div className="space-y-4">
           {result.failed === 0 ? (
             <div className="flex flex-col items-center gap-3 py-4 text-center">
-              <div className="flex size-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+              <div className="flex size-12 items-center justify-center rounded-full bg-diff-added-bg text-diff-added">
                 <CheckCircle className="size-6" />
               </div>
               <p className="text-sm text-muted-foreground">
@@ -116,33 +116,33 @@ export function BulkOperationModal({
           ) : (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-center">
-                  <p className="text-2xl font-semibold text-emerald-700">
+                <div className="diff-added rounded-lg border p-3 text-center">
+                  <p className="text-2xl font-semibold text-diff-added">
                     {result.succeeded}
                   </p>
-                  <p className="text-xs text-emerald-600">Succeeded</p>
+                  <p className="text-xs text-diff-added-foreground">Succeeded</p>
                 </div>
-                <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-center">
-                  <p className="text-2xl font-semibold text-red-700">
+                <div className="diff-removed rounded-lg border p-3 text-center">
+                  <p className="text-2xl font-semibold text-diff-removed">
                     {result.failed}
                   </p>
-                  <p className="text-xs text-red-600">Failed</p>
+                  <p className="text-xs text-diff-removed-foreground">Failed</p>
                 </div>
               </div>
 
               {result.errors && result.errors.length > 0 && (
-                <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
-                  <p className="mb-2 text-sm font-medium text-amber-800">
+                <div className="diff-modified rounded-lg border p-3">
+                  <p className="mb-2 text-sm font-medium text-diff-modified">
                     Errors:
                   </p>
-                  <ul className="space-y-1 text-xs text-amber-700">
+                  <ul className="space-y-1 text-xs text-diff-modified-foreground">
                     {result.errors.slice(0, 5).map((error, index) => (
                       <li key={index} className="truncate">
                         • {error}
                       </li>
                     ))}
                     {result.errors.length > 5 && (
-                      <li className="text-amber-600">
+                      <li className="text-diff-modified-foreground/80">
                         ...and {result.errors.length - 5} more errors
                       </li>
                     )}
@@ -163,9 +163,9 @@ export function BulkOperationModal({
           </p>
           <p className="text-sm text-muted-foreground">{config.description}</p>
           {config.warning && (
-            <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3">
-              <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-600" />
-              <p className="text-sm text-amber-800">
+            <div className="diff-modified flex items-start gap-2 rounded-lg border p-3">
+              <AlertTriangle className="mt-0.5 size-4 shrink-0 text-diff-modified" />
+              <p className="text-sm">
                 <span className="font-medium">Note:</span> {config.warning}
               </p>
             </div>

@@ -725,8 +725,8 @@ export function ContentEntryEditor({
                 className={cn(
                   'flex items-center gap-1.5 text-sm',
                   autosaveStatus === 'saving' && 'text-muted-foreground',
-                  autosaveStatus === 'saved' && 'text-emerald-600',
-                  autosaveStatus === 'error' && 'text-red-600'
+                  autosaveStatus === 'saved' && 'text-success',
+                  autosaveStatus === 'error' && 'text-destructive'
                 )}
                 data-testid="autosave-status"
               >
@@ -755,7 +755,7 @@ export function ContentEntryEditor({
           )}
 
           {isDirty && (
-            <span className="text-sm text-amber-600">Unsaved changes</span>
+            <span className="text-sm text-warning">Unsaved changes</span>
           )}
         </div>
       </div>
@@ -763,7 +763,7 @@ export function ContentEntryEditor({
       {/* Success/Error Messages */}
       {saveSuccess && (
         <div
-          className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800"
+          className="diff-added flex items-center gap-2 rounded-lg border px-4 py-3 text-sm"
           role="status"
         >
           <CheckCircle className="size-4" />
@@ -773,7 +773,7 @@ export function ContentEntryEditor({
 
       {(submitError || publishError) && (
         <div
-          className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+          className="diff-removed rounded-lg border px-4 py-3 text-sm"
           role="alert"
         >
           <span className="font-medium">Error:</span> {submitError || publishError}
@@ -886,7 +886,7 @@ export function ContentEntryEditor({
                 entry.status === 'scheduled' &&
                 entry.scheduledPublishAt && (
                   <span
-                    className="flex items-center gap-1 text-xs text-blue-600"
+                    className="flex items-center gap-1 text-xs text-info"
                     data-testid="scheduled-time"
                   >
                     <Clock className="size-3" />

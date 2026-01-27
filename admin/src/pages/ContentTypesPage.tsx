@@ -273,7 +273,7 @@ export function ContentTypesPage({ api, navigation }: ContentTypesPageProps) {
 									{contentType.singleton && (
 										<Badge
 											variant="secondary"
-											className="border-amber-200 bg-amber-50 text-xs font-normal text-amber-700"
+											className="border-diff-modified-border bg-diff-modified-bg text-xs font-normal text-diff-modified-foreground"
 										>
 											Singleton
 										</Badge>
@@ -422,7 +422,7 @@ export function ContentTypesPage({ api, navigation }: ContentTypesPageProps) {
 												className={cn(
 													"text-xs font-normal",
 													contentType.isActive &&
-														"border-emerald-200 bg-emerald-50 text-emerald-700",
+														"border-diff-added-border bg-diff-added-bg text-diff-added-foreground",
 												)}
 											>
 												{contentType.isActive ? "Active" : "Inactive"}
@@ -430,7 +430,7 @@ export function ContentTypesPage({ api, navigation }: ContentTypesPageProps) {
 											{contentType.singleton && (
 												<Badge
 													variant="secondary"
-													className="border-amber-200 bg-amber-50 text-xs font-normal text-amber-700"
+													className="border-diff-modified-border bg-diff-modified-bg text-xs font-normal text-diff-modified-foreground"
 												>
 													Singleton
 												</Badge>

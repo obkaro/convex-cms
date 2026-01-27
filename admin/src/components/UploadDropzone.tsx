@@ -158,10 +158,10 @@ export function UploadDropzone({
   const getStatusIcon = (status: UploadQueueFileStatus) => {
     switch (status) {
       case 'complete':
-        return <Check className="size-4 text-emerald-500" />
+        return <Check className="size-4 text-success" />
       case 'error':
       case 'cancelled':
-        return <X className="size-4 text-red-500" />
+        return <X className="size-4 text-destructive" />
       case 'uploading':
         return (
           <div className="size-4 animate-spin rounded-full border-2 border-muted border-t-primary" />
@@ -247,10 +247,10 @@ export function UploadDropzone({
               {!queue.isUploading && hasCompletedOrFailed && (
                 <div className="flex items-center gap-2">
                   {completedCount > 0 && (
-                    <span className="text-emerald-600">{completedCount} completed</span>
+                    <span className="text-success">{completedCount} completed</span>
                   )}
                   {errorCount > 0 && (
-                    <span className="text-red-500">{errorCount} failed</span>
+                    <span className="text-destructive">{errorCount} failed</span>
                   )}
                 </div>
               )}
@@ -293,8 +293,8 @@ export function UploadDropzone({
                 key={uploadFile.id}
                 className={cn(
                   'flex items-center gap-3 rounded-lg border bg-card p-3',
-                  uploadFile.status === 'error' && 'border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/20',
-                  uploadFile.status === 'complete' && 'border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/20'
+                  uploadFile.status === 'error' && 'border-diff-removed-border bg-diff-removed-bg',
+                  uploadFile.status === 'complete' && 'border-diff-added-border bg-diff-added-bg'
                 )}
               >
                 <div className="shrink-0">{getStatusIcon(uploadFile.status)}</div>
@@ -311,7 +311,7 @@ export function UploadDropzone({
                       {formatFileSize(uploadFile.file.size)}
                     </span>
                     {uploadFile.error && (
-                      <span className="text-xs text-red-500">{uploadFile.error}</span>
+                      <span className="text-xs text-destructive">{uploadFile.error}</span>
                     )}
                   </div>
                 </div>

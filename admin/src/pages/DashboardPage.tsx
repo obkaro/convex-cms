@@ -15,6 +15,7 @@ import {
 } from "~/components/ui/card";
 import { Skeleton } from "~/components/ui/skeleton";
 import { CmsPageHeader } from "~/components/cmsds";
+import { SchemaDriftWarning } from "~/components/SchemaDriftWarning";
 import { FileText, Image, Layers, Settings, TrendingUp } from "lucide-react";
 import type { AdminNavigation } from "~/lib/navigation";
 import type { CmsAdminApi } from "~/embed/contexts/ApiContext";
@@ -35,6 +36,8 @@ export function DashboardPage({ api, navigation }: DashboardPageProps) {
 				title="Dashboard"
 				description="Welcome to Convex CMS Admin. Manage your content, media, and publishing workflows."
 			/>
+
+			<SchemaDriftWarning api={api} />
 
 			<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
 				<DashboardCard

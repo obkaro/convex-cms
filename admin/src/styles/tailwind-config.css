@@ -71,4 +71,29 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Diff colors */
+  --color-diff-added: var(--diff-added);
+  --color-diff-added-bg: var(--diff-added-bg);
+  --color-diff-added-border: var(--diff-added-border);
+  --color-diff-added-foreground: var(--diff-added-foreground);
+
+  --color-diff-removed: var(--diff-removed);
+  --color-diff-removed-bg: var(--diff-removed-bg);
+  --color-diff-removed-border: var(--diff-removed-border);
+  --color-diff-removed-foreground: var(--diff-removed-foreground);
+
+  --color-diff-modified: var(--diff-modified);
+  --color-diff-modified-bg: var(--diff-modified-bg);
+  --color-diff-modified-border: var(--diff-modified-border);
+  --color-diff-modified-foreground: var(--diff-modified-foreground);
+
+  /* Semantic states */
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-bg: var(--info-bg);
+  --color-info-foreground: var(--info-foreground);
 }

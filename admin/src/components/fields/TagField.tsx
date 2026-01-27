@@ -315,7 +315,7 @@ export function TagField({
         <div className="border-t px-3 py-1.5 text-xs text-muted-foreground">
           {value?.length ?? 0} tag{(value?.length ?? 0) !== 1 ? 's' : ''}
           {minTags && (value?.length ?? 0) < minTags && (
-            <span className="text-amber-600"> (minimum {minTags})</span>
+            <span className="text-warning"> (minimum {minTags})</span>
           )}
           {maxTags && <span> / {maxTags} max</span>}
         </div>

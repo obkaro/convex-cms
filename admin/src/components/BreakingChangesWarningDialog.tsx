@@ -42,13 +42,13 @@ export function BreakingChangesWarningDialog({
       }
     >
       <div className="space-y-4">
-        <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
-          <AlertTriangle className="mt-0.5 size-5 shrink-0 text-amber-600" />
+        <div className="diff-modified flex items-start gap-3 rounded-lg border p-3">
+          <AlertTriangle className="mt-0.5 size-5 shrink-0 text-diff-modified" />
           <div className="space-y-1">
-            <p className="text-sm font-medium text-amber-800">
+            <p className="text-sm font-medium text-diff-modified">
               These changes may affect existing content
             </p>
-            <p className="text-sm text-amber-700">
+            <p className="text-sm text-diff-modified-foreground">
               The following changes could cause data loss or validation errors for existing entries.
               Review carefully before proceeding.
             </p>
@@ -65,7 +65,7 @@ export function BreakingChangesWarningDialog({
                 key={index}
                 className="flex items-start gap-2 rounded-md border bg-muted/30 px-3 py-2 text-sm"
               >
-                <span className="mt-0.5 size-1.5 shrink-0 rounded-full bg-amber-500" />
+                <span className="mt-0.5 size-1.5 shrink-0 rounded-full bg-warning" />
                 <span className="text-muted-foreground">{change}</span>
               </li>
             ))}

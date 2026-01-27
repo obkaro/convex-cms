@@ -37,6 +37,31 @@
   --sidebar-accent-foreground: hsl(240 5.9% 10%);
   --sidebar-border: hsl(220 13% 91%);
   --sidebar-ring: hsl(217.2 91.2% 59.8%);
+
+  /* Semantic: Diff/Change indicators */
+  --diff-added: hsl(142 76% 36%);
+  --diff-added-bg: hsl(142 76% 95%);
+  --diff-added-border: hsl(142 76% 85%);
+  --diff-added-foreground: hsl(142 76% 25%);
+
+  --diff-removed: hsl(0 84% 60%);
+  --diff-removed-bg: hsl(0 86% 97%);
+  --diff-removed-border: hsl(0 93% 85%);
+  --diff-removed-foreground: hsl(0 72% 30%);
+
+  --diff-modified: hsl(38 92% 50%);
+  --diff-modified-bg: hsl(48 96% 97%);
+  --diff-modified-border: hsl(48 96% 82%);
+  --diff-modified-foreground: hsl(38 92% 25%);
+
+  /* Semantic: Success/Warning/Info states */
+  --success: hsl(142 76% 36%);
+  --success-foreground: hsl(0 0% 100%);
+  --warning: hsl(38 92% 50%);
+  --warning-foreground: hsl(0 0% 100%);
+  --info: hsl(217 91% 60%);
+  --info-bg: hsl(214 95% 97%);
+  --info-foreground: hsl(217 91% 30%);
 }
 
 .dark {
@@ -70,4 +95,29 @@
   --sidebar-accent-foreground: hsl(240 4.8% 95.9%);
   --sidebar-border: hsl(240 3.7% 15.9%);
   --sidebar-ring: hsl(217.2 91.2% 59.8%);
+
+  /* Semantic: Diff/Change indicators (dark mode) */
+  --diff-added: hsl(142 70% 50%);
+  --diff-added-bg: hsl(142 50% 15%);
+  --diff-added-border: hsl(142 50% 25%);
+  --diff-added-foreground: hsl(142 70% 80%);
+
+  --diff-removed: hsl(0 70% 55%);
+  --diff-removed-bg: hsl(0 50% 15%);
+  --diff-removed-border: hsl(0 50% 25%);
+  --diff-removed-foreground: hsl(0 70% 80%);
+
+  --diff-modified: hsl(38 80% 55%);
+  --diff-modified-bg: hsl(38 50% 15%);
+  --diff-modified-border: hsl(38 50% 25%);
+  --diff-modified-foreground: hsl(38 80% 80%);
+
+  /* Semantic: Success/Warning/Info states (dark mode) */
+  --success: hsl(142 70% 50%);
+  --success-foreground: hsl(0 0% 100%);
+  --warning: hsl(38 80% 55%);
+  --warning-foreground: hsl(0 0% 100%);
+  --info: hsl(217 80% 60%);
+  --info-bg: hsl(217 50% 15%);
+  --info-foreground: hsl(217 80% 80%);
 }

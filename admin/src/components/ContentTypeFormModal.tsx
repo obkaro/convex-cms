@@ -940,7 +940,7 @@ export function ContentTypeFormModal({
 
 					{submitError && (
 						<div
-							className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800"
+							className="diff-removed rounded-lg border px-3 py-2 text-sm"
 							role="alert"
 							data-testid="submit-error"
 						>

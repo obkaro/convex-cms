@@ -149,7 +149,7 @@ export function VersionHistory({
       </div>
 
       {rollbackSuccess && (
-        <div className="flex items-center gap-2 border-b bg-emerald-50 px-4 py-2 text-sm text-emerald-800">
+        <div className="flex items-center gap-2 border-b bg-diff-added-bg px-4 py-2 text-sm text-diff-added-foreground">
           <CheckCircle className="size-4" />
           Successfully rolled back to previous version
         </div>
@@ -198,7 +198,7 @@ export function VersionHistory({
                         {version.wasPublished && (
                           <Badge
                             variant="outline"
-                            className="border-emerald-500/50 text-emerald-600"
+                            className="border-success/50 text-success"
                           >
                             Published
                           </Badge>

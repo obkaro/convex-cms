@@ -31,9 +31,9 @@ const variantMap = {
 
 const customVariantClasses = {
   success:
-    'bg-emerald-600 text-white hover:bg-emerald-700 focus-visible:ring-emerald-500',
+    'bg-success text-success-foreground hover:bg-success/90 focus-visible:ring-success',
   warning:
-    'bg-amber-500 text-white hover:bg-amber-600 focus-visible:ring-amber-500',
+    'bg-warning text-warning-foreground hover:bg-warning/90 focus-visible:ring-warning',
 } as Record<string, string>
 
 const LoadingSpinner = () => (

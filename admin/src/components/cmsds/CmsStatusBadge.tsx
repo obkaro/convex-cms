@@ -92,12 +92,12 @@ const statusConfig: Record<
 
 const colorToClassName: Record<WorkflowStateColor, string> = {
   gray: "bg-muted text-muted-foreground",
-  yellow: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
-  blue: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
-  green: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
-  red: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
+  yellow: "bg-diff-modified-bg text-diff-modified-foreground",
+  blue: "bg-info-bg text-info-foreground",
+  green: "bg-diff-added-bg text-diff-added-foreground",
+  red: "bg-diff-removed-bg text-diff-removed-foreground",
   purple: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400",
-  orange: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400",
+  orange: "bg-diff-modified-bg text-diff-modified-foreground",
 };
 
 function getDefaultIcon() {

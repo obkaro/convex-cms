@@ -371,7 +371,7 @@ export function SettingsPage({
 							{feedbackStatus === "saved" && (
 								<Badge
 									variant="secondary"
-									className="gap-1 bg-emerald-100 text-emerald-700"
+									className="gap-1 bg-diff-added-bg text-diff-added-foreground"
 								>
 									<Check className="size-3" />
 									Settings saved successfully
@@ -517,9 +517,9 @@ export function SettingsPage({
 					{canEdit && api.resetSettings && (
 						<CmsSurface
 							elevation="base"
-							className="border-red-200 p-6 dark:border-red-900"
+							className="border-destructive/50 p-6"
 						>
-							<h2 className="mb-4 text-lg font-semibold text-red-600">
+							<h2 className="mb-4 text-lg font-semibold text-destructive">
 								Danger Zone
 							</h2>
 							<div className="flex items-center justify-between">

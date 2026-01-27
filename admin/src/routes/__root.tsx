@@ -185,40 +185,40 @@ function ConvexProviderWrapper({
   if (!convex) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background p-6">
-        <div className="max-w-lg space-y-4 rounded-lg border border-amber-200 bg-amber-50 p-6 text-center">
-          <h2 className="text-xl font-semibold text-amber-900">
+        <div className="diff-modified max-w-lg space-y-4 rounded-lg border p-6 text-center">
+          <h2 className="text-xl font-semibold text-diff-modified">
             Convex Configuration Required
           </h2>
-          <p className="text-sm text-amber-800">
+          <p className="text-sm text-diff-modified-foreground">
             Please provide a Convex deployment URL to connect to your backend.
           </p>
-          <div className="space-y-2 text-left text-sm text-amber-700">
+          <div className="space-y-2 text-left text-sm text-diff-modified-foreground">
             <p className="font-medium">Options:</p>
             <ul className="list-inside list-disc space-y-1">
               <li>
                 Run with URL:{" "}
-                <code className="rounded bg-amber-100 px-1">
+                <code className="rounded bg-diff-modified-bg/50 px-1">
                   npx convex-cms admin --url YOUR_URL
                 </code>
               </li>
               <li>
                 Set environment variable:{" "}
-                <code className="rounded bg-amber-100 px-1">
+                <code className="rounded bg-diff-modified-bg/50 px-1">
                   CONVEX_URL=YOUR_URL
                 </code>
               </li>
               <li>
                 Add to{" "}
-                <code className="rounded bg-amber-100 px-1">.env.local</code>:{" "}
-                <code className="rounded bg-amber-100 px-1">
+                <code className="rounded bg-diff-modified-bg/50 px-1">.env.local</code>:{" "}
+                <code className="rounded bg-diff-modified-bg/50 px-1">
                   CONVEX_URL=YOUR_URL
                 </code>
               </li>
             </ul>
           </div>
-          <p className="text-sm text-amber-700">
+          <p className="text-sm text-diff-modified-foreground">
             Run{" "}
-            <code className="rounded bg-amber-100 px-1">npx convex dev</code> to
+            <code className="rounded bg-diff-modified-bg/50 px-1">npx convex dev</code> to
             start Convex and get your URL.
           </p>
         </div>

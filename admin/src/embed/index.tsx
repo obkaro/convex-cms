@@ -58,6 +58,7 @@ import {
   EmbedTrash,
   EmbedTaxonomies,
   EmbedNewEntry,
+  EmbedEntry,
 } from "./pages";
 
 function adaptAuthConfig(auth: CmsAdminAuthConfig): {
@@ -87,11 +88,11 @@ function ConvexProviderWrapper({
   if (!convex) {
     return (
       <div className="flex min-h-full items-center justify-center bg-background p-6">
-        <div className="max-w-lg space-y-4 rounded-lg border border-amber-200 bg-amber-50 p-6 text-center">
-          <h2 className="text-xl font-semibold text-amber-900">
+        <div className="diff-modified max-w-lg space-y-4 rounded-lg border p-6 text-center">
+          <h2 className="text-xl font-semibold text-diff-modified">
             Convex Configuration Required
           </h2>
-          <p className="text-sm text-amber-800">
+          <p className="text-sm text-diff-modified-foreground">
             Please provide a valid convexUrl prop to the CmsAdmin component.
           </p>
         </div>
@@ -125,6 +126,10 @@ function EmbedRouter() {
         // Handle new entry action
         if (currentRoute.params.action === "new") {
           return <EmbedNewEntry />;
+        }
+        // Handle existing entry edit
+        if (currentRoute.params.entryId) {
+          return <EmbedEntry />;
         }
         // Handle content type specific entries
         if (currentRoute.params.contentTypeId) {

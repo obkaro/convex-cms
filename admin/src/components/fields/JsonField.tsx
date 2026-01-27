@@ -160,7 +160,7 @@ export function JsonField({
             </span>
           )}
           {!syntaxError && textValue.trim() !== '' && (
-            <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+            <span className="flex items-center gap-1 text-success">
               <Check className="size-3" />
               Valid JSON
             </span>

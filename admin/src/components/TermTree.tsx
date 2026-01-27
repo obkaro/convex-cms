@@ -196,12 +196,12 @@ export function TermTree({
       </div>
 
       {error && (
-        <div className="flex items-center justify-between rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+        <div className="diff-removed flex items-center justify-between rounded-lg border px-3 py-2 text-sm">
           {error}
           <button
             type="button"
             onClick={() => setError(null)}
-            className="text-red-600 hover:text-red-800"
+            className="text-diff-removed hover:text-diff-removed-foreground"
           >
             ×
           </button>
@@ -436,7 +436,7 @@ function TermEditModal({
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {submitError && (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+          <div className="diff-removed rounded-lg border px-3 py-2 text-sm">
             {submitError}
           </div>
         )}

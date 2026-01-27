@@ -187,7 +187,7 @@ export function TaxonomyEditor({
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {submitError && (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+          <div className="diff-removed rounded-lg border px-3 py-2 text-sm">
             {submitError}
           </div>
         )}
@@ -294,7 +294,7 @@ export function TaxonomyEditor({
                 Terms can have parent-child relationships (like categories)
               </p>
               {isEditing && (
-                <p className="text-xs text-amber-600">
+                <p className="text-xs text-warning">
                   Hierarchy type cannot be changed after creation
                 </p>
               )}

@@ -21,21 +21,47 @@
 }
 
 @layer utilities {
-  /* Status badge colors */
+  /* Status badge colors - using semantic variables */
   .status-draft {
-    @apply bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300;
+    @apply bg-muted text-muted-foreground;
   }
 
   .status-published {
-    @apply bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400;
+    @apply bg-diff-added-bg text-diff-added-foreground;
   }
 
   .status-scheduled {
-    @apply bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400;
+    @apply bg-info-bg text-info-foreground;
   }
 
   .status-archived {
-    @apply bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400;
+    @apply bg-diff-modified-bg text-diff-modified-foreground;
+  }
+
+  /* Diff change indicators */
+  .diff-added {
+    @apply bg-diff-added-bg border-diff-added-border text-diff-added-foreground;
+  }
+
+  .diff-removed {
+    @apply bg-diff-removed-bg border-diff-removed-border text-diff-removed-foreground;
+  }
+
+  .diff-modified {
+    @apply bg-diff-modified-bg border-diff-modified-border text-diff-modified-foreground;
+  }
+
+  /* Icon badges for diff */
+  .diff-icon-added {
+    @apply bg-diff-added/20 text-diff-added;
+  }
+
+  .diff-icon-removed {
+    @apply bg-diff-removed/20 text-diff-removed;
+  }
+
+  .diff-icon-modified {
+    @apply bg-diff-modified/20 text-diff-modified;
   }
 
   /* Surface elevations */

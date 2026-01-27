@@ -82,11 +82,11 @@ export function VersionCompare({
   const getChangeStyles = (changeType: string) => {
     switch (changeType) {
       case 'added':
-        return 'border-emerald-200 bg-emerald-50'
+        return 'diff-added border'
       case 'removed':
-        return 'border-red-200 bg-red-50'
+        return 'diff-removed border'
       case 'modified':
-        return 'border-amber-200 bg-amber-50'
+        return 'diff-modified border'
       default:
         return 'border-border bg-card'
     }
@@ -95,11 +95,11 @@ export function VersionCompare({
   const getChangeIconStyles = (changeType: string) => {
     switch (changeType) {
       case 'added':
-        return 'bg-emerald-100 text-emerald-700'
+        return 'diff-icon-added'
       case 'removed':
-        return 'bg-red-100 text-red-700'
+        return 'diff-icon-removed'
       case 'modified':
-        return 'bg-amber-100 text-amber-700'
+        return 'diff-icon-modified'
       default:
         return 'bg-muted text-muted-foreground'
     }
@@ -144,7 +144,7 @@ export function VersionCompare({
               </p>
             </div>
           ) : !comparison ? (
-            <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+            <div className="diff-removed rounded-lg border px-4 py-3 text-sm">
               Could not load version comparison
             </div>
           ) : !comparison.hasChanges ? (
@@ -209,21 +209,21 @@ export function VersionCompare({
 
                     <div className="mt-2 space-y-2">
                       {change.changeType !== 'added' && (
-                        <div className="rounded border border-red-200 bg-white p-2">
-                          <p className="mb-1 text-xs font-medium text-red-700">
+                        <div className="rounded border border-diff-removed-border bg-card p-2">
+                          <p className="mb-1 text-xs font-medium text-diff-removed">
                             Before:
                           </p>
-                          <pre className="overflow-x-auto whitespace-pre-wrap break-words font-mono text-xs text-red-900">
+                          <pre className="overflow-x-auto whitespace-pre-wrap break-words font-mono text-xs text-diff-removed-foreground">
                             {formatValue(change.fromValue)}
                           </pre>
                         </div>
                       )}
                       {change.changeType !== 'removed' && (
-                        <div className="rounded border border-emerald-200 bg-white p-2">
-                          <p className="mb-1 text-xs font-medium text-emerald-700">
+                        <div className="rounded border border-diff-added-border bg-card p-2">
+                          <p className="mb-1 text-xs font-medium text-diff-added">
                             After:
                           </p>
-                          <pre className="overflow-x-auto whitespace-pre-wrap break-words font-mono text-xs text-emerald-900">
+                          <pre className="overflow-x-auto whitespace-pre-wrap break-words font-mono text-xs text-diff-added-foreground">
                             {formatValue(change.toValue)}
                           </pre>
                         </div>

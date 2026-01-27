@@ -49,14 +49,14 @@ export function VersionRollbackModal({
           .
         </p>
 
-        <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+        <div className="diff-modified rounded-lg border p-3">
           <div className="flex gap-2">
-            <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-600" />
+            <AlertTriangle className="mt-0.5 size-4 shrink-0 text-diff-modified" />
             <div className="space-y-2">
-              <p className="text-sm font-medium text-amber-800">
+              <p className="text-sm font-medium text-diff-modified">
                 This action will:
               </p>
-              <ul className="space-y-1 text-sm text-amber-700">
+              <ul className="space-y-1 text-sm text-diff-modified-foreground">
                 <li>
                   • Create a new version with the content from version{' '}
                   {targetVersion}
@@ -69,7 +69,7 @@ export function VersionRollbackModal({
         </div>
 
         {error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+          <div className="diff-removed rounded-lg border px-3 py-2 text-sm">
             <span className="font-medium">Error:</span> {error}
           </div>
         )}
