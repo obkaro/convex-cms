@@ -292,9 +292,9 @@ export const getContentTypeArgsSchema = z.object({
  * Arguments for creating a content entry.
  */
 export const createContentEntryArgsSchema = z.object({
-  contentTypeId: z
+  contentTypeName: z
     .string()
-    .describe("The content type ID this entry belongs to"),
+    .describe("The content type name this entry belongs to"),
   slug: z
     .string()
     .optional()
@@ -398,11 +398,10 @@ export const duplicateContentEntryArgsSchema = z.object({
  * Arguments for listing content entries.
  */
 export const listContentEntriesArgsSchema = z.object({
-  contentTypeId: z.string().optional().describe("Filter by content type ID"),
   contentTypeName: z
     .string()
     .optional()
-    .describe("Filter by content type name (alternative to ID)"),
+    .describe("Filter by content type name"),
   status: contentStatusSchema.optional().describe("Filter by single status"),
   statusIn: z
     .array(contentStatusSchema)
@@ -430,9 +429,8 @@ export const listContentEntriesArgsSchema = z.object({
  */
 export const getContentEntryArgsSchema = z.object({
   id: z.string().optional().describe("Get entry by ID"),
-  slug: z.string().optional().describe("Get entry by slug (requires contentTypeId or contentTypeName)"),
-  contentTypeId: z.string().optional().describe("Content type ID (required when using slug)"),
-  contentTypeName: z.string().optional().describe("Content type name (alternative to contentTypeId when using slug)"),
+  slug: z.string().optional().describe("Get entry by slug (requires contentTypeName)"),
+  contentTypeName: z.string().optional().describe("Content type name (required when using slug)"),
 });
 
 /**
@@ -552,7 +550,6 @@ export const bulkDeleteArgsSchema = z.object({
  */
 export const searchContentArgsSchema = z.object({
   query: z.string().describe("Search query string"),
-  contentTypeId: z.string().optional().describe("Limit search to content type"),
   contentTypeName: z.string().optional().describe("Limit search to content type by name"),
   status: contentStatusSchema.optional().describe("Filter by status"),
   limit: z.number().optional().describe("Maximum results to return"),
@@ -731,7 +728,7 @@ export function createCmsTools(
         componentApi.contentEntryMutations.createEntry,
         {
           ...args,
-          contentTypeId: args.contentTypeId ,
+          contentTypeName: args.contentTypeName,
           createdBy: args.createdBy ?? defaultUserId,
         }
       );
@@ -877,7 +874,6 @@ export function createCmsTools(
     args: listContentEntriesArgsSchema,
     handler: async (ctx, args) => {
       const result = await ctx.runQuery(componentApi.contentEntries.list, {
-        contentTypeId: args.contentTypeId ,
         contentTypeName: args.contentTypeName,
         status: args.status,
         statusIn: args.statusIn,
@@ -900,27 +896,18 @@ export function createCmsTools(
   const getContentEntry = createTool({
     description:
       "Get a single content entry by ID or by slug. " +
-      "When using slug, you must also provide contentTypeId or contentTypeName.",
+      "When using slug, you must also provide contentTypeName.",
     args: getContentEntryArgsSchema,
     handler: async (ctx, args) => {
       if (args.id) {
         const result = await ctx.runQuery(componentApi.contentEntries.get, {
-          id: args.id ,
+          id: args.id,
         });
         return result;
       } else if (args.slug) {
-        if (args.contentTypeId) {
+        if (args.contentTypeName) {
           const result = await ctx.runQuery(
             componentApi.contentEntries.getBySlug,
-            {
-              slug: args.slug,
-              contentTypeId: args.contentTypeId ,
-            }
-          );
-          return result;
-        } else if (args.contentTypeName) {
-          const result = await ctx.runQuery(
-            componentApi.contentEntries.getBySlugAndTypeName,
             {
               slug: args.slug,
               contentTypeName: args.contentTypeName,
@@ -929,7 +916,7 @@ export function createCmsTools(
           return result;
         }
         throw new Error(
-          "When using slug, contentTypeId or contentTypeName must be provided"
+          "When using slug, contentTypeName must be provided"
         );
       }
       throw new Error("Either id or slug must be provided");
@@ -1153,7 +1140,6 @@ export function createCmsTools(
     args: searchContentArgsSchema,
     handler: async (ctx, args) => {
       const result = await ctx.runQuery(componentApi.contentEntries.list, {
-        contentTypeId: args.contentTypeId ,
         contentTypeName: args.contentTypeName,
         status: args.status,
         search: args.query,
