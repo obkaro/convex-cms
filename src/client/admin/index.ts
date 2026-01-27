@@ -46,6 +46,7 @@ import type {
   AuthContext,
   ContentTypeHelpersSchema,
   TypedAdminApiOptions,
+  TypedAdminAPI,
 } from "./types.js";
 import { isUnifiedCmsConfig, extractAdminConfig, type UnifiedCmsConfig } from "../config.js";
 
@@ -65,32 +66,54 @@ import { createSettingsOperations } from "./settings.js";
  *
  * The returned API provides properly typed Convex function references that can be:
  * - Exported directly from your convex/admin.ts file
- * - Called via ctx.runQuery/ctx.runMutation in other Convex functions
- * - Used with useQuery/useMutation hooks in the frontend
+ * - Used with useQuery/useMutation hooks
+ *
+ * When `contentTypes` is provided, the returned functions have narrowed
+ * `contentTypeName` arguments for full IDE autocomplete.
  *
  * @param component - The CMS component API
  * @param options - Configuration options
- * @returns Admin API operations as Convex function references
+ * @returns Admin API operations as typed Convex function references
  *
- * @example
+ * @example Basic usage (untyped contentTypeName)
  * ```typescript
- * // convex/admin.ts
- * export const { listEntries, createEntry, publishEntry } = defineAdminAPI(
- *   components.convexCms,
- *   { contentTypes: { blogPost, author } }
- * );
+ * export const { listEntries } = defineAdminAPI(components.cms);
+ * useQuery(api.admin.listEntries, { contentTypeName: "blog_post", ... });
+ * ```
  *
- * // In another Convex function
- * const entries = await ctx.runQuery(listEntries, { contentTypeName: "blog_post" });
+ * @example With content types (typed contentTypeName with autocomplete)
+ * ```typescript
+ * export const admin = defineAdminAPI(components.cms, {
+ *   contentTypes: { blogPost, author }
+ * });
+ *
+ * // TypeScript provides autocomplete: "blog_post" | "author"
+ * useQuery(admin.listEntries, { contentTypeName: "blog_post", ... });
  * ```
  */
-export function defineAdminAPI<
-  T extends ContentTypeHelpersSchema = Record<string, never>
->(
+// Overload 1: With content types - returns typed FunctionReferences
+export function defineAdminAPI<T extends ContentTypeHelpersSchema>(
+  component: ComponentApi,
+  options: TypedAdminApiOptions<T>
+): TypedAdminAPI<T, ReturnType<typeof createAdminAPIImpl>>;
+
+// Overload 2: Without content types - returns standard types
+export function defineAdminAPI(
+  component: ComponentApi,
+  options?: AdminApiOptions | UnifiedCmsConfig
+): ReturnType<typeof createAdminAPIImpl>;
+
+// Implementation
+export function defineAdminAPI<T extends ContentTypeHelpersSchema>(
   component: ComponentApi,
   options?: AdminApiOptions | UnifiedCmsConfig | TypedAdminApiOptions<T>
-): ReturnType<typeof createAdminAPIImpl> {
-  return createAdminAPIImpl(component, options ?? {});
+): ReturnType<typeof createAdminAPIImpl> | TypedAdminAPI<T, ReturnType<typeof createAdminAPIImpl>> {
+  const impl = createAdminAPIImpl(component, options ?? {});
+  // Cast to typed API - at runtime this is the same object,
+  // but TypeScript sees FunctionReference types with narrowed args.
+  // We use 'as unknown as' because RegisteredQuery and FunctionReference
+  // don't structurally overlap, but they're compatible at runtime.
+  return impl as unknown as TypedAdminAPI<T, typeof impl>;
 }
 
 function createAdminAPIImpl(

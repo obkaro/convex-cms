@@ -53,7 +53,7 @@ import type {
   ContentTypeMeta,
   FieldMeta,
 } from "./types.js";
-import { toSlug, isValidSlug } from "../utils/toSlug.js";
+import { toSlug, isValidSlug, type ToSlugType } from "../utils/toSlug.js";
 
 // =============================================================================
 // Content Type Name/Slug Handling
@@ -177,7 +177,7 @@ export function defineContentType<
   TValidator extends Validator<Record<string, unknown>, "required", string>
 >(
   config: ContentTypeConfig<TValidator> & { name: TName }
-): ContentTypeDefinition<string, TValidator> {
+): ContentTypeDefinition<ToSlugType<TName>, TValidator> {
   const inputName = config.name;
 
   // Determine slug and display name based on input format
@@ -208,7 +208,8 @@ export function defineContentType<
   };
 
   // Freeze to prevent accidental mutation
-  return Object.freeze(definition) as ContentTypeDefinition<string, TValidator>;
+  // Cast to the computed slug type - runtime slug matches type-level ToSlugType
+  return Object.freeze(definition) as ContentTypeDefinition<ToSlugType<TName>, TValidator>;
 }
 
 // =============================================================================

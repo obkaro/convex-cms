@@ -18,6 +18,70 @@ export function toSlug(displayName: string): string {
     .replace(/_+/g, "_");
 }
 
+// =============================================================================
+// Type-Level Slug Conversion
+// =============================================================================
+// These types compute the slug at the type level, preserving literal types.
+// This enables TypeScript to track the exact slug value through the type system.
+
+/**
+ * Replaces spaces with underscores in a string type.
+ * "Blog Post" → "Blog_Post"
+ */
+type ReplaceSpaces<S extends string> = S extends `${infer Head} ${infer Tail}`
+  ? ReplaceSpaces<`${Head}_${Tail}`>
+  : S;
+
+/**
+ * Collapses multiple underscores into single underscores.
+ * "Blog__Post" → "Blog_Post"
+ */
+type CollapseUnderscores<S extends string> = S extends `${infer Head}__${infer Tail}`
+  ? CollapseUnderscores<`${Head}_${Tail}`>
+  : S;
+
+/**
+ * Removes leading underscores.
+ * "_Blog_Post" → "Blog_Post"
+ */
+type TrimLeadingUnderscore<S extends string> = S extends `_${infer Rest}`
+  ? TrimLeadingUnderscore<Rest>
+  : S;
+
+/**
+ * Removes trailing underscores.
+ * "Blog_Post_" → "Blog_Post"
+ */
+type TrimTrailingUnderscore<S extends string> = S extends `${infer Rest}_`
+  ? TrimTrailingUnderscore<Rest>
+  : S;
+
+/**
+ * Type-level slug conversion.
+ * Converts a display name to its slug form at the type level.
+ *
+ * Handles common patterns:
+ * - "Blog Post" → "blog_post" (space-separated words)
+ * - "blog_post" → "blog_post" (already a slug)
+ * - "BlogPost" → "blogpost" (camelCase, simplified)
+ *
+ * @example
+ * ```typescript
+ * type Slug1 = ToSlugType<"Blog Post">;      // "blog_post"
+ * type Slug2 = ToSlugType<"Roadmap Item">;   // "roadmap_item"
+ * type Slug3 = ToSlugType<"faq_page">;       // "faq_page"
+ * ```
+ */
+export type ToSlugType<T extends string> = Lowercase<
+  TrimTrailingUnderscore<
+    TrimLeadingUnderscore<
+      CollapseUnderscores<
+        ReplaceSpaces<T>
+      >
+    >
+  >
+>;
+
 /**
  * Validates that a slug follows the content type naming rules.
  *

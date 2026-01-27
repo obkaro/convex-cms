@@ -4,7 +4,7 @@
  * Non-derivable types for the Admin API including options, operations, and auth context.
  */
 
-import type { Auth } from "convex/server";
+import type { Auth, RegisteredQuery, RegisteredMutation } from "convex/server";
 
 /**
  * Operation context passed to the auth callback.
@@ -264,135 +264,160 @@ export interface TypedAdminApiOptions<T extends ContentTypeHelpersSchema> extend
 }
 
 // =============================================================================
-// Typed Admin API Return Type
+// Type-Safe Admin API (Explicit FunctionReference Types)
 // =============================================================================
-
-// Keys that need typed contentTypeName overrides for autocomplete
-type TypedFlatMethodKeys =
-  | "listEntries"
-  | "createEntry"
-  | "getEntryBySlug"
-  | "getEntryBySlugAndTypeName"
-  | "getScheduledEntries";
+// The solution: Define FunctionReference types explicitly with narrowed args.
+// RegisteredQuery has phantom type parameters that can't be extracted after creation.
+// FunctionReference stores types as actual properties (_args, _returnType).
+// By defining explicit types, we create properly typed function references.
 
 /**
- * Typed overrides for flat methods that take contentTypeName.
+ * Args for listEntries query with narrowed contentTypeName.
  */
-type TypedFlatMethodOverrides<T extends ContentTypeHelpersSchema> = {
-  listEntries: TypedListEntriesQuery<T>;
-  createEntry: TypedCreateEntryMutation<T>;
-  getEntryBySlug: TypedGetEntryBySlugQuery<T>;
-  getEntryBySlugAndTypeName: TypedGetEntryBySlugQuery<T>;
-  getScheduledEntries: TypedGetScheduledEntriesQuery<T>;
+type ListEntriesArgs<TSlugs extends string> = {
+  contentTypeName?: TSlugs;
+  status?: "draft" | "published" | "archived" | "scheduled";
+  search?: string;
+  locale?: string;
+  paginationOpts: { numItems: number; cursor: string | null };
+};
+
+/**
+ * Args for createEntry mutation with narrowed contentTypeName.
+ */
+type CreateEntryArgs<TSlugs extends string> = {
+  contentTypeName: TSlugs;
+  data: unknown;
+  slug?: string;
+  status?: "draft" | "published" | "archived" | "scheduled";
+  locale?: string;
+  primaryEntryId?: string;
+  createdBy?: string;
+};
+
+/**
+ * Args for getEntryBySlug query with narrowed contentTypeName.
+ */
+type GetEntryBySlugArgs<TSlugs extends string> = {
+  contentTypeName: TSlugs;
+  slug: string;
+  status?: string;
+};
+
+/**
+ * Args for getScheduledEntries query with narrowed contentTypeName.
+ */
+type GetScheduledEntriesArgs<TSlugs extends string> = {
+  contentTypeName?: TSlugs;
+  paginationOpts: { numItems: number; cursor: string | null };
+};
+
+/**
+ * Common return type for paginated entry lists.
+ * Note: FunctionReference return types are unwrapped (not wrapped in Promise).
+ */
+type PaginatedEntriesReturn = {
+  page: Array<{
+    _id: string;
+    _creationTime: number;
+    contentTypeName: string;
+    slug: string;
+    status: string;
+    data: unknown;
+    version: number;
+    locale?: string;
+    createdBy?: string;
+    updatedBy?: string;
+    firstPublishedAt?: number;
+    lastPublishedAt?: number;
+    scheduledPublishAt?: number;
+    deletedAt?: number;
+  }>;
+  continueCursor: string | null;
+  isDone: boolean;
+};
+
+/**
+ * Single entry object type.
+ */
+type Entry = {
+  _id: string;
+  _creationTime: number;
+  contentTypeName: string;
+  slug: string;
+  status: string;
+  data: unknown;
+  version: number;
+  locale?: string;
+  createdBy?: string;
+  updatedBy?: string;
+  firstPublishedAt?: number;
+  lastPublishedAt?: number;
+  scheduledPublishAt?: number;
+  deletedAt?: number;
+};
+
+/**
+ * Return type for queries that might not find an entry (getBySlug, etc).
+ */
+type EntryOrNull = Entry | null;
+
+/**
+ * Return type for mutations that always return an entry (createEntry).
+ */
+type EntryReturn = Entry;
+
+/**
+ * Narrows a single key to its typed version if it's a narrowed key.
+ * Uses RegisteredQuery/RegisteredMutation to match what FilterApi expects.
+ */
+type NarrowKey<K, TSlugs extends string, TOriginal> =
+  K extends "listEntries" ? RegisteredQuery<"public", ListEntriesArgs<TSlugs>, PaginatedEntriesReturn>
+  : K extends "createEntry" ? RegisteredMutation<"public", CreateEntryArgs<TSlugs>, EntryReturn>
+  : K extends "getEntryBySlug" ? RegisteredQuery<"public", GetEntryBySlugArgs<TSlugs>, EntryOrNull>
+  : K extends "getEntryBySlugAndTypeName" ? RegisteredQuery<"public", GetEntryBySlugArgs<TSlugs>, EntryOrNull>
+  : K extends "getScheduledEntries" ? RegisteredQuery<"public", GetScheduledEntriesArgs<TSlugs>, PaginatedEntriesReturn>
+  : TOriginal;
+
+/**
+ * Narrows entries namespace keys.
+ * Uses RegisteredQuery/RegisteredMutation to match what FilterApi expects.
+ */
+type NarrowEntriesKey<K, TSlugs extends string, TOriginal> =
+  K extends "list" ? RegisteredQuery<"public", ListEntriesArgs<TSlugs>, PaginatedEntriesReturn>
+  : K extends "create" ? RegisteredMutation<"public", CreateEntryArgs<TSlugs>, EntryReturn>
+  : K extends "getBySlug" ? RegisteredQuery<"public", GetEntryBySlugArgs<TSlugs>, EntryOrNull>
+  : K extends "getBySlugAndTypeName" ? RegisteredQuery<"public", GetEntryBySlugArgs<TSlugs>, EntryOrNull>
+  : K extends "getScheduled" ? RegisteredQuery<"public", GetScheduledEntriesArgs<TSlugs>, PaginatedEntriesReturn>
+  : TOriginal;
+
+/**
+ * Typed entries namespace using pure mapped type.
+ */
+type TypedEntriesNamespace<TSlugs extends string, TEntries> = {
+  [K in keyof TEntries]: NarrowEntriesKey<K, TSlugs, TEntries[K]>;
 };
 
 /**
  * Typed admin API with content type name inference.
  *
- * This type extends the base admin API (inferred from implementation)
- * and overrides only the methods that benefit from contentTypeName autocomplete.
- * All other methods retain their proper types from the implementation.
+ * Uses a pure mapped type (no intersections) for compatibility with
+ * Convex's FilterApi type processing.
  *
- * @typeParam TBase - The base admin API type (inferred from createAdminAPIImpl)
- * @typeParam T - The content type helpers schema for type inference
+ * @example
+ * ```typescript
+ * const admin = defineAdminAPI(components.cms, {
+ *   contentTypes: { blogPost, author }
+ * });
+ *
+ * // TypeScript provides autocomplete: "blog_post" | "author"
+ * useQuery(admin.listEntries, { contentTypeName: "blog_post", ... });
+ * ```
  */
-export type TypedAdminAPI<
-  T extends ContentTypeHelpersSchema,
-  TBase = Record<string, unknown>
-> = Omit<TBase, TypedFlatMethodKeys | "entries"> &
-  TypedFlatMethodOverrides<T> & {
-    entries: TBase extends { entries: infer E }
-      ? Omit<E, "list" | "create" | "getBySlug" | "getBySlugAndTypeName" | "getScheduled"> & {
-          list: TypedListEntriesQuery<T>;
-          create: TypedCreateEntryMutation<T>;
-          getBySlug: TypedGetEntryBySlugQuery<T>;
-          getBySlugAndTypeName: TypedGetEntryBySlugQuery<T>;
-          getScheduled: TypedGetScheduledEntriesQuery<T>;
-        }
-      : unknown;
-  };
-
-// Typed query/mutation function signatures
-type TypedListEntriesQuery<T extends ContentTypeHelpersSchema> = {
-  (ctx: unknown, args: {
-    contentTypeName?: ContentTypeSlugs<T>;
-    status?: "draft" | "published" | "archived" | "scheduled";
-    search?: string;
-    locale?: string;
-    paginationOpts: { numItems: number; cursor: string | null };
-  }): Promise<{
-    page: Array<{
-      _id: string;
-      _creationTime: number;
-      contentTypeName: string;
-      slug: string;
-      status: "draft" | "published" | "archived" | "scheduled";
-      data: Record<string, unknown>;
-      version: number;
-      locale?: string;
-      primaryEntryId?: string;
-    }>;
-    continueCursor: string | null;
-    isDone: boolean;
-  }>;
-};
-
-type TypedCreateEntryMutation<T extends ContentTypeHelpersSchema> = {
-  (ctx: unknown, args: {
-    contentTypeName: ContentTypeSlugs<T>;
-    data: Record<string, unknown>;
-    slug?: string;
-    status?: "draft" | "published" | "archived" | "scheduled";
-    locale?: string;
-    primaryEntryId?: string;
-    createdBy?: string;
-  }): Promise<{
-    _id: string;
-    _creationTime: number;
-    contentTypeName: string;
-    slug: string;
-    status: "draft" | "published" | "archived" | "scheduled";
-    data: Record<string, unknown>;
-    version: number;
-    locale?: string;
-    primaryEntryId?: string;
-  }>;
-};
-
-type TypedGetEntryBySlugQuery<T extends ContentTypeHelpersSchema> = {
-  (ctx: unknown, args: {
-    contentTypeName: ContentTypeSlugs<T>;
-    slug: string;
-    status?: "draft" | "published" | "archived" | "scheduled";
-    includeDeleted?: boolean;
-  }): Promise<{
-    _id: string;
-    _creationTime: number;
-    contentTypeName: string;
-    slug: string;
-    status: "draft" | "published" | "archived" | "scheduled";
-    data: Record<string, unknown>;
-    version: number;
-    locale?: string;
-    primaryEntryId?: string;
-  } | null>;
-};
-
-type TypedGetScheduledEntriesQuery<T extends ContentTypeHelpersSchema> = {
-  (ctx: unknown, args: {
-    from?: number;
-    to?: number;
-    contentTypeName?: ContentTypeSlugs<T>;
-  }): Promise<Array<{
-    _id: string;
-    _creationTime: number;
-    contentTypeName: string;
-    slug: string;
-    status: "draft" | "published" | "archived" | "scheduled";
-    data: Record<string, unknown>;
-    version: number;
-    locale?: string;
-    primaryEntryId?: string;
-    scheduledPublishAt?: number;
-  }>>;
+export type TypedAdminAPI<T extends ContentTypeHelpersSchema, TBase> = {
+  [K in keyof TBase]: K extends "entries"
+    ? TBase[K] extends object
+      ? TypedEntriesNamespace<ContentTypeSlugs<T>, TBase[K]>
+      : TBase[K]
+    : NarrowKey<K, ContentTypeSlugs<T>, TBase[K]>;
 };

@@ -69,7 +69,7 @@ function ChangelogCard({ entry }: { entry: ChangelogEntry }) {
 export function Changelog() {
 	const result = useQuery(api.admin.listEntries, {
 		contentTypeName: "changelog_entry",
-		status: "pubished",
+		status: "published",
 		paginationOpts: { numItems: 50, cursor: null },
 	});
 
@@ -87,7 +87,7 @@ export function Changelog() {
 
 	const entries = result.page.map((entry) => ({
 		_id: entry._id,
-		...entry.data,
+		...(entry.data as Record<string, unknown>),
 	})) as ChangelogEntry[];
 
 	return (
