@@ -41,11 +41,11 @@ If you're building on Convex and need content management without the overhead of
 
 ### What you get:
 
-- **Typesafe admin API** Admin APIs exported directly from your backend for use in your React queries and mutations
-- **Built in admin UI** A well designed admin UI that you can view and edit content from
-- **Embeddable content manager** Ability to embed and serve the prebuilt UI as part of you React application
-- **Data independence** CMS that lives in your own convex deployment, extendable and customizable with your convex functions
-- **Agent-native.** Pre-built tools useful for AI agent integration with `@convex-dev/agent`
+- **Typesafe admin API:** Admin APIs exported directly from your backend for use in your React queries and mutations
+- **Built in admin UI:** A well designed admin UI that you can view and edit content from
+- **Embeddable content manager:** Ability to embed and serve the prebuilt UI as part of you React application
+- **Data independence:** CMS that lives in your own convex deployment, extendable and customizable with your convex functions
+- **Agent-native content management:** Pre-built tools useful for AI agent integration with `@convex-dev/agent`
 
 ## Features
 
