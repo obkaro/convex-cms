@@ -5,32 +5,51 @@
  */
 
 export const CMS_CLIENT_TEMPLATE = `/**
- * CMS Client
+ * CMS Setup
  *
- * Uses the unified config pattern - all CMS settings are defined
- * once in cms.config.ts and shared with the admin API.
+ * Uses the unified createCms API for type-safe content management.
+ * Define content types with defineContent() and export the admin API.
  *
  * @example
  * \`\`\`typescript
- * import { cms } from "./cms";
+ * import { blogPost, admin } from "./cms";
  *
- * // Use in a mutation
+ * // Use in a mutation (typed helpers)
  * export const createPost = mutation({
- *   args: { title: v.string(), createdBy: v.string() },
+ *   args: { title: v.string() },
  *   handler: async (ctx, args) => {
- *     return await cms.contentEntries.create(ctx, {
- *       contentTypeId,
+ *     return await blogPost.create(ctx, {
  *       data: { title: args.title },
- *       createdBy: args.createdBy,
  *     });
  *   },
  * });
  * \`\`\`
  */
 
-import { createCmsClient } from "convex-cms";
+import { createCms } from "convex-cms";
+import { v } from "convex/values";
 import { components } from "./_generated/api";
 import cmsConfig from "./cms.config";
 
-export const cms = createCmsClient(components.convexCms, cmsConfig);
+const cms = createCms(components.convexCms, cmsConfig);
+
+// Define your content types here
+export const blogPost = cms.defineContent({
+  name: "Blog Post",
+  fields: v.object({
+    title: v.string(),
+    content: v.string(),
+    publishedAt: v.optional(v.number()),
+  }),
+  display: {
+    titleField: "title",
+    icon: "📝",
+  },
+});
+
+// Export admin API for the admin UI
+export const admin = cms.admin;
+
+// For advanced usage, you can also access CmsClient namespaces:
+// cms.contentTypes, cms.contentEntries, cms.versions, etc.
 `;
