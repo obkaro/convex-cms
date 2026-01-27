@@ -135,7 +135,7 @@ export function SettingsPage({
 	const adminConfig = useAdminConfig();
 
 	const isConfigured = useMemo(() => {
-		return typeof api.getSettings === "function";
+		return api.getSettings != null;
 	}, [api]);
 
 	const settings = useQuery(

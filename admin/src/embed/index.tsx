@@ -30,7 +30,7 @@
 
 import { ConvexProvider, ConvexReactClient } from "convex/react";
 import { useMemo, type ReactNode } from "react";
-import { AdminConfigProvider } from "../contexts/AdminConfigContext";
+import { SettingsConfigProvider } from "../contexts/SettingsConfigContext";
 import {
   AuthProvider,
   type GetUserHook,
@@ -51,6 +51,7 @@ import { EmbedLayout } from "./components/EmbedLayout";
 import {
   EmbedDashboard,
   EmbedContent,
+  EmbedContentTypeEntries,
   EmbedContentTypes,
   EmbedMedia,
   EmbedSettings,
@@ -120,12 +121,17 @@ function EmbedRouter() {
         return <EmbedTaxonomies />;
       case "trash":
         return <EmbedTrash />;
-      case "entries":
+      case "entries": {
         // Handle new entry action
         if (currentRoute.params.action === "new") {
           return <EmbedNewEntry />;
         }
+        // Handle content type specific entries
+        if (currentRoute.params.contentTypeId) {
+          return <EmbedContentTypeEntries contentTypeId={currentRoute.params.contentTypeId} />;
+        }
         return <EmbedContent />;
+      }
       default:
         return <EmbedDashboard />;
     }
@@ -149,13 +155,17 @@ export function CmsAdmin({
 }) {
   const adminConfig = useMemo(() => resolveAdminConfig(config), [config]);
   const authConfig = useMemo(() => adaptAuthConfig(auth), [auth]);
+  const settingsApi = useMemo(
+    () => (api.getSettings ? { getSettings: api.getSettings } : undefined),
+    [api]
+  );
 
   return (
     <div className={className}>
       <ApiProvider api={api}>
         <ThemeProvider>
-          <AdminConfigProvider config={adminConfig}>
-            <ConvexProviderWrapper convexUrl={convexUrl}>
+          <ConvexProviderWrapper convexUrl={convexUrl}>
+            <SettingsConfigProvider baseConfig={adminConfig} api={settingsApi}>
               <AuthProvider
                 getUser={authConfig.getUser}
                 getUserRole={authConfig.getUserRole}
@@ -173,8 +183,8 @@ export function CmsAdmin({
                   </RouteGuard>
                 </EmbedNavigationProvider>
               </AuthProvider>
-            </ConvexProviderWrapper>
-          </AdminConfigProvider>
+            </SettingsConfigProvider>
+          </ConvexProviderWrapper>
         </ThemeProvider>
       </ApiProvider>
     </div>

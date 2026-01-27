@@ -66,6 +66,9 @@ export function ContentPage({ api, navigation }: ContentPageProps) {
         ? contentTypeId.slice(5)
         : contentTypeId;
       setSelectedTypeId(slug);
+    } else {
+      // Clear selection when navigating to "All Entries"
+      setSelectedTypeId("");
     }
   }, [navigation.params?.contentTypeId]);
 

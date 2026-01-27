@@ -6,6 +6,7 @@
  */
 
 export { ContentPage, type ContentPageProps } from "./ContentPage";
+export { ContentTypeEntriesPage, type ContentTypeEntriesPageProps } from "./ContentTypeEntriesPage";
 export { ContentTypesPage, type ContentTypesPageProps } from "./ContentTypesPage";
 export { DashboardPage } from "./DashboardPage";
 export { MediaPage, type MediaPageProps } from "./MediaPage";

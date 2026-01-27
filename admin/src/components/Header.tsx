@@ -78,11 +78,14 @@ function getBreadcrumbs(
 ): BreadcrumbData[] {
   const breadcrumbs: BreadcrumbData[] = [{ label: appName, to: '/' }]
 
-  if (pathname === '/') {
+  // Decode pathname to match non-encoded override keys
+  const decodedPathname = decodeURIComponent(pathname)
+
+  if (decodedPathname === '/') {
     return breadcrumbs
   }
 
-  const segments = pathname.split('/').filter(Boolean)
+  const segments = decodedPathname.split('/').filter(Boolean)
   let currentPath = ''
 
   segments.forEach((segment, index) => {

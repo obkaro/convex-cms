@@ -1,5 +1,6 @@
 export { EmbedDashboard } from "./Dashboard";
 export { EmbedContent } from "./Content";
+export { EmbedContentTypeEntries } from "./ContentTypeEntries";
 export { EmbedContentTypes } from "./ContentTypes";
 export { EmbedMedia } from "./Media";
 export { EmbedSettings } from "./Settings";
