@@ -7,11 +7,9 @@
  */
 
 import { createContext, useContext, type ReactNode } from "react";
-import type { FunctionReference } from "convex/server";
+import { api } from "../../../convex/_generated/api";
 
-// Generic type for the CMS Admin API - matches the shape from defineAdminAPI
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type CmsAdminApi = Record<string, FunctionReference<any, any, any, any>>;
+export type CmsAdminApi = typeof api["admin"];
 
 const ApiContext = createContext<CmsAdminApi | null>(null);
 
