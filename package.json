@@ -1,7 +1,7 @@
 {
   "name": "convex-cms",
   "version": "0.0.8",
-  "packageManager": "pnpm@9.15.2",
+  "packageManager": "pnpm@10.28.2",
   "description": "A developer-first Convex Component for content management with flexible RBAC and AI-ready architecture",
   "type": "module",
   "workspaces": [

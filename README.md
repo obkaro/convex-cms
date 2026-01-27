@@ -7,6 +7,10 @@
 
 A headless CMS built as a [Convex Component](https://docs.convex.dev/components). Content management that runs inside your Convex app.
 
+[![Live Demo](docs/screenshot.png)](https://convex-cms-example.vercel.app)
+
+[Live Demo](https://convex-cms-example.vercel.app)
+
 ## Quick Start
 
 ### 1. Install
@@ -146,3 +150,9 @@ Both modes call the same functions from your `convex/admin.ts`.
 ## License
 
 Apache-2.0
+
+## Support
+
+- [GitHub Issues](https://github.com/obkaro/convex-cms/issues): Bug reports and feature requests
+- [Discord Community](https://discord.gg/convex): Chat with other users
+- [Convex Documentation](https://docs.convex.dev): Learn about Convex
