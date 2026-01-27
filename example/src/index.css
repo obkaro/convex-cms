@@ -1,9 +1,5 @@
 @import "tailwindcss";
 
-/* convex-cms admin styles - imports must come before @source */
-@import "convex-cms/admin/theme.css";
-@import "convex-cms/admin/tailwind-config.css";
-
 @theme {
   /* Typography - Editorial/Industrial */
   --font-display: "Crimson Pro", Georgia, serif;
