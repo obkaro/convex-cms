@@ -95,7 +95,7 @@ export interface ContentType {
 
 export interface ContentEntry {
   _id: string
-  contentTypeId: string
+  contentTypeName: string
   slug: string
   status: 'draft' | 'published' | 'scheduled' | 'archived'
   data: Record<string, unknown>
@@ -645,7 +645,7 @@ export function ContentEntryEditor({
           })) as ContentEntry
         } else {
           savedEntry = (await createEntry({
-            contentTypeId: contentType._id,
+            contentTypeName: contentType.name,
             data: dataForBackend,
           })) as ContentEntry
         }

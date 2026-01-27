@@ -21,7 +21,7 @@ function EditEntryPage() {
 
   const contentType = useQuery(
     api.admin.getContentType,
-    entry ? { id: entry.contentTypeId } : 'skip'
+    entry ? { name: entry.contentTypeName } : 'skip'
   );
 
   const getEntryTitle = () => {
