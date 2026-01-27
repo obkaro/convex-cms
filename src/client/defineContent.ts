@@ -614,6 +614,8 @@ export function createTypedHelpers<
   for (const [key, definition] of Object.entries(definitions)) {
     const slug = definition.slug;
 
+    registerContentType(definition as ReturnType<typeof defineContentType>);
+
     const toTypedEntry = <TData>(entry: unknown): ContentEntryWithData<TData> | null => {
       if (!entry) return null;
       return entry as ContentEntryWithData<TData>;
