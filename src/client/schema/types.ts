@@ -500,11 +500,11 @@ export interface ContentTypeConfig<
 /**
  * A fully defined content type with validator and metadata.
  *
- * @typeParam TName - The literal string type for the content type name
+ * @typeParam TSlug - The literal string type for the content type slug (machine name)
  * @typeParam TValidator - The Convex validator for content data
  */
 export interface ContentTypeDefinition<
-  TName extends string = string,
+  TSlug extends string = string,
   TValidator extends Validator<Record<string, unknown>, "required", string> = Validator<
     Record<string, unknown>,
     "required",
@@ -512,9 +512,17 @@ export interface ContentTypeDefinition<
   >
 > {
   /**
-   * The unique identifier for this content type.
+   * Human-readable display name for the content type.
+   * @example "Blog Post", "Roadmap Item"
    */
-  readonly name: TName;
+  readonly name: string;
+
+  /**
+   * Machine-readable slug used for queries and code references.
+   * Auto-generated from `name` if a display name is provided.
+   * @example "blog_post", "roadmap_item"
+   */
+  readonly slug: TSlug;
 
   /**
    * The Convex validator for content data.
@@ -583,7 +591,7 @@ export type ContentSchema = Record<string, ContentTypeDefinition>;
  * Infer all content data types from a schema object.
  *
  * Returns a mapped type where:
- * - Keys are the content type names (from the `name` property)
+ * - Keys are the content type slugs (from the `slug` property)
  * - Values are the inferred data types
  *
  * @example
@@ -599,8 +607,8 @@ export type ContentSchema = Record<string, ContentTypeDefinition>;
  * ```
  */
 export type InferSchema<T extends ContentSchema> = {
-  [K in keyof T as T[K] extends ContentTypeDefinition<infer Name, Validator<Record<string, unknown>, "required", string>>
-    ? Name
+  [K in keyof T as T[K] extends ContentTypeDefinition<infer Slug, Validator<Record<string, unknown>, "required", string>>
+    ? Slug
     : never]: T[K] extends ContentTypeDefinition<string, infer V>
     ? V extends Validator<infer Data, "required", string>
       ? Data
@@ -609,17 +617,17 @@ export type InferSchema<T extends ContentSchema> = {
 };
 
 /**
- * Extract all content type names from a schema.
+ * Extract all content type slugs from a schema.
  *
  * @example
  * ```typescript
- * type Names = SchemaContentTypeNames<typeof contentSchema>;
+ * type Slugs = SchemaContentTypeNames<typeof contentSchema>;
  * // "blog_post" | "author" | "product"
  * ```
  */
 export type SchemaContentTypeNames<T extends ContentSchema> = {
-  [K in keyof T]: T[K] extends ContentTypeDefinition<infer Name, Validator<Record<string, unknown>, "required", string>>
-    ? Name
+  [K in keyof T]: T[K] extends ContentTypeDefinition<infer Slug, Validator<Record<string, unknown>, "required", string>>
+    ? Slug
     : never;
 }[keyof T];
 
