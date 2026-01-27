@@ -5,3 +5,4 @@ export { EmbedMedia } from "./Media";
 export { EmbedSettings } from "./Settings";
 export { EmbedTrash } from "./Trash";
 export { EmbedTaxonomies } from "./Taxonomies";
+export { EmbedNewEntry } from "./NewEntry";

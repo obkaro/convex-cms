@@ -56,6 +56,7 @@ import {
   EmbedSettings,
   EmbedTrash,
   EmbedTaxonomies,
+  EmbedNewEntry,
 } from "./pages";
 
 function adaptAuthConfig(auth: CmsAdminAuthConfig): {
@@ -120,6 +121,10 @@ function EmbedRouter() {
       case "trash":
         return <EmbedTrash />;
       case "entries":
+        // Handle new entry action
+        if (currentRoute.params.action === "new") {
+          return <EmbedNewEntry />;
+        }
         return <EmbedContent />;
       default:
         return <EmbedDashboard />;

@@ -5,7 +5,7 @@
  * Used by both CLI routes and embed pages.
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useQuery } from "convex/react";
 import { usePermissions } from "~/hooks";
 import { BulkActionBar } from "~/components/BulkActionBar";
@@ -56,6 +56,18 @@ export function ContentPage({ api, navigation }: ContentPageProps) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const { canCreate, canUpdate } = usePermissions();
+
+  // Sync with navigation params when contentTypeId changes
+  useEffect(() => {
+    const contentTypeId = navigation.params?.contentTypeId;
+    if (contentTypeId) {
+      // Extract slug from contentTypeId (handles "code:slug" format)
+      const slug = contentTypeId.startsWith("code:")
+        ? contentTypeId.slice(5)
+        : contentTypeId;
+      setSelectedTypeId(slug);
+    }
+  }, [navigation.params?.contentTypeId]);
 
   const contentTypesResult = useQuery(api.listContentTypes, { isActive: true });
   const contentTypes: ContentType[] = contentTypesResult?.page ?? [];

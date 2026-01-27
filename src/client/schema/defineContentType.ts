@@ -374,15 +374,17 @@ export function toFieldDefinitions(
   return validatorFields.map((field) => {
     const meta = fieldMeta[field.name as keyof typeof fieldMeta] || {};
 
+    const fieldType = meta.renderAs || inferFieldType(field.validatorType);
+
     return {
       name: field.name,
       label: meta.label || field.name,
-      type: meta.renderAs || inferFieldType(field.validatorType),
+      type: fieldType,
       required: field.required,
       searchable: meta.searchable,
       localized: meta.localized,
       description: meta.description,
-      options: buildFieldOptions(field, meta),
+      options: buildFieldOptions(fieldType, meta),
     };
   });
 }
@@ -459,74 +461,91 @@ function inferFieldType(validatorType: string): string {
 }
 
 /**
- * Build field options from extracted field info and metadata.
+ * Build field options from field type and metadata.
  *
- * This function maps all FieldMeta options to the database field options format.
- * The options object is stored in contentTypes.fields[].options and is used
- * for validation and UI rendering.
+ * Only includes options that are valid for the specific field type,
+ * matching the admin API validator schema.
  *
  * @internal
  */
 function buildFieldOptions(
-  _field: ExtractedField,
+  fieldType: string,
   meta: FieldMeta
 ): Record<string, unknown> | undefined {
   const options: Record<string, unknown> = {};
 
-  // ==========================================================================
-  // Text Field Options
-  // ==========================================================================
-  if (meta.minLength !== undefined) options.minLength = meta.minLength;
-  if (meta.maxLength !== undefined) options.maxLength = meta.maxLength;
-  if (meta.pattern !== undefined) options.pattern = meta.pattern;
-  // Note: patternMessage and multiline are UI hints, not stored in component schema
-  // They could be stored in a separate UI hints field if needed
+  switch (fieldType) {
+    case "text": {
+      if (meta.minLength !== undefined) options.minLength = meta.minLength;
+      if (meta.maxLength !== undefined) options.maxLength = meta.maxLength;
+      if (meta.pattern !== undefined) options.pattern = meta.pattern;
+      break;
+    }
 
-  // ==========================================================================
-  // Number Field Options
-  // ==========================================================================
-  if (meta.min !== undefined) options.min = meta.min;
-  if (meta.max !== undefined) options.max = meta.max;
-  if (meta.step !== undefined) options.step = meta.step;
-  if (meta.precision !== undefined) options.precision = meta.precision;
-  // Note: prefix/suffix are UI hints, not stored in component schema
+    case "number": {
+      if (meta.min !== undefined) options.min = meta.min;
+      if (meta.max !== undefined) options.max = meta.max;
+      if (meta.step !== undefined) options.step = meta.step;
+      if (meta.precision !== undefined) options.precision = meta.precision;
+      break;
+    }
 
-  // ==========================================================================
-  // Reference Field Options
-  // ==========================================================================
-  if (meta.allowedContentTypes !== undefined) options.allowedContentTypes = meta.allowedContentTypes;
-  if (meta.multiple !== undefined) options.multiple = meta.multiple;
-  if (meta.minItems !== undefined) options.minItems = meta.minItems;
-  // Note: maxItems maps to minItems in the component (for validation purposes)
-  // The component schema has minItems but not maxItems - we'll add it anyway
-  // for forward compatibility
+    case "boolean": {
+      // Boolean fields can have trueLabel/falseLabel but those aren't in FieldMeta
+      break;
+    }
 
-  // ==========================================================================
-  // Media Field Options
-  // ==========================================================================
-  if (meta.allowedMimeTypes !== undefined) options.allowedMimeTypes = meta.allowedMimeTypes;
-  if (meta.maxFileSize !== undefined) options.maxFileSize = meta.maxFileSize;
+    case "richText": {
+      if (meta.allowedBlocks !== undefined) options.allowedBlocks = meta.allowedBlocks;
+      if (meta.allowedMarks !== undefined) options.allowedMarks = meta.allowedMarks;
+      break;
+    }
 
-  // ==========================================================================
-  // Select/MultiSelect Field Options
-  // ==========================================================================
-  if (meta.options !== undefined) options.options = meta.options;
-  // Note: minSelections/maxSelections could be mapped to minItems/maxItems
+    case "media": {
+      if (meta.allowedMimeTypes !== undefined) options.allowedMimeTypes = meta.allowedMimeTypes;
+      if (meta.maxFileSize !== undefined) options.maxFileSize = meta.maxFileSize;
+      if (meta.multiple !== undefined) options.multiple = meta.multiple;
+      break;
+    }
 
-  // ==========================================================================
-  // Rich Text Field Options
-  // ==========================================================================
-  if (meta.allowedBlocks !== undefined) options.allowedBlocks = meta.allowedBlocks;
-  if (meta.allowedMarks !== undefined) options.allowedMarks = meta.allowedMarks;
+    case "select":
+    case "multiSelect": {
+      if (meta.options !== undefined) options.options = meta.options;
+      break;
+    }
 
-  // ==========================================================================
-  // Taxonomy Field Options (tags/category)
-  // ==========================================================================
-  if (meta.taxonomyId !== undefined) options.taxonomyId = meta.taxonomyId;
-  if (meta.allowCreate !== undefined) options.allowCreate = meta.allowCreate;
-  if (meta.maxTags !== undefined) options.maxTags = meta.maxTags;
-  if (meta.minTags !== undefined) options.minTags = meta.minTags;
-  if (meta.allowMultiple !== undefined) options.allowMultiple = meta.allowMultiple;
+    case "tags": {
+      if (meta.taxonomyId !== undefined) options.taxonomyId = meta.taxonomyId;
+      if (meta.allowCreate !== undefined) options.allowCreate = meta.allowCreate;
+      if (meta.maxTags !== undefined) options.maxTags = meta.maxTags;
+      if (meta.minTags !== undefined) options.minTags = meta.minTags;
+      break;
+    }
+
+    case "category": {
+      if (meta.allowMultiple !== undefined) options.allowMultiple = meta.allowMultiple;
+      break;
+    }
+
+    case "json": {
+      // JSON fields can have schema but that's not in FieldMeta
+      break;
+    }
+
+    case "date":
+    case "datetime": {
+      if (meta.min !== undefined) options.min = meta.min;
+      if (meta.max !== undefined) options.max = meta.max;
+      break;
+    }
+
+    case "reference": {
+      if (meta.allowedContentTypes !== undefined) options.allowedContentTypes = meta.allowedContentTypes;
+      if (meta.multiple !== undefined) options.multiple = meta.multiple;
+      if (meta.minItems !== undefined) options.minItems = meta.minItems;
+      break;
+    }
+  }
 
   return Object.keys(options).length > 0 ? options : undefined;
 }

@@ -41,8 +41,8 @@ function toAdminFormat(t: ContentTypeDefinition, id: string): AdminContentTypeWi
   return {
     _id: id,
     _creationTime: 0,
-    name: t.name,
-    displayName: t.meta.displayName,
+    name: t.slug,
+    displayName: t.meta.displayName || t.name,
     description: t.meta.description,
     icon: t.meta.icon,
     singleton: t.meta.singleton ?? false,
@@ -93,7 +93,7 @@ export function createContentTypesOperations(
         // Convert code-defined types to the expected format
         const codeTypes = codeDefinedTypes
           .filter(() => args.isActive === undefined || args.isActive === true)
-          .map((t) => toAdminFormat(t, `code:${t.name}`));
+          .map((t) => toAdminFormat(t, `code:${t.slug}`));
 
         // Merge and sort by sortOrder, then name
         const allTypes = [...codeTypes, ...dbTypesFiltered].sort((a, b) => {
@@ -145,7 +145,7 @@ export function createContentTypesOperations(
         if (args.name) {
           const codeType = getCodeDefinedType(args.name);
           if (codeType) {
-            return toAdminFormat(codeType, `code:${codeType.name}`);
+            return toAdminFormat(codeType, `code:${codeType.slug}`);
           }
         }
 

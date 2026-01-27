@@ -49,6 +49,8 @@ import type {
   TypedAdminAPI,
 } from "./types.js";
 import { isUnifiedCmsConfig, extractAdminConfig, type UnifiedCmsConfig } from "../config.js";
+import { registerContentType } from "../registry.js";
+import type { ContentTypeDefinition } from "../schema/types.js";
 
 import { createDashboardOperations } from "./dashboard.js";
 import { createContentTypesOperations } from "./contentTypes.js";
@@ -126,6 +128,17 @@ function createAdminAPIImpl(
     : options;
 
   const { auth, features } = resolvedOptions;
+
+  // Register content types passed via options
+  if ("contentTypes" in options && options.contentTypes) {
+    for (const definition of Object.values(options.contentTypes)) {
+      try {
+        registerContentType(definition as ContentTypeDefinition);
+      } catch {
+        // Type already registered - ignore duplicate registration
+      }
+    }
+  }
 
   const checkAuth = async (
     ctx: AuthContext,
