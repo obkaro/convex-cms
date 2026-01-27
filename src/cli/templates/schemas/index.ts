@@ -1,19 +1,21 @@
 /**
- * Schema templates index
+ * CMS templates index
+ *
+ * Each template is a complete cms.ts file with content types + typed helpers.
  */
 
 export {
-  BLOG_SCHEMA_TEMPLATE,
+  CMS_BLOG_TEMPLATE,
   BLOG_SCHEMA_DESCRIPTION,
 } from "./blog.js";
 
 export {
-  DOCS_SCHEMA_TEMPLATE,
+  CMS_DOCS_TEMPLATE,
   DOCS_SCHEMA_DESCRIPTION,
 } from "./docs.js";
 
 export {
-  LANDING_SCHEMA_TEMPLATE,
+  CMS_LANDING_TEMPLATE,
   LANDING_SCHEMA_DESCRIPTION,
 } from "./landing.js";
 

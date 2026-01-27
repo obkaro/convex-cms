@@ -61,10 +61,10 @@ export function updateConvexConfig(
 ): FileWriteResult {
   if (!fileExists(configPath)) {
     const newContent = `import { defineApp } from "convex/server";
-import convexCms from "convex-cms/convex.config";
+import cms from "convex-cms/convex.config";
 
 const app = defineApp();
-app.use(convexCms);
+app.use(cms);
 
 export default app;
 `;
@@ -73,7 +73,8 @@ export default app;
 
   const content = readFile(configPath);
 
-  if (content.includes("convexCms") || content.includes("convex-cms")) {
+  // Check if CMS is already configured (either as 'cms' or 'convexCms')
+  if (content.includes("convex-cms/convex.config")) {
     return {
       path: configPath,
       created: false,
@@ -83,8 +84,8 @@ export default app;
     };
   }
 
-  const importStatement = 'import convexCms from "convex-cms/convex.config";';
-  const useStatement = "app.use(convexCms);";
+  const importStatement = 'import cms from "convex-cms/convex.config";';
+  const useStatement = "app.use(cms);";
 
   let updatedContent = content;
 

@@ -28,12 +28,14 @@ import {
   updateConvexConfig,
   type FileWriteResult,
 } from "../utils/fileUtils.js";
-import { ADMIN_TEMPLATE } from "../templates/admin.js";
-import { CMS_CONFIG_TEMPLATE } from "../templates/cmsConfig.js";
+import { getAdminTemplate } from "../templates/admin.js";
+import { getContentTemplate } from "../templates/content.js";
 import { CMS_CLIENT_TEMPLATE } from "../templates/cmsClient.js";
-import { BLOG_SCHEMA_TEMPLATE } from "../templates/schemas/blog.js";
-import { DOCS_SCHEMA_TEMPLATE } from "../templates/schemas/docs.js";
-import { LANDING_SCHEMA_TEMPLATE } from "../templates/schemas/landing.js";
+import {
+  CMS_BLOG_TEMPLATE,
+  CMS_DOCS_TEMPLATE,
+  CMS_LANDING_TEMPLATE,
+} from "../templates/schemas/index.js";
 
 export interface InitOptions {
   force?: boolean;
@@ -44,21 +46,20 @@ const TEMPLATE_DESCRIPTIONS: Record<SchemaTemplate, string> = {
   blog: "Blog content types",
   docs: "Documentation content types",
   landing: "Landing page content types",
-  blank: "No schemas",
+  blank: "Blank starter",
 };
 
-function getSchemaTemplate(template: SchemaTemplate): string | null {
+function getCmsTemplate(template: SchemaTemplate): string {
   switch (template) {
     case "blog":
-      return BLOG_SCHEMA_TEMPLATE;
+      return CMS_BLOG_TEMPLATE;
     case "docs":
-      return DOCS_SCHEMA_TEMPLATE;
+      return CMS_DOCS_TEMPLATE;
     case "landing":
-      return LANDING_SCHEMA_TEMPLATE;
+      return CMS_LANDING_TEMPLATE;
     case "blank":
-      return null;
     default:
-      return null;
+      return CMS_CLIENT_TEMPLATE;
   }
 }
 
@@ -100,30 +101,21 @@ export async function initCommand(options: InitOptions): Promise<void> {
 
   const files: Array<{ name: string; path: string; content: string }> = [
     {
-      name: "convex/admin.ts",
-      path: path.join(convexDir, "admin.ts"),
-      content: ADMIN_TEMPLATE,
-    },
-    {
-      name: "convex/cms.config.ts",
-      path: path.join(convexDir, "cms.config.ts"),
-      content: CMS_CONFIG_TEMPLATE,
-    },
-    {
       name: "convex/cms.ts",
       path: path.join(convexDir, "cms.ts"),
-      content: CMS_CLIENT_TEMPLATE,
+      content: getCmsTemplate(template),
+    },
+    {
+      name: "convex/admin.ts",
+      path: path.join(convexDir, "admin.ts"),
+      content: getAdminTemplate(template),
+    },
+    {
+      name: "convex/content.ts",
+      path: path.join(convexDir, "content.ts"),
+      content: getContentTemplate(template),
     },
   ];
-
-  const schemaContent = getSchemaTemplate(template);
-  if (schemaContent) {
-    files.push({
-      name: "convex/schemas.ts",
-      path: path.join(convexDir, "schemas.ts"),
-      content: schemaContent,
-    });
-  }
 
   console.log("");
   logStep("Creating files...");
