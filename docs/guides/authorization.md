@@ -8,9 +8,9 @@ While Convex CMS runs as an isolated component, the wrapper code runs in your ap
 
 Authorization works through:
 
-1. **getUserRole hook** - Receives `ctx` and can query your database to map user IDs to CMS roles
-2. **RBAC system** - Built-in roles with permission sets
-3. **Authorization hooks** - Optional custom logic with full database access
+1. **getUserRole hook**: Receives `ctx` and can query your database to map user IDs to CMS roles
+2. **RBAC system**: Built-in roles with permission sets
+3. **Authorization hooks**: Optional custom logic with full database access
 
 ## Quick Setup
 
@@ -365,95 +365,6 @@ function PublishButton({ entryId }) {
 }
 ```
 
-## Integration Patterns
-
-### With Clerk
-
-The `getUserRole` hook receives `ctx`, so you can query your database directly:
-
-```typescript
-import { getAuth } from "@clerk/convex";
-
-const cms = createCmsClient(components.convexCms, {
-  getUserRole: async (ctx, { userId }) => {
-    if (!userId) return null;
-
-    // Query your database directly - no caching needed!
-    const user = await ctx.db
-      .query("users")
-      .filter((q) => q.eq(q.field("clerkId"), userId))
-      .first();
-
-    return user?.cmsRole ?? null;
-  },
-});
-
-// In your mutations, just use the CMS client
-export const createEntry = mutation({
-  handler: async (ctx, args) => {
-    const { userId } = getAuth(ctx);
-    if (!userId) throw new Error("Not authenticated");
-
-    // CMS will automatically resolve the role via getUserRole hook
-    return await cms.contentEntries.create(ctx, {
-      ...args,
-      createdBy: userId,
-    });
-  },
-});
-```
-
-### With Custom Auth
-
-```typescript
-const cms = createCmsClient(components.convexCms, {
-  getUserRole: async (ctx, { userId }) => {
-    // Validate session directly in the hook
-    const session = await ctx.db
-      .query("sessions")
-      .filter((q) => q.eq(q.field("userId"), userId))
-      .first();
-
-    if (!session || session.expiresAt < Date.now()) {
-      return null;
-    }
-
-    const user = await ctx.db.get(session.userId);
-    return user?.role ?? null;
-  },
-});
-```
-
-### Multi-Tenant Authorization
-
-For multi-tenant apps, use the authorization hooks for tenant isolation. The hooks receive `ctx` in their context:
-
-```typescript
-const cms = createCmsClient(components.convexCms, {
-  getUserRole: async (ctx, { userId }) => {
-    const user = await ctx.db.get(userId);
-    return user?.cmsRole ?? null;
-  },
-
-  authorizationHooks: {
-    authorize: async (context) => {
-      // context.ctx gives you database access!
-      const user = await context.ctx.db.get(context.userId);
-      const resource = context.resourceId
-        ? await context.ctx.db.get(context.resourceId)
-        : null;
-
-      // Check tenant isolation
-      if (resource && resource.tenantId !== user?.tenantId) {
-        return { allowed: false, reason: "Resource belongs to different tenant" };
-      }
-
-      return null; // Fall back to default RBAC
-    },
-  },
-});
-```
-
 ## Rate Limiting
 
 Prevent abuse with rate limiting hooks:
@@ -575,43 +486,6 @@ authorizationHooks: {
   },
 }
 ```
-
----
-
-## Implementation Notes
-
-### RBAC Coverage
-
-The RBAC system is fully implemented for all core operations:
-
-| Domain | Full RBAC | Notes |
-|--------|-----------|-------|
-| Content Types | ✓ | All CRUD operations |
-| Content Entries | ✓ | Including publish, schedule, duplicate |
-| Media Assets | ✓ | Upload, update, delete |
-| Media Folders | ✓ | Create, move, delete |
-| Media Variants | ✓ | Generation and access |
-| Taxonomies | ✓ | Create, update, delete |
-| Taxonomy Terms | ✓ | Full term management |
-| Versions | ✓ | View and rollback |
-| Bulk Operations | ✓ | Checked per-entry |
-| Content Locking | ✓ | Acquire, release, force-release |
-| Settings | ✓ | Admin only by default |
-
-### Scope Enforcement
-
-The `scope` field in permissions controls access:
-
-- `"all"` — Can access any resource
-- `"own"` — Can only access resources where `createdBy` matches `userId`
-
-Scope is enforced server-side for:
-- `contentEntries.update`
-- `contentEntries.delete`
-- `contentEntries.publish`
-- `contentEntries.unpublish`
-- `mediaAssets.update`
-- `mediaAssets.delete`
 
 ---
 

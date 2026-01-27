@@ -3,7 +3,7 @@
 [![npm version](https://badge.fury.io/js/convex-cms.svg)](https://www.npmjs.com/package/convex-cms)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-> **Alpha (v0.0.6)** Actively developed. APIs may change. [Report issues](https://github.com/obkaro/convex-cms/issues).
+> **Alpha (v0.0.7)** Actively developed. APIs may change. [Report issues](https://github.com/obkaro/convex-cms/issues).
 
 A headless CMS built as a [Convex Component](https://docs.convex.dev/components). Content management that runs inside your Convex app.
 
@@ -20,14 +20,14 @@ pnpm add convex-cms
 ```typescript
 // convex/convex.config.ts
 import { defineApp } from "convex/server";
-import convexCms from "convex-cms/convex.config";
+import cms from "convex-cms/convex.config";
 
 const app = defineApp();
-app.use(convexCms);
+app.use(cms);
 export default app;
 ```
 
-### 3. Choose Your Setup
+### 3. Initialize
 
 **For Admin UI:** Run `pnpm convex-cms init` then `pnpm convex-cms admin`
 → [Full Admin UI Setup](./docs/guides/admin-ui-setup.md)
@@ -37,13 +37,15 @@ export default app;
 
 ## Why Convex CMS?
 
-If you're building on Convex and need content management, this is the most integrated option:
+If you're building on Convex and need content management without the overhead of all the CMS plumbing, this is the most integrated option.
 
-- **Zero infrastructure.** Runs entirely within your Convex deployment
-- **True real-time.** Content updates via Convex subscriptions, not polling
-- **Type-safe.** Code-first schemas with full TypeScript inference
-- **Component isolation.** Separate database tables, versioned independently
-- **Agent-native.** 23 pre-built tools for AI agent integration via `@convex-dev/agent`
+### What you get:
+
+- **Typesafe admin API** Admin APIs exported directly from your backend for use in your React queries and mutations
+- **Built in admin UI** A well designed admin UI that you can view and edit content from
+- **Embeddable content manager** Ability to embed and serve the prebuilt UI as part of you React application
+- **Data independence** CMS that lives in your own convex deployment, extendable and customizable with your convex functions
+- **Agent-native.** Pre-built tools useful for AI agent integration with `@convex-dev/agent`
 
 ## Features
 
@@ -51,12 +53,10 @@ If you're building on Convex and need content management, this is the most integ
 |---------|--------------|
 | **Code-first config** | Define content types in TypeScript with full type inference |
 | **UI-defined config** | Create and modify content types through the admin interface |
-| **CMS Client** | Programmatic access via `createCmsClient` for custom queries and mutations |
-| **Admin API** | Pre-built functions via `defineAdminAPI` that power the admin UI |
-| **CLI Admin UI** | Run `npx convex-cms admin` for local development |
+| **CMS Client** | Programmatic access for custom queries and mutations |
+| **Admin API** | Pre-built functions that power the admin UI |
+| **CLI Admin UI** | Run for local development, content entry, and management |
 | **Embedded Admin UI** | Ship the admin interface as part of your React app |
-
-Any combination of these features works together seamlessly. Pick what fits your workflow.
 
 ## In Practice
 
@@ -70,9 +70,14 @@ Code-first config + Admin API + Embedded Admin UI. Type-safe schemas with a work
 UI-defined config + Admin API + Embedded Admin UI. Non-developers can add fields and content types.
 
 **Automated content pipelines?**  
-CMS Client + agent tools. 23 pre-built tools for AI-driven workflows.
+CMS Client + agent tools. Pre-built tools for AI-driven workflows.
 
-## What's Included
+*Any combination of these features works together seamlessly. Pick what fits your workflow.*
+
+
+## Batteries Included
+
+Leverage included features or extend and customize within your own convex functions to your desire.
 
 ### Core Content
 - **13 field types.** text, richText, number, boolean, date, datetime, select, multiSelect, reference, media, json, tags, category

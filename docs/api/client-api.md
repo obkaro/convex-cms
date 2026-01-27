@@ -2,32 +2,7 @@
 
 The Convex CMS client provides a typed wrapper around the component's raw functions. This document covers the complete API.
 
-> **Which API should I use?** See the comparison below.
-
----
-
-## Two Integration Paths
-
-Convex CMS provides two ways to integrate:
-
-| | `createCmsClient` (this doc) | `defineAdminAPI` |
-|---|---|---|
-| **Purpose** | Typed methods for custom functions | Backend for Admin UI |
-| **Returns** | Namespaced object (`cms.contentEntries.*`) | Flat function exports |
-| **Best for** | Custom queries, business logic | Visual content editing |
-| **Auth model** | Pass userId, hooks resolve roles | Callback on every operation |
-
-**Most apps use both:**
-
-```typescript
-// convex/cms.ts — for your custom functions
-export const cms = createCmsClient(components.convexCms, options);
-
-// convex/admin.ts — for Admin UI
-export const { listContentTypes, getEntry, ... } = defineAdminAPI(components.convexCms);
-```
-
-See [Admin API Reference](./admin-api.md) for `defineAdminAPI` documentation.
+> For Admin UI backend functions, see [Admin API Reference](./admin-api.md). For integration guidance, see [Integration Patterns](../guides/integration-patterns.md).
 
 ---
 
@@ -40,45 +15,7 @@ import { components } from "./_generated/api";
 const cms = createCmsClient(components.convexCms, config);
 ```
 
-### Configuration Options
-
-```typescript
-interface CmsClientConfig {
-  // Locale settings
-  defaultLocale?: string;           // Default: "en"
-  supportedLocales?: string[];      // All supported locales
-  localeFallbackChains?: Record<string, string[]>;  // Fallback chains
-  autoGenerateLocaleFallbacks?: boolean;  // Default: true
-
-  // Features
-  features?: {
-    versioning?: boolean;           // Default: true
-    localization?: boolean;         // Default: false
-    scheduling?: boolean;           // Default: true
-    softDelete?: boolean;           // Default: true
-    contentLocking?: boolean;       // Default: true
-    mediaManagement?: boolean;      // Default: true
-    searchIndexing?: boolean;       // Default: true
-  };
-
-  // Versioning
-  maxVersionsPerEntry?: number;     // Default: 50
-
-  // Content Locking
-  lockDurationMs?: number;          // Default: 300000 (5 minutes)
-
-  // Media
-  maxMediaFileSize?: number;        // Default: 52428800 (50MB)
-
-  // Authorization
-  permissiveMode?: boolean;         // Bypass all auth (dev only)
-  skipRbac?: boolean;               // Skip RBAC checks
-  getUserRole?: GetUserRoleHook;    // Map userId to role
-  customRoles?: Record<string, RoleDefinition>;
-  authorizationHooks?: AuthorizationHooks;
-  rateLimitHooks?: RateLimitHooks;
-}
-```
+See [Configuration Reference](./configuration.md) for all available options.
 
 ## API Namespaces
 
@@ -326,49 +263,18 @@ const copy = await cms.contentEntries.duplicate(ctx, {
 
 ### Query Builder
 
-The query builder provides a fluent API for complex queries. Access it via `cms.contentEntries.query()`:
+For complex queries, use the fluent query builder. See [Query Builder Guide](../guides/query-builder.md) for the complete API.
 
 ```typescript
-// Basic query
 const posts = await cms.contentEntries
   .query()
   .contentType("blog_post")
   .published()
-  .limit(10)
-  .execute(ctx);
-
-// Complex query with filters
-const featured = await cms.contentEntries
-  .query()
-  .contentType("blog_post")
-  .published()
-  .where("category", "eq", "technology")
   .where("featured", "eq", true)
   .orderBy("_creationTime", "desc")
-  .limit(5)
+  .limit(10)
   .execute(ctx);
-
-// Pagination
-const page1 = await cms.contentEntries
-  .query()
-  .contentType("blog_post")
-  .limit(20)
-  .execute(ctx);
-
-const page2 = await cms.contentEntries
-  .query()
-  .contentType("blog_post")
-  .limit(20)
-  .cursor(page1.continueCursor)
-  .execute(ctx);
-
-// Terminal methods
-const first = await query.first(ctx);     // First result or null
-const exists = await query.exists(ctx);   // Boolean
-const all = await query.all(ctx);         // All results (paginated internally)
 ```
-
-See [Query Builder Guide](../guides/query-builder.md) for the complete API.
 
 ### Bulk Operations
 
@@ -869,237 +775,11 @@ interface MediaAsset {
 
 ---
 
-## Typed Client API
-
-For type-safe content entry operations with code-defined schemas, use `createTypedCmsClient`.
-
-### Creating a Typed Client
-
-```typescript
-import { createTypedCmsClient, createContentSchema, defineContentType } from "convex-cms";
-import { v } from "convex/values";
-import { components } from "./_generated/api";
-
-// Define schemas
-const blogPost = defineContentType({
-  name: "blog_post",
-  validator: v.object({
-    title: v.string(),
-    content: v.string(),
-    publishedAt: v.optional(v.number()),
-  }),
-});
-
-const contentSchema = createContentSchema({ blogPost });
-
-// Create typed client
-const cms = createTypedCmsClient(components.convexCms, {
-  schema: contentSchema,
-  // ... other config options
-});
-```
-
-### Typed Content Entries API
-
-The typed client provides a `typedContentEntries` namespace with full type inference:
-
-#### get
-
-Get a typed entry by ID.
-
-```typescript
-const post = await cms.typedContentEntries.get<"blog_post">(ctx, entryId);
-if (post) {
-  post.data.title;    // string - TypeScript knows the type
-  post.data.typo;     // Error: Property 'typo' does not exist
-}
-```
-
-#### getBySlug
-
-Get a typed entry by slug.
-
-```typescript
-const post = await cms.typedContentEntries.getBySlug<"blog_post">(ctx, {
-  contentTypeName: "blog_post",
-  slug: "hello-world",
-  locale: "en-US",  // optional
-});
-```
-
-#### create
-
-Create a typed entry with validated data.
-
-```typescript
-const entry = await cms.typedContentEntries.create<"blog_post">(ctx, {
-  contentTypeName: "blog_post",
-  data: {
-    title: "Hello World",     // Required - TypeScript enforces this
-    content: "<p>...</p>",    // Required
-    publishedAt: Date.now(),  // Optional
-  },
-  slug: "hello-world",        // optional
-  createdBy: userId,          // optional
-});
-```
-
-#### update
-
-Update with partial typed data.
-
-```typescript
-const entry = await cms.typedContentEntries.update<"blog_post">(ctx, {
-  id: entryId,
-  data: { title: "Updated Title" },  // Only update title
-  updatedBy: userId,
-});
-```
-
-#### list
-
-List typed entries with pagination.
-
-```typescript
-const { page, continueCursor, isDone } = await cms.typedContentEntries.list<"blog_post">(ctx, {
-  contentTypeName: "blog_post",
-  paginationOpts: { numItems: 10, cursor: null },
-});
-
-for (const entry of page) {
-  console.log(entry.data.title);  // Typed
-}
-```
-
-#### publish / unpublish
-
-```typescript
-await cms.typedContentEntries.publish<"blog_post">(ctx, entryId, { updatedBy: userId });
-await cms.typedContentEntries.unpublish<"blog_post">(ctx, entryId, { updatedBy: userId });
-```
-
----
-
-## Schema Utilities
-
-### Schema Drift Detection
-
-Compare code-defined schemas against database state to detect discrepancies.
-
-```typescript
-import { detectSchemaDrift, formatDriftReport, hasErrors } from "convex-cms";
-
-const report = await detectSchemaDrift(ctx, cms, contentSchema);
-
-if (report.hasDrift) {
-  console.warn("Schema drift detected:");
-  console.log(formatDriftReport(report));
-
-  if (hasErrors(report)) {
-    throw new Error("Critical schema drift - types or required fields differ");
-  }
-}
-```
-
-#### Drift Report Structure
-
-```typescript
-interface SchemaDriftReport {
-  hasDrift: boolean;
-  summary: {
-    missingInDatabase: number;
-    missingInCode: number;
-    fieldDifferences: number;
-    totalIssues: number;
-    errors: number;
-    warnings: number;
-  };
-  issues: DriftIssue[];
-  missingInDatabase: string[];  // Types in code but not DB
-  missingInCode: string[];      // Types in DB but not code
-  checkedAt: number;
-}
-```
-
-#### Detection Options
-
-```typescript
-const report = await detectSchemaDrift(ctx, cms, contentSchema, {
-  includeInfoLevel: false,       // Include metadata differences
-  contentTypes: ["blog_post"],   // Only check specific types
-  strictMissingInDb: true,       // Errors for code types not in DB
-  strictMissingInCode: false,    // Warnings for DB types not in code
-});
-```
-
-### Type Code Generation
-
-Generate TypeScript types from content types stored in the database.
-
-```typescript
-import { generateTypesFromDatabase } from "convex-cms";
-
-const result = await generateTypesFromDatabase(ctx, cms, {
-  header: "Auto-generated CMS types",
-  includeJsDoc: true,
-  includeNameUnion: true,
-  includeDiscriminatedUnion: false,
-  typeSuffix: "Data",
-});
-
-// Write to file
-await fs.writeFile("./src/generated/cms-types.ts", result.code);
-```
-
-#### Generated Output Example
-
-```typescript
-// Auto-generated by convex-cms codegen
-// DO NOT EDIT - Regenerate with: npx convex-cms codegen
-
-/**
- * Data type for "Blog Post" content entries.
- * @contentType blog_post
- */
-export interface BlogPostData {
-  /** Post title */
-  title: string;
-  content: string;
-  publishedAt?: number;
-}
-
-export type ContentTypeName = "blog_post" | "author";
-
-export interface ContentTypeMap {
-  "blog_post": BlogPostData;
-  "author": AuthorData;
-}
-
-export type DataForType<T extends ContentTypeName> = ContentTypeMap[T];
-```
-
-#### Codegen Options
-
-```typescript
-interface CodegenOptions {
-  header?: string;               // File header comment
-  includeJsDoc?: boolean;        // Include JSDoc comments (default: true)
-  contentTypes?: string[];       // Only include specific types
-  exclude?: string[];            // Exclude specific types
-  includeNameUnion?: boolean;    // Generate ContentTypeName union (default: true)
-  includeDiscriminatedUnion?: boolean;  // Generate discriminated union
-  typeSuffix?: string;           // Type name suffix (default: "Data")
-  allOptional?: boolean;         // Mark all fields optional (for partial updates)
-}
-```
-
----
-
 See also:
-- [Query Builder Guide](../guides/query-builder.md) — Fluent API for complex queries
-- [Taxonomies Guide](../guides/taxonomies.md) — Categories, tags, and organization
-- [Agent Tools Guide](../guides/agent-tools.md) — AI agent integration
-- [Content Locking Guide](../guides/content-locking.md) — Concurrent edit prevention
-- [Code-First Schema Reference](./code-first-schema.md) — TypeScript-first content types
-- [Field Types Reference](./field-types.md) — All 13 field types
-- [Configuration Reference](./configuration.md) — All config options
+- [Query Builder Guide](../guides/query-builder.md) for fluent API queries
+- [Code-First Schema](./code-first-schema.md) for TypeScript-first content types
+- [Taxonomies Guide](../guides/taxonomies.md) for categories, tags, and organization
+- [Agent Tools Guide](../guides/agent-tools.md) for AI agent integration
+- [Content Locking Guide](../guides/content-locking.md) for concurrent edit prevention
+- [Field Types Reference](./field-types.md) for all 13 field types
+- [Configuration Reference](./configuration.md) for all config options

@@ -396,6 +396,37 @@ const config = defineAdminConfig({
 
 ---
 
+## Schema Drift Warnings
+
+When using [code-first content type definitions](../api/code-first-schema.md), the Admin UI displays a warning banner if schema drift is detected between your code and the database.
+
+### What the Warning Shows
+
+- **Errors** (red): Critical issues like missing fields or type mismatches that may cause validation failures
+- **Warnings** (amber): Non-critical issues like unsynced types or extra database fields
+
+### Resolving Drift
+
+Click the **Sync Now** button in the warning banner to automatically:
+
+1. Create database records for new code-defined types
+2. Update existing code-defined types with changed fields
+3. Leave manually-created database types unchanged
+
+The warning disappears once all code-defined types are in sync.
+
+### When Drift Occurs
+
+Drift commonly occurs when:
+
+- You add or modify a `defineContentType()` definition and deploy
+- You remove a code-defined type from your codebase
+- The Convex deployment restarts before sync runs
+
+For programmatic drift detection, see [Schema Drift Detection](../api/code-first-schema.md#schema-drift-detection).
+
+---
+
 ## Troubleshooting
 
 ### "Convex URL not found"
@@ -435,6 +466,6 @@ And that your `convex/admin.ts` exports all required functions. See [Admin API R
 
 ## See Also
 
-- [Admin API Reference](../api/admin-api.md) — All admin functions
-- [Authorization](./authorization.md) — Roles and permissions
-- [Integration Patterns](./integration-patterns.md) — Common setups
+- [Admin API Reference](../api/admin-api.md): All admin functions
+- [Authorization](./authorization.md): Roles and permissions
+- [Integration Patterns](./integration-patterns.md): Common setups

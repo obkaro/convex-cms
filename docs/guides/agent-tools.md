@@ -160,11 +160,11 @@ await publishEntry.handler(ctx, {
 
 ## Best Practices
 
-1. **Use specific tools** — Give agents only the tools they need for their role
-2. **Set defaultUserId** — Track which operations were performed by agents
-3. **Prefer soft delete** — Use `hardDelete: false` (default) to allow recovery
-4. **Use searchContent** — More efficient than listing and filtering
-5. **Handle pagination** — For large datasets, use `cursor` for subsequent pages
+1. **Use specific tools**: Give agents only the tools they need for their role
+2. **Set defaultUserId**: Track which operations were performed by agents
+3. **Prefer soft delete**: Use `hardDelete: false` (default) to allow recovery
+4. **Use searchContent**: More efficient than listing and filtering
+5. **Handle pagination**: For large datasets, use `cursor` for subsequent pages
 
 ## Tool Descriptions for LLMs
 

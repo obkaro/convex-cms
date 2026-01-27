@@ -498,7 +498,7 @@ const folders = {
 ---
 
 See also:
-- [Taxonomies Guide](./taxonomies.md) — Organize media with categories and tags
+- [Taxonomies Guide](./taxonomies.md): Organize media with categories and tags
 - [Client API Reference](../api/client-api.md)
 - [Content Modeling Guide](./content-modeling.md)
 

@@ -2,8 +2,8 @@
 
 Taxonomies are classification systems for organizing content. Convex CMS supports two types:
 
-- **Hierarchical taxonomies** — Nested categories (e.g., Electronics > Phones > Smartphones)
-- **Flat taxonomies** — Simple tags (e.g., JavaScript, TypeScript, React)
+- **Hierarchical taxonomies**: Nested categories (e.g., Electronics > Phones > Smartphones)
+- **Flat taxonomies**: Simple tags (e.g., JavaScript, TypeScript, React)
 
 Both content entries and media assets can be tagged with taxonomy terms.
 
@@ -309,6 +309,6 @@ The Admin API provides these taxonomy functions:
 ---
 
 See also:
-- [Field Types Reference](../api/field-types.md) — Tags and category field types
+- [Field Types Reference](../api/field-types.md): Tags and category field types
 - [Content Modeling Guide](./content-modeling.md)
 - [Media Management Guide](./media.md)

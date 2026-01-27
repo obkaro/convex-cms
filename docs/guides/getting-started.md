@@ -1,6 +1,6 @@
 # Getting Started with Convex CMS
 
-This guide covers **programmatic usage** with `createCmsClient` — full control over content in your Convex functions.
+This guide covers **programmatic usage** with `createCmsClient` for full control over content in your Convex functions.
 
 > **Need a visual editor instead?** See [Admin UI Setup](./admin-ui-setup.md) for the visual content management interface.
 
@@ -52,23 +52,18 @@ Create a file to configure and export your CMS client. This is typically `convex
 import { createCmsClient } from "convex-cms";
 import { components } from "./_generated/api";
 
-// Basic configuration for development
 export const cms = createCmsClient(components.convexCms, {
-  // Start in permissive mode for development (no auth required)
-  permissiveMode: true,
-
-  // Default locale for content
+  permissiveMode: true,  // For development only
   defaultLocale: "en",
-
-  // Enable features
   features: {
     versioning: true,
-    localization: false,  // Enable later if needed
     scheduling: true,
     softDelete: true,
   },
 });
 ```
+
+For all configuration options, see [Configuration Reference](../api/configuration.md).
 
 ---
 
@@ -311,72 +306,6 @@ See [Code-First Schema Reference](../api/code-first-schema.md) for full document
 
 ---
 
-## Development Mode
-
-For development, you can use `permissiveMode: true` to bypass authentication:
-
-```typescript
-const cms = createCmsClient(components.convexCms, {
-  permissiveMode: true,  // No auth required
-  // ...
-});
-```
-
-**Warning**: Never use `permissiveMode: true` in production! Always configure proper authorization.
-
----
-
-## Configuration Options
-
-See the [Configuration Reference](../api/configuration.md) for all available options:
-
-```typescript
-const cms = createCmsClient(components.convexCms, {
-  // Locale settings
-  defaultLocale: "en",
-  supportedLocales: ["en", "es", "fr"],
-  localeFallbackChains: {
-    "es-MX": ["es", "en"],
-    "fr-CA": ["fr", "en"],
-  },
-
-  // Features
-  features: {
-    versioning: true,
-    localization: true,
-    scheduling: true,
-    softDelete: true,
-    contentLocking: true,
-  },
-
-  // Version retention
-  maxVersionsPerEntry: 50,
-
-  // Authorization
-  getUserRole: async ({ userId }) => {
-    // Your logic to map userId to CMS role
-    return "editor";
-  },
-
-  // Custom roles (optional)
-  customRoles: {
-    contentManager: {
-      displayName: "Content Manager",
-      permissions: [
-        { resource: "contentEntries", action: "create", scope: "all" },
-        { resource: "contentEntries", action: "read", scope: "all" },
-        { resource: "contentEntries", action: "update", scope: "all" },
-        { resource: "contentEntries", action: "publish", scope: "all" },
-        { resource: "mediaAssets", action: "create", scope: "all" },
-        { resource: "mediaAssets", action: "read", scope: "all" },
-      ],
-    },
-  },
-});
-```
-
----
-
 ## Troubleshooting
 
 ### "Content type not found" errors
@@ -396,109 +325,15 @@ Run `pnpm convex dev` to regenerate types after making changes to your Convex fu
 
 ---
 
-## Using Both Paths Together
-
-Most production applications use **both** integration paths:
-
-- `defineAdminAPI` → Powers the Admin UI for content editors
-- `createCmsClient` → Typed methods for custom frontend queries
-
-Here's a typical setup:
-
-```typescript
-// convex/admin.ts — for Admin UI
-import { defineAdminAPI } from "convex-cms";
-import { components } from "./_generated/api";
-
-export const {
-  listContentTypes,
-  getEntry,
-  publishEntry,
-  // ... all admin functions
-} = defineAdminAPI(components.convexCms, {
-  auth: async (ctx, operation) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthorized");
-    return identity.subject;
-  },
-});
-```
-
-```typescript
-// convex/cms.ts — for your custom functions
-import { createCmsClient } from "convex-cms";
-import { components } from "./_generated/api";
-
-export const cms = createCmsClient(components.convexCms, {
-  permissiveMode: false,
-  getUserRole: async ({ userId }) => {
-    // Map users to CMS roles
-    return "editor";
-  },
-});
-```
-
-Now content editors use the Admin UI while your frontend uses custom queries via `cms.*`.
-
-See [Integration Patterns](./integration-patterns.md) for more detailed examples.
-
----
-
-## Query Builder
-
-For complex queries, use the fluent query builder:
-
-```typescript
-// Published posts with filters
-const featured = await cms.contentEntries
-  .query()
-  .contentType("blog_post")
-  .published()
-  .where("featured", "eq", true)
-  .orderBy("_creationTime", "desc")
-  .limit(5)
-  .execute(ctx);
-
-// Pagination
-const page1 = await cms.contentEntries
-  .query()
-  .contentType("blog_post")
-  .published()
-  .limit(10)
-  .execute(ctx);
-
-if (!page1.isDone) {
-  const page2 = await cms.contentEntries
-    .query()
-    .contentType("blog_post")
-    .published()
-    .limit(10)
-    .cursor(page1.continueCursor)
-    .execute(ctx);
-}
-
-// First matching entry
-const latest = await cms.contentEntries
-  .query()
-  .contentType("blog_post")
-  .published()
-  .newestFirst()
-  .first(ctx);
-```
-
-See [Query Builder Guide](./query-builder.md) for the full API.
-
----
-
 ## Next Steps
 
-1. **[Query Builder](./query-builder.md)** — Fluent API for complex queries
-2. **[Add the Admin UI](./admin-ui-setup.md)** — Visual interface for content editors
-3. **[Code-First Schema](../api/code-first-schema.md)** — TypeScript-first with full type inference
-4. **[Set up authorization](./authorization.md)** — Add user roles and permissions
-5. **[Learn content modeling](./content-modeling.md)** — Define rich content types
-6. **[Taxonomies](./taxonomies.md)** — Organize content with categories and tags
-7. **[Agent Tools](./agent-tools.md)** — Integrate with AI agents
+1. **[Query Builder](./query-builder.md)** for fluent API queries
+2. **[Add the Admin UI](./admin-ui-setup.md)** for visual content editing
+3. **[Code-First Schema](../api/code-first-schema.md)** for TypeScript-first with full type inference
+4. **[Set up authorization](./authorization.md)** for user roles and permissions
+5. **[Learn content modeling](./content-modeling.md)** for rich content types
+6. **[Taxonomies](./taxonomies.md)** for organizing content with categories and tags
+7. **[Agent Tools](./agent-tools.md)** for integrating with AI agents
 
 ---
 

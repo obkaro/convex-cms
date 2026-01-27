@@ -182,11 +182,11 @@ for (const entry of locked.page) {
 
 ## Best Practices
 
-1. **Always release locks** — Release when navigation or editing completes
-2. **Set up periodic renewal** — Renew every 15 minutes for long sessions
-3. **Handle renewal failures** — Prompt user to save work if renewal fails
-4. **Use force-release sparingly** — Only for genuinely abandoned locks
-5. **Show lock status in UI** — Prevent users from trying to edit locked content
+1. **Always release locks**: Release when navigation or editing completes
+2. **Set up periodic renewal**: Renew every 15 minutes for long sessions
+3. **Handle renewal failures**: Prompt user to save work if renewal fails
+4. **Use force-release sparingly**: Only for genuinely abandoned locks
+5. **Show lock status in UI**: Prevent users from trying to edit locked content
 
 ## Error Handling
 
@@ -207,5 +207,5 @@ try {
 ---
 
 See also:
-- [Admin API Reference](../api/admin-api.md) — Content locking functions
-- [Configuration Reference](../api/configuration.md) — Enabling features
+- [Admin API Reference](../api/admin-api.md): Content locking functions
+- [Configuration Reference](../api/configuration.md): Enabling features

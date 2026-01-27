@@ -143,7 +143,7 @@ export const createPost = mutation({
 
 ## Pattern 3: Admin UI + Custom Functions
 
-**Use when:** Most applications — visual editing AND custom frontend queries
+**Use when:** Most applications. Visual editing AND custom frontend queries
 
 **Setup:**
 - `defineAdminAPI` for the admin backend
@@ -153,7 +153,7 @@ export const createPost = mutation({
 ### Example
 
 ```typescript
-// convex/admin.ts — for Admin UI
+// convex/admin.ts - for Admin UI
 import { defineAdminAPI } from "convex-cms";
 import { components } from "./_generated/api";
 
@@ -172,7 +172,7 @@ export const {
 ```
 
 ```typescript
-// convex/cms.ts — for your custom functions
+// convex/cms.ts - for your custom functions
 import { createCmsClient } from "convex-cms";
 import { components } from "./_generated/api";
 
@@ -186,7 +186,7 @@ export const cms = createCmsClient(components.convexCms, {
 ```
 
 ```typescript
-// convex/blog.ts — custom queries for your frontend
+// convex/blog.ts - custom queries for your frontend
 import { query } from "./_generated/server";
 import { cms } from "./cms";
 
@@ -217,7 +217,7 @@ export const getPostBySlug = query({
 ```
 
 ```tsx
-// app/admin/page.tsx — embedded Admin UI
+// app/admin/page.tsx - embedded Admin UI
 import { CmsAdmin } from "convex-cms/admin/embed";
 import { api } from "@/convex/_generated/api";
 
@@ -434,9 +434,9 @@ Run `pnpm convex-cms admin` to access the Admin UI.
 
 ## See Also
 
-- [Admin UI Setup](./admin-ui-setup.md) — CLI and embed modes
-- [Getting Started](./getting-started.md) — `createCmsClient` usage
-- [Agent Tools](./agent-tools.md) — AI agent integration with Zod schemas
-- [Query Builder](./query-builder.md) — Fluent API for complex queries
-- [Code-First Schema](../api/code-first-schema.md) — TypeScript-first content types with full type inference
-- [Authorization](./authorization.md) — RBAC and custom roles
+- [Admin UI Setup](./admin-ui-setup.md): CLI and embed modes
+- [Getting Started](./getting-started.md): `createCmsClient` usage
+- [Agent Tools](./agent-tools.md): AI agent integration with Zod schemas
+- [Query Builder](./query-builder.md): Fluent API for complex queries
+- [Code-First Schema](../api/code-first-schema.md): TypeScript-first content types with full type inference
+- [Authorization](./authorization.md): RBAC and custom roles

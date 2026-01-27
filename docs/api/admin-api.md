@@ -2,7 +2,7 @@
 
 The Admin API provides **60+ backend functions** across **11 domains** for the CMS Admin UI. Use `defineAdminAPI` to create these functions in your Convex app.
 
-**Domains:** Dashboard (1) • Settings (3) • Content Types (5) • Entries (15) • Bulk Ops (5) • Trash (6) • Content Lock (6) • Versions (4) • Media Assets (11) • Media Folders (8) • Media Variants (12) • Taxonomies (6) • Terms (9) • Entry-Term (6) • Media-Term (6)
+**Domains:** Dashboard (1) • Settings (3) • Content Types (7) • Entries (15) • Bulk Ops (5) • Trash (6) • Content Lock (6) • Versions (4) • Media Assets (11) • Media Folders (8) • Media Variants (12) • Taxonomies (6) • Terms (9) • Entry-Term (6) • Media-Term (6)
 
 ## Overview
 
@@ -65,8 +65,8 @@ interface AdminApiOptions {
 ```
 
 **Parameters:**
-- `ctx.auth` — Convex auth context (use `ctx.auth.getUserIdentity()`)
-- `operation` — Describes what operation is being attempted
+- `ctx.auth`: Convex auth context (use `ctx.auth.getUserIdentity()`)
+- `operation`: Describes what operation is being attempted
 
 **Returns:**
 - User ID string if authenticated
@@ -85,6 +85,8 @@ type AdminOperation =
   | { type: "createContentType" }
   | { type: "updateContentType"; id: string }
   | { type: "deleteContentType"; id: string }
+  | { type: "checkSchemaDrift" }
+  | { type: "syncContentTypes" }
   // Entries
   | { type: "listEntries"; contentTypeId: string }
   | { type: "getEntry"; id: string }
@@ -150,6 +152,8 @@ auth: async (ctx, operation) => {
 | `createContentType` | Mutation | Create a new content type |
 | `updateContentType` | Mutation | Update a content type |
 | `deleteContentType` | Mutation | Delete a content type |
+| `checkSchemaDrift` | Query | Detect drift between code-defined and database schemas |
+| `syncCodeDefinedTypes` | Mutation | Sync code-defined types to the database |
 
 ### Content Entries
 
@@ -335,6 +339,8 @@ export const {
   createContentType,
   updateContentType,
   deleteContentType,
+  checkSchemaDrift,
+  syncCodeDefinedTypes,
 
   // Entries
   listEntries,
@@ -467,8 +473,8 @@ export const {
 
 ## See Also
 
-- [Admin UI Setup](../guides/admin-ui-setup.md) — CLI and embed modes
-- [Authorization](../guides/authorization.md) — RBAC and custom roles
-- [Content Locking](../guides/content-locking.md) — Prevent concurrent edit conflicts
-- [Taxonomies](../guides/taxonomies.md) — Categories, tags, and organization
-- [Client API](./client-api.md) — `createCmsClient` for custom functions
+- [Admin UI Setup](../guides/admin-ui-setup.md): CLI and embed modes
+- [Authorization](../guides/authorization.md): RBAC and custom roles
+- [Content Locking](../guides/content-locking.md): Prevent concurrent edit conflicts
+- [Taxonomies](../guides/taxonomies.md): Categories, tags, and organization
+- [Client API](./client-api.md): `createCmsClient` for custom functions

@@ -885,4 +885,4 @@ Only mark fields that users will search:
 
 See also:
 - [Content Modeling Guide](../guides/content-modeling.md)
-- [Taxonomies Guide](../guides/taxonomies.md) — For tags and category fields
+- [Taxonomies Guide](../guides/taxonomies.md): For tags and category fields

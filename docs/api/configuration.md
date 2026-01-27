@@ -4,81 +4,6 @@ Complete reference for all Convex CMS configuration options.
 
 ---
 
-## Quick Start Configurations
-
-### Development (No Auth)
-
-```typescript
-const cms = createCmsClient(components.convexCms, {
-  permissiveMode: true,
-});
-```
-
-### Production (Basic RBAC)
-
-```typescript
-const cms = createCmsClient(components.convexCms, {
-  getUserRole: async (ctx, { userId }) => {
-    if (!userId) return null;
-    const user = await ctx.db.get(userId);
-    return user?.cmsRole ?? "viewer";
-  },
-});
-```
-
-### Multi-Locale
-
-```typescript
-const cms = createCmsClient(components.convexCms, {
-  defaultLocale: "en",
-  supportedLocales: ["en", "es", "fr"],
-  features: { localization: true },
-  getUserRole: async (ctx, { userId }) => { /* ... */ },
-});
-```
-
-### Minimal (API-Only)
-
-```typescript
-const cms = createCmsClient(components.convexCms, {
-  features: {
-    versioning: false,
-    contentLocking: false,
-    scheduling: false,
-  },
-  permissiveMode: true,
-});
-```
-
-### Code-First (Type-Safe)
-
-```typescript
-import { createTypedCmsClient, createContentSchema, defineContentType } from "convex-cms";
-import { v } from "convex/values";
-
-const blogPost = defineContentType({
-  name: "blog_post",
-  validator: v.object({
-    title: v.string(),
-    content: v.string(),
-  }),
-});
-
-const contentSchema = createContentSchema({ blogPost });
-
-const cms = createTypedCmsClient(components.convexCms, {
-  schema: contentSchema,
-  getUserRole: async (ctx, { userId }) => { /* ... */ },
-});
-
-// Now entry.data.title is typed as string
-const entry = await cms.typedContentEntries.get<"blog_post">(ctx, id);
-```
-
-See [Code-First Schema Reference](./code-first-schema.md) for full documentation.
-
----
-
 ## Client Configuration
 
 ```typescript
@@ -232,47 +157,13 @@ getUserRole: async (ctx, { userId }) => {
 }
 ```
 
-**Example with Clerk authentication**:
-
-```typescript
-const cms = createCmsClient(components.convexCms, {
-  getUserRole: async (ctx, { userId }) => {
-    if (!userId) return null;
-
-    // Look up user by Clerk ID
-    const user = await ctx.db
-      .query("users")
-      .filter((q) => q.eq(q.field("clerkId"), userId))
-      .first();
-
-    return user?.cmsRole ?? null;
-  },
-});
-
-// In your mutation - just pass userId, the hook handles role lookup
-export const createEntry = mutation({
-  args: { title: v.string() },
-  handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    const userId = identity?.subject;
-
-    // CMS automatically resolves role via getUserRole hook
-    return await cms.contentEntries.create(ctx, {
-      contentTypeId: typeId,
-      data: { title: args.title },
-      createdBy: userId,
-    });
-  },
-});
-```
-
 **Return values**:
-- `"admin"` - Full access
-- `"editor"` - Manage content and media
-- `"author"` - Create and manage own content
-- `"viewer"` - Read-only access
+- `"admin"`: Full access
+- `"editor"`: Manage content and media
+- `"author"`: Create and manage own content
+- `"viewer"`: Read-only access
 - Custom role name (defined in `customRoles`)
-- `null` - No access
+- `null`: No access
 
 ### customRoles
 
@@ -435,7 +326,7 @@ export const cms = createCmsClient(components.convexCms, {
   lockDurationMs: 600000,  // 10 minutes
   maxMediaFileSize: 25 * 1024 * 1024,  // 25MB
 
-  // Authorization - ctx gives you database access
+  // Authorization
   getUserRole: async (ctx, { userId }) => {
     if (!userId) return null;
     const user = await ctx.db.get(userId);

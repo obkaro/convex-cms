@@ -603,6 +603,67 @@ await cms.contentEntries.get(ctx, { id: dynamicTypeEntryId });
 
 ---
 
+## Schema Drift Detection
+
+When using code-first schemas, drift can occur between your code definitions and the database. This happens when:
+
+- You add or modify a `defineContentType()` and deploy
+- You remove a code-defined type from your codebase
+- Database records get out of sync with code definitions
+
+The CMS provides tools to detect and resolve schema drift.
+
+### Checking for Drift
+
+Use `checkSchemaDrift` to compare code definitions against database records:
+
+```typescript
+// In a query or action
+const driftIssues = await ctx.runQuery(api.admin.checkSchemaDrift, {});
+
+if (driftIssues.length > 0) {
+  for (const issue of driftIssues) {
+    console.log(`[${issue.severity}] ${issue.contentTypeName}: ${issue.message}`);
+  }
+}
+```
+
+### Drift Types
+
+| Type | Severity | Description |
+|------|----------|-------------|
+| `CONTENT_TYPE_MISSING_IN_DB` | warning | Code type not yet synced to database |
+| `CONTENT_TYPE_MISSING_IN_CODE` | warning | DB type was code-defined but no longer exists in code |
+| `FIELD_MISSING_IN_DB` | error | Code field not present in database schema |
+| `FIELD_MISSING_IN_CODE` | warning | Database has field not defined in code |
+| `FIELD_TYPE_MISMATCH` | error | Field type differs between code and database |
+| `FIELD_REQUIRED_MISMATCH` | warning | Required status differs |
+
+**Errors** indicate critical issues that may cause validation failures. **Warnings** indicate non-critical mismatches that should be reviewed.
+
+### Syncing Code-Defined Types
+
+Use `syncCodeDefinedTypes` to sync all code-defined types to the database:
+
+```typescript
+const result = await ctx.runMutation(api.admin.syncCodeDefinedTypes, {});
+
+console.log(`Created: ${result.created}`);   // New types added to DB
+console.log(`Updated: ${result.updated}`);   // Existing types updated
+console.log(`Unchanged: ${result.unchanged}`); // Already in sync
+```
+
+The sync operation:
+- Creates database records for new code-defined types
+- Updates existing code-defined types if fields have changed
+- Only modifies types with `createdBy: "code"`. Manually created database types are never affected
+
+### Admin UI Integration
+
+The Admin UI automatically checks for schema drift and displays a warning banner when issues are detected. Click **Sync Now** to resolve drift with a single click.
+
+---
+
 See also:
 - [Field Types Reference](./field-types.md)
 - [Client API Reference](./client-api.md)

@@ -6,8 +6,8 @@ This guide covers how to define content structures (content types) and work with
 
 Content modeling in Convex CMS follows a two-layer approach:
 
-- **Content Types** - Define the schema (what fields exist, their types, validation rules)
-- **Content Entries** - Instances of content types (the actual content)
+- **Content Types**: Define the schema (what fields exist, their types, validation rules)
+- **Content Entries**: Instances of content types (the actual content)
 
 Think of content types as templates and entries as filled-in documents using those templates.
 
@@ -22,7 +22,7 @@ Convex CMS supports two approaches for defining content types:
 | **Imperative** (this guide) | Dynamic schemas, admin UI creation | Runtime only | No |
 | **Code-First** (`defineContentType`) | Static schemas, typed applications | Full TypeScript | Yes |
 
-This guide covers the **imperative approach** - creating content types at runtime via API calls or Admin UI. For the code-first approach with TypeScript inference, see [Code-First Schema Reference](../api/code-first-schema.md).
+This guide covers the **imperative approach**: creating content types at runtime via API calls or Admin UI. For the code-first approach with TypeScript inference, see [Code-First Schema Reference](../api/code-first-schema.md).
 
 **When to use imperative:**
 - Content admins need to create/modify types via Admin UI
@@ -127,249 +127,25 @@ interface FieldDefinition {
 }
 ```
 
----
+### Available Field Types
 
-## Field Types Reference
+| Type | Purpose | Stored As |
+|------|---------|-----------|
+| `text` | Single-line text | `string` |
+| `richText` | HTML rich text | `string` |
+| `number` | Numeric values | `number` |
+| `boolean` | True/false | `boolean` |
+| `date` | Date only | `string` |
+| `datetime` | Date with time | `string` |
+| `select` | Single choice | `string` |
+| `multiSelect` | Multiple choices | `string[]` |
+| `reference` | Link to other entries | `Id` or `Id[]` |
+| `media` | Link to media assets | `Id` or `Id[]` |
+| `json` | Arbitrary JSON | `any` |
+| `tags` | Flat taxonomy tags | `string[]` |
+| `category` | Hierarchical category | `string` |
 
-### text
-
-Plain text input.
-
-```typescript
-{
-  name: "title",
-  type: "text",
-  options: {
-    minLength: 1,
-    maxLength: 200,
-    pattern: "^[A-Z].*",  // Regex pattern
-    patternMessage: "Must start with uppercase letter",
-  },
-}
-```
-
-### richText
-
-HTML rich text editor with formatting.
-
-```typescript
-{
-  name: "content",
-  type: "richText",
-  options: {
-    allowedFormats: ["bold", "italic", "link", "heading", "list"],
-    maxLength: 50000,
-  },
-}
-```
-
-### number
-
-Numeric values.
-
-```typescript
-{
-  name: "price",
-  type: "number",
-  options: {
-    min: 0,
-    max: 10000,
-    step: 0.01,
-    precision: 2,
-  },
-}
-```
-
-### boolean
-
-True/false toggle.
-
-```typescript
-{
-  name: "featured",
-  type: "boolean",
-  defaultValue: false,
-}
-```
-
-### date
-
-Date without time.
-
-```typescript
-{
-  name: "publishDate",
-  type: "date",
-  options: {
-    minDate: "2020-01-01",
-    maxDate: "2030-12-31",
-  },
-}
-```
-
-### datetime
-
-Date with time.
-
-```typescript
-{
-  name: "eventTime",
-  type: "datetime",
-  options: {
-    minDate: "2020-01-01T00:00:00Z",
-  },
-}
-```
-
-### select
-
-Single selection from options.
-
-```typescript
-{
-  name: "status",
-  type: "select",
-  options: {
-    options: [
-      { value: "active", label: "Active" },
-      { value: "inactive", label: "Inactive" },
-      { value: "archived", label: "Archived" },
-    ],
-    defaultValue: "active",
-  },
-}
-```
-
-### multiSelect
-
-Multiple selections from options.
-
-```typescript
-{
-  name: "categories",
-  type: "multiSelect",
-  options: {
-    options: [
-      { value: "tech", label: "Technology" },
-      { value: "business", label: "Business" },
-      { value: "lifestyle", label: "Lifestyle" },
-    ],
-    minSelections: 1,
-    maxSelections: 3,
-  },
-}
-```
-
-### reference
-
-Link to other content entries.
-
-```typescript
-// Single reference
-{
-  name: "author",
-  type: "reference",
-  options: {
-    contentTypes: ["author"],
-    multiple: false,
-  },
-}
-
-// Multiple references
-{
-  name: "relatedPosts",
-  type: "reference",
-  options: {
-    contentTypes: ["blog_post"],
-    multiple: true,
-    maxItems: 5,
-  },
-}
-```
-
-### media
-
-Link to media assets.
-
-```typescript
-// Single image
-{
-  name: "featuredImage",
-  type: "media",
-  options: {
-    allowedTypes: ["image/*"],
-    maxSize: 5 * 1024 * 1024,  // 5MB
-    multiple: false,
-  },
-}
-
-// Gallery
-{
-  name: "gallery",
-  type: "media",
-  options: {
-    allowedTypes: ["image/*"],
-    multiple: true,
-    maxItems: 10,
-  },
-}
-```
-
-### json
-
-Arbitrary JSON data.
-
-```typescript
-{
-  name: "metadata",
-  type: "json",
-  options: {
-    schema: {
-      type: "object",
-      properties: {
-        seoTitle: { type: "string" },
-        seoDescription: { type: "string" },
-        keywords: { type: "array", items: { type: "string" } },
-      },
-    },
-  },
-}
-```
-
-### tags
-
-Flat tags from a taxonomy.
-
-```typescript
-{
-  name: "tags",
-  type: "tags",
-  options: {
-    taxonomyName: "blog_tags",
-    allowInlineCreation: true,  // Create new tags on the fly
-    maxTags: 10,
-  },
-}
-```
-
-### category
-
-Hierarchical category selection from a taxonomy.
-
-```typescript
-{
-  name: "category",
-  type: "category",
-  required: true,
-  options: {
-    taxonomyName: "product_categories",
-    multiple: false,
-    depth: 2,  // Only show top 2 levels in picker
-  },
-}
-```
-
-See [Taxonomies Guide](./taxonomies.md) for creating taxonomies and managing tags/categories.
+For detailed options and examples for each field type, see [Field Types Reference](../api/field-types.md).
 
 ---
 
@@ -543,6 +319,8 @@ const result = await cms.contentEntries.list(ctx, {
 });
 ```
 
+For complex queries, see [Query Builder Guide](./query-builder.md).
+
 ---
 
 ### Deleting Entries
@@ -671,6 +449,14 @@ The update returns a `breakingChanges` array if updates would affect existing co
 - Changing a field type
 - Adding a required field without default
 
+### Schema Drift (Code-First Types)
+
+If you're using [code-first schema definitions](../api/code-first-schema.md), the database may drift out of sync when you add or modify `defineContentType()` definitions and deploy.
+
+The Admin UI shows a warning banner when drift is detected. Use `syncCodeDefinedTypes()` to resolve it, or click **Sync Now** in the UI.
+
+See [Schema Drift Detection](../api/code-first-schema.md#schema-drift-detection) for programmatic usage.
+
 ---
 
 ## Deleting Content Types
@@ -690,10 +476,10 @@ await cms.contentTypes.delete(ctx, {
 ---
 
 See also:
-- [Code-First Schema Reference](../api/code-first-schema.md) — Type-safe schema definition
-- [Field Types Reference](../api/field-types.md) — All 13 field types
-- [Taxonomies Guide](./taxonomies.md) — Categories and tags
-- [Query Builder Guide](./query-builder.md) — Fluent API for querying content
+- [Code-First Schema Reference](../api/code-first-schema.md) for type-safe schema definition
+- [Field Types Reference](../api/field-types.md) for all 13 field types
+- [Taxonomies Guide](./taxonomies.md) for categories and tags
+- [Query Builder Guide](./query-builder.md) for fluent API queries
 - [Client API Reference](../api/client-api.md)
 - [Media Guide](./media.md)
 
