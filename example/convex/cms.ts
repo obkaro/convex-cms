@@ -166,6 +166,7 @@ export const changelogEntry = defineContentType({
 			image: {
 				label: "Screenshot",
 				renderAs: "media",
+				required: false,
 				allowedMimeTypes: ["image/*"],
 			},
 		},

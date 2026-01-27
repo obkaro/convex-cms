@@ -411,27 +411,27 @@ function extractValidatorFields(
 
   // Convex validators have internal structure we can introspect
   // The validator has a `fields` property for object validators
+  // Each field IS a validator with isOptional, kind, etc.
   const validatorAny = validator as unknown as {
     fieldPaths?: Record<string, unknown>;
     type?: string;
     kind?: string;
     fields?: Record<
       string,
-      { fieldPath: string; validator: { isOptional?: string; type?: string; kind?: string } }
+      { isOptional?: string; type?: string; kind?: string }
     >;
   };
 
   // Try to access the validator's internal field definitions
   if (validatorAny.fields) {
-    for (const [name, fieldInfo] of Object.entries(validatorAny.fields)) {
-      const innerValidator = fieldInfo.validator;
-      const isOptional = innerValidator?.isOptional === "optional";
+    for (const [name, fieldValidator] of Object.entries(validatorAny.fields)) {
+      const isOptional = fieldValidator?.isOptional === "optional";
 
       fields.push({
         name,
-        validatorType: innerValidator?.type || innerValidator?.kind || "unknown",
+        validatorType: fieldValidator?.type || fieldValidator?.kind || "unknown",
         required: !isOptional,
-        innerValidator,
+        innerValidator: fieldValidator,
       });
     }
   }
@@ -448,6 +448,8 @@ function inferFieldType(validatorType: string): string {
   const typeMap: Record<string, string> = {
     string: "text",
     number: "number",
+    float64: "number",
+    int64: "number",
     boolean: "boolean",
     id: "reference",
     array: "json",
