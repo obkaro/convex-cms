@@ -190,8 +190,7 @@ const paginatedTrashResponse = v.object({
  * (most recently deleted first). Each entry includes metadata about
  * when it was deleted and when it will expire.
  *
- * @param contentTypeId - Filter by content type ID
- * @param contentTypeName - Filter by content type name
+ * @param contentTypeName - Filter by content type name (e.g., "blog_post")
  * @param search - Search within deleted items
  * @param paginationOpts - Standard pagination options
  *
@@ -224,7 +223,7 @@ export const listTrash = query({
 	args: listTrashArgs.fields,
 	returns: paginatedTrashResponse,
 	handler: async (ctx, args) => {
-		const { contentTypeId, contentTypeName, search, paginationOpts } = args;
+		const { contentTypeName, search, paginationOpts } = args;
 
 		// Clamp pagination
 		const numItems = Math.min(
@@ -237,25 +236,10 @@ export const listTrash = query({
 			numItems,
 		};
 
-		// Resolve content type ID from name if provided
-		let resolvedContentTypeId = contentTypeId;
-		if (!resolvedContentTypeId && contentTypeName) {
-			const contentType = await ctx.db
-				.query("contentTypes")
-				.withIndex("by_name", (q) => q.eq("name", contentTypeName))
-				.first();
-			if (contentType) {
-				resolvedContentTypeId = contentType._id;
-			}
-		}
-
 		// Get trash config for retention period
 		const config = await ctx.db.query("trashConfig").first();
 		const retentionDays = config?.retentionDays ?? DEFAULT_TRASH_RETENTION_DAYS;
 		const now = Date.now();
-
-		// Create content type cache for display names
-		const contentTypeCache = new Map<string, string>();
 
 		// Build the query using the by_deleted index
 		const streamDb = stream(ctx.db, schema);
@@ -270,11 +254,8 @@ export const listTrash = query({
 				return false;
 			}
 
-			// Filter by content type if specified
-			if (
-				resolvedContentTypeId &&
-				entry.contentTypeId !== resolvedContentTypeId
-			) {
+			// Filter by content type name if specified
+			if (contentTypeName && entry.contentTypeName !== contentTypeName) {
 				return false;
 			}
 
@@ -300,40 +281,23 @@ export const listTrash = query({
 		});
 
 		// Enrich results with deletion metadata
-		const enrichedPage = await Promise.all(
-			result.page.map(async (entry) => {
-				const deletedAt = entry.deletedAt!;
-				const deletedDaysAgo = Math.floor((now - deletedAt) / MS_PER_DAY);
+		const enrichedPage = result.page.map((entry) => {
+			const deletedAt = entry.deletedAt!;
+			const deletedDaysAgo = Math.floor((now - deletedAt) / MS_PER_DAY);
 
-				// Calculate expiration time based on retention
-				let expiresAt: number | undefined;
-				if (retentionDays > 0) {
-					expiresAt = deletedAt + retentionDays * MS_PER_DAY;
-				}
+			// Calculate expiration time based on retention
+			let expiresAt: number | undefined;
+			if (retentionDays > 0) {
+				expiresAt = deletedAt + retentionDays * MS_PER_DAY;
+			}
 
-				// Get content type display name
-				let contentTypeName = contentTypeCache.get(
-					entry.contentTypeId.toString(),
-				);
-				if (!contentTypeName) {
-					const ct = await ctx.db.get(entry.contentTypeId);
-					contentTypeName = ct?.displayName ?? ct?.name;
-					if (contentTypeName) {
-						contentTypeCache.set(
-							entry.contentTypeId.toString(),
-							contentTypeName,
-						);
-					}
-				}
-
-				return {
-					...entry,
-					deletedDaysAgo,
-					expiresAt,
-					contentTypeName,
-				};
-			}),
-		);
+			return {
+				...entry,
+				deletedDaysAgo,
+				expiresAt,
+				contentTypeName: entry.contentTypeName,
+			};
+		});
 
 		return {
 			page: enrichedPage,
@@ -427,7 +391,7 @@ export const getTrashStats = query({
  * - Delete only items of a specific content type
  *
  * @param olderThanDays - Only delete items deleted more than this many days ago
- * @param contentTypeId - Only delete items of this content type
+ * @param contentTypeName - Only delete items of this content type name
  * @param deletedBy - User performing the operation (for logging)
  *
  * @returns Count of deleted items and any errors
@@ -448,7 +412,7 @@ export const getTrashStats = query({
  *
  * // Delete only deleted blog posts
  * await ctx.runMutation(api.trash.emptyTrash, {
- *   contentTypeId: blogTypeId,
+ *   contentTypeName: "blog_post",
  *   deletedBy: currentUserId,
  * });
  * ```
@@ -457,7 +421,7 @@ export const emptyTrash = mutation({
 	args: emptyTrashArgs.fields,
 	returns: emptyTrashResult,
 	handler: async (ctx, args) => {
-		const { olderThanDays, contentTypeId } = args;
+		const { olderThanDays, contentTypeName } = args;
 
 		const now = Date.now();
 		let cutoffTime: number | undefined;
@@ -489,8 +453,8 @@ export const emptyTrash = mutation({
 				continue; // Not old enough
 			}
 			if (
-				contentTypeId !== undefined &&
-				entry.contentTypeId !== contentTypeId
+				contentTypeName !== undefined &&
+				entry.contentTypeName !== contentTypeName
 			) {
 				continue; // Wrong content type
 			}

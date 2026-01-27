@@ -112,7 +112,7 @@ export const deleteContentTypeArgs = v.object({
  * Fields like version, deletedAt, searchText are set by the mutation.
  */
 export const createContentEntryArgs = v.object({
-	contentTypeId: v.id("contentTypes"),
+	contentTypeName: v.string(),
 	slug: v.optional(v.string()), // Optional - auto-generated if not provided
 	data: v.any(),
 	locale: v.optional(v.string()),
@@ -498,7 +498,6 @@ export const paginationResultValidator = <T extends Validator<unknown, "required
 	});
 
 export const contentQueryArgs = v.object({
-	contentTypeId: v.optional(v.id("contentTypes")),
 	contentTypeName: v.optional(v.string()),
 	status: v.optional(contentStatusValidator),
 	statusIn: v.optional(v.array(contentStatusValidator)),
@@ -658,7 +657,6 @@ export const updateTrashConfigArgs = v.object({
 });
 
 export const listTrashArgs = v.object({
-	contentTypeId: v.optional(v.id("contentTypes")),
 	contentTypeName: v.optional(v.string()),
 	search: v.optional(v.string()),
 	paginationOpts: paginationOptsValidator,
@@ -666,7 +664,7 @@ export const listTrashArgs = v.object({
 
 export const emptyTrashArgs = v.object({
 	olderThanDays: v.optional(v.number()),
-	contentTypeId: v.optional(v.id("contentTypes")),
+	contentTypeName: v.optional(v.string()),
 	deletedBy: v.optional(v.string()),
 });
 
@@ -725,7 +723,7 @@ export const checkLockArgs = v.object({
 });
 
 export const listLockedEntriesArgs = v.object({
-	contentTypeId: v.optional(v.id("contentTypes")),
+	contentTypeName: v.optional(v.string()),
 	lockedBy: v.optional(v.string()),
 	paginationOpts: paginationOptsValidator,
 });

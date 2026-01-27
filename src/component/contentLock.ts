@@ -137,7 +137,7 @@ export const checkLock = query({
  * Useful for admin dashboards to see which entries are currently
  * being edited and by whom.
  *
- * @param contentTypeId - Optional filter by content type
+ * @param contentTypeName - Optional filter by content type name
  * @param lockedBy - Optional filter by locking user
  * @param paginationOpts - Pagination options
  * @returns Paginated list of locked entries
@@ -155,7 +155,7 @@ export const listLockedEntries = query({
 		isDone: v.boolean(),
 	}),
 	handler: async (ctx, args) => {
-		const { contentTypeId, lockedBy, paginationOpts } = args;
+		const { contentTypeName, lockedBy, paginationOpts } = args;
 
 		// Query entries with locks using the by_locked index
 		const query = ctx.db.query("contentEntries").withIndex("by_locked");
@@ -178,7 +178,7 @@ export const listLockedEntries = query({
 				return false;
 			}
 			// Apply content type filter if provided
-			if (contentTypeId && entry.contentTypeId !== contentTypeId) {
+			if (contentTypeName && entry.contentTypeName !== contentTypeName) {
 				return false;
 			}
 			// Apply lockedBy filter if provided

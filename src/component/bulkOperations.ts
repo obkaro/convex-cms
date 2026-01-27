@@ -494,11 +494,14 @@ export const bulkUpdate = mutation({
 				// Handle data update with validation
 				if (data !== undefined) {
 					// Get content type (from cache or database)
-					const contentTypeId = entry.contentTypeId.toString();
-					let contentType = contentTypeCache.get(contentTypeId);
+					const contentTypeName = entry.contentTypeName;
+					let contentType = contentTypeCache.get(contentTypeName);
 
 					if (!contentType) {
-						const dbContentType = await ctx.db.get(entry.contentTypeId);
+						const dbContentType = await ctx.db
+							.query("contentTypes")
+							.withIndex("by_name", (q) => q.eq("name", contentTypeName))
+							.first();
 						if (!dbContentType) {
 							results.push({
 								id,
@@ -525,7 +528,7 @@ export const bulkUpdate = mutation({
 							slugField: dbContentType.slugField,
 							singleton: dbContentType.singleton,
 						};
-						contentTypeCache.set(contentTypeId, contentType);
+						contentTypeCache.set(contentTypeName, contentType);
 					}
 
 					// Merge data with existing

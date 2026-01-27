@@ -256,8 +256,11 @@ export const getEntryForIndexing = internalQuery({
     const entry = await ctx.db.get(args.entryId);
     if (!entry) return null;
 
-    // Get the content type
-    const contentType = await ctx.db.get(entry.contentTypeId);
+    // Get the content type by name
+    const contentType = await ctx.db
+      .query("contentTypes")
+      .withIndex("by_name", (q) => q.eq("name", entry.contentTypeName))
+      .first();
     if (!contentType) return null;
 
     return {
@@ -280,7 +283,7 @@ export const getEntriesForIndexing = internalQuery({
       contentType: Doc<"contentTypes">;
     } | null> = [];
 
-    // Fetch all entries and their content types
+    // Fetch all entries and their content types (by name)
     const contentTypeCache = new Map<string, Doc<"contentTypes">>();
 
     for (const entryId of args.entryIds) {
@@ -290,12 +293,15 @@ export const getEntriesForIndexing = internalQuery({
         continue;
       }
 
-      let contentType = contentTypeCache.get(entry.contentTypeId);
+      let contentType = contentTypeCache.get(entry.contentTypeName);
       if (!contentType) {
-        const fetchedContentType = await ctx.db.get(entry.contentTypeId);
+        const fetchedContentType = await ctx.db
+          .query("contentTypes")
+          .withIndex("by_name", (q) => q.eq("name", entry.contentTypeName))
+          .first();
         if (fetchedContentType) {
           contentType = fetchedContentType;
-          contentTypeCache.set(entry.contentTypeId, fetchedContentType);
+          contentTypeCache.set(entry.contentTypeName, fetchedContentType);
         }
       }
 
@@ -349,15 +355,11 @@ export const getIndexingStats = query({
       ["unpublished", "deleted"].includes(e.action)
     ).length;
 
-    // Get content types for breakdown
-    const contentTypes = await ctx.db.query("contentTypes").collect();
-    const contentTypeMap = new Map(contentTypes.map((ct) => [ct._id, ct.name]));
-
-    // Build breakdown by content type
+    // Build breakdown by content type (entries now have contentTypeName directly)
     const byContentType: Record<string, { published: number; pending: number }> = {};
 
     for (const entry of publishedEntries) {
-      const typeName = contentTypeMap.get(entry.contentTypeId) || "unknown";
+      const typeName = entry.contentTypeName || "unknown";
       if (!byContentType[typeName]) {
         byContentType[typeName] = { published: 0, pending: 0 };
       }
@@ -468,7 +470,10 @@ export const prepareEntryForIndexing = query({
     // Only index published content
     if (entry.status !== "published") return null;
 
-    const contentType = await ctx.db.get(entry.contentTypeId);
+    const contentType = await ctx.db
+      .query("contentTypes")
+      .withIndex("by_name", (q) => q.eq("name", entry.contentTypeName))
+      .first();
     if (!contentType) return null;
 
     // Build extraction options
@@ -484,7 +489,7 @@ export const prepareEntryForIndexing = query({
     // Convert to the expected types
     const entryInfo: ContentEntryInfo = {
       _id: entry._id,
-      contentTypeId: entry.contentTypeId,
+      contentTypeName: entry.contentTypeName,
       slug: entry.slug,
       status: entry.status,
       data: entry.data as Record<string, unknown>,
@@ -594,13 +599,7 @@ export const requestReindex = internalMutation({
       throw new Error(`Entry is not published: ${entryId}`);
     }
 
-    // Get content type for payload
-    const contentType = await ctx.db.get(entry.contentTypeId);
-    if (!contentType) {
-      throw new Error(`Content type not found: ${entry.contentTypeId}`);
-    }
-
-    // Create a reindex event
+    // Create a reindex event (entry already has contentTypeName)
     await ctx.db.insert("cmsEvents", {
       eventType: "contentEntry.published",
       resourceType: "contentEntry",
@@ -608,8 +607,7 @@ export const requestReindex = internalMutation({
       action: "published",
       payload: {
         slug: entry.slug,
-        contentTypeName: contentType.name,
-        contentTypeId: contentType._id,
+        contentTypeName: entry.contentTypeName,
         status: entry.status,
         version: entry.version,
         locale: entry.locale,
@@ -649,13 +647,7 @@ export const requestEntryReindex = mutation({
       return { success: false, message: "Entry is not published" };
     }
 
-    // Get content type for payload
-    const contentType = await ctx.db.get(entry.contentTypeId);
-    if (!contentType) {
-      return { success: false, message: "Content type not found" };
-    }
-
-    // Create a reindex event
+    // Create a reindex event (entry already has contentTypeName)
     await ctx.db.insert("cmsEvents", {
       eventType: "contentEntry.published",
       resourceType: "contentEntry",
@@ -663,8 +655,7 @@ export const requestEntryReindex = mutation({
       action: "published",
       payload: {
         slug: entry.slug,
-        contentTypeName: contentType.name,
-        contentTypeId: contentType._id,
+        contentTypeName: entry.contentTypeName,
         status: entry.status,
         version: entry.version,
         locale: entry.locale,
@@ -715,24 +706,20 @@ export const requestBulkReindex = mutation({
     const hasMore = entries.length > batchSize;
     const entriesToProcess = entries.slice(0, batchSize);
 
-    // Filter by content type if specified
-    const filteredEntries = contentTypeId
-      ? entriesToProcess.filter((e) => e.contentTypeId === contentTypeId)
-      : entriesToProcess;
+    // Filter by content type if specified - need to get content type name first
+    let filteredEntries = entriesToProcess;
+    if (contentTypeId) {
+      const filterContentType = await ctx.db.get(contentTypeId);
+      if (filterContentType) {
+        filteredEntries = entriesToProcess.filter((e) => e.contentTypeName === filterContentType.name);
+      } else {
+        filteredEntries = [];
+      }
+    }
 
-    // Get content types for payloads
-    const contentTypeIds = [...new Set(filteredEntries.map((e) => e.contentTypeId))];
-    const contentTypes = await Promise.all(contentTypeIds.map((id) => ctx.db.get(id)));
-    const contentTypeMap = new Map(
-      contentTypes.filter(Boolean).map((ct) => [ct!._id, ct!])
-    );
-
-    // Create reindex events
+    // Create reindex events (entries already have contentTypeName)
     let eventsCreated = 0;
     for (const entry of filteredEntries) {
-      const contentType = contentTypeMap.get(entry.contentTypeId);
-      if (!contentType) continue;
-
       await ctx.db.insert("cmsEvents", {
         eventType: "contentEntry.published",
         resourceType: "contentEntry",
@@ -740,8 +727,7 @@ export const requestBulkReindex = mutation({
         action: "published",
         payload: {
           slug: entry.slug,
-          contentTypeName: contentType.name,
-          contentTypeId: contentType._id,
+          contentTypeName: entry.contentTypeName,
           status: entry.status,
           version: entry.version,
           locale: entry.locale,
@@ -971,7 +957,7 @@ export const prepareEntriesForIndexing = query({
     } | null;
     const results: PrepareResult[] = [];
 
-    // Cache content types to avoid repeated lookups
+    // Cache content types to avoid repeated lookups (by name)
     const contentTypeCache = new Map<string, Doc<"contentTypes">>();
 
     for (const entryId of entryIds) {
@@ -981,12 +967,15 @@ export const prepareEntriesForIndexing = query({
         continue;
       }
 
-      let contentType = contentTypeCache.get(entry.contentTypeId);
+      let contentType = contentTypeCache.get(entry.contentTypeName);
       if (!contentType) {
-        const fetchedContentType = await ctx.db.get(entry.contentTypeId);
+        const fetchedContentType = await ctx.db
+          .query("contentTypes")
+          .withIndex("by_name", (q) => q.eq("name", entry.contentTypeName))
+          .first();
         if (fetchedContentType) {
           contentType = fetchedContentType;
-          contentTypeCache.set(entry.contentTypeId, fetchedContentType);
+          contentTypeCache.set(entry.contentTypeName, fetchedContentType);
         }
       }
 
@@ -1007,7 +996,7 @@ export const prepareEntriesForIndexing = query({
 
       const entryInfo: ContentEntryInfo = {
         _id: entry._id,
-        contentTypeId: entry.contentTypeId,
+        contentTypeName: entry.contentTypeName,
         slug: entry.slug,
         status: entry.status,
         data: entry.data as Record<string, unknown>,

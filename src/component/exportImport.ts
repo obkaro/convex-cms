@@ -443,13 +443,16 @@ export const exportEntries = query({
 			}
 		}
 
-		// Build query for entries
+		// Build query for entries - use content type name
 		let entriesQuery;
-		if (resolvedContentTypeId) {
+		const resolvedContentType = resolvedContentTypeId
+			? await ctx.db.get(resolvedContentTypeId)
+			: null;
+		if (resolvedContentType) {
 			entriesQuery = ctx.db
 				.query("contentEntries")
 				.withIndex("by_content_type", (q) =>
-					q.eq("contentTypeId", resolvedContentTypeId),
+					q.eq("contentTypeName", resolvedContentType.name),
 				);
 		} else {
 			entriesQuery = ctx.db.query("contentEntries");
@@ -483,25 +486,28 @@ export const exportEntries = query({
 		// Limit results
 		filteredEntries = filteredEntries.slice(0, limit);
 
-		// Get unique content type IDs from entries
-		const contentTypeIdsSet = new Set<Id<"contentTypes">>();
+		// Get unique content type names from entries
+		const contentTypeNamesSet = new Set<string>();
 		for (const entry of filteredEntries) {
-			contentTypeIdsSet.add(entry.contentTypeId);
+			contentTypeNamesSet.add(entry.contentTypeName);
 		}
-		const contentTypeIds = Array.from(contentTypeIdsSet);
+		const contentTypeNames = Array.from(contentTypeNamesSet);
 
-		// Fetch content types
+		// Fetch content types by name
 		const contentTypesMap = new Map<string, Doc<"contentTypes">>();
-		for (const typeId of contentTypeIds) {
-			const contentType = await ctx.db.get(typeId);
+		for (const typeName of contentTypeNames) {
+			const contentType = await ctx.db
+				.query("contentTypes")
+				.withIndex("by_name", (q) => q.eq("name", typeName))
+				.first();
 			if (contentType) {
-				contentTypesMap.set(typeId as string, contentType);
+				contentTypesMap.set(typeName, contentType);
 			}
 		}
 
 		// Build exported entries
 		const exportedEntries: ExportedEntry[] = filteredEntries.map((entry) => {
-			const contentType = contentTypesMap.get(entry.contentTypeId as string);
+			const contentType = contentTypesMap.get(entry.contentTypeName);
 			return {
 				_originalId: entry._id as string,
 				contentTypeName: contentType?.name ?? "unknown",
@@ -730,7 +736,7 @@ export const importEntries = mutation({
 			const existingEntry = await ctx.db
 				.query("contentEntries")
 				.withIndex("by_content_type_and_slug", (q) =>
-					q.eq("contentTypeId", contentType._id).eq("slug", entry.slug),
+					q.eq("contentTypeName", contentType.name).eq("slug", entry.slug),
 				)
 				.filter((q) => q.eq(q.field("deletedAt"), undefined))
 				.first();
@@ -809,7 +815,7 @@ export const importEntries = mutation({
 					return await ctx.db
 						.query("contentEntries")
 						.withIndex("by_content_type_and_slug", (q) =>
-							q.eq("contentTypeId", contentType._id).eq("slug", candidateSlug),
+							q.eq("contentTypeName", contentType.name).eq("slug", candidateSlug),
 						)
 						.filter((q) => q.eq(q.field("deletedAt"), undefined))
 						.first();
@@ -818,7 +824,7 @@ export const importEntries = mutation({
 				const uniqueSlug = await ensureUniqueSlug(entry.slug, queryFn);
 
 				const newEntryId = await ctx.db.insert("contentEntries", {
-					contentTypeId: contentType._id,
+					contentTypeName: contentType.name,
 					slug: uniqueSlug,
 					status: preserveStatus ? entry.status : "draft",
 					data: entry.data,
@@ -974,13 +980,16 @@ export const getExportPreview = query({
 			}
 		}
 
-		// Build query
+		// Build query - use content type name
+		const resolvedContentType = resolvedContentTypeId
+			? await ctx.db.get(resolvedContentTypeId)
+			: null;
 		let entriesQuery;
-		if (resolvedContentTypeId) {
+		if (resolvedContentType) {
 			entriesQuery = ctx.db
 				.query("contentEntries")
 				.withIndex("by_content_type", (q) =>
-					q.eq("contentTypeId", resolvedContentTypeId),
+					q.eq("contentTypeName", resolvedContentType.name),
 				);
 		} else {
 			entriesQuery = ctx.db.query("contentEntries");
@@ -1008,28 +1017,17 @@ export const getExportPreview = query({
 			filteredEntries = filteredEntries.filter((e) => e.locale === locale);
 		}
 
-		// Get content types
-		const contentTypeIdsSet = new Set<Id<"contentTypes">>();
+		// Get unique content type names from entries
+		const contentTypeNamesSet = new Set<string>();
 		for (const entry of filteredEntries) {
-			contentTypeIdsSet.add(entry.contentTypeId);
+			contentTypeNamesSet.add(entry.contentTypeName);
 		}
-		const contentTypeIds = Array.from(contentTypeIdsSet);
-		const contentTypeNames: string[] = [];
-		const contentTypeNameMap = new Map<string, string>();
+		const contentTypeNamesList: string[] = Array.from(contentTypeNamesSet);
 
-		for (const typeId of contentTypeIds) {
-			const contentType = await ctx.db.get(typeId);
-			if (contentType) {
-				contentTypeNames.push(contentType.name);
-				contentTypeNameMap.set(typeId as string, contentType.name);
-			}
-		}
-
-		// Count by type
+		// Count by type - entries already have contentTypeName
 		const entriesByType: Record<string, number> = {};
 		for (const entry of filteredEntries) {
-			const typeName =
-				contentTypeNameMap.get(entry.contentTypeId as string) ?? "unknown";
+			const typeName = entry.contentTypeName ?? "unknown";
 			entriesByType[typeName] = (entriesByType[typeName] ?? 0) + 1;
 		}
 
@@ -1043,7 +1041,7 @@ export const getExportPreview = query({
 			totalEntries: filteredEntries.length,
 			entriesByType,
 			entriesByStatus,
-			contentTypes: contentTypeNames,
+			contentTypes: contentTypeNamesList,
 		};
 	},
 });
