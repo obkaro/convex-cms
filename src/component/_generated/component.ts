@@ -123,7 +123,6 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         "query",
         "internal",
         {
-          contentTypeId?: string;
           contentTypeName?: string;
           includeDeleted?: boolean;
           status?: string;
@@ -139,7 +138,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         {
           _creationTime: number;
           _id: string;
-          contentTypeId: string;
+          contentTypeName: string;
           createdBy?: string;
           data: any;
           deletedAt?: number;
@@ -175,7 +174,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         "query",
         "internal",
         {
-          contentTypeId: string;
+          contentTypeName: string;
           includeDeleted?: boolean;
           slug: string;
           status?: string;
@@ -183,7 +182,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         {
           _creationTime: number;
           _id: string;
-          contentTypeId: string;
+          contentTypeName: string;
           createdBy?: string;
           data: any;
           deletedAt?: number;
@@ -214,7 +213,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         {
           _creationTime: number;
           _id: string;
-          contentTypeId: string;
+          contentTypeName: string;
           createdBy?: string;
           data: any;
           deletedAt?: number;
@@ -289,7 +288,6 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         "query",
         "internal",
         {
-          contentTypeId?: string;
           contentTypeName?: string;
           fieldFilters?: Array<{
             field: string;
@@ -329,7 +327,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           page: Array<{
             _creationTime: number;
             _id: string;
-            contentTypeId: string;
+            contentTypeName: string;
             createdBy?: string;
             data: any;
             deletedAt?: number;
@@ -360,7 +358,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             role: string | null;
             userId: string;
           };
-          contentTypeId: string;
+          contentTypeName: string;
           createdBy?: string;
           data: any;
           locale?: string;
@@ -372,7 +370,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         {
           _creationTime: number;
           _id: string;
-          contentTypeId: string;
+          contentTypeName: string;
           createdBy?: string;
           data: any;
           deletedAt?: number;
@@ -407,7 +405,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         {
           _creationTime: number;
           _id: string;
-          contentTypeId: string;
+          contentTypeName: string;
           createdBy?: string;
           data: any;
           deletedAt?: number;
@@ -445,7 +443,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         {
           _creationTime: number;
           _id: string;
-          contentTypeId: string;
+          contentTypeName: string;
           createdBy?: string;
           data: any;
           deletedAt?: number;
@@ -480,7 +478,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         {
           _creationTime: number;
           _id: string;
-          contentTypeId: string;
+          contentTypeName: string;
           createdBy?: string;
           data: any;
           deletedAt?: number;
@@ -514,7 +512,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         {
           _creationTime: number;
           _id: string;
-          contentTypeId: string;
+          contentTypeName: string;
           createdBy?: string;
           data: any;
           deletedAt?: number;
@@ -548,7 +546,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         {
           _creationTime: number;
           _id: string;
-          contentTypeId: string;
+          contentTypeName: string;
           createdBy?: string;
           data: any;
           deletedAt?: number;
@@ -587,7 +585,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         {
           _creationTime: number;
           _id: string;
-          contentTypeId: string;
+          contentTypeName: string;
           createdBy?: string;
           data: any;
           deletedAt?: number;
@@ -637,7 +635,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           entry?: {
             _creationTime: number;
             _id: string;
-            contentTypeId: string;
+            contentTypeName: string;
             createdBy?: string;
             data: any;
             deletedAt?: number;
@@ -679,7 +677,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         {
           _creationTime: number;
           _id: string;
-          contentTypeId: string;
+          contentTypeName: string;
           createdBy?: string;
           data: any;
           deletedAt?: number;
@@ -702,7 +700,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         "query",
         "internal",
         {
-          contentTypeId?: string;
+          contentTypeName?: string;
           lockedBy?: string;
           paginationOpts: {
             cursor: string | null;
@@ -719,7 +717,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           page: Array<{
             _creationTime: number;
             _id: string;
-            contentTypeId: string;
+            contentTypeName: string;
             createdBy?: string;
             data: any;
             deletedAt?: number;
@@ -747,7 +745,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         {
           _creationTime: number;
           _id: string;
-          contentTypeId: string;
+          contentTypeName: string;
           createdBy?: string;
           data: any;
           deletedAt?: number;
@@ -773,7 +771,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         {
           _creationTime: number;
           _id: string;
-          contentTypeId: string;
+          contentTypeName: string;
           createdBy?: string;
           data: any;
           deletedAt?: number;
@@ -4115,7 +4113,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         {
           _creationTime: number;
           _id: string;
-          contentTypeId: string;
+          contentTypeName: string;
           createdBy?: string;
           data: any;
           deletedAt?: number;
@@ -4137,7 +4135,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
       getScheduledEntries: FunctionReference<
         "query",
         "internal",
-        { contentTypeId?: string; from?: number; to?: number },
+        { contentTypeName?: string; from?: number; to?: number },
         any,
         Name
       >;
@@ -4148,7 +4146,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         {
           _creationTime: number;
           _id: string;
-          contentTypeId: string;
+          contentTypeName: string;
           createdBy?: string;
           data: any;
           deletedAt?: number;
@@ -4673,7 +4671,11 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
       emptyTrash: FunctionReference<
         "mutation",
         "internal",
-        { contentTypeId?: string; deletedBy?: string; olderThanDays?: number },
+        {
+          contentTypeName?: string;
+          deletedBy?: string;
+          olderThanDays?: number;
+        },
         {
           deletedCount: number;
           deletedVersionsCount: number;
@@ -4710,7 +4712,6 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         "query",
         "internal",
         {
-          contentTypeId?: string;
           contentTypeName?: string;
           paginationOpts: {
             cursor: string | null;
@@ -4728,7 +4729,6 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           page: Array<{
             _creationTime: number;
             _id: string;
-            contentTypeId: string;
             contentTypeName?: string;
             createdBy?: string;
             data: any;
@@ -4794,7 +4794,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         {
           _creationTime: number;
           _id: string;
-          contentTypeId: string;
+          contentTypeName: string;
           createdBy?: string;
           data: any;
           deletedAt?: number;

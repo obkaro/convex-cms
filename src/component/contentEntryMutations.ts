@@ -69,7 +69,7 @@ import { isDeleted } from "./lib/softDelete.js";
  * 3. Ensure the slug is unique within the content type
  * 4. Create the entry with draft status (unless specified otherwise)
  *
- * @param contentTypeId - The ID of the content type this entry belongs to
+ * @param contentTypeName - The name of the content type this entry belongs to (e.g., "blog_post")
  * @param data - The content data (validated against content type schema at runtime)
  * @param slug - Optional custom slug (auto-generated from title if not provided)
  * @param locale - Optional locale code for localized content
@@ -86,7 +86,7 @@ import { isDeleted } from "./lib/softDelete.js";
  * ```typescript
  * // Create a new blog post (starts as draft)
  * const post = await ctx.runMutation(api.contentEntryMutations.createEntry, {
- *   contentTypeId: blogTypeId,
+ *   contentTypeName: "blog_post",
  *   data: {
  *     title: "My First Post",
  *     content: "<p>Hello world!</p>",
@@ -96,7 +96,7 @@ import { isDeleted } from "./lib/softDelete.js";
  *
  * // Create with explicit status
  * const scheduledPost = await ctx.runMutation(api.contentEntryMutations.createEntry, {
- *   contentTypeId: blogTypeId,
+ *   contentTypeName: "blog_post",
  *   data: { title: "Scheduled Post" },
  *   status: "scheduled",
  *   scheduledPublishAt: Date.now() + 86400000, // Tomorrow
@@ -112,7 +112,7 @@ export const createEntry = mutation({
 	returns: contentEntryDoc,
 	handler: async (ctx, args) => {
 		const {
-			contentTypeId,
+			contentTypeName,
 			data,
 			locale,
 			primaryEntryId,
@@ -123,22 +123,20 @@ export const createEntry = mutation({
 		// Authorization check - contentEntries.create permission
 		requireMutationAuth(_auth, "contentEntries", "create");
 
-		// Validate content type exists and is active
-		const contentType = await ctx.db.get(contentTypeId);
+		// Look up content type by name to get field definitions
+		const contentType = await ctx.db
+			.query("contentTypes")
+			.withIndex("by_name", (q) => q.eq("name", contentTypeName))
+			.first();
+
 		if (!contentType) {
-			throw contentTypeNotFound((contentTypeId as unknown) as string);
+			throw contentTypeNotFound(contentTypeName);
 		}
 		if (!contentType.isActive) {
-			throw contentTypeInactive(
-				(contentTypeId as unknown) as string,
-				contentType.name,
-			);
+			throw contentTypeInactive(contentTypeName, contentType.displayName);
 		}
 		if (isDeleted(contentType)) {
-			throw contentTypeDeleted(
-				(contentTypeId as unknown) as string,
-				contentType.name,
-			);
+			throw contentTypeDeleted(contentTypeName, contentType.displayName);
 		}
 
 		// Determine which field to use for slug generation
@@ -180,7 +178,7 @@ export const createEntry = mutation({
 			return await ctx.db
 				.query("contentEntries")
 				.withIndex("by_content_type_and_slug", (q) =>
-					q.eq("contentTypeId", contentTypeId).eq("slug", candidateSlug),
+					q.eq("contentTypeName", contentTypeName).eq("slug", candidateSlug),
 				)
 				.filter((q) => q.eq(q.field("deletedAt"), undefined))
 				.first();
@@ -205,7 +203,7 @@ export const createEntry = mutation({
 
 		// Create the entry
 		const entryId = await ctx.db.insert("contentEntries", {
-			contentTypeId,
+			contentTypeName,
 			slug: uniqueSlug,
 			status,
 			data,
@@ -220,7 +218,7 @@ export const createEntry = mutation({
 		// Retrieve and return the created entry
 		const entry = await ctx.db.get(entryId);
 		if (!entry) {
-			throw contentEntryCreateFailed((contentTypeId as unknown) as string);
+			throw contentEntryCreateFailed(contentTypeName);
 		}
 
 		// Emit content entry created event
@@ -231,8 +229,7 @@ export const createEntry = mutation({
 			action: "created",
 			payload: {
 				slug: uniqueSlug,
-				contentTypeName: contentType.name,
-				contentTypeId: (contentTypeId as unknown) as string,
+				contentTypeName,
 				status,
 				version: 1,
 				locale,
@@ -360,15 +357,15 @@ export const updateEntry = mutation({
 			);
 		}
 
-		const contentType = await ctx.db.get(entry.contentTypeId);
+		const contentType = await ctx.db
+			.query("contentTypes")
+			.withIndex("by_name", (q) => q.eq("name", entry.contentTypeName))
+			.first();
 		if (!contentType) {
-			throw contentTypeNotFound((entry.contentTypeId as unknown) as string);
+			throw contentTypeNotFound(entry.contentTypeName);
 		}
 		if (isDeleted(contentType)) {
-			throw contentTypeDeleted(
-				(entry.contentTypeId as unknown) as string,
-				contentType.name,
-			);
+			throw contentTypeDeleted(entry.contentTypeName, contentType.displayName);
 		}
 
 		// Build the update object
@@ -409,7 +406,7 @@ export const updateEntry = mutation({
 			const existing = await ctx.db
 				.query("contentEntries")
 				.withIndex("by_content_type_and_slug", (q) =>
-					q.eq("contentTypeId", entry.contentTypeId).eq("slug", candidateSlug),
+					q.eq("contentTypeName", entry.contentTypeName).eq("slug", candidateSlug),
 				)
 				.filter((q) => q.eq(q.field("deletedAt"), undefined))
 				.first();
@@ -507,8 +504,7 @@ export const updateEntry = mutation({
 			action: "updated",
 			payload: {
 				slug: updatedEntry.slug,
-				contentTypeName: contentType.name,
-				contentTypeId: (entry.contentTypeId as unknown) as string,
+				contentTypeName: entry.contentTypeName,
 				status: updatedEntry.status,
 				version: updatedEntry.version,
 				locale: updatedEntry.locale,
@@ -625,8 +621,6 @@ export const publishEntry = mutation({
 			throw contentEntryUpdateFailed((id as unknown) as string);
 		}
 
-		const contentType = await ctx.db.get(entry.contentTypeId);
-
 		// Emit content entry published event
 		await emitEvent(ctx, {
 			eventType: contentEntryEventType("published"),
@@ -635,8 +629,7 @@ export const publishEntry = mutation({
 			action: "published",
 			payload: {
 				slug: publishedEntry.slug,
-				contentTypeName: contentType?.name ?? "unknown",
-				contentTypeId: (entry.contentTypeId as unknown) as string,
+				contentTypeName: entry.contentTypeName,
 				status: "published",
 				version: publishedEntry.version,
 				locale: publishedEntry.locale,
@@ -725,8 +718,6 @@ export const unpublishEntry = mutation({
 			throw contentEntryUpdateFailed((id as unknown) as string);
 		}
 
-		const contentType = await ctx.db.get(entry.contentTypeId);
-
 		// Emit content entry unpublished event
 		await emitEvent(ctx, {
 			eventType: contentEntryEventType("unpublished"),
@@ -735,8 +726,7 @@ export const unpublishEntry = mutation({
 			action: "unpublished",
 			payload: {
 				slug: unpublishedEntry.slug,
-				contentTypeName: contentType?.name ?? "unknown",
-				contentTypeId: (entry.contentTypeId as unknown) as string,
+				contentTypeName: entry.contentTypeName,
 				status: "draft",
 				version: unpublishedEntry.version,
 				locale: unpublishedEntry.locale,
@@ -832,8 +822,6 @@ export const deleteEntry = mutation({
 
 		const deletedVersionsCount = versions.length;
 
-		const contentType = await ctx.db.get(entry.contentTypeId);
-
 		if (hardDelete) {
 			// Hard delete: permanently remove all versions
 			for (const version of versions) {
@@ -851,8 +839,7 @@ export const deleteEntry = mutation({
 				action: "deleted",
 				payload: {
 					slug: entry.slug,
-					contentTypeName: contentType?.name ?? "unknown",
-					contentTypeId: (entry.contentTypeId as unknown) as string,
+					contentTypeName: entry.contentTypeName,
 					status: entry.status,
 					version: entry.version,
 					locale: entry.locale,
@@ -885,8 +872,7 @@ export const deleteEntry = mutation({
 				action: "deleted",
 				payload: {
 					slug: entry.slug,
-					contentTypeName: contentType?.name ?? "unknown",
-					contentTypeId: (entry.contentTypeId as unknown) as string,
+					contentTypeName: entry.contentTypeName,
 					status: entry.status,
 					version: entry.version,
 					locale: entry.locale,
@@ -963,8 +949,6 @@ export const restoreEntry = mutation({
 			updatedBy: restoredBy,
 		});
 
-		const contentType = await ctx.db.get(entry.contentTypeId);
-
 		// Emit content entry restored event
 		await emitEvent(ctx, {
 			eventType: contentEntryEventType("restored"),
@@ -973,8 +957,7 @@ export const restoreEntry = mutation({
 			action: "restored",
 			payload: {
 				slug: entry.slug,
-				contentTypeName: contentType?.name ?? "unknown",
-				contentTypeId: (entry.contentTypeId as unknown) as string,
+				contentTypeName: entry.contentTypeName,
 				status: entry.status,
 				version: entry.version,
 				locale: entry.locale,
@@ -1081,22 +1064,23 @@ export const duplicateEntry = mutation({
 		}
 
 		// Retrieve and validate the content type
-		const contentType = await ctx.db.get(sourceEntry.contentTypeId);
+		const contentType = await ctx.db
+			.query("contentTypes")
+			.withIndex("by_name", (q) => q.eq("name", sourceEntry.contentTypeName))
+			.first();
 		if (!contentType) {
-			throw contentTypeNotFound(
-				(sourceEntry.contentTypeId as unknown) as string,
-			);
+			throw contentTypeNotFound(sourceEntry.contentTypeName);
 		}
 		if (!contentType.isActive) {
 			throw contentTypeInactive(
-				(sourceEntry.contentTypeId as unknown) as string,
-				contentType.name,
+				sourceEntry.contentTypeName,
+				contentType.displayName,
 			);
 		}
 		if (isDeleted(contentType)) {
 			throw contentTypeDeleted(
-				(sourceEntry.contentTypeId as unknown) as string,
-				contentType.name,
+				sourceEntry.contentTypeName,
+				contentType.displayName,
 			);
 		}
 
@@ -1148,7 +1132,7 @@ export const duplicateEntry = mutation({
 				.query("contentEntries")
 				.withIndex("by_content_type_and_slug", (q) =>
 					q
-						.eq("contentTypeId", sourceEntry.contentTypeId)
+						.eq("contentTypeName", sourceEntry.contentTypeName)
 						.eq("slug", candidateSlug),
 				)
 				.filter((q) => q.eq(q.field("deletedAt"), undefined))
@@ -1171,7 +1155,7 @@ export const duplicateEntry = mutation({
 
 		// Create the duplicate entry (always as draft with version 1)
 		const entryId = await ctx.db.insert("contentEntries", {
-			contentTypeId: sourceEntry.contentTypeId,
+			contentTypeName: sourceEntry.contentTypeName,
 			slug: uniqueSlug,
 			status: "draft",
 			data: newData,
@@ -1194,9 +1178,7 @@ export const duplicateEntry = mutation({
 		// Retrieve and return the created entry
 		const entry = await ctx.db.get(entryId);
 		if (!entry) {
-			throw contentEntryCreateFailed(
-				(sourceEntry.contentTypeId as unknown) as string,
-			);
+			throw contentEntryCreateFailed(sourceEntry.contentTypeName);
 		}
 
 		// Emit content entry duplicated event
@@ -1207,8 +1189,7 @@ export const duplicateEntry = mutation({
 			action: "duplicated",
 			payload: {
 				slug: uniqueSlug,
-				contentTypeName: contentType.name,
-				contentTypeId: (sourceEntry.contentTypeId as unknown) as string,
+				contentTypeName: sourceEntry.contentTypeName,
 				status: "draft",
 				version: 1,
 				locale: locale ?? sourceEntry.locale,

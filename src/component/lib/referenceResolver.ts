@@ -117,8 +117,11 @@ export async function resolveReference(
 			return null;
 		}
 
-		// Get the content type for this entry
-		const contentType = await ctx.db.get(entry.contentTypeId);
+		// Get the content type for this entry by name
+		const contentType = await ctx.db
+			.query("contentTypes")
+			.withIndex("by_name", (q) => q.eq("name", entry.contentTypeName))
+			.first();
 
 		if (!contentType || isDeleted(contentType)) {
 			return null;
@@ -235,23 +238,14 @@ export async function isValidReference(
 			};
 		}
 
-		// If content type constraints specified, check them
+		// If content type constraints specified, check them using entry's contentTypeName
 		if (allowedContentTypes && allowedContentTypes.length > 0) {
-			const contentType = await ctx.db.get(entry.contentTypeId);
-
-			if (!contentType) {
-				return {
-					valid: false,
-					error: `Content type not found for entry: ${referenceId}`,
-				};
-			}
-
-			if (!allowedContentTypes.includes(contentType.name)) {
+			if (!allowedContentTypes.includes(entry.contentTypeName)) {
 				return {
 					valid: false,
 					error: `Expected content type: ${allowedContentTypes.join(
 						" or ",
-					)}. Got: ${contentType.name}`,
+					)}. Got: ${entry.contentTypeName}`,
 				};
 			}
 		}
@@ -417,13 +411,8 @@ export async function getContentTypeName(
 			return null;
 		}
 
-		const contentType = await ctx.db.get(entry.contentTypeId);
-
-		if (!contentType || isDeleted(contentType)) {
-			return null;
-		}
-
-		return contentType.name;
+		// Entry now has contentTypeName directly
+		return entry.contentTypeName;
 	} catch {
 		return null;
 	}

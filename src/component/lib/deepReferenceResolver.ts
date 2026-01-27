@@ -253,7 +253,7 @@ export async function resolveEntryReferences(
 		slug: string;
 		status: string;
 		data: Record<string, unknown>;
-		contentTypeId?: string;
+		contentTypeName?: string;
 		locale?: string;
 		version?: number;
 	},
@@ -272,21 +272,21 @@ export async function resolveEntryReferences(
 		preserveOriginalIds = false,
 	} = options;
 
-	// Get content type info
-	let contentTypeName = "";
+	// Get content type info from entry's contentTypeName
+	const contentTypeName = entry.contentTypeName ?? "";
 	let contentTypeDisplayName = "";
 
-	if (entry.contentTypeId) {
+	if (entry.contentTypeName) {
 		try {
-			const contentType = await ctx.db.get(
-				entry.contentTypeId as Id<"contentTypes">,
-			);
+			const contentType = await ctx.db
+				.query("contentTypes")
+				.withIndex("by_name", (q) => q.eq("name", entry.contentTypeName!))
+				.first();
 			if (contentType) {
-				contentTypeName = contentType.name;
 				contentTypeDisplayName = contentType.displayName;
 			}
 		} catch {
-			// Content type not found, continue with empty names
+			// Content type not found, continue with empty display name
 		}
 	}
 
@@ -397,7 +397,7 @@ export async function resolveEntryReferencesBatch(
 		slug: string;
 		status: string;
 		data: Record<string, unknown>;
-		contentTypeId?: string;
+		contentTypeName?: string;
 		locale?: string;
 		version?: number;
 	}>,
@@ -676,8 +676,11 @@ async function resolveNestedReference(
 			return null;
 		}
 
-		// Get content type for field definitions
-		const contentType = await ctx.db.get(entry.contentTypeId);
+		// Get content type for field definitions by name
+		const contentType = await ctx.db
+			.query("contentTypes")
+			.withIndex("by_name", (q) => q.eq("name", entry.contentTypeName))
+			.first();
 
 		if (!contentType || isDeleted(contentType)) {
 			resolutionCtx.resolvedCache.set(refId, null);
