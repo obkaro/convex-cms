@@ -1,6 +1,6 @@
 {
   "name": "convex-cms",
-  "version": "0.0.6-alpha.0",
+  "version": "0.0.6",
   "description": "A developer-first Convex Component for content management with flexible RBAC and AI-ready architecture",
   "type": "module",
   "workspaces": [
