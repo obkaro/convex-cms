@@ -3,7 +3,7 @@
 [![npm version](https://badge.fury.io/js/convex-cms.svg)](https://www.npmjs.com/package/convex-cms)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-> **Alpha (v0.0.7)** Actively developed. APIs may change. [Report issues](https://github.com/obkaro/convex-cms/issues).
+> **Alpha (v0.0.8)** Actively developed. APIs may change. [Report issues](https://github.com/obkaro/convex-cms/issues).
 
 A headless CMS built as a [Convex Component](https://docs.convex.dev/components). Content management that runs inside your Convex app.
 
