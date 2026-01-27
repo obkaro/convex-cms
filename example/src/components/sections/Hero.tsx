@@ -1,72 +1,123 @@
-import { ArrowRight, Clock, Users, Zap } from "lucide-react";
+import { useQuery } from "convex/react";
+import { api } from "../../../convex/_generated/api";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { ArrowDown, Circle, Loader2, CheckCircle2 } from "lucide-react";
 
 export function Hero() {
-  return (
-    <section className="section bg-gradient-to-b from-tempo-100 to-tempo-50">
-      <div className="container-wide">
-        <div className="max-w-3xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white border-2 border-tempo-200 mb-8">
-            <span className="w-2 h-2 bg-status-progress animate-pulse" />
-            <span className="text-sm font-medium text-tempo-600">
-              See what we're building
-            </span>
-          </div>
+	const roadmap = useQuery(api.content.getRoadmapByStatus);
+	const changelog = useQuery(api.content.getChangelog);
 
-          <h1 className="heading-xl mb-6">
-            Async collaboration
-            <br />
-            <span className="text-tempo-500">for remote teams</span>
-          </h1>
+	const latestVersion = changelog?.[0]?.version;
 
-          <p className="text-xl text-tempo-600 mb-10 max-w-2xl mx-auto">
-            Tempo helps distributed teams work together without the chaos of
-            constant meetings. Document decisions, share updates, and move
-            projects forward—on your own time.
-          </p>
+	return (
+		<section className="section bg-slate-50 overflow-hidden">
+			<div className="container-wide">
+				<div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
+					{/* Left: Headline */}
+					<div className="lg:col-span-7 animate-fade-up">
+						<p className="text-label mb-6">Building in public</p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
-            <a href="#roadmap" className="btn btn-primary px-6 py-3 text-base">
-              View Roadmap
-              <ArrowRight className="w-4 h-4 ml-2" />
-            </a>
-            <a href="#changelog" className="btn btn-secondary px-6 py-3 text-base">
-              Latest Updates
-            </a>
-          </div>
-        </div>
+						<h1 className="display-xl mb-8">
+							Async work,
+							<br />
+							<span className="text-slate-400">your rhythm.</span>
+						</h1>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-          <div className="card text-center">
-            <div className="w-12 h-12 mx-auto mb-4 bg-status-feature/20 flex items-center justify-center">
-              <Clock className="w-6 h-6 text-purple-600" />
-            </div>
-            <h3 className="heading-sm mb-2">Async-First</h3>
-            <p className="text-muted">
-              No more timezone coordination. Work when you're most productive.
-            </p>
-          </div>
+						<p className="text-body-lg max-w-lg mb-10">
+							See what we're building and where we're headed. Our roadmap is
+							shaped by how teams actually work, not how they're forced to.
+						</p>
 
-          <div className="card text-center">
-            <div className="w-12 h-12 mx-auto mb-4 bg-status-progress/20 flex items-center justify-center">
-              <Users className="w-6 h-6 text-blue-600" />
-            </div>
-            <h3 className="heading-sm mb-2">Team Aligned</h3>
-            <p className="text-muted">
-              Everyone stays informed without information overload.
-            </p>
-          </div>
+						<div className="flex flex-col sm:flex-row gap-4">
+							<Button
+								asChild
+								size="lg"
+								className="bg-accent hover:bg-accent-light text-white"
+							>
+								<a href="#roadmap">
+									View Roadmap
+									<ArrowDown className="ml-2 h-4 w-4" />
+								</a>
+							</Button>
+							{latestVersion && (
+								<Button asChild variant="ghost" size="lg">
+									<a href="#changelog">Latest: v{latestVersion}</a>
+								</Button>
+							)}
+						</div>
+					</div>
 
-          <div className="card text-center">
-            <div className="w-12 h-12 mx-auto mb-4 bg-status-completed/20 flex items-center justify-center">
-              <Zap className="w-6 h-6 text-green-600" />
-            </div>
-            <h3 className="heading-sm mb-2">Ship Faster</h3>
-            <p className="text-muted">
-              Unblock decisions and keep projects moving forward.
-            </p>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
+					{/* Right: Stats Card */}
+					<div className="lg:col-span-5 animate-fade-up delay-200">
+						<Card className="border-slate-200 shadow-lg shadow-slate-200/50">
+							<CardContent className="p-8">
+								<p className="text-label mb-6">Roadmap status</p>
+
+								<div className="space-y-6">
+									<StatRow
+										icon={
+											<Circle className="h-3 w-3 fill-slate-300 text-slate-300" />
+										}
+										label="Planned"
+										count={roadmap?.planned.length}
+										color="text-slate-600"
+									/>
+									<StatRow
+										icon={
+											<Loader2 className="h-3 w-3 text-sky-600 animate-spin" />
+										}
+										label="In Progress"
+										count={roadmap?.in_progress.length}
+										color="text-sky-600"
+									/>
+									<StatRow
+										icon={
+											<CheckCircle2 className="h-3 w-3 fill-emerald-600 text-emerald-600" />
+										}
+										label="Shipped"
+										count={roadmap?.completed.length}
+										color="text-emerald-600"
+									/>
+								</div>
+
+								<div className="mt-8 pt-6 border-t border-slate-100">
+									<p className="text-small">
+										{changelog?.length || 0} releases shipped
+									</p>
+								</div>
+							</CardContent>
+						</Card>
+					</div>
+				</div>
+			</div>
+		</section>
+	);
+}
+
+function StatRow({
+	icon,
+	label,
+	count,
+	color,
+}: {
+	icon: React.ReactNode;
+	label: string;
+	count: number | undefined;
+	color: string;
+}) {
+	return (
+		<div className="flex items-center justify-between">
+			<div className="flex items-center gap-3">
+				{icon}
+				<span className="text-sm text-slate-600">{label}</span>
+			</div>
+			<span
+				className={`text-2xl font-medium ${color}`}
+				style={{ fontFamily: "var(--font-display)" }}
+			>
+				{count ?? "—"}
+			</span>
+		</div>
+	);
 }
