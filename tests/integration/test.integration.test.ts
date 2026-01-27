@@ -103,7 +103,8 @@ describe("Test Helpers Integration with convex-test", () => {
 			const t = convexTest(schema, modules);
 
 			// First create a content type
-			const contentTypeId = await t.run(async (ctx) => {
+			const contentTypeName = "blog_post";
+			await t.run(async (ctx) => {
 				return await ctx.db.insert(
 					"contentTypes",
 					contentTypeFactory.blogPost(),
@@ -111,16 +112,16 @@ describe("Test Helpers Integration with convex-test", () => {
 			});
 
 			// Create entry using factory
-			const entryData = contentEntryFactory.draft(contentTypeId, {
+			const entryData = contentEntryFactory.draft(contentTypeName, {
 				title: "My First Post",
 				content: "<p>Hello world!</p>",
 			});
 
-			// Insert (need to cast contentTypeId properly)
+			// Insert with contentTypeName
 			const entryId = await t.run(async (ctx) => {
 				return await ctx.db.insert("contentEntries", {
 					...entryData,
-					contentTypeId: contentTypeId,
+					contentTypeName: contentTypeName,
 				});
 			});
 
@@ -138,21 +139,22 @@ describe("Test Helpers Integration with convex-test", () => {
 		it("can create published entries with proper timestamps", async () => {
 			const t = convexTest(schema, modules);
 
-			const contentTypeId = await t.run(async (ctx) => {
+			const contentTypeName = "blog_post";
+			await t.run(async (ctx) => {
 				return await ctx.db.insert(
 					"contentTypes",
 					contentTypeFactory.blogPost(),
 				);
 			});
 
-			const publishedData = contentEntryFactory.published(contentTypeId, {
+			const publishedData = contentEntryFactory.published(contentTypeName, {
 				title: "Published Article",
 			});
 
 			const entryId = await t.run(async (ctx) => {
 				return await ctx.db.insert("contentEntries", {
 					...publishedData,
-					contentTypeId: contentTypeId,
+					contentTypeName: contentTypeName,
 				});
 			});
 
@@ -168,7 +170,8 @@ describe("Test Helpers Integration with convex-test", () => {
 		it("can create batch entries", async () => {
 			const t = convexTest(schema, modules);
 
-			const contentTypeId = await t.run(async (ctx) => {
+			const contentTypeName = "blog_post";
+			await t.run(async (ctx) => {
 				return await ctx.db.insert(
 					"contentTypes",
 					contentTypeFactory.blogPost(),
@@ -177,7 +180,7 @@ describe("Test Helpers Integration with convex-test", () => {
 
 			// Create batch of entries
 			const batchData = contentEntryFactory.batch(
-				contentTypeId,
+				contentTypeName,
 				5,
 				(_, index) => ({
 					data: { title: `Post ${index + 1}` },
@@ -190,7 +193,7 @@ describe("Test Helpers Integration with convex-test", () => {
 				for (const entry of batchData) {
 					await ctx.db.insert("contentEntries", {
 						...entry,
-						contentTypeId: contentTypeId,
+						contentTypeName: contentTypeName,
 					});
 				}
 			});
@@ -299,21 +302,22 @@ describe("Test Helpers Integration with convex-test", () => {
 		it("creates properly soft-deleted entries", async () => {
 			const t = convexTest(schema, modules);
 
-			const contentTypeId = await t.run(async (ctx) => {
+			const contentTypeName = "minimal_type";
+			await t.run(async (ctx) => {
 				return await ctx.db.insert(
 					"contentTypes",
 					contentTypeFactory.minimal(),
 				);
 			});
 
-			const deletedData = contentEntryFactory.deleted(contentTypeId, {
+			const deletedData = contentEntryFactory.deleted(contentTypeName, {
 				title: "Deleted Post",
 			});
 
 			const entryId = await t.run(async (ctx) => {
 				return await ctx.db.insert("contentEntries", {
 					...deletedData,
-					contentTypeId: contentTypeId,
+					contentTypeName: contentTypeName,
 				});
 			});
 

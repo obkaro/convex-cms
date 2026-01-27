@@ -25,11 +25,12 @@ describe("Scheduled Publish", () => {
 		vi.setSystemTime(NOW);
 	});
 
-	// Helper to create a content type
+	// Helper to create a content type (returns the content type name)
 	async function createContentType(t: ReturnType<typeof convexTest>) {
-		return await t.run(async (ctx) => {
-			return await ctx.db.insert("contentTypes", {
-				name: "blog_post",
+		const typeName = "blog_post";
+		await t.run(async (ctx) => {
+			await ctx.db.insert("contentTypes", {
+				name: typeName,
 				displayName: "Blog Post",
 				createdBy: "test-user",
 				fields: [
@@ -51,12 +52,13 @@ describe("Scheduled Publish", () => {
 				isActive: true,
 			});
 		});
+		return typeName;
 	}
 
 	// Helper to create a draft entry
 	async function createDraftEntry(
 		t: ReturnType<typeof convexTest>,
-		contentTypeId: string,
+		contentTypeName: string,
 		data: Record<string, unknown> = {
 			title: "Test Post",
 			content: "Test content",
@@ -64,7 +66,7 @@ describe("Scheduled Publish", () => {
 	) {
 		return await t.run(async (ctx) => {
 			return await ctx.db.insert("contentEntries", {
-				contentTypeId: contentTypeId,
+				contentTypeName: contentTypeName,
 				slug: "test-post",
 				status: "draft",
 				data,
@@ -77,8 +79,8 @@ describe("Scheduled Publish", () => {
 		test("schedules a draft entry for future publication", async () => {
 			const t = convexTest(schema, modules);
 
-			const contentTypeId = await createContentType(t);
-			const entryId = await createDraftEntry(t, contentTypeId);
+			const contentTypeName = await createContentType(t);
+			const entryId = await createDraftEntry(t, contentTypeName);
 
 			// Schedule for 1 hour from now
 			const publishAt = NOW + 60 * 60 * 1000;
@@ -96,8 +98,8 @@ describe("Scheduled Publish", () => {
 		test("rejects scheduling for a time less than 1 minute in the future", async () => {
 			const t = convexTest(schema, modules);
 
-			const contentTypeId = await createContentType(t);
-			const entryId = await createDraftEntry(t, contentTypeId);
+			const contentTypeName = await createContentType(t);
+			const entryId = await createDraftEntry(t, contentTypeName);
 
 			// Try to schedule for 30 seconds from now
 			const publishAt = NOW + 30 * 1000;
@@ -113,10 +115,10 @@ describe("Scheduled Publish", () => {
 		test("rejects scheduling an already published entry", async () => {
 			const t = convexTest(schema, modules);
 
-			const contentTypeId = await createContentType(t);
+			const contentTypeName = await createContentType(t);
 			const entryId = await t.run(async (ctx) => {
 				return await ctx.db.insert("contentEntries", {
-					contentTypeId: contentTypeId,
+					contentTypeName: contentTypeName,
 					slug: "published-post",
 					status: "published",
 					data: { title: "Published Post" },
@@ -139,10 +141,10 @@ describe("Scheduled Publish", () => {
 		test("rejects scheduling a deleted entry", async () => {
 			const t = convexTest(schema, modules);
 
-			const contentTypeId = await createContentType(t);
+			const contentTypeName = await createContentType(t);
 			const entryId = await t.run(async (ctx) => {
 				return await ctx.db.insert("contentEntries", {
-					contentTypeId: contentTypeId,
+					contentTypeName: contentTypeName,
 					slug: "deleted-post",
 					status: "draft",
 					data: { title: "Deleted Post" },
@@ -164,10 +166,10 @@ describe("Scheduled Publish", () => {
 		test("rejects scheduling an archived entry", async () => {
 			const t = convexTest(schema, modules);
 
-			const contentTypeId = await createContentType(t);
+			const contentTypeName = await createContentType(t);
 			const entryId = await t.run(async (ctx) => {
 				return await ctx.db.insert("contentEntries", {
-					contentTypeId: contentTypeId,
+					contentTypeName: contentTypeName,
 					slug: "archived-post",
 					status: "archived",
 					data: { title: "Archived Post" },
@@ -190,12 +192,12 @@ describe("Scheduled Publish", () => {
 		test("cancels a scheduled entry and reverts to draft", async () => {
 			const t = convexTest(schema, modules);
 
-			const contentTypeId = await createContentType(t);
+			const contentTypeName = await createContentType(t);
 			const publishAt = NOW + 60 * 60 * 1000;
 
 			const entryId = await t.run(async (ctx) => {
 				return await ctx.db.insert("contentEntries", {
-					contentTypeId: contentTypeId,
+					contentTypeName: contentTypeName,
 					slug: "scheduled-post",
 					status: "scheduled",
 					data: { title: "Scheduled Post" },
@@ -219,8 +221,8 @@ describe("Scheduled Publish", () => {
 		test("rejects cancelling a non-scheduled entry", async () => {
 			const t = convexTest(schema, modules);
 
-			const contentTypeId = await createContentType(t);
-			const entryId = await createDraftEntry(t, contentTypeId);
+			const contentTypeName = await createContentType(t);
+			const entryId = await createDraftEntry(t, contentTypeName);
 
 			await expect(
 				t.mutation(api.scheduledPublish.cancelScheduledPublish, {
@@ -234,12 +236,12 @@ describe("Scheduled Publish", () => {
 		test("publishes an entry when conditions are met", async () => {
 			const t = convexTest(schema, modules);
 
-			const contentTypeId = await createContentType(t);
+			const contentTypeName = await createContentType(t);
 			const publishAt = NOW;
 
 			const entryId = await t.run(async (ctx) => {
 				return await ctx.db.insert("contentEntries", {
-					contentTypeId: contentTypeId,
+					contentTypeName: contentTypeName,
 					slug: "ready-to-publish",
 					status: "scheduled",
 					data: { title: "Ready to Publish" },
@@ -269,12 +271,12 @@ describe("Scheduled Publish", () => {
 		test("creates a version snapshot when publishing", async () => {
 			const t = convexTest(schema, modules);
 
-			const contentTypeId = await createContentType(t);
+			const contentTypeName = await createContentType(t);
 			const publishAt = NOW;
 
 			const entryId = await t.run(async (ctx) => {
 				return await ctx.db.insert("contentEntries", {
-					contentTypeId: contentTypeId,
+					contentTypeName: contentTypeName,
 					slug: "snapshot-test",
 					status: "scheduled",
 					data: { title: "Snapshot Test" },
@@ -304,12 +306,12 @@ describe("Scheduled Publish", () => {
 		test("skips publish if entry was deleted", async () => {
 			const t = convexTest(schema, modules);
 
-			const contentTypeId = await createContentType(t);
+			const contentTypeName = await createContentType(t);
 			const publishAt = NOW;
 
 			const entryId = await t.run(async (ctx) => {
 				return await ctx.db.insert("contentEntries", {
-					contentTypeId: contentTypeId,
+					contentTypeName: contentTypeName,
 					slug: "deleted-before-publish",
 					status: "scheduled",
 					data: { title: "Will be deleted" },
@@ -336,12 +338,12 @@ describe("Scheduled Publish", () => {
 		test("skips publish if entry status changed", async () => {
 			const t = convexTest(schema, modules);
 
-			const contentTypeId = await createContentType(t);
+			const contentTypeName = await createContentType(t);
 			const publishAt = NOW;
 
 			const entryId = await t.run(async (ctx) => {
 				return await ctx.db.insert("contentEntries", {
-					contentTypeId: contentTypeId,
+					contentTypeName: contentTypeName,
 					slug: "status-changed",
 					status: "draft", // Changed from scheduled to draft
 					data: { title: "Status changed" },
@@ -367,13 +369,13 @@ describe("Scheduled Publish", () => {
 		test("skips publish if entry was rescheduled", async () => {
 			const t = convexTest(schema, modules);
 
-			const contentTypeId = await createContentType(t);
+			const contentTypeName = await createContentType(t);
 			const originalPublishAt = NOW;
 			const newPublishAt = NOW + 60 * 60 * 1000; // Rescheduled to 1 hour later
 
 			const entryId = await t.run(async (ctx) => {
 				return await ctx.db.insert("contentEntries", {
-					contentTypeId: contentTypeId,
+					contentTypeName: contentTypeName,
 					slug: "rescheduled",
 					status: "scheduled",
 					data: { title: "Rescheduled" },
@@ -402,7 +404,7 @@ describe("Scheduled Publish", () => {
 		test("returns entries scheduled within the time range", async () => {
 			const t = convexTest(schema, modules);
 
-			const contentTypeId = await createContentType(t);
+			const contentTypeName = await createContentType(t);
 
 			// Create entries with different scheduled times
 			const hour1 = NOW + 60 * 60 * 1000;
@@ -411,7 +413,7 @@ describe("Scheduled Publish", () => {
 
 			await t.run(async (ctx) => {
 				await ctx.db.insert("contentEntries", {
-					contentTypeId: contentTypeId,
+					contentTypeName: contentTypeName,
 					slug: "scheduled-1",
 					status: "scheduled",
 					data: { title: "Post 1" },
@@ -420,7 +422,7 @@ describe("Scheduled Publish", () => {
 				});
 
 				await ctx.db.insert("contentEntries", {
-					contentTypeId: contentTypeId,
+					contentTypeName: contentTypeName,
 					slug: "scheduled-2",
 					status: "scheduled",
 					data: { title: "Post 2" },
@@ -429,7 +431,7 @@ describe("Scheduled Publish", () => {
 				});
 
 				await ctx.db.insert("contentEntries", {
-					contentTypeId: contentTypeId,
+					contentTypeName: contentTypeName,
 					slug: "scheduled-3",
 					status: "scheduled",
 					data: { title: "Post 3" },
@@ -439,7 +441,7 @@ describe("Scheduled Publish", () => {
 
 				// Draft entry (should not be included)
 				await ctx.db.insert("contentEntries", {
-					contentTypeId: contentTypeId,
+					contentTypeName: contentTypeName,
 					slug: "draft",
 					status: "draft",
 					data: { title: "Draft" },
@@ -461,10 +463,11 @@ describe("Scheduled Publish", () => {
 		test("filters by content type", async () => {
 			const t = convexTest(schema, modules);
 
-			const blogTypeId = await createContentType(t);
-			const pageTypeId = await t.run(async (ctx) => {
-				return await ctx.db.insert("contentTypes", {
-					name: "page",
+			const blogTypeName = await createContentType(t);
+			const pageTypeName = "page";
+			await t.run(async (ctx) => {
+				await ctx.db.insert("contentTypes", {
+					name: pageTypeName,
 					displayName: "Page",
 					createdBy: "test-user",
 					fields: [
@@ -484,7 +487,7 @@ describe("Scheduled Publish", () => {
 
 			await t.run(async (ctx) => {
 				await ctx.db.insert("contentEntries", {
-					contentTypeId: blogTypeId,
+					contentTypeName: blogTypeName,
 					slug: "blog-post",
 					status: "scheduled",
 					data: { title: "Blog Post" },
@@ -493,7 +496,7 @@ describe("Scheduled Publish", () => {
 				});
 
 				await ctx.db.insert("contentEntries", {
-					contentTypeId: pageTypeId,
+					contentTypeName: pageTypeName,
 					slug: "page",
 					status: "scheduled",
 					data: { title: "Page" },
@@ -503,7 +506,7 @@ describe("Scheduled Publish", () => {
 			});
 
 			const result = await t.query(api.scheduledPublish.getScheduledEntries, {
-				contentTypeId: blogTypeId,
+				contentTypeName: blogTypeName,
 			});
 
 			expect(result.length).toBe(1);
@@ -513,12 +516,12 @@ describe("Scheduled Publish", () => {
 		test("returns entries sorted by scheduled time", async () => {
 			const t = convexTest(schema, modules);
 
-			const contentTypeId = await createContentType(t);
+			const contentTypeName = await createContentType(t);
 
 			await t.run(async (ctx) => {
 				// Insert in non-chronological order
 				await ctx.db.insert("contentEntries", {
-					contentTypeId: contentTypeId,
+					contentTypeName: contentTypeName,
 					slug: "later",
 					status: "scheduled",
 					data: { title: "Later" },
@@ -527,7 +530,7 @@ describe("Scheduled Publish", () => {
 				});
 
 				await ctx.db.insert("contentEntries", {
-					contentTypeId: contentTypeId,
+					contentTypeName: contentTypeName,
 					slug: "earlier",
 					status: "scheduled",
 					data: { title: "Earlier" },

@@ -17,11 +17,6 @@ describe("Content Entries List Query", () => {
 	// =============================================================================
 
 	describe("contentQueryArgs validator", () => {
-		it("should have contentTypeId field for filtering by type ID", () => {
-			const argFields = Object.keys(contentQueryArgs.fields);
-			expect(argFields).toContain("contentTypeId");
-		});
-
 		it("should have contentTypeName field for filtering by type name", () => {
 			const argFields = Object.keys(contentQueryArgs.fields);
 			expect(argFields).toContain("contentTypeName");
@@ -73,9 +68,9 @@ describe("Content Entries List Query", () => {
 			expect(docFields).toContain("_id");
 		});
 
-		it("should have contentTypeId for type filtering", () => {
+		it("should have contentTypeName for type filtering", () => {
 			const docFields = Object.keys(contentEntryDoc.fields);
-			expect(docFields).toContain("contentTypeId");
+			expect(docFields).toContain("contentTypeName");
 		});
 
 		it("should have status for status filtering", () => {
@@ -374,15 +369,15 @@ describe("Content Entries List Query", () => {
 	// =============================================================================
 
 	describe("Index selection logic", () => {
-		it("should prefer compound index when both contentTypeId and status present", () => {
-			const contentTypeId = "type123";
+		it("should prefer compound index when both contentTypeName and status present", () => {
+			const contentTypeName = "type123";
 			const status = "published";
 			const locale = undefined;
 
 			let selectedIndex = "none";
-			if (contentTypeId && status) {
+			if (contentTypeName && status) {
 				selectedIndex = "by_content_type_and_status";
-			} else if (contentTypeId) {
+			} else if (contentTypeName) {
 				selectedIndex = "by_content_type";
 			} else if (status) {
 				selectedIndex = "by_status";
@@ -393,15 +388,15 @@ describe("Content Entries List Query", () => {
 			expect(selectedIndex).toBe("by_content_type_and_status");
 		});
 
-		it("should use content type index when only contentTypeId present", () => {
-			const contentTypeId = "type123";
+		it("should use content type index when only contentTypeName present", () => {
+			const contentTypeName = "type123";
 			const status = undefined;
 			const locale = undefined;
 
 			let selectedIndex = "none";
-			if (contentTypeId && status) {
+			if (contentTypeName && status) {
 				selectedIndex = "by_content_type_and_status";
-			} else if (contentTypeId) {
+			} else if (contentTypeName) {
 				selectedIndex = "by_content_type";
 			} else if (status) {
 				selectedIndex = "by_status";
@@ -413,14 +408,14 @@ describe("Content Entries List Query", () => {
 		});
 
 		it("should use status index when only status present", () => {
-			const contentTypeId = undefined;
+			const contentTypeName = undefined;
 			const status = "published";
 			const locale = undefined;
 
 			let selectedIndex = "none";
-			if (contentTypeId && status) {
+			if (contentTypeName && status) {
 				selectedIndex = "by_content_type_and_status";
-			} else if (contentTypeId) {
+			} else if (contentTypeName) {
 				selectedIndex = "by_content_type";
 			} else if (status) {
 				selectedIndex = "by_status";
@@ -432,14 +427,14 @@ describe("Content Entries List Query", () => {
 		});
 
 		it("should use locale index when only locale present", () => {
-			const contentTypeId = undefined;
+			const contentTypeName = undefined;
 			const status = undefined;
 			const locale = "en-US";
 
 			let selectedIndex = "none";
-			if (contentTypeId && status) {
+			if (contentTypeName && status) {
 				selectedIndex = "by_content_type_and_status";
-			} else if (contentTypeId) {
+			} else if (contentTypeName) {
 				selectedIndex = "by_content_type";
 			} else if (status) {
 				selectedIndex = "by_status";
@@ -451,14 +446,14 @@ describe("Content Entries List Query", () => {
 		});
 
 		it("should fall back to no specific index when no filters", () => {
-			const contentTypeId = undefined;
+			const contentTypeName = undefined;
 			const status = undefined;
 			const locale = undefined;
 
 			let selectedIndex = "none";
-			if (contentTypeId && status) {
+			if (contentTypeName && status) {
 				selectedIndex = "by_content_type_and_status";
-			} else if (contentTypeId) {
+			} else if (contentTypeName) {
 				selectedIndex = "by_content_type";
 			} else if (status) {
 				selectedIndex = "by_status";

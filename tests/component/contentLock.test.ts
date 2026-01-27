@@ -272,7 +272,7 @@ describe("Content Lock Integration Tests", () => {
     );
 
     const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-      contentTypeId: contentType._id,
+      contentTypeName: contentType.name,
       data: { title: "Test Entry" },
       createdBy: "creator123",
     });
@@ -750,12 +750,12 @@ describe("Content Lock Integration Tests", () => {
 
       // Create and lock multiple entries
       const entry1 = await t.mutation(api.contentEntryMutations.createEntry, {
-        contentTypeId: contentType._id,
+        contentTypeName: contentType.name,
         data: { title: "Entry 1" },
       });
 
       const entry2 = await t.mutation(api.contentEntryMutations.createEntry, {
-        contentTypeId: contentType._id,
+        contentTypeName: contentType.name,
         data: { title: "Entry 2" },
       });
 
@@ -794,12 +794,12 @@ describe("Content Lock Integration Tests", () => {
       );
 
       const entry1 = await t.mutation(api.contentEntryMutations.createEntry, {
-        contentTypeId: contentType._id,
+        contentTypeName: contentType.name,
         data: { title: "Entry 1" },
       });
 
       const entry2 = await t.mutation(api.contentEntryMutations.createEntry, {
-        contentTypeId: contentType._id,
+        contentTypeName: contentType.name,
         data: { title: "Entry 2" },
       });
 
@@ -838,7 +838,7 @@ describe("Content Lock Integration Tests", () => {
       );
 
       const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-        contentTypeId: contentType._id,
+        contentTypeName: contentType.name,
         data: { title: "Entry" },
       });
 
@@ -896,7 +896,7 @@ describe("Concurrent Editing Scenarios", () => {
     );
 
     const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-      contentTypeId: contentType._id,
+      contentTypeName: contentType.name,
       data: { title: "Concurrent Entry" },
     });
 

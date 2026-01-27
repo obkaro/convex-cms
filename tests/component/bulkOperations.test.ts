@@ -117,17 +117,17 @@ describe("Bulk Publish Integration Tests", () => {
 
 		// Create multiple draft entries
 		const entry1 = await t.mutation(api.contentEntryMutations.createEntry, {
-			contentTypeId: contentType._id,
+			contentTypeName: contentType.name,
 			data: { title: "Article 1" },
 		});
 
 		const entry2 = await t.mutation(api.contentEntryMutations.createEntry, {
-			contentTypeId: contentType._id,
+			contentTypeName: contentType.name,
 			data: { title: "Article 2" },
 		});
 
 		const entry3 = await t.mutation(api.contentEntryMutations.createEntry, {
-			contentTypeId: contentType._id,
+			contentTypeName: contentType.name,
 			data: { title: "Article 3" },
 		});
 
@@ -178,7 +178,7 @@ describe("Bulk Publish Integration Tests", () => {
 		);
 
 		const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-			contentTypeId: contentType._id,
+			contentTypeName: contentType.name,
 			data: { title: "Already Published" },
 		});
 
@@ -214,7 +214,7 @@ describe("Bulk Publish Integration Tests", () => {
 		);
 
 		const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-			contentTypeId: contentType._id,
+			contentTypeName: contentType.name,
 			data: { title: "Will be deleted" },
 		});
 
@@ -250,7 +250,7 @@ describe("Bulk Publish Integration Tests", () => {
 		);
 
 		const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-			contentTypeId: contentType._id,
+			contentTypeName: contentType.name,
 			data: { title: "Archived" },
 			status: "archived",
 		});
@@ -279,7 +279,7 @@ describe("Bulk Publish Integration Tests", () => {
 		);
 
 		const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-			contentTypeId: contentType._id,
+			contentTypeName: contentType.name,
 			data: { title: "Versioned Entry" },
 		});
 
@@ -333,7 +333,7 @@ describe("Bulk Publish Integration Tests", () => {
 		const ids = [];
 		for (let i = 0; i < BULK_OPERATION_BATCH_SIZE + 1; i++) {
 			const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-				contentTypeId: contentType._id,
+				contentTypeName: contentType.name,
 				data: { title: `Entry ${i}` },
 			});
 			ids.push(entry._id);
@@ -361,7 +361,7 @@ describe("Bulk Publish Integration Tests", () => {
 
 		// Create one valid entry
 		const validEntry = await t.mutation(api.contentEntryMutations.createEntry, {
-			contentTypeId: contentType._id,
+			contentTypeName: contentType.name,
 			data: { title: "Valid" },
 		});
 
@@ -369,7 +369,7 @@ describe("Bulk Publish Integration Tests", () => {
 		const deletedEntry = await t.mutation(
 			api.contentEntryMutations.createEntry,
 			{
-				contentTypeId: contentType._id,
+				contentTypeName: contentType.name,
 				data: { title: "Deleted" },
 			},
 		);
@@ -409,7 +409,7 @@ describe("Bulk Unpublish Integration Tests", () => {
 
 		// Create and publish entries
 		const entry1 = await t.mutation(api.contentEntryMutations.createEntry, {
-			contentTypeId: contentType._id,
+			contentTypeName: contentType.name,
 			data: { title: "Entry 1" },
 		});
 		await t.mutation(api.contentEntryMutations.publishEntry, {
@@ -417,7 +417,7 @@ describe("Bulk Unpublish Integration Tests", () => {
 		});
 
 		const entry2 = await t.mutation(api.contentEntryMutations.createEntry, {
-			contentTypeId: contentType._id,
+			contentTypeName: contentType.name,
 			data: { title: "Entry 2" },
 		});
 		await t.mutation(api.contentEntryMutations.publishEntry, {
@@ -462,7 +462,7 @@ describe("Bulk Unpublish Integration Tests", () => {
 		);
 
 		const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-			contentTypeId: contentType._id,
+			contentTypeName: contentType.name,
 			data: { title: "Already Draft" },
 		});
 
@@ -490,7 +490,7 @@ describe("Bulk Unpublish Integration Tests", () => {
 		);
 
 		const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-			contentTypeId: contentType._id,
+			contentTypeName: contentType.name,
 			data: { title: "Timestamp Entry" },
 		});
 
@@ -534,12 +534,12 @@ describe("Bulk Delete Integration Tests", () => {
 		);
 
 		const entry1 = await t.mutation(api.contentEntryMutations.createEntry, {
-			contentTypeId: contentType._id,
+			contentTypeName: contentType.name,
 			data: { title: "Entry 1" },
 		});
 
 		const entry2 = await t.mutation(api.contentEntryMutations.createEntry, {
-			contentTypeId: contentType._id,
+			contentTypeName: contentType.name,
 			data: { title: "Entry 2" },
 		});
 
@@ -577,7 +577,7 @@ describe("Bulk Delete Integration Tests", () => {
 		);
 
 		const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-			contentTypeId: contentType._id,
+			contentTypeName: contentType.name,
 			data: { title: "Hard Delete Entry" },
 		});
 
@@ -623,7 +623,7 @@ describe("Bulk Delete Integration Tests", () => {
 		);
 
 		const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-			contentTypeId: contentType._id,
+			contentTypeName: contentType.name,
 			data: { title: "Already Deleted" },
 		});
 
@@ -669,12 +669,12 @@ describe("Bulk Update Integration Tests", () => {
 		);
 
 		const entry1 = await t.mutation(api.contentEntryMutations.createEntry, {
-			contentTypeId: contentType._id,
+			contentTypeName: contentType.name,
 			data: { title: "Entry 1", featured: false },
 		});
 
 		const entry2 = await t.mutation(api.contentEntryMutations.createEntry, {
-			contentTypeId: contentType._id,
+			contentTypeName: contentType.name,
 			data: { title: "Entry 2", featured: false },
 		});
 
@@ -714,12 +714,12 @@ describe("Bulk Update Integration Tests", () => {
 		);
 
 		const entry1 = await t.mutation(api.contentEntryMutations.createEntry, {
-			contentTypeId: contentType._id,
+			contentTypeName: contentType.name,
 			data: { title: "Entry 1" },
 		});
 
 		const entry2 = await t.mutation(api.contentEntryMutations.createEntry, {
-			contentTypeId: contentType._id,
+			contentTypeName: contentType.name,
 			data: { title: "Entry 2" },
 		});
 
@@ -761,7 +761,7 @@ describe("Bulk Update Integration Tests", () => {
 		);
 
 		const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-			contentTypeId: contentType._id,
+			contentTypeName: contentType.name,
 			data: { title: "Entry", rating: 3 },
 		});
 
@@ -791,7 +791,7 @@ describe("Bulk Update Integration Tests", () => {
 		);
 
 		const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-			contentTypeId: contentType._id,
+			contentTypeName: contentType.name,
 			data: { title: "Deleted Entry" },
 		});
 
@@ -824,7 +824,7 @@ describe("Bulk Update Integration Tests", () => {
 		);
 
 		const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-			contentTypeId: contentType._id,
+			contentTypeName: contentType.name,
 			data: { title: "Entry" },
 		});
 
@@ -853,7 +853,7 @@ describe("Bulk Update Integration Tests", () => {
 		);
 
 		const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-			contentTypeId: contentType._id,
+			contentTypeName: contentType.name,
 			data: { title: "Version Test" },
 		});
 
@@ -897,7 +897,7 @@ describe("Bulk Update Integration Tests", () => {
 		);
 
 		const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-			contentTypeId: contentType._id,
+			contentTypeName: contentType.name,
 			data: { title: "Original", description: "Original desc" },
 		});
 
@@ -933,12 +933,12 @@ describe("Bulk Restore Integration Tests", () => {
 		);
 
 		const entry1 = await t.mutation(api.contentEntryMutations.createEntry, {
-			contentTypeId: contentType._id,
+			contentTypeName: contentType.name,
 			data: { title: "Entry 1" },
 		});
 
 		const entry2 = await t.mutation(api.contentEntryMutations.createEntry, {
-			contentTypeId: contentType._id,
+			contentTypeName: contentType.name,
 			data: { title: "Entry 2" },
 		});
 
@@ -980,7 +980,7 @@ describe("Bulk Restore Integration Tests", () => {
 		);
 
 		const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-			contentTypeId: contentType._id,
+			contentTypeName: contentType.name,
 			data: { title: "Not Deleted" },
 		});
 
@@ -1008,7 +1008,7 @@ describe("Bulk Restore Integration Tests", () => {
 		);
 
 		const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-			contentTypeId: contentType._id,
+			contentTypeName: contentType.name,
 			data: { title: "Will be hard deleted" },
 		});
 
@@ -1048,14 +1048,14 @@ describe("Bulk Operations Edge Cases", () => {
 
 		// Create entries in different states
 		const draftEntry = await t.mutation(api.contentEntryMutations.createEntry, {
-			contentTypeId: contentType._id,
+			contentTypeName: contentType.name,
 			data: { title: "Draft" },
 		});
 
 		const deletedEntry = await t.mutation(
 			api.contentEntryMutations.createEntry,
 			{
-				contentTypeId: contentType._id,
+				contentTypeName: contentType.name,
 				data: { title: "Deleted" },
 			},
 		);
@@ -1066,7 +1066,7 @@ describe("Bulk Operations Edge Cases", () => {
 		const archivedEntry = await t.mutation(
 			api.contentEntryMutations.createEntry,
 			{
-				contentTypeId: contentType._id,
+				contentTypeName: contentType.name,
 				data: { title: "Archived" },
 				status: "archived",
 			},
@@ -1112,7 +1112,7 @@ describe("Bulk Operations Edge Cases", () => {
 		const entries = [];
 		for (let i = 0; i < 5; i++) {
 			const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-				contentTypeId: contentType._id,
+				contentTypeName: contentType.name,
 				data: { title: `Entry ${i}`, count: i },
 			});
 			entries.push(entry);

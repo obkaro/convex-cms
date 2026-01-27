@@ -37,7 +37,8 @@ describe("defineContentType", () => {
       },
     });
 
-    expect(blogPost.name).toBe("blog_post");
+    expect(blogPost.slug).toBe("blog_post");
+    expect(blogPost.name).toBe("Blog Post"); // Display name from meta
     expect(blogPost.meta.displayName).toBe("Blog Post");
     expect(blogPost.meta.titleField).toBe("title");
     expect(blogPost._type).toBe("content_type_definition");
@@ -76,7 +77,8 @@ describe("defineContentType", () => {
       },
     });
 
-    expect(product.name).toBe("product");
+    expect(product.slug).toBe("product");
+    expect(product.name).toBe("Product"); // Display name from meta
     expect(product.meta.fields?.name?.searchable).toBe(true);
     expect(product.meta.fields?.variants?.renderAs).toBe("json");
   });
@@ -112,7 +114,8 @@ describe("defineContentType", () => {
       },
     });
 
-    expect(article.name).toBe("article");
+    expect(article.slug).toBe("article");
+    expect(article.name).toBe("Article"); // Display name from meta
     expect(article.meta.fields?.category?.options?.length).toBe(3);
   });
 
@@ -134,7 +137,7 @@ describe("defineContentType", () => {
   });
 
   it("validates content type name format", () => {
-    // Valid names
+    // Valid slug-format names
     expect(() =>
       defineContentType({
         name: "blog_post",
@@ -151,28 +154,29 @@ describe("defineContentType", () => {
       })
     ).not.toThrow();
 
-    // Invalid names - must start with lowercase letter
+    // Valid display names - auto-converted to slugs
     expect(() =>
       defineContentType({
-        name: "BlogPost", // Uppercase
+        name: "BlogPost", // Display name → slug "blogpost"
         validator: v.object({ title: v.string() }),
         meta: { displayName: "Blog Post" },
       })
-    ).toThrow(/Invalid content type name/);
+    ).not.toThrow();
 
     expect(() =>
       defineContentType({
-        name: "123post", // Starts with number
+        name: "blog-post", // Display name → slug "blog_post"
+        validator: v.object({ title: v.string() }),
+        meta: { displayName: "Blog Post" },
+      })
+    ).not.toThrow();
+
+    // Invalid names - result in invalid slugs after conversion
+    expect(() =>
+      defineContentType({
+        name: "123post", // Starts with number → slug "123post" (invalid)
         validator: v.object({ title: v.string() }),
         meta: { displayName: "Post" },
-      })
-    ).toThrow(/Invalid content type name/);
-
-    expect(() =>
-      defineContentType({
-        name: "blog-post", // Contains hyphen
-        validator: v.object({ title: v.string() }),
-        meta: { displayName: "Blog Post" },
       })
     ).toThrow(/Invalid content type name/);
 
@@ -204,7 +208,8 @@ describe("type inference", () => {
     });
 
     // Runtime verification that the definition was created
-    expect(blogPost.name).toBe("blog_post");
+    expect(blogPost.slug).toBe("blog_post");
+    expect(blogPost.name).toBe("Blog Post"); // Display name from meta
 
     // Type test: InferContentType should match Infer<typeof validator>
     type BlogPostData = InferContentType<typeof blogPost>;
@@ -245,7 +250,8 @@ describe("type inference", () => {
     });
 
     // Runtime verification that the definition was created
-    expect(author.name).toBe("author");
+    expect(author.slug).toBe("author");
+    expect(author.name).toBe("Author"); // Display name from meta
 
     type AuthorData = InferContentType<typeof author>;
 
@@ -281,7 +287,8 @@ describe("type inference", () => {
     });
 
     // Runtime verification
-    expect(product.name).toBe("product");
+    expect(product.slug).toBe("product");
+    expect(product.name).toBe("Product"); // Display name from meta
 
     type ProductData = InferContentType<typeof product>;
 
@@ -339,11 +346,12 @@ describe("createContentSchema", () => {
     expect(schema.hasContentType("nonexistent")).toBe(false);
   });
 
-  it("provides getDefinition by name", () => {
+  it("provides getDefinition by slug", () => {
     const schema = createContentSchema({ blogPost, author });
 
     const blogDef = schema.getDefinition("blog_post");
-    expect(blogDef?.name).toBe("blog_post");
+    expect(blogDef?.slug).toBe("blog_post");
+    expect(blogDef?.name).toBe("Blog Post"); // Display name from meta
     expect(blogDef?.meta.displayName).toBe("Blog Post");
 
     const notFound = schema.getDefinition("nonexistent");
@@ -354,22 +362,24 @@ describe("createContentSchema", () => {
     const schema = createContentSchema({ blogPost, author });
 
     const blogDef = schema.getDefinitionByKey("blogPost");
-    expect(blogDef.name).toBe("blog_post");
+    expect(blogDef.slug).toBe("blog_post");
+    expect(blogDef.name).toBe("Blog Post"); // Display name from meta
 
     const authorDef = schema.getDefinitionByKey("author");
-    expect(authorDef.name).toBe("author");
+    expect(authorDef.slug).toBe("author");
+    expect(authorDef.name).toBe("Author"); // Display name from meta
   });
 
-  it("detects duplicate content type names", () => {
+  it("detects duplicate content type slugs", () => {
     const duplicateBlog = defineContentType({
-      name: "blog_post", // Same name as blogPost
+      name: "blog_post", // Same slug as blogPost
       validator: v.object({ headline: v.string() }),
       meta: { displayName: "Duplicate Blog" },
     });
 
     expect(() =>
       createContentSchema({ blogPost, duplicateBlog })
-    ).toThrow(/Duplicate content type name "blog_post"/);
+    ).toThrow(/Duplicate content type slug "blog_post"/);
   });
 
   it("freezes the schema to prevent mutation", () => {
@@ -545,8 +555,9 @@ describe("edge cases", () => {
       meta: { displayName: "Complex" },
     });
 
-    // Runtime verification
-    expect(complex.name).toBe("complex");
+    // Runtime verification - slug is the machine-readable identifier
+    expect(complex.slug).toBe("complex");
+    expect(complex.name).toBe("Complex"); // Display name from meta
 
     type ComplexData = InferContentType<typeof complex>;
 
@@ -578,8 +589,9 @@ describe("edge cases", () => {
       meta: { displayName: "With Arrays" },
     });
 
-    // Runtime verification
-    expect(withArrays.name).toBe("with_arrays");
+    // Runtime verification - slug is the machine-readable identifier
+    expect(withArrays.slug).toBe("with_arrays");
+    expect(withArrays.name).toBe("With Arrays"); // Display name from meta
 
     type ArrayData = InferContentType<typeof withArrays>;
 
@@ -605,8 +617,9 @@ describe("edge cases", () => {
       meta: { displayName: "With Record" },
     });
 
-    // Runtime verification
-    expect(withRecord.name).toBe("with_record");
+    // Runtime verification - slug is the machine-readable identifier
+    expect(withRecord.slug).toBe("with_record");
+    expect(withRecord.name).toBe("With Record"); // Display name from meta
 
     type RecordData = InferContentType<typeof withRecord>;
 

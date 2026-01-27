@@ -755,7 +755,7 @@ describe("Content Type Mutation Integration Tests", () => {
 			// Create a content entry with data in the 'body' field
 			await t.run(async (ctx) => {
 				await ctx.db.insert("contentEntries", {
-					contentTypeId: contentType._id,
+					contentTypeName: contentType.name,
 					slug: "my-post",
 					status: "draft",
 					data: {
@@ -802,7 +802,7 @@ describe("Content Type Mutation Integration Tests", () => {
 			// Create an entry with subtitle data
 			await t.run(async (ctx) => {
 				await ctx.db.insert("contentEntries", {
-					contentTypeId: contentType._id,
+					contentTypeName: contentType.name,
 					slug: "about",
 					status: "draft",
 					data: {
@@ -848,7 +848,7 @@ describe("Content Type Mutation Integration Tests", () => {
 
 			await t.run(async (ctx) => {
 				await ctx.db.insert("contentEntries", {
-					contentTypeId: contentType._id,
+					contentTypeName: contentType.name,
 					slug: "widget",
 					status: "draft",
 					data: { price: "$99.99" },
@@ -891,7 +891,7 @@ describe("Content Type Mutation Integration Tests", () => {
 			// Create entry without location
 			await t.run(async (ctx) => {
 				await ctx.db.insert("contentEntries", {
-					contentTypeId: contentType._id,
+					contentTypeName: contentType.name,
 					slug: "meetup",
 					status: "draft",
 					data: { title: "Tech Meetup" },
@@ -947,7 +947,7 @@ describe("Content Type Mutation Integration Tests", () => {
 			// Create entry using 'in_progress' status
 			await t.run(async (ctx) => {
 				await ctx.db.insert("contentEntries", {
-					contentTypeId: contentType._id,
+					contentTypeName: contentType.name,
 					slug: "task-1",
 					status: "draft",
 					data: { title: "My Task", status: "in_progress" },
@@ -1175,7 +1175,7 @@ describe("Content Type Mutation Integration Tests", () => {
 			// Create and soft-delete an entry with 'extra' field data
 			await t.run(async (ctx) => {
 				await ctx.db.insert("contentEntries", {
-					contentTypeId: contentType._id,
+					contentTypeName: contentType.name,
 					slug: "deleted-entry",
 					status: "draft",
 					data: { title: "Title", extra: "Extra data" },
@@ -1228,7 +1228,7 @@ describe("Content Type Mutation Integration Tests", () => {
 			// Create entry with 'featured' and 'popular' tags
 			await t.run(async (ctx) => {
 				await ctx.db.insert("contentEntries", {
-					contentTypeId: contentType._id,
+					contentTypeName: contentType.name,
 					slug: "item-1",
 					status: "draft",
 					data: { tags: ["featured", "popular"] },
@@ -1368,7 +1368,7 @@ describe("Content Type Mutation Integration Tests", () => {
 			// Create an entry
 			await t.run(async (ctx) => {
 				await ctx.db.insert("contentEntries", {
-					contentTypeId: contentType._id,
+					contentTypeName: contentType.name,
 					slug: "my-post",
 					status: "draft",
 					data: { title: "My Post" },
@@ -1402,14 +1402,14 @@ describe("Content Type Mutation Integration Tests", () => {
 			// Create multiple entries
 			await t.run(async (ctx) => {
 				await ctx.db.insert("contentEntries", {
-					contentTypeId: contentType._id,
+					contentTypeName: contentType.name,
 					slug: "post-1",
 					status: "draft",
 					data: { title: "Post 1" },
 					version: 1,
 				});
 				await ctx.db.insert("contentEntries", {
-					contentTypeId: contentType._id,
+					contentTypeName: contentType.name,
 					slug: "post-2",
 					status: "published",
 					data: { title: "Post 2" },
@@ -1442,14 +1442,14 @@ describe("Content Type Mutation Integration Tests", () => {
 			// Create entries
 			const entryIds = await t.run(async (ctx) => {
 				const id1 = await ctx.db.insert("contentEntries", {
-					contentTypeId: contentType._id,
+					contentTypeName: contentType.name,
 					slug: "post-1",
 					status: "draft",
 					data: { title: "Post 1" },
 					version: 1,
 				});
 				const id2 = await ctx.db.insert("contentEntries", {
-					contentTypeId: contentType._id,
+					contentTypeName: contentType.name,
 					slug: "post-2",
 					status: "published",
 					data: { title: "Post 2" },
@@ -1501,7 +1501,7 @@ describe("Content Type Mutation Integration Tests", () => {
 			// Create entry with versions
 			const { entryId, versionIds } = await t.run(async (ctx) => {
 				const eId = await ctx.db.insert("contentEntries", {
-					contentTypeId: contentType._id,
+					contentTypeName: contentType.name,
 					slug: "post-1",
 					status: "published",
 					data: { title: "Post 1" },
@@ -1625,14 +1625,14 @@ describe("Content Type Mutation Integration Tests", () => {
 			// Create entries - one active, one already deleted
 			await t.run(async (ctx) => {
 				await ctx.db.insert("contentEntries", {
-					contentTypeId: contentType._id,
+					contentTypeName: contentType.name,
 					slug: "active-post",
 					status: "draft",
 					data: { title: "Active Post" },
 					version: 1,
 				});
 				await ctx.db.insert("contentEntries", {
-					contentTypeId: contentType._id,
+					contentTypeName: contentType.name,
 					slug: "deleted-post",
 					status: "draft",
 					data: { title: "Deleted Post" },
@@ -1671,7 +1671,7 @@ describe("Content Type Mutation Integration Tests", () => {
 			// Create soft-deleted entry
 			await t.run(async (ctx) => {
 				await ctx.db.insert("contentEntries", {
-					contentTypeId: contentType._id,
+					contentTypeName: contentType.name,
 					slug: "old-post",
 					status: "draft",
 					data: { title: "Old Post" },
