@@ -345,21 +345,21 @@ describe("contentEntryFactory", () => {
 		contentEntryFactory.resetCounter();
 	});
 
-	const fakeContentTypeId = "content_type_123" as GenericId<"contentTypes">;
+	const fakeContentTypeName = "blog_post";
 
 	describe("minimal", () => {
 		it("creates a minimal entry", () => {
-			const entry = contentEntryFactory.minimal(fakeContentTypeId);
+			const entry = contentEntryFactory.minimal(fakeContentTypeName);
 
-			expect(entry.contentTypeId).toBe(fakeContentTypeId);
+			expect(entry.contentTypeName).toBe(fakeContentTypeName);
 			expect(entry.slug).toBe("test-entry-1");
 			expect(entry.status).toBe("draft");
 			expect(entry.version).toBe(1);
 		});
 
 		it("increments counter for unique slugs", () => {
-			const entry1 = contentEntryFactory.minimal(fakeContentTypeId);
-			const entry2 = contentEntryFactory.minimal(fakeContentTypeId);
+			const entry1 = contentEntryFactory.minimal(fakeContentTypeName);
+			const entry2 = contentEntryFactory.minimal(fakeContentTypeName);
 
 			expect(entry1.slug).toBe("test-entry-1");
 			expect(entry2.slug).toBe("test-entry-2");
@@ -368,7 +368,7 @@ describe("contentEntryFactory", () => {
 
 	describe("draft", () => {
 		it("creates a draft entry with data", () => {
-			const entry = contentEntryFactory.draft(fakeContentTypeId, {
+			const entry = contentEntryFactory.draft(fakeContentTypeName, {
 				title: "My Draft",
 			});
 
@@ -379,7 +379,7 @@ describe("contentEntryFactory", () => {
 
 	describe("published", () => {
 		it("creates a published entry with timestamps", () => {
-			const entry = contentEntryFactory.published(fakeContentTypeId, {
+			const entry = contentEntryFactory.published(fakeContentTypeName, {
 				title: "Published Post",
 			});
 
@@ -392,7 +392,7 @@ describe("contentEntryFactory", () => {
 
 	describe("archived", () => {
 		it("creates an archived entry", () => {
-			const entry = contentEntryFactory.archived(fakeContentTypeId, {
+			const entry = contentEntryFactory.archived(fakeContentTypeName, {
 				title: "Old Post",
 			});
 
@@ -404,7 +404,7 @@ describe("contentEntryFactory", () => {
 		it("creates a scheduled entry", () => {
 			const futureTime = Date.now() + 86400000; // 1 day
 			const entry = contentEntryFactory.scheduled(
-				fakeContentTypeId,
+				fakeContentTypeName,
 				{ title: "Future Post" },
 				futureTime,
 			);
@@ -416,7 +416,7 @@ describe("contentEntryFactory", () => {
 
 	describe("deleted", () => {
 		it("creates a soft-deleted entry", () => {
-			const entry = contentEntryFactory.deleted(fakeContentTypeId, {
+			const entry = contentEntryFactory.deleted(fakeContentTypeName, {
 				title: "Deleted",
 			});
 
@@ -429,7 +429,7 @@ describe("contentEntryFactory", () => {
 		it("creates a localized variant", () => {
 			const primaryId = "entry_123" as GenericId<"contentEntries">;
 			const entry = contentEntryFactory.localized(
-				fakeContentTypeId,
+				fakeContentTypeName,
 				primaryId,
 				"de-DE",
 				{ title: "Deutscher Titel" },
@@ -442,7 +442,7 @@ describe("contentEntryFactory", () => {
 
 	describe("blogPost", () => {
 		it("creates a blog post entry with typical data", () => {
-			const entry = contentEntryFactory.blogPost(fakeContentTypeId);
+			const entry = contentEntryFactory.blogPost(fakeContentTypeName);
 
 			expect(entry.data.title).toContain("Test Blog Post");
 			expect(entry.data.content).toContain("<p>");
@@ -453,7 +453,7 @@ describe("contentEntryFactory", () => {
 
 	describe("product", () => {
 		it("creates a product entry with typical data", () => {
-			const entry = contentEntryFactory.product(fakeContentTypeId);
+			const entry = contentEntryFactory.product(fakeContentTypeName);
 
 			expect(entry.data.name).toContain("Test Product");
 			expect(entry.data.sku).toMatch(/^SKU-\d+$/);
@@ -464,17 +464,17 @@ describe("contentEntryFactory", () => {
 
 	describe("batch", () => {
 		it("creates multiple entries", () => {
-			const entries = contentEntryFactory.batch(fakeContentTypeId, 5);
+			const entries = contentEntryFactory.batch(fakeContentTypeName, 5);
 
 			expect(entries).toHaveLength(5);
 			entries.forEach((entry) => {
-				expect(entry.contentTypeId).toBe(fakeContentTypeId);
+				expect(entry.contentTypeName).toBe(fakeContentTypeName);
 			});
 		});
 
 		it("allows customization via factory function", () => {
 			const entries = contentEntryFactory.batch(
-				fakeContentTypeId,
+				fakeContentTypeName,
 				3,
 				(typeId, index) => ({
 					data: { title: `Entry ${index}` },
@@ -654,7 +654,7 @@ describe("Assertions", () => {
 			const entry = {
 				_id: "id123",
 				_creationTime: Date.now(),
-				...contentEntryFactory.minimal("type_123" as GenericId<"contentTypes">),
+				...contentEntryFactory.minimal("blog_post"),
 			};
 
 			expect(() => assertContentEntry(entry)).not.toThrow();

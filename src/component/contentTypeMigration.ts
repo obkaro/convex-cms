@@ -737,7 +737,7 @@ export const migrateContentType = mutation({
 		// Build query for entries
 		const entriesQuery = ctx.db
 			.query("contentEntries")
-			.withIndex("by_content_type", (q) => q.eq("contentTypeId", contentTypeId))
+			.withIndex("by_content_type", (q) => q.eq("contentTypeName", contentType.name))
 			.filter((q) => q.eq(q.field("deletedAt"), undefined));
 
 		// Collect all entries
@@ -909,7 +909,7 @@ export const previewMigration = query({
 		// Build query for entries
 		let entries = await ctx.db
 			.query("contentEntries")
-			.withIndex("by_content_type", (q) => q.eq("contentTypeId", contentTypeId))
+			.withIndex("by_content_type", (q) => q.eq("contentTypeName", contentType.name))
 			.filter((q) => q.eq(q.field("deletedAt"), undefined))
 			.collect();
 

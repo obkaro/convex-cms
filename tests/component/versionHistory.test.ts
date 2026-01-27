@@ -298,7 +298,7 @@ describe("Version History Integration Tests", () => {
 
       // Create a content entry
       const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-        contentTypeId: contentType._id,
+        contentTypeName: contentType.name,
         data: { title: "Original Title", content: "<p>Original content</p>" },
         createdBy: "user123",
       });
@@ -342,7 +342,7 @@ describe("Version History Integration Tests", () => {
 
       // Create and publish an entry
       const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-        contentTypeId: contentType._id,
+        contentTypeName: contentType.name,
         data: { title: "Version 1" },
       });
 
@@ -401,7 +401,7 @@ describe("Version History Integration Tests", () => {
       );
 
       const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-        contentTypeId: contentType._id,
+        contentTypeName: contentType.name,
         data: { title: "Temp Entry" },
       });
 
@@ -435,7 +435,7 @@ describe("Version History Integration Tests", () => {
       );
 
       const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-        contentTypeId: contentType._id,
+        contentTypeName: contentType.name,
         data: { title: "Will be deleted" },
       });
 
@@ -475,7 +475,7 @@ describe("Version History Integration Tests", () => {
 
       // Create entry but don't publish (no versions created)
       const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-        contentTypeId: contentType._id,
+        contentTypeName: contentType.name,
         data: { title: "Draft Only" },
       });
 
@@ -506,7 +506,7 @@ describe("Version History Integration Tests", () => {
       );
 
       const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-        contentTypeId: contentType._id,
+        contentTypeName: contentType.name,
         data: { title: "v1" },
       });
 
@@ -572,7 +572,7 @@ describe("Version History Integration Tests", () => {
       );
 
       const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-        contentTypeId: contentType._id,
+        contentTypeName: contentType.name,
         data: { title: "Test Entry" },
         createdBy: "author123",
       });

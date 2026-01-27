@@ -688,8 +688,8 @@ export class ContentEntriesApi {
   }
 
   async create(ctx: ConvexContext, args: CreateContentEntryArgs): Promise<ContentEntry> {
-    await this.authorize(ctx, "contentEntries.create", args.createdBy, undefined, undefined, args.contentTypeId);
-    await this.rateLimit(ctx, "contentEntries.create", args.createdBy, args.contentTypeId);
+    await this.authorize(ctx, "contentEntries.create", args.createdBy, undefined, undefined, args.contentTypeName);
+    await this.rateLimit(ctx, "contentEntries.create", args.createdBy, args.contentTypeName);
     const argsWithDefaults = { ...args, locale: args.locale ?? this.config.defaultLocale };
     return ctx.runMutation(this.api.contentEntryMutations.createEntry, argsWithDefaults);
   }
@@ -697,16 +697,16 @@ export class ContentEntriesApi {
   async update(ctx: ConvexContext, args: UpdateContentEntryArgs): Promise<ContentEntry> {
     const entry = await ctx.runQuery(this.api.contentEntries.get, { id: args.id });
     if (!entry) throw new Error(`Content entry not found: ${args.id}`);
-    await this.authorize(ctx, "contentEntries.update", args.updatedBy, args.id, entry.createdBy, entry.contentTypeId);
-    await this.rateLimit(ctx, "contentEntries.update", args.updatedBy, entry.contentTypeId);
+    await this.authorize(ctx, "contentEntries.update", args.updatedBy, args.id, entry.createdBy, entry.contentTypeName);
+    await this.rateLimit(ctx, "contentEntries.update", args.updatedBy, entry.contentTypeName);
     return ctx.runMutation(this.api.contentEntryMutations.updateEntry, args);
   }
 
   async delete(ctx: ConvexContext, args: DeleteContentEntryArgs): Promise<ContentEntry> {
     const entry = await ctx.runQuery(this.api.contentEntries.get, { id: args.id });
     if (!entry) throw new Error(`Content entry not found: ${args.id}`);
-    await this.authorize(ctx, "contentEntries.delete", args.deletedBy, args.id, entry.createdBy, entry.contentTypeId);
-    await this.rateLimit(ctx, "contentEntries.delete", args.deletedBy, entry.contentTypeId);
+    await this.authorize(ctx, "contentEntries.delete", args.deletedBy, args.id, entry.createdBy, entry.contentTypeName);
+    await this.rateLimit(ctx, "contentEntries.delete", args.deletedBy, entry.contentTypeName);
     return ctx.runMutation(this.api.contentEntryMutations.deleteEntry, args);
   }
 
@@ -714,24 +714,16 @@ export class ContentEntriesApi {
     return ctx.runQuery(this.api.contentEntries.get, args);
   }
 
-  /** Looks up by contentTypeId+slug or contentTypeName+slug */
+  /** Looks up by contentTypeName+slug */
   async getBySlug(ctx: ReadableContext, args: GetContentEntryBySlugArgs): Promise<ContentEntry | null> {
-    // The wrapper's unified interface adapts to the component's split API
-    if (args.contentTypeId) {
-      return ctx.runQuery(this.api.contentEntries.getBySlug, {
-        contentTypeId: args.contentTypeId,
-        slug: args.slug,
-        includeDeleted: false,
-      });
+    if (!args.contentTypeName) {
+      throw new Error("getBySlug requires contentTypeName");
     }
-    if (args.contentTypeName) {
-      return ctx.runQuery(this.api.contentEntries.getBySlugAndTypeName, {
-        contentTypeName: args.contentTypeName,
-        slug: args.slug,
-        includeDeleted: false,
-      });
-    }
-    throw new Error("getBySlug requires either contentTypeId or contentTypeName");
+    return ctx.runQuery(this.api.contentEntries.getBySlug, {
+      contentTypeName: args.contentTypeName,
+      slug: args.slug,
+      includeDeleted: false,
+    });
   }
 
   /** Standard Convex pagination format compatible with usePaginatedQuery */
@@ -766,10 +758,10 @@ export class ContentEntriesApi {
       args.updatedBy,
       args.id,
       entry.createdBy,
-      entry.contentTypeId
+      entry.contentTypeName
     );
     // Rate limit check - contentEntries.publish
-    await this.rateLimit(ctx, "contentEntries.publish", args.updatedBy, entry.contentTypeId);
+    await this.rateLimit(ctx, "contentEntries.publish", args.updatedBy, entry.contentTypeName);
     return ctx.runMutation(this.api.contentEntryMutations.publishEntry, args);
   }
 
@@ -797,10 +789,10 @@ export class ContentEntriesApi {
       args.updatedBy,
       args.id,
       entry.createdBy,
-      entry.contentTypeId
+      entry.contentTypeName
     );
     // Rate limit check - contentEntries.unpublish
-    await this.rateLimit(ctx, "contentEntries.unpublish", args.updatedBy, entry.contentTypeId);
+    await this.rateLimit(ctx, "contentEntries.unpublish", args.updatedBy, entry.contentTypeName);
     return ctx.runMutation(this.api.contentEntryMutations.unpublishEntry, args);
   }
 
@@ -840,10 +832,10 @@ export class ContentEntriesApi {
       args.updatedBy,
       args.id,
       entry.createdBy,
-      entry.contentTypeId
+      entry.contentTypeName
     );
     // Rate limit check - contentEntries.schedule
-    await this.rateLimit(ctx, "contentEntries.schedule", args.updatedBy, entry.contentTypeId);
+    await this.rateLimit(ctx, "contentEntries.schedule", args.updatedBy, entry.contentTypeName);
     return ctx.runMutation(this.api.scheduledPublish.scheduleEntry, args);
   }
 
@@ -889,10 +881,10 @@ export class ContentEntriesApi {
       args.restoredBy,
       args.id,
       entry.createdBy,
-      entry.contentTypeId
+      entry.contentTypeName
     );
     // Rate limit check - contentEntries.restore
-    await this.rateLimit(ctx, "contentEntries.restore", args.restoredBy, entry.contentTypeId);
+    await this.rateLimit(ctx, "contentEntries.restore", args.restoredBy, entry.contentTypeName);
     return ctx.runMutation(this.api.contentEntryMutations.restoreEntry, args);
   }
 
@@ -3456,7 +3448,7 @@ export interface CmsClient {
    *   role: await cms.getUserRole(currentUser),
    *   resourceId: entryId,
    *   resourceOwnerId: entry.createdBy,
-   *   contentTypeId: entry.contentTypeId,
+   *   contentTypeId: entry.contentTypeName,
    *   operationData: { id: entryId },
    * });
    *

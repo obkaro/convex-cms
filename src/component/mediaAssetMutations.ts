@@ -310,7 +310,7 @@ export const findMediaAssetReferences = query({
 
 		const contentTypes = await ctx.db.query("contentTypes").collect();
 		const contentTypeMap = new Map(
-			contentTypes.map((ct) => [ct._id.toString(), ct]),
+			contentTypes.map((ct) => [ct.name, ct]),
 		);
 
 		const entries = await ctx.db
@@ -321,7 +321,7 @@ export const findMediaAssetReferences = query({
 		for (const entry of entries) {
 			if (references.length >= limit) break;
 
-			const contentType = contentTypeMap.get(entry.contentTypeId.toString());
+			const contentType = contentTypeMap.get(entry.contentTypeName);
 			if (!contentType) continue;
 
 			const mediaFields = contentType.fields.filter((f) => f.type === "media");
@@ -378,7 +378,7 @@ async function findReferencesInternal(
 
 	const contentTypes = await ctx.db.query("contentTypes").collect();
 	const contentTypeMap = new Map(
-		contentTypes.map((ct) => [ct._id.toString(), ct]),
+		contentTypes.map((ct) => [ct.name, ct]),
 	);
 
 	const entries = await ctx.db
@@ -389,7 +389,7 @@ async function findReferencesInternal(
 	for (const entry of entries) {
 		if (references.length >= 100) break;
 
-		const contentType = contentTypeMap.get(entry.contentTypeId.toString());
+		const contentType = contentTypeMap.get(entry.contentTypeName);
 		if (!contentType) continue;
 
 		const mediaFields = contentType.fields.filter((f: { type: string }) => f.type === "media");

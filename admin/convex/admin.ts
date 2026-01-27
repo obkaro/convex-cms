@@ -1,15 +1,7 @@
-/**
- * Admin API for CMS Admin UI
- *
- * Uses defineAdminAPI to expose all CMS component operations.
- * Settings operations remain separate as they use the local admin database.
- */
-
-import { defineAdminAPI } from "../../src/client/admin/index.js";
+import { defineAdminAPI } from "../../src/client/admin";
 import { components } from "./_generated/api";
 
-// Create admin API with all component-based operations
-const adminApi = defineAdminAPI(components.convexCms);
+const adminApi = defineAdminAPI(components.cms);
 
 // =============================================================================
 // Dashboard
@@ -98,7 +90,8 @@ export const updateMediaAsset = adminApi.updateMediaAsset;
 export const deleteMediaAsset = adminApi.deleteMediaAsset;
 export const restoreMediaAsset = adminApi.restoreMediaAsset;
 export const permanentDeleteMediaAsset = adminApi.permanentDeleteMediaAsset;
-export const bulkPermanentDeleteMediaAssets = adminApi.bulkPermanentDeleteMediaAssets;
+export const bulkPermanentDeleteMediaAssets =
+	adminApi.bulkPermanentDeleteMediaAssets;
 export const moveMediaAssets = adminApi.moveMediaAssets;
 export const getMediaTrashCount = adminApi.getMediaTrashCount;
 
@@ -126,10 +119,12 @@ export const getMediaResponsiveSrcset = adminApi.getMediaResponsiveSrcset;
 export const getMediaVariantPresets = adminApi.getMediaVariantPresets;
 export const getMediaAssetWithVariants = adminApi.getMediaAssetWithVariants;
 export const createMediaVariant = adminApi.createMediaVariant;
-export const requestMediaVariantGeneration = adminApi.requestMediaVariantGeneration;
+export const requestMediaVariantGeneration =
+	adminApi.requestMediaVariantGeneration;
 export const deleteMediaVariant = adminApi.deleteMediaVariant;
 export const deleteMediaAssetVariants = adminApi.deleteMediaAssetVariants;
-export const generateMediaVariantsFromPresets = adminApi.generateMediaVariantsFromPresets;
+export const generateMediaVariantsFromPresets =
+	adminApi.generateMediaVariantsFromPresets;
 export const restoreMediaVariant = adminApi.restoreMediaVariant;
 
 // =============================================================================

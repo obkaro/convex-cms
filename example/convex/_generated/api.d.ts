@@ -11,11 +11,8 @@
 import type * as admin from "../admin.js";
 import type * as cms from "../cms.js";
 import type * as content from "../content.js";
-import type * as example from "../example.js";
 import type * as http from "../http.js";
-import type * as schemas from "../schemas.js";
 import type * as seed from "../seed.js";
-import type * as setup from "../setup.js";
 
 import type {
   ApiFromModules,
@@ -27,11 +24,8 @@ declare const fullApi: ApiFromModules<{
   admin: typeof admin;
   cms: typeof cms;
   content: typeof content;
-  example: typeof example;
   http: typeof http;
-  schemas: typeof schemas;
   seed: typeof seed;
-  setup: typeof setup;
 }>;
 
 /**
@@ -61,7 +55,7 @@ export declare const internal: FilterApi<
 >;
 
 export declare const components: {
-  convexCms: {
+  cms: {
     bulkOperations: {
       bulkDelete: FunctionReference<
         "mutation",
@@ -156,7 +150,6 @@ export declare const components: {
         "query",
         "internal",
         {
-          contentTypeId?: string;
           contentTypeName?: string;
           includeDeleted?: boolean;
           status?: string;
@@ -171,7 +164,7 @@ export declare const components: {
         {
           _creationTime: number;
           _id: string;
-          contentTypeId: string;
+          contentTypeName: string;
           createdBy?: string;
           data: any;
           deletedAt?: number;
@@ -206,7 +199,7 @@ export declare const components: {
         "query",
         "internal",
         {
-          contentTypeId: string;
+          contentTypeName: string;
           includeDeleted?: boolean;
           slug: string;
           status?: string;
@@ -214,7 +207,7 @@ export declare const components: {
         {
           _creationTime: number;
           _id: string;
-          contentTypeId: string;
+          contentTypeName: string;
           createdBy?: string;
           data: any;
           deletedAt?: number;
@@ -244,7 +237,7 @@ export declare const components: {
         {
           _creationTime: number;
           _id: string;
-          contentTypeId: string;
+          contentTypeName: string;
           createdBy?: string;
           data: any;
           deletedAt?: number;
@@ -316,7 +309,6 @@ export declare const components: {
         "query",
         "internal",
         {
-          contentTypeId?: string;
           contentTypeName?: string;
           fieldFilters?: Array<{
             field: string;
@@ -356,7 +348,7 @@ export declare const components: {
           page: Array<{
             _creationTime: number;
             _id: string;
-            contentTypeId: string;
+            contentTypeName: string;
             createdBy?: string;
             data: any;
             deletedAt?: number;
@@ -386,7 +378,7 @@ export declare const components: {
             role: string | null;
             userId: string;
           };
-          contentTypeId: string;
+          contentTypeName: string;
           createdBy?: string;
           data: any;
           locale?: string;
@@ -398,7 +390,7 @@ export declare const components: {
         {
           _creationTime: number;
           _id: string;
-          contentTypeId: string;
+          contentTypeName: string;
           createdBy?: string;
           data: any;
           deletedAt?: number;
@@ -432,7 +424,7 @@ export declare const components: {
         {
           _creationTime: number;
           _id: string;
-          contentTypeId: string;
+          contentTypeName: string;
           createdBy?: string;
           data: any;
           deletedAt?: number;
@@ -469,7 +461,7 @@ export declare const components: {
         {
           _creationTime: number;
           _id: string;
-          contentTypeId: string;
+          contentTypeName: string;
           createdBy?: string;
           data: any;
           deletedAt?: number;
@@ -503,7 +495,7 @@ export declare const components: {
         {
           _creationTime: number;
           _id: string;
-          contentTypeId: string;
+          contentTypeName: string;
           createdBy?: string;
           data: any;
           deletedAt?: number;
@@ -536,7 +528,7 @@ export declare const components: {
         {
           _creationTime: number;
           _id: string;
-          contentTypeId: string;
+          contentTypeName: string;
           createdBy?: string;
           data: any;
           deletedAt?: number;
@@ -569,7 +561,7 @@ export declare const components: {
         {
           _creationTime: number;
           _id: string;
-          contentTypeId: string;
+          contentTypeName: string;
           createdBy?: string;
           data: any;
           deletedAt?: number;
@@ -607,7 +599,7 @@ export declare const components: {
         {
           _creationTime: number;
           _id: string;
-          contentTypeId: string;
+          contentTypeName: string;
           createdBy?: string;
           data: any;
           deletedAt?: number;
@@ -655,7 +647,7 @@ export declare const components: {
           entry?: {
             _creationTime: number;
             _id: string;
-            contentTypeId: string;
+            contentTypeName: string;
             createdBy?: string;
             data: any;
             deletedAt?: number;
@@ -695,7 +687,7 @@ export declare const components: {
         {
           _creationTime: number;
           _id: string;
-          contentTypeId: string;
+          contentTypeName: string;
           createdBy?: string;
           data: any;
           deletedAt?: number;
@@ -717,7 +709,7 @@ export declare const components: {
         "query",
         "internal",
         {
-          contentTypeId?: string;
+          contentTypeName?: string;
           lockedBy?: string;
           paginationOpts: {
             cursor: string | null;
@@ -734,7 +726,7 @@ export declare const components: {
           page: Array<{
             _creationTime: number;
             _id: string;
-            contentTypeId: string;
+            contentTypeName: string;
             createdBy?: string;
             data: any;
             deletedAt?: number;
@@ -761,7 +753,7 @@ export declare const components: {
         {
           _creationTime: number;
           _id: string;
-          contentTypeId: string;
+          contentTypeName: string;
           createdBy?: string;
           data: any;
           deletedAt?: number;
@@ -786,7 +778,7 @@ export declare const components: {
         {
           _creationTime: number;
           _id: string;
-          contentTypeId: string;
+          contentTypeName: string;
           createdBy?: string;
           data: any;
           deletedAt?: number;
@@ -4069,7 +4061,7 @@ export declare const components: {
         {
           _creationTime: number;
           _id: string;
-          contentTypeId: string;
+          contentTypeName: string;
           createdBy?: string;
           data: any;
           deletedAt?: number;
@@ -4090,7 +4082,7 @@ export declare const components: {
       getScheduledEntries: FunctionReference<
         "query",
         "internal",
-        { contentTypeId?: string; from?: number; to?: number },
+        { contentTypeName?: string; from?: number; to?: number },
         any
       >;
       scheduleEntry: FunctionReference<
@@ -4100,7 +4092,7 @@ export declare const components: {
         {
           _creationTime: number;
           _id: string;
-          contentTypeId: string;
+          contentTypeName: string;
           createdBy?: string;
           data: any;
           deletedAt?: number;
@@ -4594,7 +4586,11 @@ export declare const components: {
       emptyTrash: FunctionReference<
         "mutation",
         "internal",
-        { contentTypeId?: string; deletedBy?: string; olderThanDays?: number },
+        {
+          contentTypeName?: string;
+          deletedBy?: string;
+          olderThanDays?: number;
+        },
         {
           deletedCount: number;
           deletedVersionsCount: number;
@@ -4628,7 +4624,6 @@ export declare const components: {
         "query",
         "internal",
         {
-          contentTypeId?: string;
           contentTypeName?: string;
           paginationOpts: {
             cursor: string | null;
@@ -4646,7 +4641,6 @@ export declare const components: {
           page: Array<{
             _creationTime: number;
             _id: string;
-            contentTypeId: string;
             contentTypeName?: string;
             createdBy?: string;
             data: any;
@@ -4708,7 +4702,7 @@ export declare const components: {
         {
           _creationTime: number;
           _id: string;
-          contentTypeId: string;
+          contentTypeName: string;
           createdBy?: string;
           data: any;
           deletedAt?: number;

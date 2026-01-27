@@ -70,7 +70,7 @@ function ContentTypeEntriesPage() {
   useBreadcrumbLabel(`/entries/type/${contentTypeId}`, contentType?.displayName)
 
   const entriesResult = useQuery(api.admin.listEntries, {
-    contentTypeId: contentTypeId,
+    contentTypeName: contentType?.name,
     status: selectedStatus === 'all' ? undefined : selectedStatus,
     search: debouncedSearch || undefined,
     paginationOpts: { numItems: 250, cursor: null },

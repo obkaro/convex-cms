@@ -53,7 +53,7 @@ describe("Content Entry Mutation Validators", () => {
 		it("should have correct argument structure for create", () => {
 			const argFields = Object.keys(createContentEntryArgs.fields);
 
-			expect(argFields).toContain("contentTypeId");
+			expect(argFields).toContain("contentTypeName");
 			expect(argFields).toContain("data");
 			expect(argFields).toContain("slug");
 			expect(argFields).toContain("locale");
@@ -61,9 +61,9 @@ describe("Content Entry Mutation Validators", () => {
 			expect(argFields).toContain("createdBy");
 		});
 
-		it("should have contentTypeId as required field", () => {
-			const contentTypeIdField = createContentEntryArgs.fields.contentTypeId;
-			expect(contentTypeIdField).toBeDefined();
+		it("should have contentTypeName as required field", () => {
+			const contentTypeNameField = createContentEntryArgs.fields.contentTypeName;
+			expect(contentTypeNameField).toBeDefined();
 		});
 
 		it("should have data as required field", () => {
@@ -856,7 +856,7 @@ describe("Content Entry Update Mutation Integration Tests", () => {
 
 			// Create a content entry
 			const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-				contentTypeId: contentType._id,
+				contentTypeName: contentType.name,
 				data: { title: "Original Title", content: "<p>Original content</p>" },
 				createdBy: "user123",
 			});
@@ -899,7 +899,7 @@ describe("Content Entry Update Mutation Integration Tests", () => {
 
 			// Create an entry with valid data
 			const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-				contentTypeId: contentType._id,
+				contentTypeName: contentType.name,
 				data: { title: "Valid Title" },
 			});
 
@@ -929,7 +929,7 @@ describe("Content Entry Update Mutation Integration Tests", () => {
 			);
 
 			const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-				contentTypeId: contentType._id,
+				contentTypeName: contentType.name,
 				data: { title: "Original Page" },
 			});
 
@@ -963,7 +963,7 @@ describe("Content Entry Update Mutation Integration Tests", () => {
 			);
 
 			const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-				contentTypeId: contentType._id,
+				contentTypeName: contentType.name,
 				data: { title: "My Post" },
 			});
 
@@ -997,7 +997,7 @@ describe("Content Entry Update Mutation Integration Tests", () => {
 			);
 
 			const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-				contentTypeId: contentType._id,
+				contentTypeName: contentType.name,
 				data: { title: "Document Title" },
 			});
 
@@ -1030,12 +1030,12 @@ describe("Content Entry Update Mutation Integration Tests", () => {
 
 			// Create two entries
 			const entry1 = await t.mutation(api.contentEntryMutations.createEntry, {
-				contentTypeId: contentType._id,
+				contentTypeName: contentType.name,
 				data: { title: "First Item" },
 			});
 
 			const entry2 = await t.mutation(api.contentEntryMutations.createEntry, {
-				contentTypeId: contentType._id,
+				contentTypeName: contentType.name,
 				data: { title: "Second Item" },
 			});
 
@@ -1078,7 +1078,7 @@ describe("Content Entry Update Mutation Integration Tests", () => {
 			);
 
 			const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-				contentTypeId: contentType._id,
+				contentTypeName: contentType.name,
 				data: { title: "Original", description: "Original description" },
 			});
 
@@ -1110,7 +1110,7 @@ describe("Content Entry Update Mutation Integration Tests", () => {
 			);
 
 			const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-				contentTypeId: contentType._id,
+				contentTypeName: contentType.name,
 				data: { title: "Temp Entry" },
 			});
 
@@ -1143,7 +1143,7 @@ describe("Content Entry Update Mutation Integration Tests", () => {
 			);
 
 			const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-				contentTypeId: contentType._id,
+				contentTypeName: contentType.name,
 				data: { title: "Will be deleted" },
 			});
 
@@ -1176,7 +1176,7 @@ describe("Content Entry Update Mutation Integration Tests", () => {
 			);
 
 			const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-				contentTypeId: contentType._id,
+				contentTypeName: contentType.name,
 				data: { title: "Orphan Entry" },
 			});
 
@@ -1209,7 +1209,7 @@ describe("Content Entry Update Mutation Integration Tests", () => {
 			);
 
 			const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-				contentTypeId: contentType._id,
+				contentTypeName: contentType.name,
 				data: { title: "Status Entry" },
 				status: "draft",
 			});
@@ -1242,7 +1242,7 @@ describe("Content Entry Update Mutation Integration Tests", () => {
 			);
 
 			const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-				contentTypeId: contentType._id,
+				contentTypeName: contentType.name,
 				data: { title: "v1" },
 			});
 
@@ -1296,7 +1296,7 @@ describe("Content Entry Update Mutation Integration Tests", () => {
 			);
 
 			const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-				contentTypeId: contentType._id,
+				contentTypeName: contentType.name,
 				data: { title: "Complex Entry", rating: 3, category: "tech" },
 			});
 
@@ -1342,7 +1342,7 @@ describe("Content Entry Update Mutation Integration Tests", () => {
 			);
 
 			const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-				contentTypeId: contentType._id,
+				contentTypeName: contentType.name,
 				data: { title: "Original" },
 				createdBy: "user1",
 			});
@@ -1578,7 +1578,7 @@ describe("Content Entry Duplicate Mutation Integration Tests", () => {
 
 			// Create an original entry
 			const original = await t.mutation(api.contentEntryMutations.createEntry, {
-				contentTypeId: contentType._id,
+				contentTypeName: contentType.name,
 				data: { title: "My Blog Post", content: "<p>Hello world!</p>" },
 				createdBy: "user123",
 			});
@@ -1619,7 +1619,7 @@ describe("Content Entry Duplicate Mutation Integration Tests", () => {
 			);
 
 			const original = await t.mutation(api.contentEntryMutations.createEntry, {
-				contentTypeId: contentType._id,
+				contentTypeName: contentType.name,
 				data: { title: "Original Article" },
 			});
 
@@ -1652,7 +1652,7 @@ describe("Content Entry Duplicate Mutation Integration Tests", () => {
 			);
 
 			const original = await t.mutation(api.contentEntryMutations.createEntry, {
-				contentTypeId: contentType._id,
+				contentTypeName: contentType.name,
 				data: { title: "Post with Image", image: "media_123" },
 			});
 
@@ -1692,7 +1692,7 @@ describe("Content Entry Duplicate Mutation Integration Tests", () => {
 			);
 
 			const original = await t.mutation(api.contentEntryMutations.createEntry, {
-				contentTypeId: contentType._id,
+				contentTypeName: contentType.name,
 				data: {
 					title: "Media Entry",
 					single: "media_single",
@@ -1731,7 +1731,7 @@ describe("Content Entry Duplicate Mutation Integration Tests", () => {
 
 			// Create and publish an entry
 			const original = await t.mutation(api.contentEntryMutations.createEntry, {
-				contentTypeId: contentType._id,
+				contentTypeName: contentType.name,
 				data: { title: "Published Post" },
 			});
 
@@ -1775,7 +1775,7 @@ describe("Content Entry Duplicate Mutation Integration Tests", () => {
 			);
 
 			const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-				contentTypeId: contentType._id,
+				contentTypeName: contentType.name,
 				data: { title: "Temp" },
 			});
 
@@ -1807,7 +1807,7 @@ describe("Content Entry Duplicate Mutation Integration Tests", () => {
 			);
 
 			const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-				contentTypeId: contentType._id,
+				contentTypeName: contentType.name,
 				data: { title: "Will be deleted" },
 			});
 
@@ -1839,7 +1839,7 @@ describe("Content Entry Duplicate Mutation Integration Tests", () => {
 			);
 
 			const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-				contentTypeId: contentType._id,
+				contentTypeName: contentType.name,
 				data: { title: "Entry" },
 			});
 
@@ -1885,7 +1885,7 @@ describe("Content Entry Duplicate Mutation Integration Tests", () => {
 			);
 
 			const original = await t.mutation(api.contentEntryMutations.createEntry, {
-				contentTypeId: contentType._id,
+				contentTypeName: contentType.name,
 				data: { title: "Searchable Title", description: "Searchable desc" },
 			});
 
@@ -1917,7 +1917,7 @@ describe("Content Entry Duplicate Mutation Integration Tests", () => {
 			);
 
 			const original = await t.mutation(api.contentEntryMutations.createEntry, {
-				contentTypeId: contentType._id,
+				contentTypeName: contentType.name,
 				data: { title: "English Post" },
 				locale: "en-US",
 			});
@@ -1950,7 +1950,7 @@ describe("Content Entry Duplicate Mutation Integration Tests", () => {
 			);
 
 			const original = await t.mutation(api.contentEntryMutations.createEntry, {
-				contentTypeId: contentType._id,
+				contentTypeName: contentType.name,
 				data: { title: "Localized Post" },
 				locale: "de-DE",
 			});
@@ -1982,7 +1982,7 @@ describe("Content Entry Duplicate Mutation Integration Tests", () => {
 			);
 
 			const original = await t.mutation(api.contentEntryMutations.createEntry, {
-				contentTypeId: contentType._id,
+				contentTypeName: contentType.name,
 				data: { title: "Original" },
 			});
 

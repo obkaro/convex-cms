@@ -23,7 +23,6 @@ export function createEntriesOperations(
   return {
     listEntries: queryGeneric({
       args: {
-        contentTypeId: v.optional(v.string()),
         contentTypeName: v.optional(v.string()),
         status: v.optional(contentStatusValidator),
         search: v.optional(v.string()),
@@ -32,9 +31,8 @@ export function createEntriesOperations(
       },
       returns: adminPaginationResult(adminContentEntryDoc),
       handler: async (ctx, args) => {
-        await checkAuth(ctx, { type: "listEntries", contentTypeId: args.contentTypeId });
+        await checkAuth(ctx, { type: "listEntries", contentTypeName: args.contentTypeName });
         return await ctx.runQuery(component.contentEntries.list, {
-          contentTypeId: args.contentTypeId,
           contentTypeName: args.contentTypeName,
           status: args.status,
           search: args.search,
@@ -74,7 +72,7 @@ export function createEntriesOperations(
 
     createEntry: mutationGeneric({
       args: {
-        contentTypeId: v.string(),
+        contentTypeName: v.string(),
         data: v.any(),
         slug: v.optional(v.string()),
         status: v.optional(contentStatusValidator),
@@ -84,7 +82,7 @@ export function createEntriesOperations(
       },
       returns: adminContentEntryDoc,
       handler: async (ctx, args) => {
-        await checkAuth(ctx, { type: "createEntry", contentTypeId: args.contentTypeId });
+        await checkAuth(ctx, { type: "createEntry", contentTypeName: args.contentTypeName });
         return await ctx.runMutation(
           component.contentEntryMutations.createEntry,
           args
@@ -212,7 +210,7 @@ export function createEntriesOperations(
       args: {
         from: v.optional(v.number()),
         to: v.optional(v.number()),
-        contentTypeId: v.optional(v.string()),
+        contentTypeName: v.optional(v.string()),
       },
       returns: v.array(adminContentEntryDoc),
       handler: async (ctx, args) => {
@@ -241,7 +239,7 @@ export function createEntriesOperations(
 
     getEntryBySlug: queryGeneric({
       args: {
-        contentTypeId: v.string(),
+        contentTypeName: v.string(),
         slug: v.string(),
         status: v.optional(contentStatusValidator),
         includeDeleted: v.optional(v.boolean()),
@@ -250,7 +248,7 @@ export function createEntriesOperations(
       handler: async (ctx, args) => {
         await checkAuth(ctx, {
           type: "getEntryBySlug",
-          contentTypeId: args.contentTypeId,
+          contentTypeName: args.contentTypeName,
           slug: args.slug,
         });
         return await ctx.runQuery(component.contentEntries.getBySlug, args);

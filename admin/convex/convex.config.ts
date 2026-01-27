@@ -1,7 +1,7 @@
 import { defineApp } from "convex/server";
-import convexCms from "../../src/component/convex.config.js";
+import cms from "../../src/component/convex.config.js";
 
 const app = defineApp();
-app.use(convexCms);
+app.use(cms);
 
 export default app;

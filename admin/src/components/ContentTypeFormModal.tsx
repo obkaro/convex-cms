@@ -32,6 +32,7 @@ import {
 	List,
 	Tag,
 	FolderOpen,
+	Code2,
 } from "lucide-react";
 import { cn } from "~/lib/cn";
 import { BreakingChangesWarningDialog } from "./BreakingChangesWarningDialog";
@@ -139,7 +140,7 @@ interface ContentTypeFormModalProps {
 	onClose: () => void;
 	onCreated?: (contentType: unknown) => void;
 	onUpdated?: (contentType: unknown) => void;
-	contentType?: ContentType | null;
+	contentType?: (ContentType & { source?: "code" | "database" }) | null;
 }
 
 function generateMachineName(displayName: string): string {
@@ -164,6 +165,8 @@ export function ContentTypeFormModal({
 	contentType,
 }: ContentTypeFormModalProps) {
 	const isEditing = !!contentType;
+	const isCodeDefined = contentType?.source === "code";
+	const isReadOnly = isCodeDefined;
 
 	const [displayName, setDisplayName] = useState("");
 	const [machineName, setMachineName] = useState("");
@@ -512,34 +515,62 @@ export function ContentTypeFormModal({
 			<CmsDialog
 				open={isOpen}
 				onOpenChange={(open) => !open && handleClose()}
-				title={isEditing ? "Edit Content Type" : "Create Content Type"}
+				title={
+					isCodeDefined
+						? "View Content Type"
+						: isEditing
+							? "Edit Content Type"
+							: "Create Content Type"
+				}
 				size="2xl"
 				footer={
-					<>
-						<CmsButton
-							variant="outline"
-							onClick={handleClose}
-							disabled={isSubmitting}
-						>
-							Cancel
+					isReadOnly ? (
+						<CmsButton variant="outline" onClick={handleClose}>
+							Close
 						</CmsButton>
-						<CmsButton
-							variant="primary"
-							onClick={handleSubmit}
-							disabled={validationErrors.length > 0}
-							loading={isSubmitting}
-							data-testid={
-								isEditing
-									? "update-content-type-submit"
-									: "create-content-type-submit"
-							}
-						>
-							{isEditing ? "Save Changes" : "Create Content Type"}
-						</CmsButton>
-					</>
+					) : (
+						<>
+							<CmsButton
+								variant="outline"
+								onClick={handleClose}
+								disabled={isSubmitting}
+							>
+								Cancel
+							</CmsButton>
+							<CmsButton
+								variant="primary"
+								onClick={handleSubmit}
+								disabled={validationErrors.length > 0}
+								loading={isSubmitting}
+								data-testid={
+									isEditing
+										? "update-content-type-submit"
+										: "create-content-type-submit"
+								}
+							>
+								{isEditing ? "Save Changes" : "Create Content Type"}
+							</CmsButton>
+						</>
+					)
 				}
 			>
 				<form onSubmit={handleSubmit} className="space-y-6">
+					{isCodeDefined && (
+						<div className="flex items-start gap-3 rounded-lg border border-violet-200 bg-violet-50 p-3">
+							<Code2 className="mt-0.5 size-5 shrink-0 text-violet-600" />
+							<div className="space-y-1">
+								<p className="text-sm font-medium text-violet-900">
+									Managed by Code
+								</p>
+								<p className="text-sm text-violet-700">
+									This content type is defined in your codebase and cannot be
+									edited through the admin interface. To make changes, update
+									the definition in your code.
+								</p>
+							</div>
+						</div>
+					)}
+
 					{/* Basic Info Section */}
 					<div className="space-y-4">
 						<h4 className="text-sm font-semibold text-foreground">
@@ -555,8 +586,8 @@ export function ContentTypeFormModal({
 								value={displayName}
 								onChange={(e) => handleDisplayNameChange(e.target.value)}
 								placeholder="e.g., Blog Post"
-								disabled={isSubmitting}
-								autoFocus
+								disabled={isSubmitting || isReadOnly}
+								autoFocus={!isReadOnly}
 								data-testid="display-name-input"
 							/>
 						</div>
@@ -570,7 +601,7 @@ export function ContentTypeFormModal({
 								value={machineName}
 								onChange={(e) => handleMachineNameChange(e.target.value)}
 								placeholder="e.g., blog_post"
-								disabled={isSubmitting || isEditing}
+								disabled={isSubmitting || isEditing || isReadOnly}
 								className={cn(
 									!isValidMachineName(machineName) &&
 										machineName &&
@@ -592,7 +623,7 @@ export function ContentTypeFormModal({
 								value={description}
 								onChange={(e) => setDescription(e.target.value)}
 								placeholder="Optional description of this content type"
-								disabled={isSubmitting}
+								disabled={isSubmitting || isReadOnly}
 								rows={2}
 							/>
 						</div>
@@ -602,7 +633,7 @@ export function ContentTypeFormModal({
 								id="singleton"
 								checked={singleton}
 								onCheckedChange={(checked) => setSingleton(checked as boolean)}
-								disabled={isSubmitting}
+								disabled={isSubmitting || isReadOnly}
 							/>
 							<Label htmlFor="singleton" className="cursor-pointer">
 								Singleton (only one entry allowed)
@@ -614,17 +645,19 @@ export function ContentTypeFormModal({
 					<div className="space-y-4">
 						<div className="flex items-center justify-between">
 							<h4 className="text-sm font-semibold text-foreground">Fields</h4>
-							<CmsButton
-								type="button"
-								variant="secondary"
-								size="sm"
-								onClick={addField}
-								disabled={isSubmitting}
-								data-testid="add-field-button"
-							>
-								<Plus className="size-3.5" />
-								Add Field
-							</CmsButton>
+							{!isReadOnly && (
+								<CmsButton
+									type="button"
+									variant="secondary"
+									size="sm"
+									onClick={addField}
+									disabled={isSubmitting}
+									data-testid="add-field-button"
+								>
+									<Plus className="size-3.5" />
+									Add Field
+								</CmsButton>
+							)}
 						</div>
 
 						<div className="space-y-2">
@@ -632,41 +665,46 @@ export function ContentTypeFormModal({
 								<div
 									key={index}
 									className={cn(
-										"flex cursor-pointer items-center gap-2 rounded-lg border p-2 transition-colors hover:bg-muted/50",
+										"flex items-center gap-2 rounded-lg border p-2 transition-colors",
+										!isReadOnly && "cursor-pointer hover:bg-muted/50",
 										activeFieldIndex === index && "border-primary bg-primary/5",
 									)}
 									onClick={() => {
-										setActiveFieldIndex(index);
-										setShowFieldEditor(true);
+										if (!isReadOnly) {
+											setActiveFieldIndex(index);
+											setShowFieldEditor(true);
+										}
 									}}
 									data-testid={`field-item-${index}`}
 								>
-									<div className="flex flex-col gap-0.5">
-										{index > 0 && (
-											<button
-												type="button"
-												onClick={(e) => {
-													e.stopPropagation();
-													moveField(index, index - 1);
-												}}
-												className="rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
-											>
-												<ChevronUp className="size-3" />
-											</button>
-										)}
-										{index < fields.length - 1 && (
-											<button
-												type="button"
-												onClick={(e) => {
-													e.stopPropagation();
-													moveField(index, index + 1);
-												}}
-												className="rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
-											>
-												<ChevronDown className="size-3" />
-											</button>
-										)}
-									</div>
+									{!isReadOnly && (
+										<div className="flex flex-col gap-0.5">
+											{index > 0 && (
+												<button
+													type="button"
+													onClick={(e) => {
+														e.stopPropagation();
+														moveField(index, index - 1);
+													}}
+													className="rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+												>
+													<ChevronUp className="size-3" />
+												</button>
+											)}
+											{index < fields.length - 1 && (
+												<button
+													type="button"
+													onClick={(e) => {
+														e.stopPropagation();
+														moveField(index, index + 1);
+													}}
+													className="rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+												>
+													<ChevronDown className="size-3" />
+												</button>
+											)}
+										</div>
+									)}
 
 									<div className="flex size-8 items-center justify-center rounded bg-muted text-muted-foreground">
 										{FIELD_TYPE_INFO[field.type].icon}
@@ -682,23 +720,25 @@ export function ContentTypeFormModal({
 										</p>
 									</div>
 
-									<button
-										type="button"
-										onClick={(e) => {
-											e.stopPropagation();
-											removeField(index);
-										}}
-										disabled={isSubmitting || fields.length === 1}
-										className="rounded p-1 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
-									>
-										<X className="size-4" />
-									</button>
+									{!isReadOnly && (
+										<button
+											type="button"
+											onClick={(e) => {
+												e.stopPropagation();
+												removeField(index);
+											}}
+											disabled={isSubmitting || fields.length === 1}
+											className="rounded p-1 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
+										>
+											<X className="size-4" />
+										</button>
+									)}
 								</div>
 							))}
 						</div>
 
-						{/* Field Editor Panel */}
-						{showFieldEditor && activeField && activeFieldIndex !== null && (
+						{/* Field Editor Panel - hidden in read-only mode */}
+						{!isReadOnly && showFieldEditor && activeField && activeFieldIndex !== null && (
 							<div
 								className="rounded-lg border bg-muted/30 p-4"
 								data-testid="field-editor"

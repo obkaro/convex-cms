@@ -154,27 +154,15 @@ describe("ContentQueryBuilder", () => {
 			const options = builder.toOptions();
 
 			expect(options.contentTypeName).toBe("blog_post");
-			expect(options.contentTypeId).toBeUndefined();
 		});
 
-		it("contentTypeById sets contentTypeId", () => {
-			const builder = new ContentQueryBuilder(mockApi).contentTypeById(
-				"type_123",
-			);
-			const options = builder.toOptions();
-
-			expect(options.contentTypeId).toBe("type_123");
-			expect(options.contentTypeName).toBeUndefined();
-		});
-
-		it("contentType clears contentTypeId", () => {
+		it("contentType overwrites previous contentTypeName", () => {
 			const builder = new ContentQueryBuilder(mockApi)
-				.contentTypeById("type_123")
+				.contentType("article")
 				.contentType("blog_post");
 			const options = builder.toOptions();
 
 			expect(options.contentTypeName).toBe("blog_post");
-			expect(options.contentTypeId).toBeUndefined();
 		});
 	});
 
@@ -522,7 +510,6 @@ describe("ContentQueryBuilder", () => {
 
 			// Every method should return the same builder instance
 			expect(builder.contentType("blog")).toBe(builder);
-			expect(builder.contentTypeById("type_123")).toBe(builder);
 			expect(builder.status("published")).toBe(builder);
 			expect(builder.statusIn(["draft"])).toBe(builder);
 			expect(builder.published()).toBe(builder);

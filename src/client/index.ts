@@ -90,6 +90,14 @@ export {
   type AdminOperation,
 } from "./admin/index.js";
 
+// Type-safe admin API utilities
+export type {
+  ContentTypeHelpersSchema,
+  ContentTypeSlugs,
+  TypedAdminApiOptions,
+  TypedAdminAPI,
+} from "./admin/types.js";
+
 // --- Admin API Types ---
 // export type {
 //   AdminApi,
@@ -1228,6 +1236,20 @@ export {
   generateTypesFromDefinitions,
   validateGeneratedCode,
 } from "./schema/index.js";
+
+// --- Unified CMS Factory (Advanced API) ---
+export {
+  createCms,
+  createTypedHelpers,
+  type CmsInstance,
+  type ContentTypeHelpers,
+  type TypedHelpersResult,
+  type DefineContentConfig,
+  type ContentDisplayConfig,
+  type ContentEntryWithData,
+  type DefineContentListOptions,
+  type DefineContentPaginatedResult,
+} from "./defineContent.js";
 
 // Re-export schema types
 export type {

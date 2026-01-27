@@ -72,7 +72,6 @@ describe("Trash Validators", () => {
   describe("listTrashArgs", () => {
     it("should have correct fields for listing trash", () => {
       const fields = Object.keys(listTrashArgs.fields);
-      expect(fields).toContain("contentTypeId");
       expect(fields).toContain("contentTypeName");
       expect(fields).toContain("search");
       expect(fields).toContain("paginationOpts");
@@ -87,7 +86,7 @@ describe("Trash Validators", () => {
     it("should have correct fields for emptying trash", () => {
       const fields = Object.keys(emptyTrashArgs.fields);
       expect(fields).toContain("olderThanDays");
-      expect(fields).toContain("contentTypeId");
+      expect(fields).toContain("contentTypeName");
       expect(fields).toContain("deletedBy");
     });
 
@@ -177,13 +176,13 @@ describe("Trash Logic Patterns", () => {
   describe("Filter logic", () => {
     it("should filter by content type", () => {
       const entries = [
-        { contentTypeId: "type1", deletedAt: Date.now() },
-        { contentTypeId: "type2", deletedAt: Date.now() },
-        { contentTypeId: "type1", deletedAt: Date.now() },
+        { contentTypeName: "type1", deletedAt: Date.now() },
+        { contentTypeName: "type2", deletedAt: Date.now() },
+        { contentTypeName: "type1", deletedAt: Date.now() },
       ];
-      const filterTypeId = "type1";
+      const filterTypeName = "type1";
 
-      const filtered = entries.filter((e) => e.contentTypeId === filterTypeId);
+      const filtered = entries.filter((e) => e.contentTypeName === filterTypeName);
 
       expect(filtered.length).toBe(2);
     });
@@ -274,11 +273,11 @@ describe("Trash Integration", () => {
 
     // Create and delete some entries
     const entry1 = await t.mutation(api.contentEntryMutations.createEntry, {
-      contentTypeId: contentType._id,
+      contentTypeName: contentType.name,
       data: { title: "Post 1" },
     });
     const entry2 = await t.mutation(api.contentEntryMutations.createEntry, {
-      contentTypeId: contentType._id,
+      contentTypeName: contentType.name,
       data: { title: "Post 2" },
     });
 
@@ -322,7 +321,7 @@ describe("Trash Integration", () => {
 
     // Create an entry
     const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-      contentTypeId: contentType._id,
+      contentTypeName: contentType.name,
       data: { title: "My Article" },
     });
 
@@ -366,7 +365,7 @@ describe("Trash Integration", () => {
 
     // Create and delete entries
     const entry1 = await t.mutation(api.contentEntryMutations.createEntry, {
-      contentTypeId: contentType._id,
+      contentTypeName: contentType.name,
       data: { title: "Note 1" },
     });
     await t.mutation(api.contentEntryMutations.deleteEntry, { id: entry1._id });
@@ -417,11 +416,11 @@ describe("Trash Integration", () => {
 
     // Create and delete entries of each type
     const blog1 = await t.mutation(api.contentEntryMutations.createEntry, {
-      contentTypeId: blogType._id,
+      contentTypeName: blogType.name,
       data: { title: "Blog 1" },
     });
     const page1 = await t.mutation(api.contentEntryMutations.createEntry, {
-      contentTypeId: pageType._id,
+      contentTypeName: pageType.name,
       data: { title: "Page 1" },
     });
 
@@ -430,11 +429,11 @@ describe("Trash Integration", () => {
 
     // List only blog trash
     const blogTrash = await t.query(api.trash.listTrash, {
-      contentTypeId: blogType._id,
+      contentTypeName: blogType.name,
       paginationOpts: { numItems: 10, cursor: null },
     });
     expect(blogTrash.page.length).toBe(1);
-    expect(blogTrash.page[0].contentTypeId).toBe(blogType._id);
+    expect(blogTrash.page[0].contentTypeName).toBe(blogType.name);
 
     // List all trash
     const allTrash = await t.query(api.trash.listTrash, {

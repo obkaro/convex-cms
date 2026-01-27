@@ -4,7 +4,7 @@
  * Non-derivable types for the Admin API including options, operations, and auth context.
  */
 
-import type { Auth } from "convex/server";
+import type { Auth, RegisteredQuery, RegisteredMutation } from "convex/server";
 
 /**
  * Operation context passed to the auth callback.
@@ -24,9 +24,9 @@ export type AdminOperation =
   | { type: "updateContentType"; id: string }
   | { type: "deleteContentType"; id: string }
   // Entries
-  | { type: "listEntries"; contentTypeId?: string }
+  | { type: "listEntries"; contentTypeName?: string }
   | { type: "getEntry"; id: string }
-  | { type: "createEntry"; contentTypeId: string }
+  | { type: "createEntry"; contentTypeName: string }
   | { type: "updateEntry"; id: string }
   | { type: "publishEntry"; id: string }
   | { type: "unpublishEntry"; id: string }
@@ -36,7 +36,7 @@ export type AdminOperation =
   | { type: "cancelScheduledEntry"; id: string }
   | { type: "getScheduledEntries" }
   | { type: "restoreEntry"; id: string }
-  | { type: "getEntryBySlug"; contentTypeId: string; slug: string }
+  | { type: "getEntryBySlug"; contentTypeName: string; slug: string }
   | { type: "getEntryBySlugAndTypeName"; contentTypeName: string; slug: string }
   // Bulk Operations
   | { type: "bulkPublish" }
@@ -207,3 +207,217 @@ export interface ResolvedFeatureFlags {
   localization: boolean;
   mediaManagement: boolean;
 }
+
+// =============================================================================
+// Type-Safe Content Type Inference
+// =============================================================================
+
+/**
+ * Base interface for any object with a slug property.
+ * This allows both ContentTypeDefinition and ContentTypeHelpers to be used.
+ */
+export interface HasSlug {
+  readonly slug: string;
+}
+
+/**
+ * A record of content types with slugs, keyed by any string.
+ * This accepts both ContentTypeDefinition and ContentTypeHelpers.
+ *
+ * @example
+ * ```typescript
+ * // Using defineContentType directly
+ * const roadmapItem = defineContentType({ name: "Roadmap Item", ... });
+ * defineAdminAPI(component, { contentTypes: { roadmapItem } });
+ *
+ * // Using createCms().defineContent()
+ * const blogPost = cms.defineContent({ name: "Blog Post", ... });
+ * defineAdminAPI(component, { contentTypes: { blogPost } });
+ * ```
+ */
+export type ContentTypeHelpersSchema = Record<string, HasSlug>;
+
+/**
+ * Extracts the union of all slug strings from a ContentTypeHelpersSchema.
+ *
+ * @example
+ * ```typescript
+ * const contentTypes = { blogPost, author };
+ * type Slugs = ContentTypeSlugs<typeof contentTypes>;
+ * // "blog_post" | "author"
+ * ```
+ */
+export type ContentTypeSlugs<T extends ContentTypeHelpersSchema> = {
+  [K in keyof T]: T[K]["slug"];
+}[keyof T];
+
+/**
+ * Options for type-safe admin API with content type inference.
+ */
+export interface TypedAdminApiOptions<T extends ContentTypeHelpersSchema> extends AdminApiOptions {
+  /**
+   * Content type helpers for TypeScript inference.
+   * Pass the helpers created by cms.defineContent() to enable
+   * autocomplete for contentTypeName arguments.
+   */
+  contentTypes: T;
+}
+
+// =============================================================================
+// Type-Safe Admin API (Explicit FunctionReference Types)
+// =============================================================================
+// The solution: Define FunctionReference types explicitly with narrowed args.
+// RegisteredQuery has phantom type parameters that can't be extracted after creation.
+// FunctionReference stores types as actual properties (_args, _returnType).
+// By defining explicit types, we create properly typed function references.
+
+/**
+ * Args for listEntries query with narrowed contentTypeName.
+ */
+type ListEntriesArgs<TSlugs extends string> = {
+  contentTypeName?: TSlugs;
+  status?: "draft" | "published" | "archived" | "scheduled";
+  search?: string;
+  locale?: string;
+  paginationOpts: { numItems: number; cursor: string | null };
+};
+
+/**
+ * Args for createEntry mutation with narrowed contentTypeName.
+ */
+type CreateEntryArgs<TSlugs extends string> = {
+  contentTypeName: TSlugs;
+  data: unknown;
+  slug?: string;
+  status?: "draft" | "published" | "archived" | "scheduled";
+  locale?: string;
+  primaryEntryId?: string;
+  createdBy?: string;
+};
+
+/**
+ * Args for getEntryBySlug query with narrowed contentTypeName.
+ */
+type GetEntryBySlugArgs<TSlugs extends string> = {
+  contentTypeName: TSlugs;
+  slug: string;
+  status?: string;
+};
+
+/**
+ * Args for getScheduledEntries query with narrowed contentTypeName.
+ */
+type GetScheduledEntriesArgs<TSlugs extends string> = {
+  contentTypeName?: TSlugs;
+  paginationOpts: { numItems: number; cursor: string | null };
+};
+
+/**
+ * Common return type for paginated entry lists.
+ * Note: FunctionReference return types are unwrapped (not wrapped in Promise).
+ */
+type PaginatedEntriesReturn = {
+  page: Array<{
+    _id: string;
+    _creationTime: number;
+    contentTypeName: string;
+    slug: string;
+    status: string;
+    data: unknown;
+    version: number;
+    locale?: string;
+    createdBy?: string;
+    updatedBy?: string;
+    firstPublishedAt?: number;
+    lastPublishedAt?: number;
+    scheduledPublishAt?: number;
+    deletedAt?: number;
+  }>;
+  continueCursor: string | null;
+  isDone: boolean;
+};
+
+/**
+ * Single entry object type.
+ */
+type Entry = {
+  _id: string;
+  _creationTime: number;
+  contentTypeName: string;
+  slug: string;
+  status: string;
+  data: unknown;
+  version: number;
+  locale?: string;
+  createdBy?: string;
+  updatedBy?: string;
+  firstPublishedAt?: number;
+  lastPublishedAt?: number;
+  scheduledPublishAt?: number;
+  deletedAt?: number;
+};
+
+/**
+ * Return type for queries that might not find an entry (getBySlug, etc).
+ */
+type EntryOrNull = Entry | null;
+
+/**
+ * Return type for mutations that always return an entry (createEntry).
+ */
+type EntryReturn = Entry;
+
+/**
+ * Narrows a single key to its typed version if it's a narrowed key.
+ * Uses RegisteredQuery/RegisteredMutation to match what FilterApi expects.
+ */
+type NarrowKey<K, TSlugs extends string, TOriginal> =
+  K extends "listEntries" ? RegisteredQuery<"public", ListEntriesArgs<TSlugs>, PaginatedEntriesReturn>
+  : K extends "createEntry" ? RegisteredMutation<"public", CreateEntryArgs<TSlugs>, EntryReturn>
+  : K extends "getEntryBySlug" ? RegisteredQuery<"public", GetEntryBySlugArgs<TSlugs>, EntryOrNull>
+  : K extends "getEntryBySlugAndTypeName" ? RegisteredQuery<"public", GetEntryBySlugArgs<TSlugs>, EntryOrNull>
+  : K extends "getScheduledEntries" ? RegisteredQuery<"public", GetScheduledEntriesArgs<TSlugs>, PaginatedEntriesReturn>
+  : TOriginal;
+
+/**
+ * Narrows entries namespace keys.
+ * Uses RegisteredQuery/RegisteredMutation to match what FilterApi expects.
+ */
+type NarrowEntriesKey<K, TSlugs extends string, TOriginal> =
+  K extends "list" ? RegisteredQuery<"public", ListEntriesArgs<TSlugs>, PaginatedEntriesReturn>
+  : K extends "create" ? RegisteredMutation<"public", CreateEntryArgs<TSlugs>, EntryReturn>
+  : K extends "getBySlug" ? RegisteredQuery<"public", GetEntryBySlugArgs<TSlugs>, EntryOrNull>
+  : K extends "getBySlugAndTypeName" ? RegisteredQuery<"public", GetEntryBySlugArgs<TSlugs>, EntryOrNull>
+  : K extends "getScheduled" ? RegisteredQuery<"public", GetScheduledEntriesArgs<TSlugs>, PaginatedEntriesReturn>
+  : TOriginal;
+
+/**
+ * Typed entries namespace using pure mapped type.
+ */
+type TypedEntriesNamespace<TSlugs extends string, TEntries> = {
+  [K in keyof TEntries]: NarrowEntriesKey<K, TSlugs, TEntries[K]>;
+};
+
+/**
+ * Typed admin API with content type name inference.
+ *
+ * Uses a pure mapped type (no intersections) for compatibility with
+ * Convex's FilterApi type processing.
+ *
+ * @example
+ * ```typescript
+ * const admin = defineAdminAPI(components.cms, {
+ *   contentTypes: { blogPost, author }
+ * });
+ *
+ * // TypeScript provides autocomplete: "blog_post" | "author"
+ * useQuery(admin.listEntries, { contentTypeName: "blog_post", ... });
+ * ```
+ */
+export type TypedAdminAPI<T extends ContentTypeHelpersSchema, TBase> = {
+  [K in keyof TBase]: K extends "entries"
+    ? TBase[K] extends object
+      ? TypedEntriesNamespace<ContentTypeSlugs<T>, TBase[K]>
+      : TBase[K]
+    : NarrowKey<K, ContentTypeSlugs<T>, TBase[K]>;
+};

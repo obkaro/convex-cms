@@ -113,7 +113,7 @@ export function ReferenceField({
     api.admin.listEntries,
     showPicker
       ? {
-          contentTypeId: contentTypeFilter || undefined,
+          contentTypeName: contentTypeFilter || undefined,
           search: searchQuery || undefined,
           paginationOpts: { numItems: 50, cursor: null },
         }
@@ -124,15 +124,15 @@ export function ReferenceField({
     if (!entriesResult?.page) return []
     if (allowedContentTypes.length === 0) return entriesResult.page
 
-    const allowedIds = filteredContentTypes.map((ct) => ct._id)
+    const allowedNames = filteredContentTypes.map((ct) => ct.name)
     return entriesResult.page.filter((entry) =>
-      allowedIds.includes(entry.contentTypeId)
+      allowedNames.includes(entry.contentTypeName)
     )
   }, [entriesResult?.page, allowedContentTypes, filteredContentTypes])
 
-  const getContentTypeName = useCallback(
-    (contentTypeId: string) => {
-      const ct = contentTypes?.page?.find((c) => c._id === contentTypeId)
+  const getContentTypeDisplayName = useCallback(
+    (contentTypeName: string) => {
+      const ct = contentTypes?.page?.find((c) => c.name === contentTypeName)
       return ct?.displayName || ct?.name || 'Unknown'
     },
     [contentTypes?.page]
@@ -177,7 +177,7 @@ export function ReferenceField({
       data?: Record<string, unknown>
       slug?: string
       status: string
-      contentTypeId: string
+      contentTypeName: string
     },
     showRemove = true
   ) => (
@@ -194,7 +194,7 @@ export function ReferenceField({
         </p>
         <div className="flex items-center gap-2">
           <span className="text-xs text-muted-foreground">
-            {getContentTypeName(entry.contentTypeId)}
+            {getContentTypeDisplayName(entry.contentTypeName)}
           </span>
           <CmsStatusBadge status={entry.status as ContentStatus} />
         </div>
@@ -329,7 +329,7 @@ export function ReferenceField({
                           </p>
                           <div className="flex items-center gap-2">
                             <span className="text-xs text-muted-foreground">
-                              {getContentTypeName(entry.contentTypeId)}
+                              {getContentTypeDisplayName(entry.contentTypeName)}
                             </span>
                             <Badge
                               variant="secondary"

@@ -688,8 +688,7 @@ export async function extractUserIdFromAuth(
  *   {
  *     resourceId: entry._id,
  *     resourceOwnerId: entry.createdBy,
- *     contentTypeId: entry.contentTypeId,
- *     contentTypeName: contentType.name,
+ *     contentTypeName: entry.contentTypeName,
  *   }
  * );
  * ```

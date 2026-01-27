@@ -65,13 +65,13 @@ function createMockContentType(overrides: Partial<ContentTypeInfo> = {}): Conten
 }
 
 function createMockContentEntry(
-  contentTypeId: string,
+  contentTypeName: string,
   data: Record<string, unknown>,
   overrides: Partial<ContentEntryInfo> = {}
 ): ContentEntryInfo {
   return {
     _id: "entry_123",
-    contentTypeId,
+    contentTypeName,
     slug: "test-entry",
     status: "published",
     data,

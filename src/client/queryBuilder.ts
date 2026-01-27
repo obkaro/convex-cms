@@ -76,7 +76,6 @@ export type SortableField = "_creationTime" | "_id" | string;
  * Accumulates all query options before execution.
  */
 interface QueryBuilderState {
-  contentTypeId?: string;
   contentTypeName?: string;
   status?: ContentStatus;
   statusIn?: ContentStatus[];
@@ -172,27 +171,6 @@ export class ContentQueryBuilder {
    */
   contentType(name: string): this {
     this.state.contentTypeName = name;
-    this.state.contentTypeId = undefined; // Clear ID if name is set
-    return this;
-  }
-
-  /**
-   * Filter by content type ID.
-   *
-   * @param id - The content type ID
-   * @returns this for chaining
-   *
-   * @example
-   * ```typescript
-   * const posts = await cms.contentEntries
-   *   .query()
-   *   .contentTypeById(typeId)
-   *   .execute(ctx);
-   * ```
-   */
-  contentTypeById(id: string): this {
-    this.state.contentTypeId = id;
-    this.state.contentTypeName = undefined; // Clear name if ID is set
     return this;
   }
 
@@ -861,9 +839,6 @@ export class ContentQueryBuilder {
       },
     };
 
-    if (this.state.contentTypeId) {
-      options.contentTypeId = this.state.contentTypeId;
-    }
     if (this.state.contentTypeName) {
       options.contentTypeName = this.state.contentTypeName;
     }

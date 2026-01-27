@@ -1,3 +1,4 @@
 packages:
+  - "."      # Root package (convex-cms)
   - admin
   - example

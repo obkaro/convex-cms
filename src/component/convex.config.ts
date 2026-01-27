@@ -39,6 +39,6 @@ import { defineComponent } from "convex/server";
  * export const cms = createCmsClient(components.convexCms, config);
  * ```
  */
-const component = defineComponent("convexCms");
+const component = defineComponent("cms");
 
 export default component;

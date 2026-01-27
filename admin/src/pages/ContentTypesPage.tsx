@@ -25,6 +25,7 @@ interface ContentTypeWithCount {
 	singleton?: boolean;
 	entryCount?: number;
 	_creationTime: number;
+	source?: "code" | "database";
 }
 import { CmsPageHeader } from "~/components/cmsds/CmsPageHeader";
 import { CmsToolbar } from "~/components/cmsds/CmsToolbar";
@@ -51,6 +52,8 @@ import {
 	FolderOpen,
 	AlignLeft,
 	Pencil,
+	Code2,
+	Eye,
 } from "lucide-react";
 import type { AdminNavigation } from "~/lib/navigation";
 import { CmsAdminApi } from "~/embed/contexts/ApiContext";
@@ -252,6 +255,16 @@ export function ContentTypesPage({ api, navigation }: ContentTypesPageProps) {
 									<FileType className="size-5" />
 								</div>
 								<div className="flex items-center gap-1.5">
+									{contentType.source === "code" && (
+										<Badge
+											variant="secondary"
+											className="border-violet-200 bg-violet-50 text-xs font-normal text-violet-700"
+											title="Managed by code - edit in your codebase"
+										>
+											<Code2 className="mr-1 size-3" />
+											Code
+										</Badge>
+									)}
 									{!contentType.isActive && (
 										<Badge variant="secondary" className="text-xs font-normal">
 											Inactive
@@ -265,14 +278,25 @@ export function ContentTypesPage({ api, navigation }: ContentTypesPageProps) {
 											Singleton
 										</Badge>
 									)}
-									<button
-										onClick={() => setEditingContentType(contentType)}
-										className="rounded p-1.5 text-muted-foreground opacity-0 transition-all hover:bg-muted hover:text-foreground group-hover:opacity-100"
-										title="Edit content type"
-										aria-label="Edit content type"
-									>
-										<Pencil className="size-4" />
-									</button>
+									{contentType.source === "code" ? (
+										<button
+											className="rounded p-1.5 text-muted-foreground opacity-0 transition-all hover:bg-muted hover:text-foreground group-hover:opacity-100"
+											title="View content type (managed by code)"
+											aria-label="View content type"
+											onClick={() => setEditingContentType(contentType)}
+										>
+											<Eye className="size-4" />
+										</button>
+									) : (
+										<button
+											onClick={() => setEditingContentType(contentType)}
+											className="rounded p-1.5 text-muted-foreground opacity-0 transition-all hover:bg-muted hover:text-foreground group-hover:opacity-100"
+											title="Edit content type"
+											aria-label="Edit content type"
+										>
+											<Pencil className="size-4" />
+										</button>
+									)}
 								</div>
 							</div>
 
@@ -383,6 +407,16 @@ export function ContentTypesPage({ api, navigation }: ContentTypesPageProps) {
 									</td>
 									<td className="p-3">
 										<div className="flex items-center gap-1.5">
+											{contentType.source === "code" && (
+												<Badge
+													variant="secondary"
+													className="border-violet-200 bg-violet-50 text-xs font-normal text-violet-700"
+													title="Managed by code"
+												>
+													<Code2 className="mr-1 size-3" />
+													Code
+												</Badge>
+											)}
 											<Badge
 												variant={contentType.isActive ? "default" : "secondary"}
 												className={cn(
@@ -408,14 +442,26 @@ export function ContentTypesPage({ api, navigation }: ContentTypesPageProps) {
 									</td>
 									<td className="p-3">
 										<div className="flex items-center gap-2">
-											<CmsButton
-												variant="outline"
-												size="sm"
-												onClick={() => setEditingContentType(contentType)}
-											>
-												<Pencil className="size-3.5" />
-												Edit
-											</CmsButton>
+											{contentType.source === "code" ? (
+												<CmsButton
+													variant="outline"
+													size="sm"
+													onClick={() => setEditingContentType(contentType)}
+													title="View content type (managed by code)"
+												>
+													<Eye className="size-3.5" />
+													View
+												</CmsButton>
+											) : (
+												<CmsButton
+													variant="outline"
+													size="sm"
+													onClick={() => setEditingContentType(contentType)}
+												>
+													<Pencil className="size-3.5" />
+													Edit
+												</CmsButton>
+											)}
 											<CmsButton
 												variant="outline"
 												size="sm"

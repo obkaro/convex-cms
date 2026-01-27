@@ -267,7 +267,7 @@ const contentTypeFields = {
 };
 
 const contentEntryFields = {
-	contentTypeId: v.id("contentTypes"),
+	contentTypeName: v.string(),
 	slug: v.string(),
 	status: contentStatusValidator,
 	data: v.any(),
@@ -413,10 +413,10 @@ const schema = defineSchema({
 	contentEntries: defineTable({
 		...contentEntryFields,
 	})
-		.index("by_content_type", ["contentTypeId"])
-		.index("by_content_type_and_slug", ["contentTypeId", "slug"])
+		.index("by_content_type", ["contentTypeName"])
+		.index("by_content_type_and_slug", ["contentTypeName", "slug"])
 		.index("by_status", ["status"])
-		.index("by_content_type_and_status", ["contentTypeId", "status"])
+		.index("by_content_type_and_status", ["contentTypeName", "status"])
 		.index("by_primary_entry", ["primaryEntryId"])
 		.index("by_locale", ["locale"])
 		.index("by_deleted", ["deletedAt"])
@@ -424,7 +424,7 @@ const schema = defineSchema({
 		.index("by_locked", ["lockedBy"])
 		.searchIndex("search_content", {
 			searchField: "searchText",
-			filterFields: ["contentTypeId", "status", "locale"],
+			filterFields: ["contentTypeName", "status", "locale"],
 		}),
 	contentVersions: defineTable({
 		...contentVersionFields,

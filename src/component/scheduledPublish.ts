@@ -315,8 +315,8 @@ export const getScheduledEntries = query({
 		from: v.optional(v.number()),
 		/** End of time range (ms timestamp). Defaults to 30 days from now. */
 		to: v.optional(v.number()),
-		/** Content type ID to filter by (optional) */
-		contentTypeId: v.optional(v.id("contentTypes")),
+		/** Content type name to filter by (optional) */
+		contentTypeName: v.optional(v.string()),
 	},
 	handler: async (ctx, args) => {
 		const now = Date.now();
@@ -346,7 +346,7 @@ export const getScheduledEntries = query({
 					return false;
 				}
 				// Filter by content type if specified
-				if (args.contentTypeId && entry.contentTypeId !== args.contentTypeId) {
+				if (args.contentTypeName && entry.contentTypeName !== args.contentTypeName) {
 					return false;
 				}
 				return true;

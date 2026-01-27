@@ -72,7 +72,7 @@ export interface ContentTypeInfo {
  */
 export interface ContentEntryInfo {
 	_id: string;
-	contentTypeId: string;
+	contentTypeName: string;
 	slug: string;
 	status: string;
 	data: Record<string, unknown>;
@@ -1080,8 +1080,8 @@ function forceSplitText(text: string, opts: Required<ChunkOptions>): string[] {
  *   args: { entryId: v.id("contentEntries") },
  *   handler: async (ctx, { entryId }) => {
  *     const entry = await ctx.runQuery(api.contentEntries.get, { id: entryId });
- *     const contentType = await ctx.runQuery(api.contentTypes.get, {
- *       id: entry.contentTypeId
+ *     const contentType = await ctx.runQuery(api.contentTypes.getByName, {
+ *       name: entry.contentTypeName
  *     });
  *
  *     const chunks = chunkContentEntry(entry, contentType, {
@@ -1313,7 +1313,7 @@ export function chunkMultipleEntries(
 	const results = new Map<string, ContentChunk[]>();
 
 	for (const entry of entries) {
-		const contentType = contentTypes.get(entry.contentTypeId);
+		const contentType = contentTypes.get(entry.contentTypeName);
 		if (!contentType) {
 			console.warn(`Content type not found for entry ${entry._id}`);
 			continue;
@@ -1346,7 +1346,7 @@ export function estimateChunkingStats(
 	let totalCharacters = 0;
 
 	for (const entry of entries) {
-		const contentType = contentTypes.get(entry.contentTypeId);
+		const contentType = contentTypes.get(entry.contentTypeName);
 		if (!contentType) continue;
 
 		const chunks = chunkContentEntry(entry, contentType, options);

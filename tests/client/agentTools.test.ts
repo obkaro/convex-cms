@@ -285,7 +285,7 @@ describe("Agent Tools", () => {
     describe("createContentEntryArgsSchema", () => {
       it("should validate valid content entry creation args", () => {
         const validArgs = {
-          contentTypeId: "content_type_123",
+          contentTypeName: "content_type_123",
           data: {
             title: "My Blog Post",
             content: "Hello world",
@@ -293,13 +293,13 @@ describe("Agent Tools", () => {
         };
 
         const result = createContentEntryArgsSchema.parse(validArgs);
-        expect(result.contentTypeId).toBe("content_type_123");
+        expect(result.contentTypeName).toBe("content_type_123");
         expect(result.data.title).toBe("My Blog Post");
       });
 
       it("should accept optional fields", () => {
         const validArgs = {
-          contentTypeId: "ct_123",
+          contentTypeName: "ct_123",
           data: { title: "Test" },
           slug: "test-slug",
           locale: "en-US",
@@ -317,13 +317,13 @@ describe("Agent Tools", () => {
     describe("listContentEntriesArgsSchema", () => {
       it("should validate query options", () => {
         const validArgs = {
-          contentTypeId: "ct_123",
+          contentTypeName: "ct_123",
           status: "published",
           limit: 10,
         };
 
         const result = listContentEntriesArgsSchema.parse(validArgs);
-        expect(result.contentTypeId).toBe("ct_123");
+        expect(result.contentTypeName).toBe("ct_123");
         expect(result.status).toBe("published");
         expect(result.limit).toBe(10);
       });

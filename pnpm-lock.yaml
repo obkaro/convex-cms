@@ -293,8 +293,8 @@ importers:
         specifier: ^1.31.6
         version: 1.31.6(react@19.2.3)
       convex-cms:
-        specifier: file:..
-        version: file:(tgort737cbxqc2vecimav2kztu)
+        specifier: workspace:*
+        version: link:..
       lucide-react:
         specifier: ^0.563.0
         version: 0.563.0(react@19.2.3)
@@ -2504,76 +2504,6 @@ packages:
   convert-source-map@2.0.0:
     resolution: {integrity: sha512-Kvp459HrV2FEJ1CAsi1Ku+MY3kasH19TFykTz2xWmMeq6bk2NU3XXvfJ+Q61m0xktWwt+1HSYf3JZsTms3aRJg==}
 
-  'convex-cms@file:':
-    resolution: {directory: '', type: directory}
-    hasBin: true
-    peerDependencies:
-      '@convex-dev/agent': ^0.3.0
-      '@radix-ui/react-accordion': ^1.2.0
-      '@radix-ui/react-alert-dialog': ^1.1.0
-      '@radix-ui/react-avatar': ^1.1.0
-      '@radix-ui/react-checkbox': ^1.3.0
-      '@radix-ui/react-dialog': ^1.1.0
-      '@radix-ui/react-dropdown-menu': ^2.1.0
-      '@radix-ui/react-label': ^2.1.0
-      '@radix-ui/react-popover': ^1.1.0
-      '@radix-ui/react-scroll-area': ^1.2.0
-      '@radix-ui/react-select': ^2.2.0
-      '@radix-ui/react-separator': ^1.1.0
-      '@radix-ui/react-slot': ^1.2.0
-      '@radix-ui/react-switch': ^1.2.0
-      '@radix-ui/react-tabs': ^1.1.0
-      '@radix-ui/react-tooltip': ^1.2.0
-      convex: ^1.31.6
-      lucide-react: ^0.400.0
-      react: ^18.3.1 || ^19.0.0
-      react-hook-form: ^7.50.0
-      tailwindcss: ^4.0.0
-      zod: ^3.23.0
-    peerDependenciesMeta:
-      '@convex-dev/agent':
-        optional: true
-      '@radix-ui/react-accordion':
-        optional: true
-      '@radix-ui/react-alert-dialog':
-        optional: true
-      '@radix-ui/react-avatar':
-        optional: true
-      '@radix-ui/react-checkbox':
-        optional: true
-      '@radix-ui/react-dialog':
-        optional: true
-      '@radix-ui/react-dropdown-menu':
-        optional: true
-      '@radix-ui/react-label':
-        optional: true
-      '@radix-ui/react-popover':
-        optional: true
-      '@radix-ui/react-scroll-area':
-        optional: true
-      '@radix-ui/react-select':
-        optional: true
-      '@radix-ui/react-separator':
-        optional: true
-      '@radix-ui/react-slot':
-        optional: true
-      '@radix-ui/react-switch':
-        optional: true
-      '@radix-ui/react-tabs':
-        optional: true
-      '@radix-ui/react-tooltip':
-        optional: true
-      lucide-react:
-        optional: true
-      react:
-        optional: true
-      react-hook-form:
-        optional: true
-      tailwindcss:
-        optional: true
-      zod:
-        optional: true
-
   convex-helpers@0.1.111:
     resolution: {integrity: sha512-0O59Ohi8HVc3+KULxSC6JHsw8cQJyc8gZ7OAfNRVX7T5Wy6LhPx3l8veYN9avKg7UiPlO7m1eBiQMHKclIyXyQ==}
     hasBin: true
@@ -4454,28 +4384,12 @@ snapshots:
 
   '@actions/io@1.1.3': {}
 
-  '@ai-sdk/gateway@2.0.29(zod@3.25.76)':
-    dependencies:
-      '@ai-sdk/provider': 2.0.1
-      '@ai-sdk/provider-utils': 3.0.20(zod@3.25.76)
-      '@vercel/oidc': 3.1.0
-      zod: 3.25.76
-    optional: true
-
   '@ai-sdk/gateway@2.0.29(zod@4.3.6)':
     dependencies:
       '@ai-sdk/provider': 2.0.1
       '@ai-sdk/provider-utils': 3.0.20(zod@4.3.6)
       '@vercel/oidc': 3.1.0
       zod: 4.3.6
-
-  '@ai-sdk/provider-utils@3.0.20(zod@3.25.76)':
-    dependencies:
-      '@ai-sdk/provider': 2.0.1
-      '@standard-schema/spec': 1.1.0
-      eventsource-parser: 3.0.6
-      zod: 3.25.76
-    optional: true
 
   '@ai-sdk/provider-utils@3.0.20(zod@4.3.6)':
     dependencies:
@@ -4628,17 +4542,6 @@ snapshots:
       '@clack/core': 0.4.2
       picocolors: 1.1.1
       sisteransi: 1.0.5
-
-  '@convex-dev/agent@0.3.2(@ai-sdk/provider-utils@3.0.20(zod@3.25.76))(ai@5.0.123(zod@3.25.76))(convex-helpers@0.1.111(@standard-schema/spec@1.1.0)(convex@1.31.6(react@19.2.3))(react@19.2.3)(typescript@5.9.3)(zod@3.25.76))(convex@1.31.6(react@19.2.3))(react@19.2.3)':
-    dependencies:
-      '@ai-sdk/provider-utils': 3.0.20(zod@3.25.76)
-      ai: 5.0.123(zod@3.25.76)
-      convex: 1.31.6(react@19.2.3)
-      convex-helpers: 0.1.111(@standard-schema/spec@1.1.0)(convex@1.31.6(react@19.2.3))(react@19.2.3)(typescript@5.9.3)(zod@3.25.76)
-    optionalDependencies:
-      '@ungap/structured-clone': 1.3.0
-      react: 19.2.3
-    optional: true
 
   '@convex-dev/agent@0.3.2(@ai-sdk/provider-utils@3.0.20(zod@4.3.6))(ai@5.0.123(zod@4.3.6))(convex-helpers@0.1.111(@standard-schema/spec@1.1.0)(convex@1.31.6(react@19.2.3))(react@19.2.3)(typescript@5.9.3)(zod@4.3.6))(convex@1.31.6(react@19.2.3))(react@19.2.3)':
     dependencies:
@@ -6277,15 +6180,6 @@ snapshots:
 
   acorn@8.15.0: {}
 
-  ai@5.0.123(zod@3.25.76):
-    dependencies:
-      '@ai-sdk/gateway': 2.0.29(zod@3.25.76)
-      '@ai-sdk/provider': 2.0.1
-      '@ai-sdk/provider-utils': 3.0.20(zod@3.25.76)
-      '@opentelemetry/api': 1.9.0
-      zod: 3.25.76
-    optional: true
-
   ai@5.0.123(zod@4.3.6):
     dependencies:
       '@ai-sdk/gateway': 2.0.29(zod@4.3.6)
@@ -6531,49 +6425,6 @@ snapshots:
   consola@3.4.2: {}
 
   convert-source-map@2.0.0: {}
-
-  convex-cms@file:(tgort737cbxqc2vecimav2kztu):
-    dependencies:
-      '@clack/prompts': 0.10.1
-      commander: 14.0.2
-      convex: 1.31.6(react@19.2.3)
-      convex-helpers: 0.1.111(@standard-schema/spec@1.1.0)(convex@1.31.6(react@19.2.3))(react@19.2.3)(typescript@5.9.3)(zod@3.25.76)
-      open: 11.0.0
-    optionalDependencies:
-      '@convex-dev/agent': 0.3.2(@ai-sdk/provider-utils@3.0.20(zod@3.25.76))(ai@5.0.123(zod@3.25.76))(convex-helpers@0.1.111(@standard-schema/spec@1.1.0)(convex@1.31.6(react@19.2.3))(react@19.2.3)(typescript@5.9.3)(zod@3.25.76))(convex@1.31.6(react@19.2.3))(react@19.2.3)
-      '@radix-ui/react-accordion': 1.2.12(@types/react-dom@19.2.3(@types/react@19.2.9))(@types/react@19.2.9)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
-      '@radix-ui/react-alert-dialog': 1.1.15(@types/react-dom@19.2.3(@types/react@19.2.9))(@types/react@19.2.9)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
-      '@radix-ui/react-avatar': 1.1.11(@types/react-dom@19.2.3(@types/react@19.2.9))(@types/react@19.2.9)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
-      '@radix-ui/react-checkbox': 1.3.3(@types/react-dom@19.2.3(@types/react@19.2.9))(@types/react@19.2.9)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
-      '@radix-ui/react-dialog': 1.1.15(@types/react-dom@19.2.3(@types/react@19.2.9))(@types/react@19.2.9)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
-      '@radix-ui/react-dropdown-menu': 2.1.16(@types/react-dom@19.2.3(@types/react@19.2.9))(@types/react@19.2.9)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
-      '@radix-ui/react-label': 2.1.8(@types/react-dom@19.2.3(@types/react@19.2.9))(@types/react@19.2.9)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
-      '@radix-ui/react-popover': 1.1.15(@types/react-dom@19.2.3(@types/react@19.2.9))(@types/react@19.2.9)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
-      '@radix-ui/react-scroll-area': 1.2.10(@types/react-dom@19.2.3(@types/react@19.2.9))(@types/react@19.2.9)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
-      '@radix-ui/react-select': 2.2.6(@types/react-dom@19.2.3(@types/react@19.2.9))(@types/react@19.2.9)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
-      '@radix-ui/react-separator': 1.1.8(@types/react-dom@19.2.3(@types/react@19.2.9))(@types/react@19.2.9)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
-      '@radix-ui/react-slot': 1.2.4(@types/react@19.2.9)(react@19.2.3)
-      '@radix-ui/react-switch': 1.2.6(@types/react-dom@19.2.3(@types/react@19.2.9))(@types/react@19.2.9)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
-      '@radix-ui/react-tabs': 1.1.13(@types/react-dom@19.2.3(@types/react@19.2.9))(@types/react@19.2.9)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
-      '@radix-ui/react-tooltip': 1.2.8(@types/react-dom@19.2.3(@types/react@19.2.9))(@types/react@19.2.9)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
-      lucide-react: 0.563.0(react@19.2.3)
-      react: 19.2.3
-      react-hook-form: 7.71.1(react@19.2.3)
-      tailwindcss: 4.1.18
-      zod: 3.25.76
-    transitivePeerDependencies:
-      - '@standard-schema/spec'
-      - hono
-      - typescript
-
-  convex-helpers@0.1.111(@standard-schema/spec@1.1.0)(convex@1.31.6(react@19.2.3))(react@19.2.3)(typescript@5.9.3)(zod@3.25.76):
-    dependencies:
-      convex: 1.31.6(react@19.2.3)
-    optionalDependencies:
-      '@standard-schema/spec': 1.1.0
-      react: 19.2.3
-      typescript: 5.9.3
-      zod: 3.25.76
 
   convex-helpers@0.1.111(@standard-schema/spec@1.1.0)(convex@1.31.6(react@19.2.3))(react@19.2.3)(typescript@5.9.3)(zod@4.3.6):
     dependencies:

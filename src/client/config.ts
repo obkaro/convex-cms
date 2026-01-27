@@ -42,6 +42,7 @@ import type { FieldTypeDefinition } from "./field-types.js";
 import type { WorkflowConfig } from "./workflows.js";
 import type { AdminOperation, AdminApiOptions } from "./admin/types.js";
 import type { AdminConfig } from "./adminConfig.js";
+import type { ContentTypeDefinition } from "./schema/types.js";
 
 // =============================================================================
 // Shared Configuration
@@ -142,6 +143,15 @@ export interface UnifiedCmsConfig extends SharedCmsConfig {
 	client?: ClientCmsConfig;
 	admin?: AdminApiCmsConfig;
 	ui?: UiCmsConfig;
+
+	/**
+	 * @deprecated Content types are now automatically read from the registry.
+	 * Use `cms.defineContent()` to register content types - they will be
+	 * automatically available in the admin API without needing to pass them here.
+	 *
+	 * This field is ignored if provided.
+	 */
+	contentTypes?: ContentTypeDefinition[];
 }
 
 // =============================================================================
@@ -241,6 +251,7 @@ export function extractClientConfig(config: UnifiedCmsConfig): ComponentConfig {
  * Extract AdminApiOptions from UnifiedCmsConfig for defineAdminAPI.
  *
  * Maps unified config structure to the AdminApiOptions format.
+ * Note: contentTypes is now read from registry, not from config.
  */
 export function extractAdminConfig(config: UnifiedCmsConfig): AdminApiOptions {
 	return {

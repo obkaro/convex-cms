@@ -587,7 +587,7 @@ export function createContentEntryAuthContext(
   operation: CmsOperation,
   userId: string | undefined,
   role: string | null | undefined,
-  entry?: { _id: unknown; createdBy?: string; contentTypeId: unknown },
+  entry?: { _id: unknown; createdBy?: string; contentTypeName: string },
   contentType?: { _id: unknown; name: string },
   operationData?: Record<string, unknown>
 ): Omit<AuthorizationHookContext, "ctx"> {
@@ -597,8 +597,8 @@ export function createContentEntryAuthContext(
     role,
     resourceId: entry?._id as string | undefined,
     resourceOwnerId: entry?.createdBy,
-    contentTypeId: (entry?.contentTypeId ?? contentType?._id) as string | undefined,
-    contentTypeName: contentType?.name,
+    contentTypeId: contentType?._id as string | undefined,
+    contentTypeName: entry?.contentTypeName ?? contentType?.name,
     operationData,
   };
 }

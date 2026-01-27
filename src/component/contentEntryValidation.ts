@@ -599,17 +599,14 @@ async function validateSingleReference(
 
 		// Validate content type constraint
 		if (allowedContentTypes && allowedContentTypes.length > 0) {
-			const contentType = await ctx.db.get(entry.contentTypeId);
-			if (contentType) {
-				if (!allowedContentTypes.includes(contentType.name)) {
-					errors.push({
-						field: fieldLabel,
-						message: `Reference must be of type: ${allowedContentTypes.join(
-							", ",
-						)}. Got: ${contentType.name}`,
-						code: "INVALID_CONTENT_TYPE",
-					});
-				}
+			if (!allowedContentTypes.includes(entry.contentTypeName)) {
+				errors.push({
+					field: fieldLabel,
+					message: `Reference must be of type: ${allowedContentTypes.join(
+						", ",
+					)}. Got: ${entry.contentTypeName}`,
+					code: "INVALID_CONTENT_TYPE",
+				});
 			}
 		}
 	} catch {

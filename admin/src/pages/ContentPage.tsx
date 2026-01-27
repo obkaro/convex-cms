@@ -39,17 +39,9 @@ import { CmsAdminApi } from "~/embed/contexts/ApiContext";
 
 type ContentType = {
   _id: string;
+  name: string;
   displayName: string;
   titleField?: string;
-};
-
-type Entry = {
-  _id: string;
-  contentTypeId: string;
-  slug?: string;
-  status: string;
-  data: Record<string, unknown>;
-  _creationTime: number;
 };
 
 export interface ContentPageProps {
@@ -70,12 +62,12 @@ export function ContentPage({ api, navigation }: ContentPageProps) {
   const isLoadingContentTypes = contentTypesResult === undefined;
 
   const entriesResult = useQuery(api.listEntries, {
-    contentTypeId: selectedTypeId || undefined,
+    contentTypeName: selectedTypeId || undefined,
     status: selectedStatus || undefined,
     search: searchQuery.trim() || undefined,
     paginationOpts: { numItems: 50, cursor: null },
   });
-  const entries: Entry[] = entriesResult?.page ?? [];
+  const entries = entriesResult?.page ?? [];
   const isLoadingEntries = entriesResult === undefined;
 
   const isLoading = isLoadingContentTypes || isLoadingEntries;
@@ -84,16 +76,16 @@ export function ContentPage({ api, navigation }: ContentPageProps) {
     navigation.navigateToNewEntry(contentTypeId);
   };
 
-  const getContentTypeName = (contentTypeId: string) => {
-    const type = contentTypes.find((t) => t._id === contentTypeId);
-    return type?.displayName ?? "Unknown";
+  const getContentTypeDisplayName = (contentTypeName: string) => {
+    const type = contentTypes.find((t) => t.name === contentTypeName);
+    return type?.displayName ?? contentTypeName;
   };
 
   const getEntryTitle = (
     entry: { data: Record<string, unknown> },
-    contentTypeId: string
+    contentTypeName: string
   ) => {
-    const type = contentTypes.find((t) => t._id === contentTypeId);
+    const type = contentTypes.find((t) => t.name === contentTypeName);
     const titleField = type?.titleField ?? "title";
     const title = entry.data[titleField];
     return typeof title === "string" && title ? title : "Untitled";
@@ -291,7 +283,7 @@ export function ContentPage({ api, navigation }: ContentPageProps) {
                       onCheckedChange={(checked) =>
                         handleSelectItem(entry._id, checked as boolean)
                       }
-                      aria-label={`Select ${getEntryTitle(entry, entry.contentTypeId)}`}
+                      aria-label={`Select ${getEntryTitle(entry, entry.contentTypeName)}`}
                     />
                   </td>
                   <td className="p-3">
@@ -301,7 +293,7 @@ export function ContentPage({ api, navigation }: ContentPageProps) {
                       className="block text-left"
                     >
                       <span className="font-medium text-foreground hover:text-primary">
-                        {getEntryTitle(entry, entry.contentTypeId)}
+                        {getEntryTitle(entry, entry.contentTypeName)}
                       </span>
                       <span className="block text-xs text-muted-foreground">
                         {entry.slug}
@@ -309,7 +301,7 @@ export function ContentPage({ api, navigation }: ContentPageProps) {
                     </button>
                   </td>
                   <td className="p-3 text-sm text-muted-foreground">
-                    {getContentTypeName(entry.contentTypeId)}
+                    {getContentTypeDisplayName(entry.contentTypeName)}
                   </td>
                   <td className="p-3">
                     <CmsStatusBadge status={entry.status as ContentStatus} />

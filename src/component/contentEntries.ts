@@ -12,7 +12,6 @@ import { isDeleted } from "./lib/softDelete.js";
 import { paginationOptsValidator } from "convex/server";
 import { stream } from "convex-helpers/server/stream";
 import { query, type QueryCtx } from "./_generated/server.js";
-import type { Id } from "./_generated/dataModel.js";
 import {
   contentEntryDoc,
   contentVersionDoc,
@@ -409,21 +408,7 @@ export const get = query({
  * Arguments for retrieving a content entry by slug.
  */
 const getBySlugArgs = v.object({
-  /** The ID of the content type to search within */
-  contentTypeId: v.id("contentTypes"),
-  /** The URL-friendly slug to look up */
-  slug: v.string(),
-  /** Optional status filter (e.g., "published" for public content) */
-  status: v.optional(contentStatusValidator),
-  /** Whether to include soft-deleted entries (default: false) */
-  includeDeleted: v.optional(v.boolean()),
-});
-
-/**
- * Arguments for retrieving a content entry by slug and content type name.
- */
-const getBySlugAndTypeNameArgs = v.object({
-  /** The machine-readable name of the content type (e.g., "blog_post") */
+  /** The name of the content type to search within (e.g., "blog_post") */
   contentTypeName: v.string(),
   /** The URL-friendly slug to look up */
   slug: v.string(),
@@ -433,13 +418,14 @@ const getBySlugAndTypeNameArgs = v.object({
   includeDeleted: v.optional(v.boolean()),
 });
 
+
 /**
- * Query to retrieve a content entry by its slug and content type ID.
+ * Query to retrieve a content entry by its slug and content type name.
  *
  * This is the primary lookup function for frontend routing and SEO-friendly URLs.
  * It uses the `by_content_type_and_slug` index for efficient O(1) lookups.
  *
- * @param contentTypeId - The ID of the content type to search within
+ * @param contentTypeName - The name of the content type to search within (e.g., "blog_post")
  * @param slug - The URL-friendly slug to look up
  * @param status - Optional status filter (defaults to returning any status)
  * @param includeDeleted - Whether to include soft-deleted entries (defaults to false)
@@ -450,13 +436,13 @@ const getBySlugAndTypeNameArgs = v.object({
  * ```typescript
  * // From parent app - basic usage:
  * const blogPost = await ctx.runQuery(components.convexCms.contentEntries.getBySlug, {
- *   contentTypeId: blogTypeId,
+ *   contentTypeName: "blog_post",
  *   slug: "my-first-post",
  * });
  *
  * // With status filter for published content only (common for public sites):
  * const publishedPost = await ctx.runQuery(components.convexCms.contentEntries.getBySlug, {
- *   contentTypeId: blogTypeId,
+ *   contentTypeName: "blog_post",
  *   slug: "my-first-post",
  *   status: "published",
  * });
@@ -464,21 +450,21 @@ const getBySlugAndTypeNameArgs = v.object({
  * // Frontend routing example:
  * // URL: /blog/my-first-post
  * // -> Extract slug "my-first-post" from URL
- * // -> Query: getBySlug({ contentTypeId: blogTypeId, slug: "my-first-post", status: "published" })
+ * // -> Query: getBySlug({ contentTypeName: "blog_post", slug: "my-first-post", status: "published" })
  * ```
  */
 export const getBySlug = query({
   args: getBySlugArgs.fields,
   returns: v.union(contentEntryDoc, v.null()),
   handler: async (ctx, args) => {
-    const { contentTypeId, slug, status, includeDeleted = false } = args;
+    const { contentTypeName, slug, status, includeDeleted = false } = args;
 
     // Query using the compound index for efficient lookup
     // The by_content_type_and_slug index enables O(1) lookups
     const entry = await ctx.db
       .query("contentEntries")
       .withIndex("by_content_type_and_slug", (q) =>
-        q.eq("contentTypeId", contentTypeId).eq("slug", slug)
+        q.eq("contentTypeName", contentTypeName).eq("slug", slug)
       )
       .first();
 
@@ -502,79 +488,35 @@ export const getBySlug = query({
 });
 
 /**
- * Query to retrieve a content entry by its slug and content type name.
- *
- * This is a convenience function that looks up the content type by name first,
- * then retrieves the entry by slug. Useful when you have the content type name
- * (e.g., "blog_post") but not its ID.
- *
- * Note: This performs two index lookups (content type by name, then entry by slug),
- * so `getBySlug` is more efficient if you already have the content type ID cached.
- *
- * @param contentTypeName - The machine-readable name of the content type (e.g., "blog_post")
- * @param slug - The URL-friendly slug to look up
- * @param status - Optional status filter (defaults to returning any status)
- * @param includeDeleted - Whether to include soft-deleted entries (defaults to false)
- *
- * @returns The content entry if found, or null if not found (including if content type doesn't exist)
- *
- * @example
- * ```typescript
- * // From parent app - using content type name instead of ID:
- * const blogPost = await ctx.runQuery(components.convexCms.contentEntries.getBySlugAndTypeName, {
- *   contentTypeName: "blog_post",
- *   slug: "my-first-post",
- *   status: "published",
- * });
- *
- * // Useful for static routes where content type is known at build time:
- * // /blog/[slug] -> contentTypeName: "blog_post"
- * // /products/[slug] -> contentTypeName: "product"
- * // /pages/[slug] -> contentTypeName: "page"
- * ```
+ * @deprecated Use getBySlug instead - now uses contentTypeName directly.
+ * This function is kept for backward compatibility but is now identical to getBySlug.
  */
 export const getBySlugAndTypeName = query({
-  args: getBySlugAndTypeNameArgs.fields,
+  args: {
+    contentTypeName: v.string(),
+    slug: v.string(),
+    status: v.optional(contentStatusValidator),
+    includeDeleted: v.optional(v.boolean()),
+  },
   returns: v.union(contentEntryDoc, v.null()),
   handler: async (ctx, args) => {
     const { contentTypeName, slug, status, includeDeleted = false } = args;
 
-    // First, look up the content type by name using the by_name index
-    const contentType = await ctx.db
-      .query("contentTypes")
-      .withIndex("by_name", (q) => q.eq("name", contentTypeName))
-      .first();
-
-    // Return null if content type doesn't exist
-    if (!contentType) {
-      return null;
-    }
-
-    // Check if content type is active and not deleted
-    // Inactive or deleted content types should not serve content
-    if (!contentType.isActive || isDeleted(contentType)) {
-      return null;
-    }
-
-    // Query the entry using the compound index
     const entry = await ctx.db
       .query("contentEntries")
       .withIndex("by_content_type_and_slug", (q) =>
-        q.eq("contentTypeId", contentType._id).eq("slug", slug)
+        q.eq("contentTypeName", contentTypeName).eq("slug", slug)
       )
       .first();
 
-    // Return null if no entry found
     if (!entry) {
       return null;
     }
 
-    // Filter out soft-deleted entries unless explicitly requested
     if (!includeDeleted && isDeleted(entry)) {
       return null;
     }
 
-    // Filter by status if specified
     if (status !== undefined && entry.status !== status) {
       return null;
     }
@@ -602,9 +544,7 @@ const MAX_NUM_ITEMS = 250;
  * Uses convex-helpers paginator for robust cursor-based pagination.
  */
 const listContentEntriesArgs = v.object({
-  /** Filter by content type ID */
-  contentTypeId: v.optional(v.id("contentTypes")),
-  /** Filter by content type name (alternative to contentTypeId) */
+  /** Filter by content type name (e.g., "blog_post") */
   contentTypeName: v.optional(v.string()),
   /** Filter by a single entry status (draft, published, archived, scheduled) */
   status: v.optional(contentStatusValidator),
@@ -705,8 +645,7 @@ const paginatedContentEntriesResponse = v.object({
  * - Locale filter: Uses the `by_locale` index
  * - Field filters: Applied as post-processing filters on entry data
  *
- * @param contentTypeId - Optional content type ID to filter by
- * @param contentTypeName - Optional content type name (resolved to ID internally)
+ * @param contentTypeName - Optional content type name to filter by (e.g., "blog_post")
  * @param status - Optional status filter (draft, published, archived, scheduled)
  * @param statusIn - Optional array of statuses to filter by (for admin views)
  * @param locale - Optional locale code to filter by
@@ -814,7 +753,6 @@ export const list = query({
   returns: paginatedContentEntriesResponse,
   handler: async (ctx, args) => {
     const {
-      contentTypeId,
       contentTypeName,
       status,
       statusIn,
@@ -846,22 +784,6 @@ export const list = query({
       numItems,
     };
 
-    // Resolve content type ID from name if provided
-    let resolvedContentTypeId = contentTypeId;
-    if (!resolvedContentTypeId && contentTypeName) {
-      const contentType = await ctx.db
-        .query("contentTypes")
-        .withIndex("by_name", (q) => q.eq("name", contentTypeName))
-        .first();
-
-      // If content type not found or inactive, return empty result
-      if (!contentType || !contentType.isActive || isDeleted(contentType)) {
-        return { page: [], continueCursor: null, isDone: true };
-      }
-
-      resolvedContentTypeId = contentType._id;
-    }
-
     // Build sort options
     const sortOptions: SortOptions = {
       sortField,
@@ -872,7 +794,7 @@ export const list = query({
     if (search && search.trim().length > 0) {
       return handleSearchQuery(ctx, {
         search: search.trim(),
-        contentTypeId: resolvedContentTypeId,
+        contentTypeName,
         statuses: resolvedStatuses,
         locale,
         includeDeleted,
@@ -884,7 +806,7 @@ export const list = query({
 
     // Handle standard index-based queries with paginator
     return handlePaginatorQuery(ctx, {
-      contentTypeId: resolvedContentTypeId,
+      contentTypeName,
       statuses: resolvedStatuses,
       locale,
       includeDeleted,
@@ -979,7 +901,7 @@ async function handleSearchQuery(
   ctx: QueryCtx,
   args: {
     search: string;
-    contentTypeId?: Id<"contentTypes">;
+    contentTypeName?: string;
     statuses?: string[];
     locale?: string;
     includeDeleted: boolean;
@@ -988,7 +910,7 @@ async function handleSearchQuery(
     paginationOpts: PaginationOpts;
   }
 ): Promise<ContentEntryPaginationResult> {
-  const { search, contentTypeId, statuses, locale, includeDeleted, fieldFilters, sortOptions, paginationOpts } = args;
+  const { search, contentTypeName, statuses, locale, includeDeleted, fieldFilters, sortOptions, paginationOpts } = args;
   const { numItems, cursor } = paginationOpts;
 
   // Determine if we can use index-level status filtering
@@ -996,15 +918,15 @@ async function handleSearchQuery(
   const singleStatus = statuses?.length === 1 ? statuses[0] : undefined;
 
   // Build search query with filter fields
-  // The search_content index supports filtering by contentTypeId, status, and locale
+  // The search_content index supports filtering by contentTypeName, status, and locale
   const searchQuery = ctx.db
     .query("contentEntries")
     .withSearchIndex("search_content", (q: any) => {
       let query = q.search("searchText", search);
 
       // Apply filter fields available in the search index
-      if (contentTypeId) {
-        query = query.eq("contentTypeId", contentTypeId);
+      if (contentTypeName) {
+        query = query.eq("contentTypeName", contentTypeName);
       }
       // Only apply index-level status filter for single status
       if (singleStatus) {
@@ -1095,7 +1017,7 @@ async function handleSearchQuery(
 async function handlePaginatorQuery(
   ctx: QueryCtx,
   args: {
-    contentTypeId?: Id<"contentTypes">;
+    contentTypeName?: string;
     statuses?: string[];
     locale?: string;
     includeDeleted: boolean;
@@ -1104,7 +1026,7 @@ async function handlePaginatorQuery(
     paginationOpts: PaginationOpts;
   }
 ): Promise<ContentEntryPaginationResult> {
-  const { contentTypeId, statuses, locale, includeDeleted, fieldFilters, sortOptions, paginationOpts } = args;
+  const { contentTypeName, statuses, locale, includeDeleted, fieldFilters, sortOptions, paginationOpts } = args;
 
   // Determine if we can use index-level status filtering
   // Only possible when filtering by exactly one status
@@ -1116,19 +1038,19 @@ async function handlePaginatorQuery(
   // Build the base query using the most efficient index
   let baseQuery;
 
-  if (contentTypeId && singleStatus) {
+  if (contentTypeName && singleStatus) {
     // Use compound index for content type + single status filtering
     baseQuery = streamDb
       .query("contentEntries")
       .withIndex("by_content_type_and_status", (q) =>
-        q.eq("contentTypeId", contentTypeId).eq("status", singleStatus as "draft" | "published" | "archived" | "scheduled")
+        q.eq("contentTypeName", contentTypeName).eq("status", singleStatus as "draft" | "published" | "archived" | "scheduled")
       );
-  } else if (contentTypeId) {
+  } else if (contentTypeName) {
     // Use content type index
     baseQuery = streamDb
       .query("contentEntries")
       .withIndex("by_content_type", (q) =>
-        q.eq("contentTypeId", contentTypeId)
+        q.eq("contentTypeName", contentTypeName)
       );
   } else if (singleStatus) {
     // Use status index for single status
@@ -1157,7 +1079,7 @@ async function handlePaginatorQuery(
   const needsFiltering =
     !includeDeleted ||
     (statuses && statuses.length > 1) ||
-    (locale && !contentTypeId && !singleStatus) ||
+    (locale && !contentTypeName && !singleStatus) ||
     hasFieldFilters;
 
   // Apply order based on sort direction (for _creationTime sorting)
@@ -1170,7 +1092,7 @@ async function handlePaginatorQuery(
       orderedQuery,
       statuses,
       locale,
-      contentTypeId,
+      contentTypeName,
       singleStatus,
       includeDeleted,
       fieldFilters,
@@ -1195,7 +1117,7 @@ async function handlePaginatorQuery(
       }
 
       // Filter by locale if not already handled by index
-      if (locale && !contentTypeId && !singleStatus) {
+      if (locale && !contentTypeName && !singleStatus) {
         if (entry.locale !== locale) {
           return false;
         }
@@ -1252,7 +1174,7 @@ async function handleCustomSortQuery(
     orderedQuery: any;
     statuses?: string[];
     locale?: string;
-    contentTypeId?: Id<"contentTypes">;
+    contentTypeName?: string;
     singleStatus?: string;
     includeDeleted: boolean;
     fieldFilters?: FieldFilter[];
@@ -1264,7 +1186,7 @@ async function handleCustomSortQuery(
     orderedQuery,
     statuses,
     locale,
-    contentTypeId,
+    contentTypeName,
     singleStatus,
     includeDeleted,
     fieldFilters,
@@ -1298,7 +1220,7 @@ async function handleCustomSortQuery(
     }
 
     // Filter by locale if not already handled by index
-    if (locale && !contentTypeId && !singleStatus) {
+    if (locale && !contentTypeName && !singleStatus) {
       if (entry.locale !== locale) {
         return false;
       }
@@ -1831,9 +1753,7 @@ export const compareVersions = query({
  * Arguments for counting content entries.
  */
 const countContentEntriesArgs = v.object({
-  /** Filter by content type ID */
-  contentTypeId: v.optional(v.id("contentTypes")),
-  /** Filter by content type name (alternative to contentTypeId) */
+  /** Filter by content type name (e.g., "blog_post") */
   contentTypeName: v.optional(v.string()),
   /** Filter by a single entry status */
   status: v.optional(contentStatusValidator),
@@ -1853,8 +1773,7 @@ const countContentEntriesArgs = v.object({
  * Unlike the `list` query which is limited by pagination, this query
  * counts ALL matching entries and returns the total.
  *
- * @param contentTypeId - Optional content type ID to filter by
- * @param contentTypeName - Optional content type name (resolved to ID internally)
+ * @param contentTypeName - Optional content type name to filter by (e.g., "blog_post")
  * @param status - Optional single status filter
  * @param statusIn - Optional array of statuses to filter by
  * @param includeDeleted - Whether to include soft-deleted entries (default: false)
@@ -1866,20 +1785,14 @@ const countContentEntriesArgs = v.object({
  * // Count all entries for a content type
  * const { count } = await ctx.runQuery(
  *   components.convexCms.contentEntries.count,
- *   { contentTypeId: blogTypeId }
+ *   { contentTypeName: "blog_post" }
  * );
  * console.log(`Blog posts: ${count}`);
  *
  * // Count published entries only
  * const { count: publishedCount } = await ctx.runQuery(
  *   components.convexCms.contentEntries.count,
- *   { contentTypeId: blogTypeId, status: "published" }
- * );
- *
- * // Count entries by content type name
- * const { count: productCount } = await ctx.runQuery(
- *   components.convexCms.contentEntries.count,
- *   { contentTypeName: "product" }
+ *   { contentTypeName: "blog_post", status: "published" }
  * );
  * ```
  */
@@ -1890,7 +1803,6 @@ export const count = query({
   }),
   handler: async (ctx, args) => {
     const {
-      contentTypeId,
       contentTypeName,
       status,
       statusIn,
@@ -1904,41 +1816,25 @@ export const count = query({
         ? [status]
         : undefined;
 
-    // Resolve content type ID from name if provided
-    let resolvedContentTypeId = contentTypeId;
-    if (!resolvedContentTypeId && contentTypeName) {
-      const contentType = await ctx.db
-        .query("contentTypes")
-        .withIndex("by_name", (q) => q.eq("name", contentTypeName))
-        .first();
-
-      // If content type not found or inactive, return 0 count
-      if (!contentType || !contentType.isActive || isDeleted(contentType)) {
-        return { count: 0 };
-      }
-
-      resolvedContentTypeId = contentType._id;
-    }
-
     // Determine if we can use index-level status filtering
     const singleStatus = resolvedStatuses?.length === 1 ? resolvedStatuses[0] : undefined;
 
     // Build and execute the query using the most efficient index
     let queryBuilder;
 
-    if (resolvedContentTypeId && singleStatus) {
+    if (contentTypeName && singleStatus) {
       // Use compound index for content type + single status filtering
       queryBuilder = ctx.db
         .query("contentEntries")
         .withIndex("by_content_type_and_status", (q) =>
-          q.eq("contentTypeId", resolvedContentTypeId!).eq("status", singleStatus as "draft" | "published" | "archived" | "scheduled")
+          q.eq("contentTypeName", contentTypeName).eq("status", singleStatus as "draft" | "published" | "archived" | "scheduled")
         );
-    } else if (resolvedContentTypeId) {
+    } else if (contentTypeName) {
       // Use content type index
       queryBuilder = ctx.db
         .query("contentEntries")
         .withIndex("by_content_type", (q) =>
-          q.eq("contentTypeId", resolvedContentTypeId!)
+          q.eq("contentTypeName", contentTypeName)
         );
     } else if (singleStatus) {
       // Use status index for single status

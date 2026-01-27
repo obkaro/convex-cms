@@ -70,7 +70,6 @@ export type EventType = `${EventResourceType}.${EventAction}`;
 export interface ContentEntryEventPayload {
   slug: string;
   contentTypeName: string;
-  contentTypeId: string;
   status: string;
   version: number;
   locale?: string;

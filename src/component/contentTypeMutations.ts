@@ -695,7 +695,7 @@ export const updateContentType = mutation({
       // Get all existing content entries for this content type
       const existingEntries = await ctx.db
         .query("contentEntries")
-        .withIndex("by_content_type", (q) => q.eq("contentTypeId", id))
+        .withIndex("by_content_type", (q) => q.eq("contentTypeName", existingType.name))
         .filter((q) => q.eq(q.field("deletedAt"), undefined))
         .collect();
 
@@ -877,7 +877,7 @@ export const deleteContentType = mutation({
     // Get all content entries for this type (excluding already soft-deleted ones)
     const existingEntries = await ctx.db
       .query("contentEntries")
-      .withIndex("by_content_type", (q) => q.eq("contentTypeId", id))
+      .withIndex("by_content_type", (q) => q.eq("contentTypeName", contentType.name))
       .filter((q) => q.eq(q.field("deletedAt"), undefined))
       .collect();
 

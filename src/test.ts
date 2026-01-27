@@ -822,7 +822,7 @@ let entryCounter = 0;
  * Factory functions for creating test content entry data.
  * All factories return data suitable for inserting into the contentEntries table.
  *
- * Note: You'll need to provide a valid contentTypeId when inserting into the database.
+ * Note: You'll need to provide a valid contentTypeName when inserting into the database.
  */
 export const contentEntryFactory = {
 	/**
@@ -837,12 +837,12 @@ export const contentEntryFactory = {
 	 * Create a minimal valid content entry.
 	 */
 	minimal(
-		contentTypeId: Id<"contentTypes">,
+		contentTypeName: string,
 		overrides: Partial<ContentEntryData> = {},
 	): ContentEntryData {
 		entryCounter++;
 		return {
-			contentTypeId,
+			contentTypeName,
 			slug: `test-entry-${entryCounter}`,
 			status: "draft",
 			data: {},
@@ -855,13 +855,13 @@ export const contentEntryFactory = {
 	 * Create a draft content entry.
 	 */
 	draft(
-		contentTypeId: Id<"contentTypes">,
+		contentTypeName: string,
 		data: Record<string, unknown>,
 		overrides: Partial<ContentEntryData> = {},
 	): ContentEntryData {
 		entryCounter++;
 		return {
-			contentTypeId,
+			contentTypeName,
 			slug: `draft-${entryCounter}`,
 			status: "draft",
 			data,
@@ -874,14 +874,14 @@ export const contentEntryFactory = {
 	 * Create a published content entry.
 	 */
 	published(
-		contentTypeId: Id<"contentTypes">,
+		contentTypeName: string,
 		data: Record<string, unknown>,
 		overrides: Partial<ContentEntryData> = {},
 	): ContentEntryData {
 		entryCounter++;
 		const now = Date.now();
 		return {
-			contentTypeId,
+			contentTypeName,
 			slug: `published-${entryCounter}`,
 			status: "published",
 			data,
@@ -896,13 +896,13 @@ export const contentEntryFactory = {
 	 * Create an archived content entry.
 	 */
 	archived(
-		contentTypeId: Id<"contentTypes">,
+		contentTypeName: string,
 		data: Record<string, unknown>,
 		overrides: Partial<ContentEntryData> = {},
 	): ContentEntryData {
 		entryCounter++;
 		return {
-			contentTypeId,
+			contentTypeName,
 			slug: `archived-${entryCounter}`,
 			status: "archived",
 			data,
@@ -915,14 +915,14 @@ export const contentEntryFactory = {
 	 * Create a scheduled content entry.
 	 */
 	scheduled(
-		contentTypeId: Id<"contentTypes">,
+		contentTypeName: string,
 		data: Record<string, unknown>,
 		scheduledPublishAt: number,
 		overrides: Partial<ContentEntryData> = {},
 	): ContentEntryData {
 		entryCounter++;
 		return {
-			contentTypeId,
+			contentTypeName,
 			slug: `scheduled-${entryCounter}`,
 			status: "scheduled",
 			data,
@@ -936,13 +936,13 @@ export const contentEntryFactory = {
 	 * Create a soft-deleted content entry.
 	 */
 	deleted(
-		contentTypeId: Id<"contentTypes">,
+		contentTypeName: string,
 		data: Record<string, unknown>,
 		overrides: Partial<ContentEntryData> = {},
 	): ContentEntryData {
 		entryCounter++;
 		return {
-			contentTypeId,
+			contentTypeName,
 			slug: `deleted-${entryCounter}`,
 			status: "draft",
 			data,
@@ -956,7 +956,7 @@ export const contentEntryFactory = {
 	 * Create a localized content entry variant.
 	 */
 	localized(
-		contentTypeId: Id<"contentTypes">,
+		contentTypeName: string,
 		primaryEntryId: Id<"contentEntries">,
 		locale: string,
 		data: Record<string, unknown>,
@@ -964,7 +964,7 @@ export const contentEntryFactory = {
 	): ContentEntryData {
 		entryCounter++;
 		return {
-			contentTypeId,
+			contentTypeName,
 			slug: `localized-${locale}-${entryCounter}`,
 			status: "draft",
 			data,
@@ -979,12 +979,12 @@ export const contentEntryFactory = {
 	 * Create a blog post entry with typical data.
 	 */
 	blogPost(
-		contentTypeId: Id<"contentTypes">,
+		contentTypeName: string,
 		overrides: Partial<ContentEntryData> = {},
 	): ContentEntryData {
 		entryCounter++;
 		return {
-			contentTypeId,
+			contentTypeName,
 			slug: `blog-post-${entryCounter}`,
 			status: "draft",
 			data: {
@@ -1003,13 +1003,13 @@ export const contentEntryFactory = {
 	 * Create a product entry with typical data.
 	 */
 	product(
-		contentTypeId: Id<"contentTypes">,
+		contentTypeName: string,
 		overrides: Partial<ContentEntryData> = {},
 	): ContentEntryData {
 		entryCounter++;
 		const price = Math.floor(Math.random() * 10000) / 100 + 9.99;
 		return {
-			contentTypeId,
+			contentTypeName,
 			slug: `product-${entryCounter}`,
 			status: "draft",
 			data: {
@@ -1030,16 +1030,16 @@ export const contentEntryFactory = {
 	 * Create multiple entries at once.
 	 */
 	batch(
-		contentTypeId: Id<"contentTypes">,
+		contentTypeName: string,
 		count: number,
 		factory: (
-			contentTypeId: Id<"contentTypes">,
+			contentTypeName: string,
 			index: number,
 		) => Partial<ContentEntryData> = () => ({}),
 	): ContentEntryData[] {
 		return Array.from({ length: count }, (_, index) => {
-			const custom = factory(contentTypeId, index);
-			return contentEntryFactory.minimal(contentTypeId, custom);
+			const custom = factory(contentTypeName, index);
+			return contentEntryFactory.minimal(contentTypeName, custom);
 		});
 	},
 };
@@ -1347,9 +1347,9 @@ export function assertContentEntry(
 
 	const obj = value as Record<string, unknown>;
 
-	if (!obj.contentTypeId) {
+	if (!obj.contentTypeName) {
 		throw new Error(
-			message ?? "Content entry missing required 'contentTypeId' field",
+			message ?? "Content entry missing required 'contentTypeName' field",
 		);
 	}
 

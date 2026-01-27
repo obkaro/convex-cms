@@ -262,7 +262,7 @@ describe("Version Snapshot Integration Tests", () => {
 
 			// Create a content entry
 			const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-				contentTypeId: contentType._id,
+				contentTypeName: contentType.name,
 				data: { title: "Test Entry", content: "<p>Test content</p>" },
 				createdBy: "user123",
 			});
@@ -304,7 +304,7 @@ describe("Version Snapshot Integration Tests", () => {
 			);
 
 			const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-				contentTypeId: contentType._id,
+				contentTypeName: contentType.name,
 				data: { title: "Publishable Entry" },
 			});
 
@@ -341,7 +341,7 @@ describe("Version Snapshot Integration Tests", () => {
 			);
 
 			const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-				contentTypeId: contentType._id,
+				contentTypeName: contentType.name,
 				data: { title: "Accurate Entry", count: 42 },
 			});
 
@@ -380,7 +380,7 @@ describe("Version Snapshot Integration Tests", () => {
 			);
 
 			const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-				contentTypeId: contentType._id,
+				contentTypeName: contentType.name,
 				data: { title: "To Delete" },
 			});
 
@@ -411,7 +411,7 @@ describe("Version Snapshot Integration Tests", () => {
 			);
 
 			const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-				contentTypeId: contentType._id,
+				contentTypeName: contentType.name,
 				data: { title: "Soft Deleted" },
 			});
 
@@ -443,7 +443,7 @@ describe("Version Snapshot Integration Tests", () => {
 			);
 
 			const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-				contentTypeId: contentType._id,
+				contentTypeName: contentType.name,
 				data: { title: "Multi Snapshot Entry" },
 			});
 
@@ -492,7 +492,7 @@ describe("Version Snapshot Integration Tests", () => {
 			);
 
 			const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-				contentTypeId: contentType._id,
+				contentTypeName: contentType.name,
 				data: { title: "Check Existence" },
 			});
 
@@ -526,7 +526,7 @@ describe("Version Snapshot Integration Tests", () => {
 			);
 
 			const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-				contentTypeId: contentType._id,
+				contentTypeName: contentType.name,
 				data: { title: "No Snapshot" },
 			});
 
@@ -557,7 +557,7 @@ describe("Version Snapshot Integration Tests", () => {
 			);
 
 			const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-				contentTypeId: contentType._id,
+				contentTypeName: contentType.name,
 				data: { title: "New Entry" },
 			});
 
@@ -590,7 +590,7 @@ describe("Version Snapshot Integration Tests", () => {
 			);
 
 			const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-				contentTypeId: contentType._id,
+				contentTypeName: contentType.name,
 				data: { title: "Existing Entry" },
 			});
 
@@ -633,7 +633,7 @@ describe("Version Snapshot Integration Tests", () => {
 			);
 
 			const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-				contentTypeId: contentType._id,
+				contentTypeName: contentType.name,
 				data: { title: "To Delete" },
 			});
 
@@ -667,7 +667,7 @@ describe("Version Snapshot Integration Tests", () => {
 			);
 
 			const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-				contentTypeId: contentType._id,
+				contentTypeName: contentType.name,
 				data: { title: "Soft Deleted" },
 			});
 
@@ -703,7 +703,7 @@ describe("Version Snapshot Integration Tests", () => {
 			);
 
 			const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-				contentTypeId: contentType._id,
+				contentTypeName: contentType.name,
 				data: { title: "History Entry" },
 			});
 
@@ -740,7 +740,7 @@ describe("Version Snapshot Integration Tests", () => {
 			);
 
 			const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-				contentTypeId: contentType._id,
+				contentTypeName: contentType.name,
 				data: { title: "Order Entry" },
 			});
 
@@ -803,7 +803,7 @@ describe("Version Snapshot Integration Tests", () => {
 
 			// Create a content entry (version 1)
 			const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-				contentTypeId: contentType._id,
+				contentTypeName: contentType.name,
 				data: { title: "Original Title", content: "<p>Original content</p>" },
 				createdBy: "user123",
 			});
@@ -861,7 +861,7 @@ describe("Version Snapshot Integration Tests", () => {
 
 			// Create entry as draft (version 1)
 			const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-				contentTypeId: contentType._id,
+				contentTypeName: contentType.name,
 				data: { title: "Draft Post" },
 			});
 
@@ -915,7 +915,7 @@ describe("Version Snapshot Integration Tests", () => {
 			);
 
 			const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-				contentTypeId: contentType._id,
+				contentTypeName: contentType.name,
 				data: { title: "Version 1 Title" },
 			});
 
@@ -979,7 +979,7 @@ describe("Version Snapshot Integration Tests", () => {
 			);
 
 			const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-				contentTypeId: contentType._id,
+				contentTypeName: contentType.name,
 				data: { title: "Temp Entry" },
 			});
 
@@ -1012,7 +1012,7 @@ describe("Version Snapshot Integration Tests", () => {
 			);
 
 			const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-				contentTypeId: contentType._id,
+				contentTypeName: contentType.name,
 				data: { title: "Deleted Entry" },
 			});
 
@@ -1050,7 +1050,7 @@ describe("Version Snapshot Integration Tests", () => {
 			);
 
 			const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-				contentTypeId: contentType._id,
+				contentTypeName: contentType.name,
 				data: { title: "No Snapshot" },
 			});
 
@@ -1081,7 +1081,7 @@ describe("Version Snapshot Integration Tests", () => {
 
 			// Create entry with original slug
 			const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-				contentTypeId: contentType._id,
+				contentTypeName: contentType.name,
 				data: { title: "Original Slug" },
 			});
 
@@ -1146,7 +1146,7 @@ describe("Version Snapshot Integration Tests", () => {
 			};
 
 			const entry = await t.mutation(api.contentEntryMutations.createEntry, {
-				contentTypeId: contentType._id,
+				contentTypeName: contentType.name,
 				data: complexData,
 			});
 

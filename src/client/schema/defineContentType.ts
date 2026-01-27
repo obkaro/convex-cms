@@ -5,31 +5,42 @@
  * using Convex validators. Types are automatically inferred via Convex's
  * native `Infer<typeof validator>` pattern.
  *
- * @example
+ * You can use either display names ("Blog Post") or slug format ("blog_post"):
+ * - Display names are automatically converted to slugs
+ * - Slugs are used for queries and code references
+ *
+ * @example Using a display name (recommended)
  * ```typescript
  * import { v } from "convex/values";
  * import { defineContentType } from "convex-cms";
  *
  * export const blogPost = defineContentType({
- *   name: "blog_post",
+ *   name: "Blog Post", // → slug: "blog_post"
  *   validator: v.object({
  *     title: v.string(),
- *     slug: v.string(),
  *     content: v.string(),
- *     author: v.id("contentEntries"),
- *     category: v.optional(v.union(v.literal("tech"), v.literal("news"))),
- *     publishedAt: v.optional(v.number()),
  *   }),
  *   meta: {
  *     displayName: "Blog Post",
  *     titleField: "title",
- *     slugField: "slug",
- *     fields: {
- *       title: { label: "Title", maxLength: 200 },
- *       content: { label: "Content", renderAs: "richText", searchable: true },
- *       author: { label: "Author", renderAs: "reference" },
- *       category: { label: "Category", renderAs: "select" },
- *     },
+ *   },
+ * });
+ *
+ * // blogPost.slug === "blog_post"
+ * // blogPost.name === "Blog Post"
+ * ```
+ *
+ * @example Using slug format directly
+ * ```typescript
+ * export const blogPost = defineContentType({
+ *   name: "blog_post", // Already a valid slug
+ *   validator: v.object({
+ *     title: v.string(),
+ *     content: v.string(),
+ *   }),
+ *   meta: {
+ *     displayName: "Blog Post",
+ *     titleField: "title",
  *   },
  * });
  * ```
@@ -42,35 +53,36 @@ import type {
   ContentTypeMeta,
   FieldMeta,
 } from "./types.js";
+import { toSlug, isValidSlug, type ToSlugType } from "../utils/toSlug.js";
 
 // =============================================================================
-// Content Type Name Validation
+// Content Type Name/Slug Handling
 // =============================================================================
 
 /**
- * Pattern for valid content type names.
- * - Lowercase letters, numbers, and underscores only
- * - Must start with a letter
- * - 1-50 characters
+ * Checks if a name is already in slug format.
  */
-const CONTENT_TYPE_NAME_PATTERN = /^[a-z][a-z0-9_]{0,49}$/;
+function isSlugFormat(name: string): boolean {
+  return isValidSlug(name);
+}
 
 /**
- * Validates a content type name.
+ * Validates a generated slug.
  *
- * @param name - The name to validate
- * @throws Error if the name is invalid
+ * @param slug - The slug to validate
+ * @param originalName - The original name (for error messages)
+ * @throws Error if the slug is invalid
  */
-function validateContentTypeName(name: string): void {
-  if (!name) {
+function validateSlug(slug: string, originalName: string): void {
+  if (!slug) {
     throw new Error("Content type name is required");
   }
 
-  if (!CONTENT_TYPE_NAME_PATTERN.test(name)) {
+  if (!isValidSlug(slug)) {
     throw new Error(
-      `Invalid content type name "${name}". ` +
-        "Names must start with a lowercase letter and contain only " +
-        "lowercase letters, numbers, and underscores (1-50 characters)."
+      `Invalid content type name "${originalName}". ` +
+        `Generated slug "${slug}" must start with a lowercase letter and contain only ` +
+        `lowercase letters, numbers, and underscores (1-50 characters).`
     );
   }
 }
@@ -103,7 +115,7 @@ function validateContentTypeName(name: string): void {
  * import { defineContentType } from "convex-cms";
  *
  * export const blogPost = defineContentType({
- *   name: "blog_post",
+ *   name: "Blog Post", // Display name → auto-converted to slug "blog_post"
  *   validator: v.object({
  *     title: v.string(),
  *     content: v.string(),
@@ -124,7 +136,7 @@ function validateContentTypeName(name: string): void {
  *
  * ```typescript
  * export const product = defineContentType({
- *   name: "product",
+ *   name: "Product",
  *   validator: v.object({
  *     name: v.string(),
  *     price: v.number(),
@@ -157,7 +169,7 @@ function validateContentTypeName(name: string): void {
  * @param config - The content type configuration
  * @returns A frozen content type definition object
  *
- * @typeParam TName - The literal string type of the content type name
+ * @typeParam TName - The literal string type of the content type name (display or slug)
  * @typeParam TValidator - The Convex validator type
  */
 export function defineContentType<
@@ -165,20 +177,39 @@ export function defineContentType<
   TValidator extends Validator<Record<string, unknown>, "required", string>
 >(
   config: ContentTypeConfig<TValidator> & { name: TName }
-): ContentTypeDefinition<TName, TValidator> {
-  // Validate the content type name at definition time
-  validateContentTypeName(config.name);
+): ContentTypeDefinition<ToSlugType<TName>, TValidator> {
+  const inputName = config.name;
 
-  // Create the definition object
-  const definition: ContentTypeDefinition<TName, TValidator> = {
-    name: config.name,
+  // Determine slug and display name based on input format
+  let slug: string;
+  let displayName: string;
+
+  if (isSlugFormat(inputName)) {
+    // Input is already a valid slug (e.g., "blog_post")
+    slug = inputName;
+    // Use displayName from meta if provided, otherwise derive from slug
+    displayName = config.meta.displayName || inputName;
+  } else {
+    // Input is a display name (e.g., "Blog Post") - convert to slug
+    slug = toSlug(inputName);
+    displayName = inputName;
+  }
+
+  // Validate the generated/provided slug
+  validateSlug(slug, inputName);
+
+  // Create the definition object with both name (display) and slug
+  const definition = {
+    name: displayName,
+    slug: slug,
     validator: config.validator,
     meta: config.meta as ContentTypeMeta,
-    _type: "content_type_definition",
+    _type: "content_type_definition" as const,
   };
 
   // Freeze to prevent accidental mutation
-  return Object.freeze(definition);
+  // Cast to the computed slug type - runtime slug matches type-level ToSlugType
+  return Object.freeze(definition) as ContentTypeDefinition<ToSlugType<TName>, TValidator>;
 }
 
 // =============================================================================
@@ -215,34 +246,34 @@ export function defineContentType<
 export function createContentSchema<
   T extends Record<string, ContentTypeDefinition>
 >(definitions: T): ContentSchemaInstance<T> {
-  // Build a map of name -> definition for quick lookup
-  const byName = new Map<string, ContentTypeDefinition>();
-  const names: string[] = [];
+  // Build a map of slug -> definition for quick lookup
+  const bySlug = new Map<string, ContentTypeDefinition>();
+  const slugs: string[] = [];
 
   for (const [_key, def] of Object.entries(definitions)) {
-    if (byName.has(def.name)) {
+    if (bySlug.has(def.slug)) {
       throw new Error(
-        `Duplicate content type name "${def.name}" in schema. ` +
-          `Content type names must be unique.`
+        `Duplicate content type slug "${def.slug}" in schema. ` +
+          `Content type slugs must be unique.`
       );
     }
-    byName.set(def.name, def);
-    names.push(def.name);
+    bySlug.set(def.slug, def);
+    slugs.push(def.slug);
   }
 
   return Object.freeze({
     definitions,
 
-    getDefinition(name: string): ContentTypeDefinition | undefined {
-      return byName.get(name);
+    getDefinition(slug: string): ContentTypeDefinition | undefined {
+      return bySlug.get(slug);
     },
 
     getContentTypeNames(): string[] {
-      return [...names];
+      return [...slugs];
     },
 
-    hasContentType(name: string): boolean {
-      return byName.has(name);
+    hasContentType(slug: string): boolean {
+      return bySlug.has(slug);
     },
 
     getDefinitionByKey<K extends keyof T>(key: K): T[K] {
@@ -263,27 +294,27 @@ export interface ContentSchemaInstance<
   readonly definitions: T;
 
   /**
-   * Get a content type definition by its name.
+   * Get a content type definition by its slug.
    *
-   * @param name - The content type name (e.g., "blog_post")
+   * @param slug - The content type slug (e.g., "blog_post")
    * @returns The definition or undefined if not found
    */
-  getDefinition(name: string): ContentTypeDefinition | undefined;
+  getDefinition(slug: string): ContentTypeDefinition | undefined;
 
   /**
-   * Get all content type names in the schema.
+   * Get all content type slugs in the schema.
    *
-   * @returns Array of content type names
+   * @returns Array of content type slugs
    */
   getContentTypeNames(): string[];
 
   /**
    * Check if a content type exists in the schema.
    *
-   * @param name - The content type name to check
+   * @param slug - The content type slug to check
    * @returns true if the content type exists
    */
-  hasContentType(name: string): boolean;
+  hasContentType(slug: string): boolean;
 
   /**
    * Get a content type definition by its key in the definitions object.

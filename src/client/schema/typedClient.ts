@@ -474,7 +474,7 @@ export class TypedContentEntriesApiImpl<
 		}
 
 		const entry = await this.baseClient.contentEntries.create(ctx, {
-			contentTypeId: contentType._id,
+			contentTypeName: options.contentTypeName as string,
 			data: options.data as Record<string, unknown>,
 			slug: options.slug,
 			locale: options.locale,
@@ -520,20 +520,8 @@ export class TypedContentEntriesApiImpl<
 		ctx: ConvexContext,
 		options: TypedListEntriesOptions<TName>,
 	): Promise<TypedPaginationResult<SchemaDataType<TSchema, TName>>> {
-		// If filtering by content type name, look up the content type ID
-		let contentTypeId: string | undefined;
-		if (options.contentTypeName) {
-			const contentType = await this.baseClient.contentTypes.getByName(
-				ctx,
-				options.contentTypeName as string,
-			);
-			if (contentType) {
-				contentTypeId = contentType._id;
-			}
-		}
-
 		const result = await this.baseClient.contentEntries.list(ctx, {
-			contentTypeId,
+			contentTypeName: options.contentTypeName as string | undefined,
 			status: options.status,
 			statusIn: options.statusIn,
 			locale: options.locale,
