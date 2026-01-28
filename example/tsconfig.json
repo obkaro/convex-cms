@@ -24,6 +24,7 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
+      "@convex/*": ["./convex/*"],
       "~/*": ["../admin/src/*"],
       "convex-cms/admin": ["../admin/src/embed/index.tsx"],
       "convex-cms/react": ["../src/react/index.ts"],
