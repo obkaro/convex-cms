@@ -1,10 +1,12 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-/* convex-cms admin styles */
+/* convex-cms admin styles - these use Vite aliases */
 @import "convex-cms/admin/theme.css";
 @import "convex-cms/admin/tailwind-config.css";
-@source "convex-cms/admin/src";
+
+/* Tailwind source scanning - use relative path (Tailwind doesn't resolve aliases) */
+@source "../../admin/src/**/*.{ts,tsx}";
 
 @theme {
 	/* Typography - Editorial/Industrial */

@@ -7,7 +7,7 @@
  */
 
 import { createContext, useContext, type ReactNode } from "react";
-import type { BaseAdminAPI } from "convex-cms";
+import type { BaseAdminAPI } from "~/lib/cmsExports";
 
 // CmsAdminApi accepts BaseAdminAPI with optional namespaced exports.
 // This allows the API to work with Convex's FilterApi which removes

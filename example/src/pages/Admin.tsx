@@ -20,6 +20,7 @@ export function Admin() {
 	return (
 		<CmsAdmin
 			api={api.admin}
+			themeMode="inherit"
 			auth={{
 				getUser: () => ({
 					id: "demo-user",

@@ -17,10 +17,7 @@
 		"jsx": "react-jsx",
 		"baseUrl": ".",
 		"paths": {
-			"~/*": ["./src/*"],
-			"convex-cms": ["../src/client/index.ts"],
-			"convex-cms/react": ["../src/react/index.ts"],
-			"convex-cms/*": ["../src/client/*"]
+			"~/*": ["./src/*"]
 		}
 	},
 	"include": ["src", "convex"],

@@ -13,7 +13,19 @@ export default defineConfig({
     alias: {
       "@": path.resolve(__dirname, "./src"),
       "@convex": path.resolve(__dirname, "./convex"),
-      "~": path.resolve(__dirname, "./node_modules/convex-cms/admin/src"),
+      "~": path.resolve(__dirname, "../admin/src"),
+      // CSS paths FIRST (most specific) - Vite matches greedily
+      "convex-cms/admin/theme.css": path.resolve(__dirname, "../admin/src/styles/theme.css"),
+      "convex-cms/admin/tailwind-config.css": path.resolve(__dirname, "../admin/src/styles/tailwind-config.css"),
+      "convex-cms/admin/globals.css": path.resolve(__dirname, "../admin/src/styles/globals.css"),
+      // Subpath exports
+      "convex-cms/admin/src": path.resolve(__dirname, "../admin/src"),
+      "convex-cms/admin": path.resolve(__dirname, "../admin/src/embed/index.tsx"),
+      "convex-cms/react": path.resolve(__dirname, "../src/react/index.ts"),
+      "convex-cms/types": path.resolve(__dirname, "../src/client/types.ts"),
+      "convex-cms/config": path.resolve(__dirname, "../src/client/config.ts"),
+      // Main package LAST
+      "convex-cms": path.resolve(__dirname, "../src/client/index.ts"),
     },
   },
   optimizeDeps: {

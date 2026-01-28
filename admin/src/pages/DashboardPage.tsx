@@ -110,9 +110,9 @@ function DashboardCard({
 }) {
 	return (
 		<button type="button" onClick={onClick} className="text-left">
-			<Card className="h-full transition-colors hover:bg-accent/50">
+			<Card className="h-full transition-colors hover:bg-accent/20 hover:cursor-pointer">
 				<CardHeader className="pb-2">
-					<div className="mb-2 flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+					<div className="mb-2 flex size-10 items-center justify-center rounded-lg bg-primary/5 text-primary">
 						{icon}
 					</div>
 					<CardTitle className="text-base">{title}</CardTitle>
@@ -124,4 +124,3 @@ function DashboardCard({
 		</button>
 	);
 }
-
