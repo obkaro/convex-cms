@@ -458,8 +458,11 @@ function createAdminAPIImpl(
   };
 }
 
-// Base admin API type - inferred from implementation
-export type BaseAdminAPI = ReturnType<typeof createAdminAPIImpl>;
+import type { ToFunctionRefs } from "./types.js";
+
+// Base admin API type - inferred from implementation, converted to FunctionReference types
+// for direct compatibility with React hooks (useQuery, useMutation)
+export type BaseAdminAPI = ToFunctionRefs<ReturnType<typeof createAdminAPIImpl>>;
 
 // Re-export types
 export type {

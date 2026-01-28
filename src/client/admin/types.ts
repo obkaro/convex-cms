@@ -4,7 +4,7 @@
  * Non-derivable types for the Admin API including options, operations, and auth context.
  */
 
-import type { Auth, RegisteredQuery, RegisteredMutation } from "convex/server";
+import type { Auth, RegisteredQuery, RegisteredMutation, FunctionReference } from "convex/server";
 
 /**
  * Operation context passed to the auth callback.
@@ -423,3 +423,25 @@ export type TypedAdminAPI<T extends ContentTypeHelpersSchema, TBase> = {
       : TBase[K]
     : NarrowKey<K, ContentTypeSlugs<T>, TBase[K]>;
 };
+
+// =============================================================================
+// React Hook Compatible Types
+// =============================================================================
+// RegisteredQuery/RegisteredMutation use phantom type parameters which don't
+// structurally match FunctionReference (used by React hooks). This utility
+// converts between the two representations.
+
+/**
+ * Recursively converts all RegisteredQuery/RegisteredMutation types in an object
+ * to their FunctionReference equivalents for use with React hooks.
+ *
+ * This is applied to BaseAdminAPI so the exported type works directly with
+ * useQuery/useMutation without additional type assertions.
+ */
+export type ToFunctionRefs<T> = T extends RegisteredQuery<infer V, infer Args, infer Returns>
+  ? FunctionReference<"query", V, Args, Awaited<Returns>>
+  : T extends RegisteredMutation<infer V, infer Args, infer Returns>
+    ? FunctionReference<"mutation", V, Args, Awaited<Returns>>
+    : T extends object
+      ? { [K in keyof T]: ToFunctionRefs<T[K]> }
+      : T;
