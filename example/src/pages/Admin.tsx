@@ -16,7 +16,6 @@ export function Admin() {
 	return (
 		<CmsAdmin
 			api={api.admin}
-			convexUrl={import.meta.env.VITE_CONVEX_URL!}
 			auth={{
 				getUser: () => ({
 					id: "demo-user",
@@ -31,7 +30,6 @@ export function Admin() {
 			config={{
 				branding: {
 					appName: "Tempo CMS",
-					// logoUrl: "/tempo.svg",
 				},
 			}}
 		/>

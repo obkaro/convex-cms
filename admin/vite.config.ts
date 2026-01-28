@@ -22,4 +22,7 @@ export default defineConfig({
   ],
   // Nitro configuration for Node.js deployment
   nitro: {},
+  optimizeDeps: {
+    exclude: ['use-sync-external-store'],
+  },
 })

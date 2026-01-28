@@ -16,7 +16,6 @@ export interface CmsAdminAuthConfig {
 
 export interface CmsAdminProps {
   api: CmsAdminApi;
-  convexUrl: string;
   config?: Partial<AdminConfig>;
   auth: CmsAdminAuthConfig;
   basePath?: string;

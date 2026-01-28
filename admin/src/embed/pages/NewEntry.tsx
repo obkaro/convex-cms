@@ -18,7 +18,8 @@ export function EmbedNewEntry() {
   const { navigate, navigateToEntry, navigateToContentType } = useEmbedNavigation();
 
   const contentTypeId = params.contentTypeId;
-  const contentType = useQuery(api.getContentType, contentTypeId ? { id: contentTypeId } : "skip");
+  const contentTypeArgs = contentTypeId ? { id: contentTypeId } : ("skip" as const);
+  const contentType = useQuery(api.getContentType, contentTypeArgs);
 
   if (!contentTypeId) {
     return (

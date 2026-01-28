@@ -54,6 +54,7 @@
       "types": "./admin/src/embed/index.tsx",
       "default": "./admin/src/embed/index.tsx"
     },
+    "./admin/globals.css": "./admin/src/styles/globals.css",
     "./admin/theme.css": "./admin/src/styles/theme.css",
     "./admin/tailwind-config.css": "./admin/src/styles/tailwind-config.css",
     "./admin/src": "./admin/src",

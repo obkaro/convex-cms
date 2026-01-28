@@ -1,4 +1,7 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "convex-cms/admin/theme.css";
+@import "convex-cms/admin/tailwind-config.css";
 
 @theme {
   /* Typography - Editorial/Industrial */

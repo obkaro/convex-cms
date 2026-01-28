@@ -21,12 +21,11 @@ export function EmbedEntry() {
 
   const entryId = params.entryId;
 
-  const entry = useQuery(api.getEntry, entryId ? { id: entryId } : "skip");
+  const entryArgs = entryId ? { id: entryId } : ("skip" as const);
+  const entry = useQuery(api.getEntry, entryArgs);
 
-  const contentType = useQuery(
-    api.getContentType,
-    entry ? { name: entry.contentTypeName } : "skip"
-  );
+  const contentTypeArgs = entry ? { name: entry.contentTypeName } : ("skip" as const);
+  const contentType = useQuery(api.getContentType, contentTypeArgs);
 
   if (!entryId) {
     return (

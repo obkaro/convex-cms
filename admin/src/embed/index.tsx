@@ -4,32 +4,38 @@
  * Use this component to embed the CMS admin UI into your existing React app.
  * Provides a fully functional admin interface with router-agnostic navigation.
  *
+ * IMPORTANT: The CmsAdmin component must be rendered within a ConvexProvider.
+ * Your app should already have this if you're using Convex.
+ *
  * @example
  * ```tsx
- * import { CmsAdmin } from "@convex-cms/admin/embed";
+ * import { CmsAdmin } from "convex-cms/admin";
+ * import { api } from "./convex/_generated/api";
  *
  * function App() {
  *   return (
- *     <CmsAdmin
- *       convexUrl="https://your-deployment.convex.cloud"
- *       auth={{
- *         getUser: () => currentUser,
- *         getUserRole: (userId) => userRoles[userId] ?? null,
- *         onLogout: () => signOut(),
- *       }}
- *       config={{
- *         branding: { appName: "My CMS" },
- *         navigation: { showTaxonomies: false },
- *       }}
- *       basePath="/admin"
- *     />
+ *     <ConvexProvider client={convex}>
+ *       <CmsAdmin
+ *         api={api.admin}
+ *         auth={{
+ *           getUser: () => currentUser,
+ *           getUserRole: (userId) => userRoles[userId] ?? null,
+ *           onLogout: () => signOut(),
+ *         }}
+ *         config={{
+ *           branding: { appName: "My CMS" },
+ *           navigation: { showTaxonomies: false },
+ *         }}
+ *         basePath="/admin"
+ *       />
+ *     </ConvexProvider>
  *   );
  * }
  * ```
  */
 
-import { ConvexProvider, ConvexReactClient } from "convex/react";
-import { useMemo, type ReactNode } from "react";
+import { useConvex } from "convex/react";
+import { useMemo } from "react";
 import { SettingsConfigProvider } from "../contexts/SettingsConfigContext";
 import {
   AuthProvider,
@@ -71,36 +77,6 @@ function adaptAuthConfig(auth: CmsAdminAuthConfig): {
     getUserRole: ({ userId }) => auth.getUserRole(userId),
     onLogout: auth.onLogout ?? (() => {}),
   };
-}
-
-function ConvexProviderWrapper({
-  convexUrl,
-  children,
-}: {
-  convexUrl: string;
-  children: ReactNode;
-}) {
-  const convex = useMemo(() => {
-    if (!convexUrl) return null;
-    return new ConvexReactClient(convexUrl);
-  }, [convexUrl]);
-
-  if (!convex) {
-    return (
-      <div className="flex min-h-full items-center justify-center bg-background p-6">
-        <div className="diff-modified max-w-lg space-y-4 rounded-lg border p-6 text-center">
-          <h2 className="text-xl font-semibold text-diff-modified">
-            Convex Configuration Required
-          </h2>
-          <p className="text-sm text-diff-modified-foreground">
-            Please provide a valid convexUrl prop to the CmsAdmin component.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  return <ConvexProvider client={convex}>{children}</ConvexProvider>;
 }
 
 function EmbedRouter() {
@@ -147,7 +123,6 @@ function EmbedRouter() {
 
 export function CmsAdmin({
   api,
-  convexUrl,
   config,
   auth,
   basePath = "/admin",
@@ -158,6 +133,7 @@ export function CmsAdmin({
   initialRoute?: EmbedRoute;
   onNavigate?: (path: string, params: Record<string, string>) => void;
 }) {
+  const convex = useConvex();
   const adminConfig = useMemo(() => resolveAdminConfig(config), [config]);
   const authConfig = useMemo(() => adaptAuthConfig(auth), [auth]);
   const settingsApi = useMemo(
@@ -165,31 +141,45 @@ export function CmsAdmin({
     [api]
   );
 
+  if (!convex) {
+    return (
+      <div className="flex min-h-full items-center justify-center bg-background p-6">
+        <div className="diff-modified max-w-lg space-y-4 rounded-lg border p-6 text-center">
+          <h2 className="text-xl font-semibold text-diff-modified">
+            ConvexProvider Required
+          </h2>
+          <p className="text-sm text-diff-modified-foreground">
+            CmsAdmin must be rendered within a ConvexProvider. Wrap your app or
+            this component with ConvexProvider.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={className}>
       <ApiProvider api={api}>
         <ThemeProvider>
-          <ConvexProviderWrapper convexUrl={convexUrl}>
-            <SettingsConfigProvider baseConfig={adminConfig} api={settingsApi}>
-              <AuthProvider
-                getUser={authConfig.getUser}
-                getUserRole={authConfig.getUserRole}
-                onLogout={authConfig.onLogout}
+          <SettingsConfigProvider baseConfig={adminConfig} api={settingsApi}>
+            <AuthProvider
+              getUser={authConfig.getUser}
+              getUserRole={authConfig.getUserRole}
+              onLogout={authConfig.onLogout}
+            >
+              <EmbedNavigationProvider
+                initialRoute={initialRoute}
+                basePath={basePath}
+                onNavigate={onNavigate}
               >
-                <EmbedNavigationProvider
-                  initialRoute={initialRoute}
-                  basePath={basePath}
-                  onNavigate={onNavigate}
-                >
-                  <RouteGuard>
-                    <div className="min-h-screen">
-                      <EmbedRouter />
-                    </div>
-                  </RouteGuard>
-                </EmbedNavigationProvider>
-              </AuthProvider>
-            </SettingsConfigProvider>
-          </ConvexProviderWrapper>
+                <RouteGuard>
+                  <div className="min-h-screen">
+                    <EmbedRouter />
+                  </div>
+                </RouteGuard>
+              </EmbedNavigationProvider>
+            </AuthProvider>
+          </SettingsConfigProvider>
         </ThemeProvider>
       </ApiProvider>
     </div>

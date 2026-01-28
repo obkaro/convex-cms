@@ -17,4 +17,7 @@ export default defineConfig({
       "~": path.resolve(__dirname, "./node_modules/convex-cms/admin/src"),
     },
   },
+  optimizeDeps: {
+    exclude: ["use-sync-external-store"],
+  },
 });
