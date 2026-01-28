@@ -46,6 +46,7 @@ import {
 import { ThemeProvider } from "../contexts/ThemeContext";
 import { RouteGuard } from "../components/RouteGuard";
 import { resolveAdminConfig } from "../lib/admin-config";
+import { cn } from "../lib/cn";
 import type { CmsAdminProps, CmsAdminAuthConfig } from "./types";
 import { ApiProvider } from "./contexts/ApiContext";
 import {
@@ -127,6 +128,7 @@ export function CmsAdmin({
   auth,
   basePath = "/admin",
   className,
+  themeMode = "isolated",
   initialRoute = "dashboard",
   onNavigate,
 }: CmsAdminProps & {
@@ -143,7 +145,10 @@ export function CmsAdmin({
 
   if (!convex) {
     return (
-      <div className="flex min-h-full items-center justify-center bg-background p-6">
+      <div
+        className={cn("flex h-full items-center justify-center bg-background p-6", className)}
+        data-cms-admin={themeMode}
+      >
         <div className="diff-modified max-w-lg space-y-4 rounded-lg border p-6 text-center">
           <h2 className="text-xl font-semibold text-diff-modified">
             ConvexProvider Required
@@ -158,7 +163,7 @@ export function CmsAdmin({
   }
 
   return (
-    <div className={className}>
+    <div className={cn("h-full", className)} data-cms-admin={themeMode}>
       <ApiProvider api={api}>
         <ThemeProvider>
           <SettingsConfigProvider baseConfig={adminConfig} api={settingsApi}>
@@ -173,9 +178,7 @@ export function CmsAdmin({
                 onNavigate={onNavigate}
               >
                 <RouteGuard>
-                  <div className="min-h-screen">
-                    <EmbedRouter />
-                  </div>
+                  <EmbedRouter />
                 </RouteGuard>
               </EmbedNavigationProvider>
             </AuthProvider>

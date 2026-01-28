@@ -20,4 +20,10 @@ export interface CmsAdminProps {
   auth: CmsAdminAuthConfig;
   basePath?: string;
   className?: string;
+  /**
+   * Theme mode for CSS variable scoping:
+   * - 'isolated' (default): Admin uses its own theme, ignores parent app styles
+   * - 'inherit': Admin inherits parent app's CSS variables (for shadcn apps)
+   */
+  themeMode?: "isolated" | "inherit";
 }

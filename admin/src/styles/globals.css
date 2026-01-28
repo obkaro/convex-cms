@@ -12,7 +12,16 @@
     @apply border-border;
   }
 
+  /* Standalone mode - admin owns the document */
   body {
+    @apply bg-background text-foreground;
+    font-feature-settings: 'rlig' 1, 'calt' 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Embedded mode - scope styles to container */
+  [data-cms-admin] {
     @apply bg-background text-foreground;
     font-feature-settings: 'rlig' 1, 'calt' 1;
     -webkit-font-smoothing: antialiased;

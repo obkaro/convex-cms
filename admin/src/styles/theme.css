@@ -2,10 +2,13 @@
    CMS Admin Theme - CSS Custom Properties
    Professional & Clean (Linear/Notion aesthetic)
 
-   Consumers can import this file and override
-   any variable in their own :root {} block.
+   Theme modes:
+   - Standalone: Uses :root for the entire document
+   - Isolated (embedded): Admin uses its own theme via [data-cms-admin="isolated"]
+   - Inherit (embedded): Admin inherits parent's colors via [data-cms-admin="inherit"]
    ============================================ */
 
+/* Standalone mode - admin owns the document */
 :root {
   /* Main colors */
   --background: hsl(0 0% 98%);
@@ -64,7 +67,106 @@
   --info-foreground: hsl(217 91% 30%);
 }
 
-.dark {
+/* Isolated mode - forces admin's own theme, ignores parent styles */
+[data-cms-admin="isolated"] {
+  /* Main colors */
+  --background: hsl(0 0% 98%);
+  --foreground: hsl(240 10% 3.9%);
+  --card: hsl(0 0% 100%);
+  --card-foreground: hsl(240 10% 3.9%);
+  --popover: hsl(0 0% 100%);
+  --popover-foreground: hsl(240 10% 3.9%);
+  --primary: hsl(240 5.9% 10%);
+  --primary-foreground: hsl(0 0% 98%);
+  --secondary: hsl(240 4.8% 95.9%);
+  --secondary-foreground: hsl(240 5.9% 10%);
+  --muted: hsl(240 4.8% 95.9%);
+  --muted-foreground: hsl(240 3.8% 46.1%);
+  --accent: hsl(240 4.8% 95.9%);
+  --accent-foreground: hsl(240 5.9% 10%);
+  --destructive: hsl(0 84.2% 60.2%);
+  --destructive-foreground: hsl(0 0% 98%);
+  --border: hsl(240 5.9% 90%);
+  --input: hsl(240 5.9% 90%);
+  --ring: hsl(240 5.9% 10%);
+
+  /* Sidebar */
+  --sidebar: hsl(0 0% 98%);
+  --sidebar-foreground: hsl(240 5.3% 26.1%);
+  --sidebar-primary: hsl(240 5.9% 10%);
+  --sidebar-primary-foreground: hsl(0 0% 98%);
+  --sidebar-accent: hsl(240 4.8% 95.9%);
+  --sidebar-accent-foreground: hsl(240 5.9% 10%);
+  --sidebar-border: hsl(220 13% 91%);
+  --sidebar-ring: hsl(217.2 91.2% 59.8%);
+
+  /* Semantic: Diff/Change indicators */
+  --diff-added: hsl(142 76% 36%);
+  --diff-added-bg: hsl(142 76% 95%);
+  --diff-added-border: hsl(142 76% 85%);
+  --diff-added-foreground: hsl(142 76% 25%);
+
+  --diff-removed: hsl(0 84% 60%);
+  --diff-removed-bg: hsl(0 86% 97%);
+  --diff-removed-border: hsl(0 93% 85%);
+  --diff-removed-foreground: hsl(0 72% 30%);
+
+  --diff-modified: hsl(38 92% 50%);
+  --diff-modified-bg: hsl(48 96% 97%);
+  --diff-modified-border: hsl(48 96% 82%);
+  --diff-modified-foreground: hsl(38 92% 25%);
+
+  /* Semantic: Success/Warning/Info states */
+  --success: hsl(142 76% 36%);
+  --success-foreground: hsl(0 0% 100%);
+  --warning: hsl(38 92% 50%);
+  --warning-foreground: hsl(0 0% 100%);
+  --info: hsl(217 91% 60%);
+  --info-bg: hsl(214 95% 97%);
+  --info-foreground: hsl(217 91% 30%);
+}
+
+/* Inherit mode - uses parent's colors with fallbacks for layout */
+[data-cms-admin="inherit"] {
+  /* Sidebar variables with fallbacks (prevents broken layout) */
+  --sidebar: var(--sidebar, hsl(0 0% 98%));
+  --sidebar-foreground: var(--sidebar-foreground, hsl(240 5.3% 26.1%));
+  --sidebar-primary: var(--sidebar-primary, hsl(240 5.9% 10%));
+  --sidebar-primary-foreground: var(--sidebar-primary-foreground, hsl(0 0% 98%));
+  --sidebar-accent: var(--sidebar-accent, hsl(240 4.8% 95.9%));
+  --sidebar-accent-foreground: var(--sidebar-accent-foreground, hsl(240 5.9% 10%));
+  --sidebar-border: var(--sidebar-border, hsl(220 13% 91%));
+  --sidebar-ring: var(--sidebar-ring, hsl(217.2 91.2% 59.8%));
+
+  /* Semantic variables with fallbacks */
+  --diff-added: var(--diff-added, hsl(142 76% 36%));
+  --diff-added-bg: var(--diff-added-bg, hsl(142 76% 95%));
+  --diff-added-border: var(--diff-added-border, hsl(142 76% 85%));
+  --diff-added-foreground: var(--diff-added-foreground, hsl(142 76% 25%));
+
+  --diff-removed: var(--diff-removed, hsl(0 84% 60%));
+  --diff-removed-bg: var(--diff-removed-bg, hsl(0 86% 97%));
+  --diff-removed-border: var(--diff-removed-border, hsl(0 93% 85%));
+  --diff-removed-foreground: var(--diff-removed-foreground, hsl(0 72% 30%));
+
+  --diff-modified: var(--diff-modified, hsl(38 92% 50%));
+  --diff-modified-bg: var(--diff-modified-bg, hsl(48 96% 97%));
+  --diff-modified-border: var(--diff-modified-border, hsl(48 96% 82%));
+  --diff-modified-foreground: var(--diff-modified-foreground, hsl(38 92% 25%));
+
+  --success: var(--success, hsl(142 76% 36%));
+  --success-foreground: var(--success-foreground, hsl(0 0% 100%));
+  --warning: var(--warning, hsl(38 92% 50%));
+  --warning-foreground: var(--warning-foreground, hsl(0 0% 100%));
+  --info: var(--info, hsl(217 91% 60%));
+  --info-bg: var(--info-bg, hsl(214 95% 97%));
+  --info-foreground: var(--info-foreground, hsl(217 91% 30%));
+}
+
+/* Dark mode - standalone and isolated modes */
+.dark,
+[data-cms-admin="isolated"].dark,
+[data-cms-admin="isolated"] .dark {
   /* Main colors */
   --background: hsl(240 10% 3.9%);
   --foreground: hsl(0 0% 98%);
@@ -120,4 +222,40 @@
   --info: hsl(217 80% 60%);
   --info-bg: hsl(217 50% 15%);
   --info-foreground: hsl(217 80% 80%);
+}
+
+/* Dark mode sidebar fallbacks for inherit mode */
+[data-cms-admin="inherit"].dark,
+[data-cms-admin="inherit"] .dark {
+  --sidebar: var(--sidebar, hsl(240 5.9% 10%));
+  --sidebar-foreground: var(--sidebar-foreground, hsl(240 4.8% 95.9%));
+  --sidebar-primary: var(--sidebar-primary, hsl(224.3 76.3% 48%));
+  --sidebar-primary-foreground: var(--sidebar-primary-foreground, hsl(0 0% 100%));
+  --sidebar-accent: var(--sidebar-accent, hsl(240 3.7% 15.9%));
+  --sidebar-accent-foreground: var(--sidebar-accent-foreground, hsl(240 4.8% 95.9%));
+  --sidebar-border: var(--sidebar-border, hsl(240 3.7% 15.9%));
+  --sidebar-ring: var(--sidebar-ring, hsl(217.2 91.2% 59.8%));
+
+  --diff-added: var(--diff-added, hsl(142 70% 50%));
+  --diff-added-bg: var(--diff-added-bg, hsl(142 50% 15%));
+  --diff-added-border: var(--diff-added-border, hsl(142 50% 25%));
+  --diff-added-foreground: var(--diff-added-foreground, hsl(142 70% 80%));
+
+  --diff-removed: var(--diff-removed, hsl(0 70% 55%));
+  --diff-removed-bg: var(--diff-removed-bg, hsl(0 50% 15%));
+  --diff-removed-border: var(--diff-removed-border, hsl(0 50% 25%));
+  --diff-removed-foreground: var(--diff-removed-foreground, hsl(0 70% 80%));
+
+  --diff-modified: var(--diff-modified, hsl(38 80% 55%));
+  --diff-modified-bg: var(--diff-modified-bg, hsl(38 50% 15%));
+  --diff-modified-border: var(--diff-modified-border, hsl(38 50% 25%));
+  --diff-modified-foreground: var(--diff-modified-foreground, hsl(38 80% 80%));
+
+  --success: var(--success, hsl(142 70% 50%));
+  --success-foreground: var(--success-foreground, hsl(0 0% 100%));
+  --warning: var(--warning, hsl(38 80% 55%));
+  --warning-foreground: var(--warning-foreground, hsl(0 0% 100%));
+  --info: var(--info, hsl(217 80% 60%));
+  --info-bg: var(--info-bg, hsl(217 50% 15%));
+  --info-foreground: var(--info-foreground, hsl(217 80% 80%));
 }

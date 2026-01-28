@@ -3,6 +3,7 @@
  *
  * A router-agnostic layout for the embedded admin that uses
  * EmbedSidebar instead of the router-dependent Sidebar.
+ * Uses CSS Grid for proper container-relative positioning.
  */
 
 import type { ReactNode } from "react";
@@ -18,9 +19,12 @@ export function EmbedLayout({ children }: EmbedLayoutProps) {
   const { layout } = useAdminConfig();
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div
+      className="grid h-full bg-background"
+      style={{ gridTemplateColumns: `${layout.sidebarWidth}px 1fr` }}
+    >
       <EmbedSidebar />
-      <div className="flex flex-1 flex-col" style={{ marginLeft: layout.sidebarWidth }}>
+      <div className="flex flex-col overflow-hidden">
         <EmbedHeader />
         <main className="flex-1 overflow-auto p-6">{children}</main>
       </div>
