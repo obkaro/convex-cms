@@ -1,13 +1,24 @@
-import { useQuery } from "convex/react";
+import { useQuery, type FunctionReference } from "convex/react";
 import { createContext, useContext, useMemo, type ReactNode } from "react";
-import { api as localApi } from "../../convex/_generated/api";
 import type { AdminConfig } from "~/lib/admin-config";
 import { AdminConfigProvider } from "./AdminConfigContext";
 
-type Settings = NonNullable<typeof localApi.admin.getSettings._returnType>;
+/**
+ * Settings returned by the getSettings query.
+ * This type is defined explicitly to avoid importing from convex/_generated.
+ */
+export interface Settings {
+  features: {
+    versioning: boolean;
+    scheduling: boolean;
+    localization: boolean;
+    mediaManagement: boolean;
+  };
+}
 
 type SettingsApi = {
-  getSettings: typeof localApi.admin.getSettings;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  getSettings: FunctionReference<"query", "public", Record<string, never>, Settings | null>;
 };
 
 interface SettingsConfigContextValue {
@@ -26,8 +37,8 @@ export function SettingsConfigProvider({
   children: ReactNode;
   api?: SettingsApi;
 }) {
-  const resolvedApi = api ?? localApi.admin;
-  const settings = useQuery(resolvedApi.getSettings);
+  // Use skip pattern when api is not provided
+  const settings = useQuery(api?.getSettings ?? "skip") as Settings | undefined;
 
   const mergedConfig = useMemo((): AdminConfig => {
     if (!settings) return baseConfig;

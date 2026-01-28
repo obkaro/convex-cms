@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { useQuery, useMutation } from 'convex/react'
-import { api } from '../../../convex/_generated/api'
+import { useApi } from '~/embed/contexts/ApiContext'
 import { Badge } from '~/components/ui/badge'
 import { Input } from '~/components/ui/input'
 import { Button } from '~/components/ui/button'
@@ -32,6 +32,7 @@ export function MediaTaxonomyPicker({
   disabled = false,
   className = '',
 }: MediaTaxonomyPickerProps) {
+  const api = useApi()
   const [inputValue, setInputValue] = useState('')
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(0)
@@ -42,14 +43,14 @@ export function MediaTaxonomyPicker({
   const suggestionsRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
-  const currentTerms = useQuery(api.admin.getTermsByMedia, {
+  const currentTerms = useQuery(api.getTermsByMedia, {
     mediaId,
     taxonomyId,
   })
 
   const selectedTermIds = currentTerms?.map((t: TaxonomyTermDisplay) => t._id) ?? []
 
-  const suggestionsResult = useQuery(api.admin.suggestTerms, {
+  const suggestionsResult = useQuery(api.suggestTerms, {
     taxonomyId,
     query: inputValue,
     limit: 10,
@@ -57,8 +58,8 @@ export function MediaTaxonomyPicker({
   })
   const suggestions = (suggestionsResult ?? []) as TaxonomyTermDisplay[]
 
-  const setMediaTermsMutation = useMutation(api.admin.setMediaTerms)
-  const createTermMutation = useMutation(api.admin.createTermAndAddToMedia)
+  const setMediaTermsMutation = useMutation(api.setMediaTerms)
+  const createTermMutation = useMutation(api.createTermAndAddToMedia)
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {

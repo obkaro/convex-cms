@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { useQuery } from 'convex/react'
-import { api } from '../../../convex/_generated/api'
+import { useApi } from '~/embed/contexts/ApiContext'
 import { FieldWrapper } from './FieldWrapper'
 import type { BaseFieldProps } from './types'
 import { asTaxonomyId } from '../../types'
@@ -41,6 +41,7 @@ export function CategoryField({
   id,
   placeholder = 'Select category...',
 }: CategoryFieldProps) {
+  const api = useApi()
   const fieldId = id || `field-${field.name}`
   const taxonomyId = field.options?.taxonomyId
   const allowMultiple = field.options?.allowMultiple ?? false
@@ -52,7 +53,7 @@ export function CategoryField({
   const containerRef = useRef<HTMLDivElement>(null)
 
   const hierarchyResult = useQuery(
-    api.admin.getTermsHierarchy,
+    api.getTermsHierarchy,
     taxonomyId ? { taxonomyId: asTaxonomyId(taxonomyId) } : 'skip'
   )
   const categoryTree = (hierarchyResult ?? []) as CategoryTerm[]

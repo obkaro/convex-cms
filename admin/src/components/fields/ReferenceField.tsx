@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo } from 'react'
 import { useQuery } from 'convex/react'
-import { api } from '../../../convex/_generated/api'
+import { useApi } from '~/embed/contexts/ApiContext'
 import { FieldWrapper } from './FieldWrapper'
 import type { BaseFieldProps } from './types'
 import {
@@ -62,6 +62,7 @@ export function ReferenceField({
   id,
   placeholder = 'Select content...',
 }: ReferenceFieldProps) {
+  const api = useApi()
   const fieldId = id || `field-${field.name}`
   const [showPicker, setShowPicker] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -75,7 +76,7 @@ export function ReferenceField({
     return Array.isArray(value) ? value : [value]
   }, [value])
 
-  const contentTypes = useQuery(api.admin.listContentTypes, {
+  const contentTypes = useQuery(api.listContentTypes, {
     isActive: true,
     includeEntryCounts: false,
   })
@@ -91,12 +92,12 @@ export function ReferenceField({
   }, [contentTypes?.page, allowedContentTypes])
 
   const selectedEntry = useQuery(
-    api.admin.getEntry,
+    api.getEntry,
     selectedIds.length === 1 ? { id: selectedIds[0] } : 'skip'
   )
 
   const selectedEntries = useQuery(
-    api.admin.listEntries,
+    api.listEntries,
     selectedIds.length > 1
       ? {
           paginationOpts: { numItems: 100, cursor: null },
@@ -110,7 +111,7 @@ export function ReferenceField({
   }, [selectedEntries?.page, selectedIds])
 
   const entriesResult = useQuery(
-    api.admin.listEntries,
+    api.listEntries,
     showPicker
       ? {
           contentTypeName: contentTypeFilter || undefined,

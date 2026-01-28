@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 import { useQuery } from 'convex/react'
-import { api } from '../../../convex/_generated/api'
+import { useApi } from '~/embed/contexts/ApiContext'
 // IDs are strings when crossing component boundaries
 import { FieldWrapper } from './FieldWrapper'
 import type { BaseFieldProps } from './types'
@@ -96,6 +96,7 @@ export function MediaField({
   id,
   placeholder = 'Select media...',
 }: MediaFieldProps) {
+  const api = useApi()
   const fieldId = id || `field-${field.name}`
   const [showPicker, setShowPicker] = useState(false)
   const [activeTab, setActiveTab] = useState<string>('browse')
@@ -105,12 +106,12 @@ export function MediaField({
   const allowedMimeTypes = field.options?.allowedMimeTypes ?? []
 
   const selectedAsset = useQuery(
-    api.admin.getMediaAsset,
+    api.getMediaAsset,
     value ? { id: value } : 'skip'
   )
 
   const assetsResult = useQuery(
-    api.admin.listMediaAssets,
+    api.listMediaAssets,
     showPicker
       ? {
           type: typeFilter
@@ -345,8 +346,8 @@ export function MediaField({
 
             <TabsContent value="upload" className="mt-4">
               <UploadDropzone
-                generateUploadUrl={api.admin.generateUploadUrl}
-                createAsset={api.admin.createMediaAsset}
+                generateUploadUrl={api.generateUploadUrl}
+                createAsset={api.createMediaAsset}
                 onUploadComplete={handleUploadComplete}
                 allowedMimeTypes={allowedMimeTypes}
                 maxFileSize={field.options?.maxFileSize}

@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react'
 import { useMutation, useQuery } from 'convex/react'
-import { api } from '../../../convex/_generated/api'
+import { useApi } from '~/embed/contexts/ApiContext'
 import { CmsDialog } from '~/components/cmsds/CmsDialog'
 import { CmsButton } from '~/components/cmsds/CmsButton'
 import { CmsField } from '~/components/cmsds/CmsField'
@@ -30,6 +30,7 @@ export function MediaAssetEditDialog({
   onOpenChange,
   onSaved,
 }: MediaAssetEditDialogProps) {
+  const api = useApi()
   const [name, setName] = useState('')
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -38,9 +39,9 @@ export function MediaAssetEditDialog({
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState('')
 
-  const updateAsset = useMutation(api.admin.updateMediaAsset)
+  const updateAsset = useMutation(api.updateMediaAsset)
 
-  const taxonomiesResult = useQuery(api.admin.listTaxonomies, {
+  const taxonomiesResult = useQuery(api.listTaxonomies, {
     isActive: true,
     paginationOpts: { numItems: 50, cursor: null },
   })

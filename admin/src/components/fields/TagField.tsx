@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect, useId } from 'react'
 import { useQuery, useMutation } from 'convex/react'
-import { api } from '../../../convex/_generated/api'
+import { useApi } from '~/embed/contexts/ApiContext'
 import { FieldWrapper } from './FieldWrapper'
 import type { BaseFieldProps } from './types'
 import { asTaxonomyId, asTaxonomyTermIds } from '../../types'
@@ -34,6 +34,7 @@ export function TagField({
   id,
   placeholder = 'Add tags...',
 }: TagFieldProps) {
+  const api = useApi()
   const generatedId = useId()
   const fieldId = id ?? `field-${field.name}-${generatedId}`
   const taxonomyId = field.options?.taxonomyId
@@ -51,7 +52,7 @@ export function TagField({
   const containerRef = useRef<HTMLDivElement>(null)
 
   const suggestionsResult = useQuery(
-    api.admin.suggestTerms,
+    api.suggestTerms,
     taxonomyId
       ? {
           taxonomyId: asTaxonomyId(taxonomyId),
@@ -64,7 +65,7 @@ export function TagField({
   const suggestions = suggestionsResult ?? []
 
   const selectedTermsResult = useQuery(
-    api.admin.listTerms,
+    api.listTerms,
     taxonomyId && value && value.length > 0
       ? {
           taxonomyId: asTaxonomyId(taxonomyId),
@@ -82,7 +83,7 @@ export function TagField({
     }
   }
 
-  const createTermMutation = useMutation(api.admin.createTerm)
+  const createTermMutation = useMutation(api.createTerm)
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {

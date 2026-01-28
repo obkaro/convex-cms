@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react'
 import { useMutation } from 'convex/react'
-import { api } from '../../convex/_generated/api'
+import { useApi } from '~/embed/contexts/ApiContext'
 import { CmsDialog } from '~/components/cmsds/CmsDialog'
 import { CmsButton } from '~/components/cmsds/CmsButton'
 import { Input } from '~/components/ui/input'
@@ -49,8 +49,9 @@ export function TaxonomyEditor({
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(false)
 
-  const createTaxonomy = useMutation(api.admin.createTaxonomy)
-  const updateTaxonomy = useMutation(api.admin.updateTaxonomy)
+  const api = useApi()
+  const createTaxonomy = useMutation(api.createTaxonomy)
+  const updateTaxonomy = useMutation(api.updateTaxonomy)
 
   useEffect(() => {
     if (taxonomy) {

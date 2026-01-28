@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 import { useQuery, useMutation } from 'convex/react'
-import { api } from '../../convex/_generated/api'
+import { useApi } from '~/embed/contexts/ApiContext'
 import { VersionCompare } from './VersionCompare'
 import { VersionRollbackModal } from './VersionRollbackModal'
 import { CmsButton } from '~/components/cmsds/CmsButton'
@@ -34,6 +34,7 @@ export function VersionHistory({
   onRollbackComplete,
   onClose,
 }: VersionHistoryProps) {
+  const api = useApi()
   const [selectedVersions, setSelectedVersions] = useState<
     [number, number] | null
   >(null)
@@ -42,12 +43,12 @@ export function VersionHistory({
   const [rollbackError, setRollbackError] = useState<string | null>(null)
   const [rollbackSuccess, setRollbackSuccess] = useState(false)
 
-  const versionsQuery = useQuery(api.admin.getVersionHistory, {
+  const versionsQuery = useQuery(api.getVersionHistory, {
     entryId,
     paginationOpts: { numItems: 50, cursor: null },
   })
 
-  const rollbackMutation = useMutation(api.admin.rollbackVersion)
+  const rollbackMutation = useMutation(api.rollbackVersion)
 
   const versions = (versionsQuery?.page ?? []) as VersionItem[]
   const isLoading = versionsQuery === undefined

@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 import { useMutation } from 'convex/react'
-import { api } from '../../convex/_generated/api'
+import { useApi } from '~/embed/contexts/ApiContext'
 import { BulkOperationModal } from './BulkOperationModal'
 import { CmsButton } from '~/components/cmsds/CmsButton'
 import { Badge } from '~/components/ui/badge'
@@ -19,6 +19,7 @@ export function BulkActionBar({
   onClearSelection,
   onOperationComplete,
 }: BulkActionBarProps) {
+  const api = useApi()
   const [activeAction, setActiveAction] = useState<BulkAction | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
   const [result, setResult] = useState<{
@@ -27,10 +28,10 @@ export function BulkActionBar({
     errors?: string[]
   } | null>(null)
 
-  const bulkPublish = useMutation(api.admin.bulkPublish)
-  const bulkUnpublish = useMutation(api.admin.bulkUnpublish)
-  const bulkDelete = useMutation(api.admin.bulkDelete)
-  const bulkUpdate = useMutation(api.admin.bulkUpdate)
+  const bulkPublish = useMutation(api.bulkPublish)
+  const bulkUnpublish = useMutation(api.bulkUnpublish)
+  const bulkDelete = useMutation(api.bulkDelete)
+  const bulkUpdate = useMutation(api.bulkUpdate)
 
   const handleAction = useCallback((action: BulkAction) => {
     setActiveAction(action)

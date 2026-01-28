@@ -5,7 +5,7 @@ import { Layers, ChevronDown } from "lucide-react";
 import { cn } from "~/lib/cn";
 import { useAdminConfig } from "~/contexts";
 import { Icon } from "~/lib/icons";
-import { api } from "../../convex/_generated/api";
+import { useApi } from "~/embed/contexts/ApiContext";
 import {
   Collapsible,
   CollapsibleTrigger,
@@ -19,10 +19,11 @@ export function Sidebar() {
   const currentPath = routerState.location.pathname;
   const config = useAdminConfig();
   const { navItems, branding, layout } = config;
+  const api = useApi();
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-  const contentTypesResult = useQuery(api.admin.listContentTypes, {
+  const contentTypesResult = useQuery(api.listContentTypes, {
     isActive: true,
   });
   const contentTypes = contentTypesResult?.page ?? [];

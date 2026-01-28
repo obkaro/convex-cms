@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo } from 'react'
 import { useQuery } from 'convex/react'
-import { api } from '../../../convex/_generated/api'
+import { useApi } from '~/embed/contexts/ApiContext'
 import { CmsButton } from '~/components/cmsds/CmsButton'
 import {
   Popover,
@@ -46,10 +46,11 @@ export function TaxonomyFilter({
   disabled = false,
   className,
 }: TaxonomyFilterProps) {
+  const api = useApi()
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
 
-  const taxonomiesResult = useQuery(api.admin.listTaxonomies, { isActive: true })
+  const taxonomiesResult = useQuery(api.listTaxonomies, { isActive: true })
   const taxonomies = taxonomiesResult?.page ?? []
 
   const activeTaxonomy = useMemo(() => {
@@ -62,7 +63,7 @@ export function TaxonomyFilter({
   const targetTaxonomyId = taxonomyId ?? taxonomies[0]?._id
 
   const termsResult = useQuery(
-    api.admin.listTerms,
+    api.listTerms,
     targetTaxonomyId
       ? {
           taxonomyId: targetTaxonomyId,

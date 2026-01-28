@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react'
 import { useMutation } from 'convex/react'
-import { api } from '../../../convex/_generated/api'
+import { useApi } from '~/embed/contexts/ApiContext'
 import { CmsDialog } from '~/components/cmsds/CmsDialog'
 import { CmsButton } from '~/components/cmsds/CmsButton'
 import { CmsField } from '~/components/cmsds/CmsField'
@@ -26,12 +26,13 @@ export function MediaFolderEditDialog({
   onOpenChange,
   onSaved,
 }: MediaFolderEditDialogProps) {
+  const api = useApi()
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState('')
 
-  const updateFolder = useMutation(api.admin.updateMediaFolder)
+  const updateFolder = useMutation(api.updateMediaFolder)
 
   useEffect(() => {
     if (folder) {

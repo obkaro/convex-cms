@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { useMutation } from "convex/react";
-import { api } from "../../convex/_generated/api";
+import { useApi } from "~/embed/contexts/ApiContext";
 import type { FieldType, ContentType } from "convex-cms/types";
 import { CmsDialog } from "~/components/cmsds/CmsDialog";
 import { CmsButton } from "~/components/cmsds/CmsButton";
@@ -191,8 +191,9 @@ export function ContentTypeFormModal({
 	const [showBreakingWarning, setShowBreakingWarning] = useState(false);
 	const [isForceUpdating, setIsForceUpdating] = useState(false);
 
-	const createContentType = useMutation(api.admin.createContentType);
-	const updateContentType = useMutation(api.admin.updateContentType);
+	const api = useApi();
+	const createContentType = useMutation(api.createContentType);
+	const updateContentType = useMutation(api.updateContentType);
 
 	// Populate form when editing
 	useEffect(() => {

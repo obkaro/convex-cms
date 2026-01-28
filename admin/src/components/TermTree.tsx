@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 import { useQuery, useMutation } from 'convex/react'
-import { api } from '../../convex/_generated/api'
+import { useApi } from '~/embed/contexts/ApiContext'
 import { CmsDialog, CmsConfirmDialog } from '~/components/cmsds/CmsDialog'
 import { CmsButton } from '~/components/cmsds/CmsButton'
 import { CmsEmptyState } from '~/components/cmsds/CmsEmptyState'
@@ -34,6 +34,7 @@ export function TermTree({
   isHierarchical,
   allowInlineCreation,
 }: TermTreeProps) {
+  const api = useApi()
   const [expandedTerms, setExpandedTerms] = useState<Set<string>>(new Set())
   const [editingTerm, setEditingTerm] = useState<Term | null>(null)
   const [showCreateModal, setShowCreateModal] = useState(false)
@@ -42,10 +43,10 @@ export function TermTree({
   const [error, setError] = useState<string | null>(null)
 
   const termsQuery = isHierarchical
-    ? useQuery(api.admin.getTermsHierarchy, { taxonomyId })
-    : useQuery(api.admin.listTerms, { taxonomyId })
+    ? useQuery(api.getTermsHierarchy, { taxonomyId })
+    : useQuery(api.listTerms, { taxonomyId })
 
-  const deleteTerm = useMutation(api.admin.deleteTerm)
+  const deleteTerm = useMutation(api.deleteTerm)
 
   const terms = (
     isHierarchical ? termsQuery : (termsQuery as { page?: Term[] })?.page
@@ -304,8 +305,9 @@ function TermEditModal({
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(false)
 
-  const createTerm = useMutation(api.admin.createTerm)
-  const updateTerm = useMutation(api.admin.updateTerm)
+  const api = useApi()
+  const createTerm = useMutation(api.createTerm)
+  const updateTerm = useMutation(api.updateTerm)
 
   const handleChange = useCallback(
     (field: keyof typeof formData, value: string | number) => {

@@ -1,5 +1,5 @@
 import { useQuery } from 'convex/react'
-import { api } from '../../convex/_generated/api'
+import { useApi } from '~/embed/contexts/ApiContext'
 import { CmsButton } from '~/components/cmsds/CmsButton'
 import { Badge } from '~/components/ui/badge'
 import { ScrollArea } from '~/components/ui/scroll-area'
@@ -47,7 +47,8 @@ export function VersionCompare({
   onClose,
   onRollback,
 }: VersionCompareProps) {
-  const comparisonQuery = useQuery(api.admin.compareVersions, {
+  const api = useApi()
+  const comparisonQuery = useQuery(api.compareVersions, {
     entryId,
     fromVersionNumber: fromVersion,
     toVersionNumber: toVersion,

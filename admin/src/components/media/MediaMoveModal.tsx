@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useQuery, useMutation } from 'convex/react'
-import { api } from '../../../convex/_generated/api'
+import { useApi } from '~/embed/contexts/ApiContext'
 import { CmsDialog } from '~/components/cmsds/CmsDialog'
 import { CmsButton } from '~/components/cmsds/CmsButton'
 import { cn } from '~/lib/cn'
@@ -28,14 +28,15 @@ export function MediaMoveModal({
   currentFolderId,
   onMoved,
 }: MediaMoveModalProps) {
+  const api = useApi()
   const [selectedFolderId, setSelectedFolderId] = useState<string | undefined>(
     undefined
   )
   const [isMoving, setIsMoving] = useState(false)
   const [error, setError] = useState('')
 
-  const folderTree = useQuery(api.admin.getMediaFolderTree, {})
-  const moveAssets = useMutation(api.admin.moveMediaAssets)
+  const folderTree = useQuery(api.getMediaFolderTree, {})
+  const moveAssets = useMutation(api.moveMediaAssets)
 
   const sortedFolders = useMemo(() => {
     if (!folderTree) return []

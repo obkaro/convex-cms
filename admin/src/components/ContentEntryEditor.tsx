@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { useMutation } from 'convex/react'
-import { api } from '../../convex/_generated/api'
+import { useApi } from '~/embed/contexts/ApiContext'
 import { FieldRenderer } from './fields/FieldRenderer'
 import { VersionHistory } from './VersionHistory'
 import type { FieldDefinition, FieldError } from './fields/types'
@@ -188,14 +188,15 @@ export function ContentEntryEditor({
   const formDataRef = useRef(formData)
   formDataRef.current = formData
 
-  const createEntry = useMutation(api.admin.createEntry)
-  const updateEntry = useMutation(api.admin.updateEntry)
-  const publishEntry = useMutation(api.admin.publishEntry)
-  const unpublishEntry = useMutation(api.admin.unpublishEntry)
-  const scheduleEntry = useMutation(api.admin.scheduleEntry)
-  const cancelScheduleEntry = useMutation(api.admin.cancelScheduledEntry)
-  const deleteEntryMutation = useMutation(api.admin.deleteEntry)
-  const duplicateEntryMutation = useMutation(api.admin.duplicateEntry)
+  const api = useApi()
+  const createEntry = useMutation(api.createEntry)
+  const updateEntry = useMutation(api.updateEntry)
+  const publishEntry = useMutation(api.publishEntry)
+  const unpublishEntry = useMutation(api.unpublishEntry)
+  const scheduleEntry = useMutation(api.scheduleEntry)
+  const cancelScheduleEntry = useMutation(api.cancelScheduledEntry)
+  const deleteEntryMutation = useMutation(api.deleteEntry)
+  const duplicateEntryMutation = useMutation(api.duplicateEntry)
 
   const [showScheduleModal, setShowScheduleModal] = useState(false)
   const [scheduleDateTime, setScheduleDateTime] = useState<string>(() => {
