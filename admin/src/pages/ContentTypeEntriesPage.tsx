@@ -327,7 +327,7 @@ export function ContentTypeEntriesPage({
             className: "w-36",
           },
         ]}
-        onClear={hasFilters ? clearFilters : undefined}
+        onClearFilters={hasFilters ? clearFilters : undefined}
       />
 
       {sortedEntries.length === 0 ? (
