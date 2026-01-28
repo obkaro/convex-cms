@@ -13,8 +13,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from "~/components/ui/card";
-import { Skeleton } from "~/components/ui/skeleton";
-import { CmsPageHeader } from "~/components/cmsds";
+import { CmsPageHeader, CmsStatCard } from "~/components/cmsds";
 import { SchemaDriftWarning } from "~/components/SchemaDriftWarning";
 import { FileText, Image, Layers, Settings, TrendingUp } from "lucide-react";
 import type { AdminNavigation } from "~/lib/navigation";
@@ -72,40 +71,24 @@ export function DashboardPage({ api, navigation }: DashboardPageProps) {
 					<h2 className="text-lg font-semibold">Quick Stats</h2>
 				</div>
 				<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-					<StatCard
-						label="Content Types"
-						value={
-							isLoading
-								? undefined
-								: hasError
-								? "—"
-								: String(stats.contentTypes)
-						}
+					<CmsStatCard
+						title="Content Types"
+						value={hasError ? "—" : String(stats?.contentTypes ?? 0)}
 						isLoading={isLoading}
 					/>
-					<StatCard
-						label="Content Entries"
-						value={
-							isLoading
-								? undefined
-								: hasError
-								? "—"
-								: String(stats.contentEntries)
-						}
+					<CmsStatCard
+						title="Content Entries"
+						value={hasError ? "—" : String(stats?.contentEntries ?? 0)}
 						isLoading={isLoading}
 					/>
-					<StatCard
-						label="Media Assets"
-						value={
-							isLoading ? undefined : hasError ? "—" : String(stats.mediaAssets)
-						}
+					<CmsStatCard
+						title="Media Assets"
+						value={hasError ? "—" : String(stats?.mediaAssets ?? 0)}
 						isLoading={isLoading}
 					/>
-					<StatCard
-						label="Published"
-						value={
-							isLoading ? undefined : hasError ? "—" : String(stats.published)
-						}
+					<CmsStatCard
+						title="Published"
+						value={hasError ? "—" : String(stats?.published ?? 0)}
 						isLoading={isLoading}
 					/>
 				</div>
@@ -142,25 +125,3 @@ function DashboardCard({
 	);
 }
 
-function StatCard({
-	label,
-	value,
-	isLoading = false,
-}: {
-	label: string;
-	value?: string;
-	isLoading?: boolean;
-}) {
-	return (
-		<Card>
-			<CardContent className="p-4">
-				{isLoading ? (
-					<Skeleton className="mb-1 h-8 w-16" />
-				) : (
-					<div className="text-2xl font-bold">{value}</div>
-				)}
-				<div className="text-sm text-muted-foreground">{label}</div>
-			</CardContent>
-		</Card>
-	);
-}

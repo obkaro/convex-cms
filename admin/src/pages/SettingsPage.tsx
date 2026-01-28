@@ -84,7 +84,11 @@ const THEME_OPTIONS: {
 ];
 
 function AppearanceSection() {
-	const { theme, setTheme } = useTheme();
+	const { theme, setTheme, canToggleDarkMode } = useTheme();
+
+	if (!canToggleDarkMode) {
+		return null;
+	}
 
 	return (
 		<CmsSurface elevation="base" className="p-6">

@@ -5,27 +5,21 @@
  * Used by both CLI routes and embed pages.
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useQuery, useMutation } from "convex/react";
-import { CmsPageHeader } from "~/components/cmsds/CmsPageHeader";
-import { CmsToolbar } from "~/components/cmsds/CmsToolbar";
-import { CmsEmptyState } from "~/components/cmsds/CmsEmptyState";
-import { CmsSurface } from "~/components/cmsds/CmsSurface";
-import { CmsButton } from "~/components/cmsds/CmsButton";
-import { CmsConfirmDialog } from "~/components/cmsds/CmsDialog";
-import { Input } from "~/components/ui/input";
 import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "~/components/ui/select";
-import { Checkbox } from "~/components/ui/checkbox";
+	CmsPageHeader,
+	CmsEmptyState,
+	CmsSurface,
+	CmsButton,
+	CmsConfirmDialog,
+	CmsFilterBar,
+	CmsTable,
+	type CmsTableColumn,
+} from "~/components/cmsds";
 import { Badge } from "~/components/ui/badge";
 import { Alert, AlertDescription } from "~/components/ui/alert";
-import { cn } from "~/lib/cn";
-import { Search, Trash2, RotateCcw, AlertTriangle, X } from "lucide-react";
+import { Trash2, RotateCcw, AlertTriangle, X } from "lucide-react";
 import type { AdminNavigation } from "~/lib/navigation";
 import { CmsAdminApi } from "~/embed/contexts/ApiContext";
 
@@ -76,26 +70,6 @@ export function TrashPage({ api, navigation: _navigation }: TrashPageProps) {
 	const isLoading = trashQuery === undefined;
 	const config = configQuery;
 	const stats = statsQuery;
-
-	const handleSelectItem = useCallback((itemId: string, selected: boolean) => {
-		setSelectedItems((prev) => {
-			const next = new Set(prev);
-			if (selected) {
-				next.add(itemId);
-			} else {
-				next.delete(itemId);
-			}
-			return next;
-		});
-	}, []);
-
-	const handleSelectAll = useCallback(() => {
-		if (selectedItems.size === trashItems.length) {
-			setSelectedItems(new Set());
-		} else {
-			setSelectedItems(new Set(trashItems.map((item) => item._id)));
-		}
-	}, [selectedItems.size, trashItems]);
 
 	const handleRestore = useCallback(
 		async (ids: string[]) => {
@@ -166,6 +140,79 @@ export function TrashPage({ api, navigation: _navigation }: TrashPageProps) {
 		return item.slug || item._id;
 	};
 
+	const trashColumns: CmsTableColumn<TrashItem>[] = useMemo(
+		() => [
+			{
+				key: "name",
+				header: "Name",
+				cell: (item) => (
+					<>
+						<span className="font-medium text-foreground">{getItemTitle(item)}</span>
+						{item.slug && (
+							<span className="block text-xs text-muted-foreground">{item.slug}</span>
+						)}
+					</>
+				),
+			},
+			{
+				key: "type",
+				header: "Type",
+				cell: (item) => (
+					<span className="text-sm text-muted-foreground">
+						{item.contentTypeName || "Unknown"}
+					</span>
+				),
+			},
+			{
+				key: "deleted",
+				header: "Deleted",
+				cell: (item) => (
+					<>
+						<span className="text-sm text-muted-foreground">
+							{formatDate(item.deletedAt)}
+						</span>
+						{item.deletedBy && (
+							<span className="block text-xs text-muted-foreground">
+								by {item.deletedBy}
+							</span>
+						)}
+					</>
+				),
+			},
+			{
+				key: "expires",
+				header: "Expires In",
+				cell: (item) => {
+					const daysLeft = getDaysUntilDeletion(item.deletedAt);
+					return daysLeft !== null ? (
+						<Badge
+							variant={daysLeft <= 3 ? "destructive" : "secondary"}
+							className="font-normal"
+						>
+							{daysLeft} {daysLeft === 1 ? "day" : "days"}
+						</Badge>
+					) : null;
+				},
+			},
+			{
+				key: "actions",
+				header: "Actions",
+				cell: (item) => (
+					<CmsButton
+						variant="outline"
+						size="sm"
+						onClick={() => handleRestore([item._id])}
+						loading={isRestoring}
+					>
+						<RotateCcw className="size-4" />
+						Restore
+					</CmsButton>
+				),
+			},
+		],
+		[isRestoring, handleRestore, config?.retentionDays]
+	);
+
 	return (
 		<div className="space-y-6 p-6">
 			<div className="flex items-start justify-between">
@@ -200,39 +247,28 @@ export function TrashPage({ api, navigation: _navigation }: TrashPageProps) {
 				</div>
 			)}
 
-			<CmsToolbar
-				left={
-					<div className="flex items-center gap-3">
-						<div className="relative">
-							<Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-							<Input
-								type="text"
-								placeholder="Search deleted items..."
-								value={searchQuery}
-								onChange={(e) => setSearchQuery(e.target.value)}
-								className="w-64 pl-9"
-							/>
-						</div>
-						<Select
-							value={selectedContentType || "all"}
-							onValueChange={(v) =>
-								setSelectedContentType(v === "all" ? "" : v)
-							}
-						>
-							<SelectTrigger className="w-48">
-								<SelectValue placeholder="All Content Types" />
-							</SelectTrigger>
-							<SelectContent>
-								<SelectItem value="all">All Content Types</SelectItem>
-								{contentTypes.map((type: any) => (
-									<SelectItem key={type._id} value={type._id}>
-										{type.displayName}
-									</SelectItem>
-								))}
-							</SelectContent>
-						</Select>
-					</div>
-				}
+			<CmsFilterBar
+				search={{
+					value: searchQuery,
+					onChange: setSearchQuery,
+					placeholder: "Search deleted items...",
+					className: "w-64",
+				}}
+				filters={[
+					{
+						key: "contentType",
+						value: selectedContentType || "all",
+						onChange: (v) => setSelectedContentType(v === "all" ? "" : v),
+						options: [
+							{ value: "all", label: "All Content Types" },
+							...contentTypes.map((type: { _id: string; displayName: string }) => ({
+								value: type._id,
+								label: type.displayName,
+							})),
+						],
+						className: "w-48",
+					},
+				]}
 			/>
 
 			{restoreError && (
@@ -304,106 +340,15 @@ export function TrashPage({ api, navigation: _navigation }: TrashPageProps) {
 					description="Deleted items will appear here"
 				/>
 			) : (
-				<div className="rounded-lg border bg-card">
-					<table className="w-full">
-						<thead>
-							<tr className="border-b">
-								<th className="w-10 p-3 text-left">
-									<Checkbox
-										checked={
-											selectedItems.size === trashItems.length &&
-											trashItems.length > 0
-										}
-										onCheckedChange={handleSelectAll}
-									/>
-								</th>
-								<th className="p-3 text-left text-sm font-medium text-muted-foreground">
-									Name
-								</th>
-								<th className="p-3 text-left text-sm font-medium text-muted-foreground">
-									Type
-								</th>
-								<th className="p-3 text-left text-sm font-medium text-muted-foreground">
-									Deleted
-								</th>
-								<th className="p-3 text-left text-sm font-medium text-muted-foreground">
-									Expires In
-								</th>
-								<th className="p-3 text-left text-sm font-medium text-muted-foreground">
-									Actions
-								</th>
-							</tr>
-						</thead>
-						<tbody>
-							{trashItems.map((item) => {
-								const daysLeft = getDaysUntilDeletion(item.deletedAt);
-
-								return (
-									<tr
-										key={item._id}
-										className={cn(
-											"border-b last:border-0 transition-colors hover:bg-muted/50",
-											selectedItems.has(item._id) && "bg-primary/5",
-										)}
-									>
-										<td className="p-3">
-											<Checkbox
-												checked={selectedItems.has(item._id)}
-												onCheckedChange={(checked) =>
-													handleSelectItem(item._id, checked as boolean)
-												}
-											/>
-										</td>
-										<td className="p-3">
-											<span className="font-medium text-foreground">
-												{getItemTitle(item)}
-											</span>
-											{item.slug && (
-												<span className="block text-xs text-muted-foreground">
-													{item.slug}
-												</span>
-											)}
-										</td>
-										<td className="p-3 text-sm text-muted-foreground">
-											{item.contentTypeName || "Unknown"}
-										</td>
-										<td className="p-3">
-											<span className="text-sm text-muted-foreground">
-												{formatDate(item.deletedAt)}
-											</span>
-											{item.deletedBy && (
-												<span className="block text-xs text-muted-foreground">
-													by {item.deletedBy}
-												</span>
-											)}
-										</td>
-										<td className="p-3">
-											{daysLeft !== null && (
-												<Badge
-													variant={daysLeft <= 3 ? "destructive" : "secondary"}
-													className="font-normal"
-												>
-													{daysLeft} {daysLeft === 1 ? "day" : "days"}
-												</Badge>
-											)}
-										</td>
-										<td className="p-3">
-											<CmsButton
-												variant="outline"
-												size="sm"
-												onClick={() => handleRestore([item._id])}
-												loading={isRestoring}
-											>
-												<RotateCcw className="size-4" />
-												Restore
-											</CmsButton>
-										</td>
-									</tr>
-								);
-							})}
-						</tbody>
-					</table>
-				</div>
+				<CmsTable
+					columns={trashColumns}
+					data={trashItems}
+					getRowId={(item) => item._id}
+					selectable
+					selectedIds={selectedItems}
+					onSelectionChange={setSelectedItems}
+					emptyMessage="No items in trash"
+				/>
 			)}
 
 			<CmsConfirmDialog

@@ -129,6 +129,7 @@ export function CmsAdmin({
   basePath = "/admin",
   className,
   themeMode = "isolated",
+  darkModeControl = "independent",
   initialRoute = "dashboard",
   onNavigate,
 }: CmsAdminProps & {
@@ -165,7 +166,7 @@ export function CmsAdmin({
   return (
     <div className={cn("h-full", className)} data-cms-admin={themeMode}>
       <ApiProvider api={api}>
-        <ThemeProvider>
+        <ThemeProvider themeMode={themeMode} darkModeControl={darkModeControl}>
           <SettingsConfigProvider baseConfig={adminConfig} api={settingsApi}>
             <AuthProvider
               getUser={authConfig.getUser}

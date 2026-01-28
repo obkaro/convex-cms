@@ -8,28 +8,19 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { usePermissions } from "~/hooks";
-import { CmsPageHeader } from "~/components/cmsds/CmsPageHeader";
-import { CmsToolbar } from "~/components/cmsds/CmsToolbar";
-import { CmsButton } from "~/components/cmsds/CmsButton";
-import { CmsStatusBadge, type ContentStatus } from "~/components/cmsds/CmsStatusBadge";
-import { CmsEmptyState } from "~/components/cmsds/CmsEmptyState";
-import { CmsConfirmDialog } from "~/components/cmsds/CmsDialog";
-import { Input } from "~/components/ui/input";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "~/components/ui/select";
-import {
-  Search,
-  Plus,
-  FileText,
-  ChevronUp,
-  ChevronDown,
-  ArrowUpDown,
-} from "lucide-react";
+  CmsPageHeader,
+  CmsButton,
+  CmsStatusBadge,
+  type ContentStatus,
+  CmsEmptyState,
+  CmsConfirmDialog,
+  CmsFilterBar,
+  CmsTable,
+  type CmsTableColumn,
+  CmsPagination,
+} from "~/components/cmsds";
+import { Plus, FileText } from "lucide-react";
 import type { AdminNavigation } from "~/lib/navigation";
 import type { CmsAdminApi } from "~/embed/contexts/ApiContext";
 
@@ -143,24 +134,14 @@ export function ContentTypeEntriesPage({
     });
   };
 
-  const handleSort = (field: SortField) => {
+  const handleSort = (columnKey: string) => {
+    const field = columnKey as SortField;
     if (sortField === field) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
       setSortField(field);
       setSortDirection("desc");
     }
-  };
-
-  const getSortIcon = (field: SortField) => {
-    if (sortField !== field) {
-      return <ArrowUpDown className="size-3.5 text-muted-foreground/50" />;
-    }
-    return sortDirection === "asc" ? (
-      <ChevronUp className="size-3.5" />
-    ) : (
-      <ChevronDown className="size-3.5" />
-    );
   };
 
   const handleDeleteClick = useCallback(
@@ -212,6 +193,71 @@ export function ContentTypeEntriesPage({
     setCurrentPage(0);
   }, []);
 
+  type Entry = (typeof paginatedEntries)[number];
+
+  const entryColumns: CmsTableColumn<Entry>[] = useMemo(
+    () => [
+      {
+        key: "title",
+        header: "Title",
+        sortable: true,
+        cell: (entry) => (
+          <button
+            type="button"
+            onClick={() => navigation.navigateToEntry(entry._id)}
+            className="block text-left"
+          >
+            <span className="font-medium text-foreground hover:text-primary hover:underline">
+              {getEntryTitle(entry)}
+            </span>
+            <span className="block text-xs text-muted-foreground">{entry.slug}</span>
+          </button>
+        ),
+      },
+      {
+        key: "status",
+        header: "Status",
+        sortable: true,
+        cell: (entry) => <CmsStatusBadge status={entry.status as ContentStatus} />,
+      },
+      {
+        key: "updatedAt",
+        header: "Updated",
+        sortable: true,
+        cell: (entry) => (
+          <span className="text-sm text-muted-foreground">
+            {formatDate(entry.lastPublishedAt ?? entry._creationTime)}
+          </span>
+        ),
+      },
+      {
+        key: "actions",
+        header: "Actions",
+        cell: (entry) => (
+          <div className="flex items-center gap-2">
+            <CmsButton
+              variant="outline"
+              size="sm"
+              onClick={() => navigation.navigateToEntry(entry._id)}
+            >
+              {canUpdate("contentEntries") ? "Edit" : "View"}
+            </CmsButton>
+            {canDelete("contentEntries") && (
+              <CmsButton
+                variant="danger"
+                size="sm"
+                onClick={() => handleDeleteClick(entry)}
+              >
+                Delete
+              </CmsButton>
+            )}
+          </div>
+        ),
+      },
+    ],
+    [navigation, getEntryTitle, formatDate, canUpdate, canDelete, handleDeleteClick]
+  );
+
   if (contentType === undefined || entriesResult === undefined) {
     return (
       <div className="space-y-6 p-6">
@@ -256,44 +302,32 @@ export function ContentTypeEntriesPage({
         }
       />
 
-      <CmsToolbar
-        left={
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Search entries..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-64 pl-9"
-              />
-            </div>
-            <Select
-              value={selectedStatus}
-              onValueChange={(value) => {
-                setSelectedStatus(value as ContentStatus | "all");
-                setCurrentPage(0);
-              }}
-            >
-              <SelectTrigger className="w-36">
-                <SelectValue placeholder="All Statuses" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="draft">Draft</SelectItem>
-                <SelectItem value="published">Published</SelectItem>
-                <SelectItem value="scheduled">Scheduled</SelectItem>
-                <SelectItem value="archived">Archived</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        }
-        right={
-          <span className="text-sm text-muted-foreground">
-            {sortedEntries.length} {sortedEntries.length === 1 ? "entry" : "entries"}
-          </span>
-        }
+      <CmsFilterBar
+        search={{
+          value: searchQuery,
+          onChange: setSearchQuery,
+          placeholder: "Search entries...",
+          className: "w-64",
+        }}
+        filters={[
+          {
+            key: "status",
+            value: selectedStatus,
+            onChange: (v) => {
+              setSelectedStatus(v as ContentStatus | "all");
+              setCurrentPage(0);
+            },
+            options: [
+              { value: "all", label: "All Statuses" },
+              { value: "draft", label: "Draft" },
+              { value: "published", label: "Published" },
+              { value: "scheduled", label: "Scheduled" },
+              { value: "archived", label: "Archived" },
+            ],
+            className: "w-36",
+          },
+        ]}
+        onClear={hasFilters ? clearFilters : undefined}
       />
 
       {sortedEntries.length === 0 ? (
@@ -313,129 +347,21 @@ export function ContentTypeEntriesPage({
         />
       ) : (
         <>
-          <div className="rounded-lg border bg-card">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b">
-                  <th className="p-3 text-left">
-                    <button
-                      className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground"
-                      onClick={() => handleSort("title")}
-                    >
-                      Title
-                      {getSortIcon("title")}
-                    </button>
-                  </th>
-                  <th className="p-3 text-left">
-                    <button
-                      className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground"
-                      onClick={() => handleSort("status")}
-                    >
-                      Status
-                      {getSortIcon("status")}
-                    </button>
-                  </th>
-                  <th className="p-3 text-left">
-                    <button
-                      className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground"
-                      onClick={() => handleSort("updatedAt")}
-                    >
-                      Updated
-                      {getSortIcon("updatedAt")}
-                    </button>
-                  </th>
-                  <th className="p-3 text-left text-sm font-medium text-muted-foreground">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {paginatedEntries.map((entry) => (
-                  <tr
-                    key={entry._id}
-                    className="border-b last:border-0 transition-colors hover:bg-muted/50"
-                  >
-                    <td className="p-3">
-                      <button
-                        type="button"
-                        onClick={() => navigation.navigateToEntry(entry._id)}
-                        className="text-left font-medium text-foreground hover:text-primary hover:underline"
-                      >
-                        {getEntryTitle(entry)}
-                      </button>
-                      <p className="text-xs text-muted-foreground">{entry.slug}</p>
-                    </td>
-                    <td className="p-3">
-                      <CmsStatusBadge status={entry.status as ContentStatus} />
-                    </td>
-                    <td className="p-3 text-sm text-muted-foreground">
-                      {formatDate(entry.lastPublishedAt ?? entry._creationTime)}
-                    </td>
-                    <td className="p-3">
-                      <div className="flex items-center gap-2">
-                        <CmsButton
-                          variant="outline"
-                          size="sm"
-                          onClick={() => navigation.navigateToEntry(entry._id)}
-                        >
-                          {canUpdate("contentEntries") ? "Edit" : "View"}
-                        </CmsButton>
-                        {canDelete("contentEntries") && (
-                          <CmsButton
-                            variant="danger"
-                            size="sm"
-                            onClick={() => handleDeleteClick(entry)}
-                          >
-                            Delete
-                          </CmsButton>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <CmsTable
+            columns={entryColumns}
+            data={paginatedEntries}
+            getRowId={(e) => e._id}
+            sortColumn={sortField}
+            sortDirection={sortDirection}
+            onSort={handleSort}
+            emptyMessage="No entries found"
+          />
 
-          {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-2">
-              <CmsButton
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage(0)}
-                disabled={currentPage === 0}
-              >
-                First
-              </CmsButton>
-              <CmsButton
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
-                disabled={currentPage === 0}
-              >
-                Previous
-              </CmsButton>
-              <span className="px-3 text-sm text-muted-foreground">
-                Page {currentPage + 1} of {totalPages}
-              </span>
-              <CmsButton
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage((p) => Math.min(totalPages - 1, p + 1))}
-                disabled={currentPage >= totalPages - 1}
-              >
-                Next
-              </CmsButton>
-              <CmsButton
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage(totalPages - 1)}
-                disabled={currentPage >= totalPages - 1}
-              >
-                Last
-              </CmsButton>
-            </div>
-          )}
+          <CmsPagination
+            currentPage={currentPage + 1}
+            totalPages={totalPages}
+            onPageChange={(page) => setCurrentPage(page - 1)}
+          />
         </>
       )}
 

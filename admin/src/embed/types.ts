@@ -26,4 +26,10 @@ export interface CmsAdminProps {
    * - 'inherit': Admin inherits parent app's CSS variables (for shadcn apps)
    */
   themeMode?: "isolated" | "inherit";
+  /**
+   * Dark mode control behavior:
+   * - 'independent' (default): Admin has its own dark mode toggle
+   * - 'follow-parent': Admin follows parent app's dark mode (hides toggle in inherit mode)
+   */
+  darkModeControl?: "independent" | "follow-parent";
 }

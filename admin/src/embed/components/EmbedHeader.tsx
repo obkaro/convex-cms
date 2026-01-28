@@ -11,7 +11,7 @@ import { useEmbedNavigation } from "../navigation";
 export function EmbedHeader() {
   const { goBack, canGoBack, currentRoute } = useEmbedNavigation();
   const { branding: _branding } = useAdminConfig();
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, canToggleDarkMode } = useTheme();
   const { user, logout, isAuthenticated } = useAuth();
 
   const routeTitles: Record<string, string> = {
@@ -44,14 +44,16 @@ export function EmbedHeader() {
       </div>
 
       <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          className="flex size-9 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
-          title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
-        >
-          {theme === "dark" ? <Sun className="size-5" /> : <Moon className="size-5" />}
-        </button>
+        {canToggleDarkMode && (
+          <button
+            type="button"
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            className="flex size-9 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
+            title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+          >
+            {theme === "dark" ? <Sun className="size-5" /> : <Moon className="size-5" />}
+          </button>
+        )}
 
         <button
           type="button"

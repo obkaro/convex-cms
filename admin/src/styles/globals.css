@@ -30,21 +30,25 @@
 }
 
 @layer utilities {
-  /* Status badge colors */
+  /* Status badge colors - using CSS variables for theme consistency */
   .status-draft {
-    @apply bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300;
+    background-color: var(--muted);
+    color: var(--muted-foreground);
   }
 
   .status-published {
-    @apply bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400;
+    background-color: var(--diff-added-bg);
+    color: var(--diff-added-foreground);
   }
 
   .status-scheduled {
-    @apply bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400;
+    background-color: var(--info-bg);
+    color: var(--info-foreground);
   }
 
   .status-archived {
-    @apply bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400;
+    background-color: var(--diff-modified-bg);
+    color: var(--diff-modified-foreground);
   }
 
   /* Surface elevations */

@@ -27,16 +27,18 @@ interface ContentTypeWithCount {
 	_creationTime: number;
 	source?: "code" | "database";
 }
-import { CmsPageHeader } from "~/components/cmsds/CmsPageHeader";
-import { CmsToolbar } from "~/components/cmsds/CmsToolbar";
-import { CmsEmptyState } from "~/components/cmsds/CmsEmptyState";
-import { CmsButton } from "~/components/cmsds/CmsButton";
-import { Input } from "~/components/ui/input";
+import {
+	CmsPageHeader,
+	CmsEmptyState,
+	CmsButton,
+	CmsFilterBar,
+	CmsTable,
+	type CmsTableColumn,
+} from "~/components/cmsds";
 import { Checkbox } from "~/components/ui/checkbox";
 import { Badge } from "~/components/ui/badge";
 import { cn } from "~/lib/cn";
 import {
-	Search,
 	Grid3X3,
 	List,
 	Plus,
@@ -150,6 +152,120 @@ export function ContentTypesPage({ api, navigation }: ContentTypesPageProps) {
 		}
 	};
 
+	const contentTypeColumns: CmsTableColumn<ContentTypeWithCount>[] = useMemo(
+		() => [
+			{
+				key: "name",
+				header: "Name",
+				cell: (contentType) => (
+					<>
+						<p className="font-medium text-foreground">{contentType.displayName}</p>
+						<p className="text-xs text-muted-foreground">{contentType.name}</p>
+					</>
+				),
+			},
+			{
+				key: "fields",
+				header: "Fields",
+				cell: (contentType) => (
+					<span className="text-sm text-muted-foreground">
+						{contentType.fields.length}
+					</span>
+				),
+			},
+			{
+				key: "entries",
+				header: "Entries",
+				cell: (contentType) => (
+					<span className="text-sm text-muted-foreground">
+						{contentType.entryCount ?? 0}
+					</span>
+				),
+			},
+			{
+				key: "status",
+				header: "Status",
+				cell: (contentType) => (
+					<div className="flex items-center gap-1.5">
+						{contentType.source === "code" && (
+							<Badge
+								variant="secondary"
+								className="border-violet-200 bg-violet-50 text-xs font-normal text-violet-700"
+								title="Managed by code"
+							>
+								<Code2 className="mr-1 size-3" />
+								Code
+							</Badge>
+						)}
+						<Badge
+							variant={contentType.isActive ? "default" : "secondary"}
+							className={cn(
+								"text-xs font-normal",
+								contentType.isActive &&
+									"border-diff-added-border bg-diff-added-bg text-diff-added-foreground",
+							)}
+						>
+							{contentType.isActive ? "Active" : "Inactive"}
+						</Badge>
+						{contentType.singleton && (
+							<Badge
+								variant="secondary"
+								className="border-diff-modified-border bg-diff-modified-bg text-xs font-normal text-diff-modified-foreground"
+							>
+								Singleton
+							</Badge>
+						)}
+					</div>
+				),
+			},
+			{
+				key: "updated",
+				header: "Last Updated",
+				cell: (contentType) => (
+					<span className="text-sm text-muted-foreground">
+						{formatDate(contentType._creationTime)}
+					</span>
+				),
+			},
+			{
+				key: "actions",
+				header: "Actions",
+				cell: (contentType) => (
+					<div className="flex items-center gap-2">
+						{contentType.source === "code" ? (
+							<CmsButton
+								variant="outline"
+								size="sm"
+								onClick={() => setEditingContentType(contentType)}
+								title="View content type (managed by code)"
+							>
+								<Eye className="size-3.5" />
+								View
+							</CmsButton>
+						) : (
+							<CmsButton
+								variant="outline"
+								size="sm"
+								onClick={() => setEditingContentType(contentType)}
+							>
+								<Pencil className="size-3.5" />
+								Edit
+							</CmsButton>
+						)}
+						<CmsButton
+							variant="outline"
+							size="sm"
+							onClick={() => navigation.navigateToContentType(contentType._id)}
+						>
+							View Entries
+						</CmsButton>
+					</div>
+				),
+			},
+		],
+		[navigation, formatDate, setEditingContentType]
+	);
+
 	return (
 		<div className="space-y-6 p-6">
 			<CmsPageHeader
@@ -157,19 +273,15 @@ export function ContentTypesPage({ api, navigation }: ContentTypesPageProps) {
 				description="Define the structure of your content with custom fields and validation rules."
 			/>
 
-			<CmsToolbar
-				left={
+			<CmsFilterBar
+				search={{
+					value: searchQuery,
+					onChange: setSearchQuery,
+					placeholder: "Search content types...",
+					className: "w-64",
+				}}
+				actions={
 					<div className="flex items-center gap-3">
-						<div className="relative">
-							<Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-							<Input
-								type="search"
-								placeholder="Search content types..."
-								value={searchQuery}
-								onChange={(e) => setSearchQuery(e.target.value)}
-								className="w-64 pl-9"
-							/>
-						</div>
 						<label className="flex cursor-pointer items-center gap-2 text-sm">
 							<Checkbox
 								checked={showActiveOnly}
@@ -179,10 +291,6 @@ export function ContentTypesPage({ api, navigation }: ContentTypesPageProps) {
 							/>
 							Active only
 						</label>
-					</div>
-				}
-				right={
-					<div className="flex items-center gap-2">
 						<div className="flex rounded-md border bg-muted/30">
 							<button
 								className={cn(
@@ -361,123 +469,12 @@ export function ContentTypesPage({ api, navigation }: ContentTypesPageProps) {
 					))}
 				</div>
 			) : (
-				<div className="rounded-lg border bg-card">
-					<table className="w-full">
-						<thead>
-							<tr className="border-b">
-								<th className="p-3 text-left text-sm font-medium text-muted-foreground">
-									Name
-								</th>
-								<th className="p-3 text-left text-sm font-medium text-muted-foreground">
-									Fields
-								</th>
-								<th className="p-3 text-left text-sm font-medium text-muted-foreground">
-									Entries
-								</th>
-								<th className="p-3 text-left text-sm font-medium text-muted-foreground">
-									Status
-								</th>
-								<th className="p-3 text-left text-sm font-medium text-muted-foreground">
-									Last Updated
-								</th>
-								<th className="p-3 text-left text-sm font-medium text-muted-foreground">
-									Actions
-								</th>
-							</tr>
-						</thead>
-						<tbody>
-							{filteredContentTypes.map((contentType) => (
-								<tr
-									key={contentType._id}
-									className="border-b last:border-0 transition-colors hover:bg-muted/50"
-								>
-									<td className="p-3">
-										<p className="font-medium text-foreground">
-											{contentType.displayName}
-										</p>
-										<p className="text-xs text-muted-foreground">
-											{contentType.name}
-										</p>
-									</td>
-									<td className="p-3 text-sm text-muted-foreground">
-										{contentType.fields.length}
-									</td>
-									<td className="p-3 text-sm text-muted-foreground">
-										{contentType.entryCount ?? 0}
-									</td>
-									<td className="p-3">
-										<div className="flex items-center gap-1.5">
-											{contentType.source === "code" && (
-												<Badge
-													variant="secondary"
-													className="border-violet-200 bg-violet-50 text-xs font-normal text-violet-700"
-													title="Managed by code"
-												>
-													<Code2 className="mr-1 size-3" />
-													Code
-												</Badge>
-											)}
-											<Badge
-												variant={contentType.isActive ? "default" : "secondary"}
-												className={cn(
-													"text-xs font-normal",
-													contentType.isActive &&
-														"border-diff-added-border bg-diff-added-bg text-diff-added-foreground",
-												)}
-											>
-												{contentType.isActive ? "Active" : "Inactive"}
-											</Badge>
-											{contentType.singleton && (
-												<Badge
-													variant="secondary"
-													className="border-diff-modified-border bg-diff-modified-bg text-xs font-normal text-diff-modified-foreground"
-												>
-													Singleton
-												</Badge>
-											)}
-										</div>
-									</td>
-									<td className="p-3 text-sm text-muted-foreground">
-										{formatDate(contentType._creationTime)}
-									</td>
-									<td className="p-3">
-										<div className="flex items-center gap-2">
-											{contentType.source === "code" ? (
-												<CmsButton
-													variant="outline"
-													size="sm"
-													onClick={() => setEditingContentType(contentType)}
-													title="View content type (managed by code)"
-												>
-													<Eye className="size-3.5" />
-													View
-												</CmsButton>
-											) : (
-												<CmsButton
-													variant="outline"
-													size="sm"
-													onClick={() => setEditingContentType(contentType)}
-												>
-													<Pencil className="size-3.5" />
-													Edit
-												</CmsButton>
-											)}
-											<CmsButton
-												variant="outline"
-												size="sm"
-												onClick={() =>
-													navigation.navigateToContentType(contentType._id)
-												}
-											>
-												View Entries
-											</CmsButton>
-										</div>
-									</td>
-								</tr>
-							))}
-						</tbody>
-					</table>
-				</div>
+				<CmsTable
+					columns={contentTypeColumns}
+					data={filteredContentTypes}
+					getRowId={(ct) => ct._id}
+					emptyMessage="No content types found"
+				/>
 			)}
 
 			{!isLoading && filteredContentTypes.length > 0 && (

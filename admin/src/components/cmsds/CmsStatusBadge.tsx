@@ -96,7 +96,7 @@ const colorToClassName: Record<WorkflowStateColor, string> = {
   blue: "bg-info-bg text-info-foreground",
   green: "bg-diff-added-bg text-diff-added-foreground",
   red: "bg-diff-removed-bg text-diff-removed-foreground",
-  purple: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400",
+  purple: "bg-purple-bg text-purple-foreground",
   orange: "bg-diff-modified-bg text-diff-modified-foreground",
 };
 

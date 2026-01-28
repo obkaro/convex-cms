@@ -8,10 +8,12 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { UploadDropzone, type UploadedFile } from "~/components/UploadDropzone";
-import { CmsPageHeader } from "~/components/cmsds/CmsPageHeader";
-import { CmsToolbar } from "~/components/cmsds/CmsToolbar";
-import { CmsEmptyState } from "~/components/cmsds/CmsEmptyState";
-import { CmsButton } from "~/components/cmsds/CmsButton";
+import {
+  CmsPageHeader,
+  CmsEmptyState,
+  CmsButton,
+  CmsFilterBar,
+} from "~/components/cmsds";
 import { TaxonomyFilter } from "~/components/filters/TaxonomyFilter";
 import {
   Dialog,
@@ -22,13 +24,6 @@ import {
 } from "~/components/ui/dialog";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "~/components/ui/select";
 import { Checkbox } from "~/components/ui/checkbox";
 import { cn } from "~/lib/cn";
 import {
@@ -43,7 +38,6 @@ import {
   FolderPlus,
   Upload,
   Search,
-  X,
   Trash2,
   RotateCcw,
 } from "lucide-react";
@@ -544,48 +538,31 @@ export function MediaPage({ api, navigation, settings }: MediaPageProps) {
         </nav>
       )}
 
-      <CmsToolbar
-        left={
+      <CmsFilterBar
+        search={{
+          value: searchQuery,
+          onChange: setSearchQuery,
+          placeholder: "Search files...",
+          className: "w-64",
+        }}
+        filters={[
+          {
+            key: "type",
+            value: typeFilter || "all",
+            onChange: (v) => setTypeFilter(v === "all" ? "" : (v as MediaType)),
+            options: [
+              { value: "all", label: "All Types" },
+              { value: "image", label: "Images" },
+              { value: "video", label: "Videos" },
+              { value: "audio", label: "Audio" },
+              { value: "document", label: "Documents" },
+              { value: "other", label: "Other" },
+            ],
+            className: "w-36",
+          },
+        ]}
+        actions={
           <div className="flex items-center gap-3">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Search files..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-64 pl-9"
-              />
-              {searchQuery && (
-                <button
-                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 hover:bg-muted"
-                  onClick={() => setSearchQuery("")}
-                  aria-label="Clear search"
-                >
-                  <X className="size-4 text-muted-foreground" />
-                </button>
-              )}
-            </div>
-
-            <Select
-              value={typeFilter || "all"}
-              onValueChange={(v) =>
-                setTypeFilter(v === "all" ? "" : (v as MediaType))
-              }
-            >
-              <SelectTrigger className="w-36">
-                <SelectValue placeholder="All Types" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="image">Images</SelectItem>
-                <SelectItem value="video">Videos</SelectItem>
-                <SelectItem value="audio">Audio</SelectItem>
-                <SelectItem value="document">Documents</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
-              </SelectContent>
-            </Select>
-
             <TaxonomyFilter
               selectedTermIds={selectedTermIds}
               onChange={setSelectedTermIds}
@@ -606,10 +583,7 @@ export function MediaPage({ api, navigation, settings }: MediaPageProps) {
                 Selection Mode
               </label>
             )}
-          </div>
-        }
-        right={
-          <div className="flex items-center gap-2">
+
             {isSelectionMode && selectedAssets.size > 0 && (
               <span className="text-sm text-muted-foreground">
                 {selectedAssets.size} selected

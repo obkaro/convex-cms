@@ -5,35 +5,27 @@
  * Used by both CLI routes and embed pages.
  */
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { useQuery } from "convex/react";
 import { usePermissions } from "~/hooks";
 import { BulkActionBar } from "~/components/BulkActionBar";
-import { CmsPageHeader } from "~/components/cmsds/CmsPageHeader";
-import { CmsToolbar } from "~/components/cmsds/CmsToolbar";
-import { CmsEmptyState } from "~/components/cmsds/CmsEmptyState";
 import {
+  CmsPageHeader,
+  CmsEmptyState,
   CmsStatusBadge,
   type ContentStatus,
-} from "~/components/cmsds/CmsStatusBadge";
-import { CmsButton } from "~/components/cmsds/CmsButton";
-import { Input } from "~/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "~/components/ui/select";
+  CmsButton,
+  CmsFilterBar,
+  CmsTable,
+  type CmsTableColumn,
+} from "~/components/cmsds";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
-import { Checkbox } from "~/components/ui/checkbox";
-import { cn } from "~/lib/cn";
-import { Plus, Search, FileText, ChevronDown } from "lucide-react";
+import { Plus, FileText, ChevronDown } from "lucide-react";
 import type { AdminNavigation } from "~/lib/navigation";
 import { CmsAdminApi } from "~/embed/contexts/ApiContext";
 
@@ -114,29 +106,71 @@ export function ContentPage({ api, navigation }: ContentPageProps) {
     });
   };
 
-  const handleSelectItem = useCallback((id: string, selected: boolean) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (selected) {
-        next.add(id);
-      } else {
-        next.delete(id);
-      }
-      return next;
-    });
-  }, []);
-
-  const handleSelectAll = useCallback(() => {
-    if (selectedIds.size === entries.length && entries.length > 0) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(entries.map((e) => e._id)));
-    }
-  }, [selectedIds.size, entries]);
-
   const handleClearSelection = useCallback(() => {
     setSelectedIds(new Set());
   }, []);
+
+  type Entry = (typeof entries)[number];
+
+  const entryColumns: CmsTableColumn<Entry>[] = useMemo(
+    () => [
+      {
+        key: "title",
+        header: "Title",
+        cell: (entry) => (
+          <button
+            type="button"
+            onClick={() => navigation.navigateToEntry(entry._id)}
+            className="block text-left"
+          >
+            <span className="font-medium text-foreground hover:text-primary">
+              {getEntryTitle(entry, entry.contentTypeName)}
+            </span>
+            <span className="block text-xs text-muted-foreground">
+              {entry.slug}
+            </span>
+          </button>
+        ),
+      },
+      {
+        key: "type",
+        header: "Type",
+        cell: (entry) => (
+          <span className="text-sm text-muted-foreground">
+            {getContentTypeDisplayName(entry.contentTypeName)}
+          </span>
+        ),
+      },
+      {
+        key: "status",
+        header: "Status",
+        cell: (entry) => <CmsStatusBadge status={entry.status as ContentStatus} />,
+      },
+      {
+        key: "updated",
+        header: "Updated",
+        cell: (entry) => (
+          <span className="text-sm text-muted-foreground">
+            {formatDate(entry._creationTime)}
+          </span>
+        ),
+      },
+      {
+        key: "actions",
+        header: "Actions",
+        cell: (entry) => (
+          <CmsButton
+            variant="outline"
+            size="sm"
+            onClick={() => navigation.navigateToEntry(entry._id)}
+          >
+            {canUpdate("contentEntries") ? "Edit" : "View"}
+          </CmsButton>
+        ),
+      },
+    ],
+    [navigation, contentTypes, canUpdate]
+  );
 
   if (isLoading) {
     return (
@@ -162,56 +196,42 @@ export function ContentPage({ api, navigation }: ContentPageProps) {
         description="Browse and manage content entries across all content types."
       />
 
-      <CmsToolbar
-        left={
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder="Search content..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-64 pl-9"
-                data-testid="content-search-input"
-              />
-            </div>
-            <Select
-              value={selectedTypeId || "all"}
-              onValueChange={(v) => setSelectedTypeId(v === "all" ? "" : v)}
-            >
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="All Content Types" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Content Types</SelectItem>
-                {contentTypes.map((type) => (
-                  <SelectItem key={type._id} value={type._id}>
-                    {type.displayName}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select
-              value={selectedStatus || "all"}
-              onValueChange={(v) =>
-                setSelectedStatus(v === "all" ? "" : (v as ContentStatus))
-              }
-            >
-              <SelectTrigger className="w-36">
-                <SelectValue placeholder="All Statuses" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="draft">Draft</SelectItem>
-                <SelectItem value="published">Published</SelectItem>
-                <SelectItem value="scheduled">Scheduled</SelectItem>
-                <SelectItem value="archived">Archived</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        }
-        right={
+      <CmsFilterBar
+        search={{
+          value: searchQuery,
+          onChange: setSearchQuery,
+          placeholder: "Search content...",
+          className: "w-64",
+        }}
+        filters={[
+          {
+            key: "contentType",
+            value: selectedTypeId || "all",
+            onChange: (v) => setSelectedTypeId(v === "all" ? "" : v),
+            options: [
+              { value: "all", label: "All Content Types" },
+              ...contentTypes.map((type) => ({
+                value: type._id,
+                label: type.displayName,
+              })),
+            ],
+            className: "w-48",
+          },
+          {
+            key: "status",
+            value: selectedStatus || "all",
+            onChange: (v) => setSelectedStatus(v === "all" ? "" : (v as ContentStatus)),
+            options: [
+              { value: "all", label: "All Statuses" },
+              { value: "draft", label: "Draft" },
+              { value: "published", label: "Published" },
+              { value: "scheduled", label: "Scheduled" },
+              { value: "archived", label: "Archived" },
+            ],
+            className: "w-36",
+          },
+        ]}
+        actions={
           canCreate("contentEntries") && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -253,91 +273,15 @@ export function ContentPage({ api, navigation }: ContentPageProps) {
           }
         />
       ) : (
-        <div className="rounded-lg border bg-card">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b">
-                <th className="w-10 p-3 text-left">
-                  <Checkbox
-                    checked={
-                      selectedIds.size === entries.length && entries.length > 0
-                    }
-                    onCheckedChange={handleSelectAll}
-                    aria-label="Select all entries"
-                  />
-                </th>
-                <th className="p-3 text-left text-sm font-medium text-muted-foreground">
-                  Title
-                </th>
-                <th className="p-3 text-left text-sm font-medium text-muted-foreground">
-                  Type
-                </th>
-                <th className="p-3 text-left text-sm font-medium text-muted-foreground">
-                  Status
-                </th>
-                <th className="p-3 text-left text-sm font-medium text-muted-foreground">
-                  Updated
-                </th>
-                <th className="p-3 text-left text-sm font-medium text-muted-foreground">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {entries.map((entry) => (
-                <tr
-                  key={entry._id}
-                  className={cn(
-                    "border-b last:border-0 transition-colors hover:bg-muted/50",
-                    selectedIds.has(entry._id) && "bg-primary/5"
-                  )}
-                >
-                  <td className="p-3">
-                    <Checkbox
-                      checked={selectedIds.has(entry._id)}
-                      onCheckedChange={(checked) =>
-                        handleSelectItem(entry._id, checked as boolean)
-                      }
-                      aria-label={`Select ${getEntryTitle(entry, entry.contentTypeName)}`}
-                    />
-                  </td>
-                  <td className="p-3">
-                    <button
-                      type="button"
-                      onClick={() => navigation.navigateToEntry(entry._id)}
-                      className="block text-left"
-                    >
-                      <span className="font-medium text-foreground hover:text-primary">
-                        {getEntryTitle(entry, entry.contentTypeName)}
-                      </span>
-                      <span className="block text-xs text-muted-foreground">
-                        {entry.slug}
-                      </span>
-                    </button>
-                  </td>
-                  <td className="p-3 text-sm text-muted-foreground">
-                    {getContentTypeDisplayName(entry.contentTypeName)}
-                  </td>
-                  <td className="p-3">
-                    <CmsStatusBadge status={entry.status as ContentStatus} />
-                  </td>
-                  <td className="p-3 text-sm text-muted-foreground">
-                    {formatDate(entry._creationTime)}
-                  </td>
-                  <td className="p-3">
-                    <CmsButton
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigation.navigateToEntry(entry._id)}
-                    >
-                      {canUpdate("contentEntries") ? "Edit" : "View"}
-                    </CmsButton>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <CmsTable
+          columns={entryColumns}
+          data={entries}
+          getRowId={(e) => e._id}
+          selectable
+          selectedIds={selectedIds}
+          onSelectionChange={setSelectedIds}
+          emptyMessage="No content entries found"
+        />
       )}
     </div>
   );
