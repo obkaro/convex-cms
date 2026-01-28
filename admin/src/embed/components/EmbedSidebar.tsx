@@ -36,7 +36,9 @@ function pathToRoute(path: string): EmbedRoute {
 export function EmbedSidebar() {
   const { currentPath, navigate, navigateToContentType } = useEmbedNavigation();
   const config = useAdminConfig();
-  const { navItems, branding, layout } = config;
+  const { navItems, branding,
+    // layout
+  } = config;
   const api = useApi();
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
