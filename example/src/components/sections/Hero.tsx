@@ -3,12 +3,17 @@ import { api } from "../../../convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowDown, Circle, Loader2, CheckCircle2 } from "lucide-react";
+import { changelogEntry } from "convex/cms";
+import { useCmsQuery } from "convex-cms/react";
 
 export function Hero() {
 	const roadmap = useQuery(api.content.getRoadmapByStatus);
-	const changelog = useQuery(api.content.getChangelog);
+	const changelog = useCmsQuery(api.admin, changelogEntry, {
+		paginationOpts: { numItems: 50, cursor: null },
+		status: "published",
+	});
 
-	const latestVersion = changelog?.[0]?.version;
+	const latestVersion = changelog?.page[0]?.data.version;
 
 	return (
 		<section className="section bg-slate-50 overflow-hidden">
@@ -83,7 +88,9 @@ export function Hero() {
 
 								<div className="mt-8 pt-6 border-t border-slate-100">
 									<p className="text-small">
-										{changelog?.length || 0} releases shipped
+										{changelog?.page.map((entry) => entry.data.version)
+											.length || 0}{" "}
+										releases shipped
 									</p>
 								</div>
 							</CardContent>

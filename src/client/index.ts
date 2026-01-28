@@ -88,6 +88,7 @@ export {
   defineAdminAPI,
   type AdminApiOptions,
   type AdminOperation,
+  type BaseAdminAPI,
 } from "./admin/index.js";
 
 // Type-safe admin API utilities

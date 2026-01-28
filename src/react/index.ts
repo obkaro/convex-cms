@@ -57,6 +57,8 @@ import type {
 	FunctionReturnType,
 } from "convex/server";
 import type { PaginationResult } from "convex/server";
+import type { Validator } from "convex/values";
+import type { ContentTypeDefinition } from "../client/schema/types.js";
 
 // =============================================================================
 // Upload Utilities
@@ -937,4 +939,312 @@ export function useMediaUploadQueue<
 		isUploading,
 		overallProgress,
 	};
+}
+
+// =============================================================================
+// Typed Content Hooks
+// =============================================================================
+
+/**
+ * Infer data type from content type definition.
+ * Uses the validator's generic type to extract the TypeScript type.
+ */
+export type InferData<T extends ContentTypeDefinition> =
+	T extends ContentTypeDefinition<string, infer V>
+		? V extends Validator<infer Data, "required", string>
+			? Data
+			: unknown
+		: unknown;
+
+/**
+ * Content entry with typed data field.
+ * Represents the full entry structure returned from CMS queries.
+ */
+export interface TypedEntry<TData> {
+	_id: string;
+	_creationTime: number;
+	contentTypeName: string;
+	slug: string;
+	status: "draft" | "published" | "archived" | "scheduled";
+	data: TData;
+	version: number;
+	locale?: string;
+	publishedAt?: number;
+	scheduledFor?: number;
+	createdBy?: string;
+	updatedBy?: string;
+}
+
+/**
+ * Paginated result with typed entries.
+ */
+export interface TypedPaginatedResult<TData> {
+	page: TypedEntry<TData>[];
+	continueCursor: string | null;
+	isDone: boolean;
+}
+
+/**
+ * Shape of the admin API for type inference.
+ */
+type BaseAdminAPI = {
+	listEntries: FunctionReference<"query">;
+	getEntry: FunctionReference<"query">;
+	getEntryBySlug: FunctionReference<"query">;
+	createEntry: FunctionReference<"mutation">;
+	updateEntry: FunctionReference<"mutation">;
+	publishEntry: FunctionReference<"mutation">;
+	unpublishEntry: FunctionReference<"mutation">;
+	deleteEntry: FunctionReference<"mutation">;
+};
+
+/**
+ * Options for useCmsQuery hook.
+ */
+export type CmsQueryOptions = {
+	status?: "draft" | "published" | "archived" | "scheduled";
+	search?: string;
+	locale?: string;
+	paginationOpts?: { numItems: number; cursor: string | null };
+};
+
+/**
+ * Query content entries with typed data.
+ * Similar to useQuery but with type inference from content type definition.
+ *
+ * @param adminApi - The admin API object from your Convex API
+ * @param definition - Content type definition created with defineContentType
+ * @param options - Query options (status, search, locale, pagination)
+ * @returns Paginated result with typed entries, or undefined while loading
+ *
+ * @example
+ * ```typescript
+ * import { useCmsQuery } from "convex-cms/react";
+ * import { api } from "../convex/_generated/api";
+ * import { changelogEntry } from "../convex/cms";
+ *
+ * const result = useCmsQuery(api.admin, changelogEntry, { status: "published" });
+ * result?.page[0].data.title;     // string ✓
+ * result?.page[0].data.version;   // string ✓
+ * ```
+ */
+export function useCmsQuery<TDef extends ContentTypeDefinition>(
+	adminApi: BaseAdminAPI,
+	definition: TDef,
+	options?: CmsQueryOptions,
+): TypedPaginatedResult<InferData<TDef>> | undefined {
+	type Data = InferData<TDef>;
+
+	const result = useQuery(adminApi.listEntries, {
+		contentTypeName: definition.slug,
+		paginationOpts: options?.paginationOpts ?? { numItems: 50, cursor: null },
+		...options,
+	});
+
+	return result as TypedPaginatedResult<Data> | undefined;
+}
+
+/**
+ * Get a single content entry with typed data.
+ * Supports fetching by ID or by slug.
+ *
+ * @param adminApi - The admin API object from your Convex API
+ * @param definition - Content type definition created with defineContentType
+ * @param args - Either { id: string } or { slug: string, status?: string }
+ * @returns Typed entry, null if not found, or undefined while loading
+ *
+ * @example
+ * ```typescript
+ * // By ID
+ * const entry = useCmsEntry(api.admin, changelogEntry, { id: entryId });
+ * entry?.data.title; // Typed!
+ *
+ * // By slug
+ * const entry = useCmsEntry(api.admin, changelogEntry, {
+ *   slug: "v1-release",
+ *   status: "published"
+ * });
+ * ```
+ */
+export function useCmsEntry<TDef extends ContentTypeDefinition>(
+	adminApi: BaseAdminAPI,
+	definition: TDef,
+	args: { id: string } | { slug: string; status?: string },
+): TypedEntry<InferData<TDef>> | null | undefined {
+	type Data = InferData<TDef>;
+
+	const isById = "id" in args;
+
+	const result = useQuery(
+		isById ? adminApi.getEntry : adminApi.getEntryBySlug,
+		isById
+			? { id: args.id }
+			: {
+					contentTypeName: definition.slug,
+					slug: args.slug,
+					status: args.status,
+				},
+	);
+
+	return result as TypedEntry<Data> | null | undefined;
+}
+
+type MutationOperation =
+	| "create"
+	| "update"
+	| "publish"
+	| "unpublish"
+	| "delete";
+
+type CreateArgs<TData> = {
+	data: TData;
+	slug?: string;
+	status?: "draft" | "published";
+	locale?: string;
+	createdBy?: string;
+};
+
+type UpdateArgs<TData> = {
+	id: string;
+	data?: Partial<TData>;
+	slug?: string;
+	status?: "draft" | "published" | "archived";
+	updatedBy?: string;
+};
+
+type TypedMutationReturn<TData, TOp extends MutationOperation> =
+	TOp extends "create"
+		? (args: CreateArgs<TData>) => Promise<TypedEntry<TData>>
+		: TOp extends "update"
+			? (args: UpdateArgs<TData>) => Promise<TypedEntry<TData>>
+			: TOp extends "publish" | "unpublish"
+				? (args: { id: string }) => Promise<TypedEntry<TData>>
+				: TOp extends "delete"
+					? (args: { id: string }) => Promise<void>
+					: never;
+
+/**
+ * Get a typed mutation for content entries.
+ * Similar to useMutation but with type inference from content type definition.
+ *
+ * @param adminApi - The admin API object from your Convex API
+ * @param definition - Content type definition created with defineContentType
+ * @param operation - The mutation type: "create" | "update" | "publish" | "unpublish" | "delete"
+ * @returns A typed mutation function
+ *
+ * @example
+ * ```typescript
+ * const create = useTypedMutation(api.admin, changelogEntry, "create");
+ * await create({
+ *   data: { title: "v1.0", version: "1.0.0", ... }
+ * }); // data is fully typed!
+ *
+ * const update = useTypedMutation(api.admin, changelogEntry, "update");
+ * await update({
+ *   id: "...",
+ *   data: { title: "New title" }
+ * }); // partial data, typed!
+ * ```
+ */
+export function useTypedMutation<
+	TDef extends ContentTypeDefinition,
+	TOp extends MutationOperation,
+>(
+	adminApi: BaseAdminAPI,
+	definition: TDef,
+	operation: TOp,
+): TypedMutationReturn<InferData<TDef>, TOp> {
+	type Data = InferData<TDef>;
+
+	const createMutation = useMutation(adminApi.createEntry);
+	const updateMutation = useMutation(adminApi.updateEntry);
+	const publishMutation = useMutation(adminApi.publishEntry);
+	const unpublishMutation = useMutation(adminApi.unpublishEntry);
+	const deleteMutation = useMutation(adminApi.deleteEntry);
+
+	const mutationFn = useMemo(() => {
+		switch (operation) {
+			case "create":
+				return async (args: CreateArgs<Data>) => {
+					const result = await createMutation({
+						contentTypeName: definition.slug,
+						...args,
+					});
+					return result as TypedEntry<Data>;
+				};
+
+			case "update":
+				return async (args: UpdateArgs<Data>) => {
+					const result = await updateMutation(args);
+					return result as TypedEntry<Data>;
+				};
+
+			case "publish":
+				return async (args: { id: string }) => {
+					const result = await publishMutation(args);
+					return result as TypedEntry<Data>;
+				};
+
+			case "unpublish":
+				return async (args: { id: string }) => {
+					const result = await unpublishMutation(args);
+					return result as TypedEntry<Data>;
+				};
+
+			case "delete":
+				return async (args: { id: string }) => {
+					await deleteMutation(args);
+				};
+
+			default:
+				throw new Error(`Unknown operation: ${operation}`);
+		}
+	}, [
+		operation,
+		definition.slug,
+		createMutation,
+		updateMutation,
+		publishMutation,
+		unpublishMutation,
+		deleteMutation,
+	]);
+
+	return mutationFn as TypedMutationReturn<Data, TOp>;
+}
+
+/**
+ * Type assertion for paginated entries.
+ * Use with native useQuery for manual type narrowing when you need
+ * full control over the query but still want typed results.
+ *
+ * @example
+ * ```typescript
+ * const result = useQuery(api.admin.listEntries, { ... });
+ * const typed = asTypedEntries(result, changelogEntry);
+ * typed?.page[0].data.title; // Typed!
+ * ```
+ */
+export function asTypedEntries<TDef extends ContentTypeDefinition>(
+	result: unknown,
+	_definition: TDef,
+): TypedPaginatedResult<InferData<TDef>> | undefined {
+	return result as TypedPaginatedResult<InferData<TDef>> | undefined;
+}
+
+/**
+ * Type assertion for single entry.
+ * Use with native useQuery for manual type narrowing.
+ *
+ * @example
+ * ```typescript
+ * const result = useQuery(api.admin.getEntry, { id });
+ * const entry = asTypedEntry(result, changelogEntry);
+ * entry?.data.title; // Typed!
+ * ```
+ */
+export function asTypedEntry<TDef extends ContentTypeDefinition>(
+	entry: unknown,
+	_definition: TDef,
+): TypedEntry<InferData<TDef>> | null | undefined {
+	return entry as TypedEntry<InferData<TDef>> | null | undefined;
 }

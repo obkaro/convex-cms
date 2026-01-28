@@ -7,9 +7,9 @@
  */
 
 import { createContext, useContext, type ReactNode } from "react";
-import { api } from "../../../convex/_generated/api";
+import type { BaseAdminAPI } from "convex-cms";
 
-export type CmsAdminApi = typeof api["admin"];
+export type CmsAdminApi = BaseAdminAPI;
 
 const ApiContext = createContext<CmsAdminApi | null>(null);
 

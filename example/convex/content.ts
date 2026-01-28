@@ -38,17 +38,3 @@ export const getRoadmapByStatus = query({
 		};
 	},
 });
-
-export const getChangelog = query({
-	args: {},
-	handler: async (ctx) => {
-		// Using typed helper - result.page[].data is fully typed
-		const result = await content.changelog.list(ctx, { status: "published" });
-
-		// Return entries with data flattened for easier frontend consumption
-		return result.page.map((entry) => ({
-			_id: entry._id,
-			...entry.data,
-		}));
-	},
-});

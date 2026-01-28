@@ -1,20 +1,12 @@
-import { useQuery } from "convex/react";
+import { useCmsQuery, type InferData } from "convex-cms/react";
 import { api } from "../../../convex/_generated/api";
+import { changelogEntry } from "../../../convex/cms";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Calendar } from "lucide-react";
 
-type ChangeType = "feature" | "improvement" | "fix" | "breaking";
-
-interface ChangelogEntry {
-	_id: string;
-	title: string;
-	description: string;
-	version: string;
-	releaseDate: number;
-	type: ChangeType[];
-	image?: string;
-}
+type ChangelogData = InferData<typeof changelogEntry>;
+type ChangeType = ChangelogData["type"][number];
 
 const typeConfig: Record<ChangeType, { label: string; className: string }> = {
 	feature: { label: "Feature", className: "type-feature" },
@@ -35,7 +27,7 @@ function ChangelogCard({
 	entry,
 	isLatest,
 }: {
-	entry: ChangelogEntry;
+	entry: ChangelogData & { _id: string };
 	isLatest: boolean;
 }) {
 	return (
@@ -101,9 +93,16 @@ function LoadingSkeleton() {
 }
 
 export function Changelog() {
-	const result = useQuery(api.content.getChangelog);
+	// Type-safe query: entry.data is fully typed from changelogEntry definition
+	const result = useCmsQuery(api.admin, changelogEntry, {
+		status: "published",
+	});
 
-	const entries = result as ChangelogEntry[] | undefined;
+	// Map entries with typed data - no manual type assertions needed
+	const entries = result?.page.map((entry) => ({
+		_id: entry._id,
+		...entry.data,
+	}));
 
 	return (
 		<section id="changelog" className="section bg-slate-50">

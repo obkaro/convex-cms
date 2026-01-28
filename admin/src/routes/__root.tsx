@@ -17,9 +17,11 @@ import {
   type GetUserRoleHook,
   type LogoutHook,
 } from "~/contexts";
+import { ApiProvider } from "~/embed/contexts/ApiContext";
 import type { AdminConfig } from "~/lib/admin-config";
 import { resolveAdminConfig } from "~/lib/admin-config";
 import { getServerConfig, type ServerConfig } from "~/lib/config.server";
+import { api } from "../../convex/_generated/api";
 
 /**
  * Auth Configuration
@@ -228,9 +230,11 @@ function ConvexProviderWrapper({
 
   return (
     <ConvexProvider client={convex}>
-      <SettingsConfigProvider baseConfig={adminConfig}>
-        {children}
-      </SettingsConfigProvider>
+      <ApiProvider api={api.admin}>
+        <SettingsConfigProvider baseConfig={adminConfig}>
+          {children}
+        </SettingsConfigProvider>
+      </ApiProvider>
     </ConvexProvider>
   );
 }
