@@ -1160,57 +1160,12 @@ export type {
 } from "./types.js";
 
 // --- Agent Tools ---
-export {
-  // Main factory function
-  createCmsTools,
-
-  // Types
-  type CmsTools,
-  type CmsToolName,
-  type CreateCmsToolsOptions,
-
-  // Zod schemas for tool arguments (useful for custom tool creation)
-  fieldTypeSchema,
-  contentStatusSchema,
-  mediaTypeSchema,
-  fieldOptionsSchema,
-  fieldDefinitionSchema,
-  filterOperatorSchema,
-  fieldFilterSchema,
-
-  // Content Type schemas
-  createContentTypeArgsSchema,
-  updateContentTypeArgsSchema,
-  listContentTypesArgsSchema,
-  getContentTypeArgsSchema,
-
-  // Content Entry schemas
-  createContentEntryArgsSchema,
-  updateContentEntryArgsSchema,
-  publishEntryArgsSchema,
-  unpublishEntryArgsSchema,
-  scheduleEntryArgsSchema,
-  deleteContentEntryArgsSchema,
-  duplicateContentEntryArgsSchema,
-  listContentEntriesArgsSchema,
-  getContentEntryArgsSchema,
-  restoreContentEntryArgsSchema,
-
-  // Media Asset schemas
-  createMediaAssetArgsSchema,
-  updateMediaAssetArgsSchema,
-  listMediaAssetsArgsSchema,
-  getMediaAssetArgsSchema,
-  deleteMediaAssetArgsSchema,
-
-  // Bulk Operation schemas
-  bulkPublishArgsSchema,
-  bulkUnpublishArgsSchema,
-  bulkDeleteArgsSchema,
-
-  // Search schema
-  searchContentArgsSchema,
-} from "./agentTools.js";
+// Agent tools are available via a separate import path to avoid requiring
+// the optional @convex-dev/agent peer dependency for all users:
+//
+// import { createCmsTools } from "convex-cms/agent";
+//
+// See ./agentTools.ts for the full API.
 
 // --- Code-Only Schema System ---
 export {

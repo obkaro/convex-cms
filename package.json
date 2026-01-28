@@ -36,6 +36,10 @@
       "types": "./dist/react/index.d.ts",
       "default": "./dist/react/index.js"
     },
+    "./agent": {
+      "types": "./dist/client/agentTools.d.ts",
+      "default": "./dist/client/agentTools.js"
+    },
     "./_generated/component.js": {
       "types": "./dist/component/_generated/component.d.ts"
     },
