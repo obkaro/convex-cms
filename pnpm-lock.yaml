@@ -380,8 +380,8 @@ importers:
         specifier: ^1.31.6
         version: 1.31.6(react@19.2.4)
       convex-cms:
-        specifier: ^0.0.9-alpha.7
-        version: 0.0.9-alpha.7(mw6kybbtalzjwgwl5ntioyzkyq)
+        specifier: ^0.0.9-alpha.8
+        version: 0.0.9-alpha.8(mw6kybbtalzjwgwl5ntioyzkyq)
       convex-helpers:
         specifier: ^0.1.111
         version: 0.1.111(@standard-schema/spec@1.1.0)(convex@1.31.6(react@19.2.4))(react@19.2.4)(typescript@5.9.3)(zod@3.25.76)
@@ -2636,8 +2636,8 @@ packages:
   convert-source-map@2.0.0:
     resolution: {integrity: sha512-Kvp459HrV2FEJ1CAsi1Ku+MY3kasH19TFykTz2xWmMeq6bk2NU3XXvfJ+Q61m0xktWwt+1HSYf3JZsTms3aRJg==}
 
-  convex-cms@0.0.9-alpha.7:
-    resolution: {integrity: sha512-V2h13LkSH7dwF975OHaj8STWyN43+Ip7jsF8KkBvb4NBFmb1/tg3jleOJi0T23b4yhakGvsZswz3n/3z3EVp3g==}
+  convex-cms@0.0.9-alpha.8:
+    resolution: {integrity: sha512-z3x3d0GvYr7R9p1scVLVcYAptkETEe9+cnH+N0J/SGZs99wauBHaqpTTGbHw6HBEvCF5V0lx9jy6Kh77CM/AkA==}
     hasBin: true
     peerDependencies:
       '@convex-dev/agent': ^0.3.0
@@ -6702,7 +6702,7 @@ snapshots:
 
   convert-source-map@2.0.0: {}
 
-  convex-cms@0.0.9-alpha.7(mw6kybbtalzjwgwl5ntioyzkyq):
+  convex-cms@0.0.9-alpha.8(mw6kybbtalzjwgwl5ntioyzkyq):
     dependencies:
       '@clack/prompts': 0.10.1
       commander: 14.0.2
