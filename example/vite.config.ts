@@ -13,6 +13,8 @@ export default defineConfig({
     alias: {
       "@": path.resolve(__dirname, "./src"),
       "@convex": path.resolve(__dirname, "./convex"),
+      // Resolve admin package's internal aliases
+      "~": path.resolve(__dirname, "./node_modules/convex-cms/admin/src"),
     },
   },
 });
