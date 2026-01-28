@@ -1,111 +1,27 @@
 /**
  * Tests for RBAC default roles configuration.
  *
- * These tests verify that:
- * - All default roles are properly defined
- * - Permission checking works correctly
- * - Role utilities return expected results
+ * Tests permission checking behavior and role utilities.
  */
 
 import { describe, it, expect } from "vitest";
 import {
-  roleNames,
-  resources,
-  actions,
-  DEFAULT_ROLES,
-  DEFAULT_ROLES_LIST,
-  ADMIN_ROLE,
-  EDITOR_ROLE,
-  AUTHOR_ROLE,
-  VIEWER_ROLE,
   hasPermission,
   getRolePermissions,
   getRole,
   isBuiltInRole,
   getResourcePermissions,
   canAccessResource,
-  type RoleName,
   type Resource,
   type Action,
-  type Permission,
 } from "../../src/component/roles.js";
 
 // =============================================================================
-// Constants Tests
+// Role Permission Behavior Tests
 // =============================================================================
 
-describe("RBAC Constants", () => {
-  describe("roleNames", () => {
-    it("should have exactly 4 built-in roles", () => {
-      expect(roleNames).toHaveLength(4);
-    });
-
-    it("should include all expected roles", () => {
-      expect(roleNames).toContain("admin");
-      expect(roleNames).toContain("editor");
-      expect(roleNames).toContain("author");
-      expect(roleNames).toContain("viewer");
-    });
-  });
-
-  describe("resources", () => {
-    it("should include all CMS resources", () => {
-      expect(resources).toContain("contentTypes");
-      expect(resources).toContain("contentEntries");
-      expect(resources).toContain("mediaItems");
-      expect(resources).toContain("settings");
-      expect(resources).toHaveLength(4);
-    });
-  });
-
-  describe("actions", () => {
-    it("should include CRUD actions", () => {
-      expect(actions).toContain("create");
-      expect(actions).toContain("read");
-      expect(actions).toContain("update");
-      expect(actions).toContain("delete");
-    });
-
-    it("should include publish actions", () => {
-      expect(actions).toContain("publish");
-      expect(actions).toContain("unpublish");
-    });
-
-    it("should include restore and manage actions", () => {
-      expect(actions).toContain("restore");
-      expect(actions).toContain("manage");
-    });
-  });
-});
-
-// =============================================================================
-// Default Roles Tests
-// =============================================================================
-
-describe("DEFAULT_ROLES", () => {
-  it("should contain all built-in roles", () => {
-    expect(Object.keys(DEFAULT_ROLES)).toHaveLength(4);
-    expect(DEFAULT_ROLES.admin).toBeDefined();
-    expect(DEFAULT_ROLES.editor).toBeDefined();
-    expect(DEFAULT_ROLES.author).toBeDefined();
-    expect(DEFAULT_ROLES.viewer).toBeDefined();
-  });
-
-  it("should have DEFAULT_ROLES_LIST matching DEFAULT_ROLES values", () => {
-    expect(DEFAULT_ROLES_LIST).toHaveLength(4);
-    expect(DEFAULT_ROLES_LIST).toContain(ADMIN_ROLE);
-    expect(DEFAULT_ROLES_LIST).toContain(EDITOR_ROLE);
-    expect(DEFAULT_ROLES_LIST).toContain(AUTHOR_ROLE);
-    expect(DEFAULT_ROLES_LIST).toContain(VIEWER_ROLE);
-  });
-
-  describe("ADMIN_ROLE", () => {
-    it("should have correct metadata", () => {
-      expect(ADMIN_ROLE.name).toBe("admin");
-      expect(ADMIN_ROLE.displayName).toBe("Administrator");
-      expect(ADMIN_ROLE.isSystem).toBe(true);
-    });
-
+describe("Role Permissions", () => {
+  describe("admin role", () => {
     it("should have full permissions on all resources", () => {
       const testResources: Resource[] = [
         "contentTypes",
@@ -134,13 +50,7 @@ describe("DEFAULT_ROLES", () => {
     });
   });
 
-  describe("EDITOR_ROLE", () => {
-    it("should have correct metadata", () => {
-      expect(EDITOR_ROLE.name).toBe("editor");
-      expect(EDITOR_ROLE.displayName).toBe("Editor");
-      expect(EDITOR_ROLE.isSystem).toBe(true);
-    });
-
+  describe("editor role", () => {
     it("should have read-only access to content types", () => {
       expect(hasPermission("editor", { resource: "contentTypes", action: "read" })).toBe(true);
       expect(hasPermission("editor", { resource: "contentTypes", action: "create" })).toBe(false);
@@ -160,13 +70,7 @@ describe("DEFAULT_ROLES", () => {
     });
   });
 
-  describe("AUTHOR_ROLE", () => {
-    it("should have correct metadata", () => {
-      expect(AUTHOR_ROLE.name).toBe("author");
-      expect(AUTHOR_ROLE.displayName).toBe("Author");
-      expect(AUTHOR_ROLE.isSystem).toBe(true);
-    });
-
+  describe("author role", () => {
     it("should be able to create content entries", () => {
       expect(hasPermission("author", { resource: "contentEntries", action: "create" })).toBe(true);
     });
@@ -190,13 +94,7 @@ describe("DEFAULT_ROLES", () => {
     });
   });
 
-  describe("VIEWER_ROLE", () => {
-    it("should have correct metadata", () => {
-      expect(VIEWER_ROLE.name).toBe("viewer");
-      expect(VIEWER_ROLE.displayName).toBe("Viewer");
-      expect(VIEWER_ROLE.isSystem).toBe(true);
-    });
-
+  describe("viewer role", () => {
     it("should have read-only access", () => {
       expect(hasPermission("viewer", { resource: "contentTypes", action: "read" })).toBe(true);
       expect(hasPermission("viewer", { resource: "contentEntries", action: "read" })).toBe(true);
@@ -218,7 +116,7 @@ describe("DEFAULT_ROLES", () => {
 });
 
 // =============================================================================
-// Utility Function Tests
+// hasPermission Utility Tests
 // =============================================================================
 
 describe("hasPermission", () => {

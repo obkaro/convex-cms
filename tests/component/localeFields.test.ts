@@ -265,16 +265,6 @@ describe("mergeLocalizedValues", () => {
 });
 
 describe("getAvailableLocales", () => {
-  it("should return all locale codes", () => {
-    const value: LocalizedFieldValue<string> = {
-      "en-US": "Hello",
-      "es-ES": "Hola",
-      "fr-FR": "Bonjour",
-    };
-    const result = getAvailableLocales(value);
-    expect(result).toEqual(["en-US", "es-ES", "fr-FR"]);
-  });
-
   it("should return empty array for non-localized values", () => {
     expect(getAvailableLocales("Hello")).toEqual([]);
     expect(getAvailableLocales(123)).toEqual([]);

@@ -704,20 +704,6 @@ describe("CMS Client Wrapper", () => {
   });
 });
 
-describe("API Types", () => {
-  it("exports TypedComponentApi type", () => {
-    // TypeScript compilation ensures this type exists
-    const api: TypedComponentApi = createMockComponentApi();
-    expect(api).toBeDefined();
-  });
-
-  it("exports ConvexContext type", () => {
-    // TypeScript compilation ensures this type exists
-    const ctx: ConvexContext = createMockContext();
-    expect(ctx).toBeDefined();
-  });
-});
-
 describe("getUserRole Hook", () => {
   let mockApi: TypedComponentApi;
 

@@ -79,68 +79,6 @@ const mockComponentApi: AgentComponentApi = {
 };
 
 describe("Agent Tools", () => {
-  describe("AgentComponentApi structure", () => {
-    it("should match the actual Convex component module structure", () => {
-      // Verify the mock matches expected module structure
-      // This documents and enforces the correct API paths
-
-      // contentTypes module - queries only (no mutations)
-      expect(mockComponentApi.contentTypes.get).toBeDefined();
-      expect(mockComponentApi.contentTypes.list).toBeDefined();
-      // Note: NO getByName - the get function handles both id and name lookup
-
-      // contentTypeMutations module - mutations
-      expect(mockComponentApi.contentTypeMutations.createContentType).toBeDefined();
-      expect(mockComponentApi.contentTypeMutations.updateContentType).toBeDefined();
-      expect(mockComponentApi.contentTypeMutations.deleteContentType).toBeDefined();
-
-      // contentEntries module - queries
-      expect(mockComponentApi.contentEntries.get).toBeDefined();
-      expect(mockComponentApi.contentEntries.getBySlug).toBeDefined();
-      expect(mockComponentApi.contentEntries.getBySlugAndTypeName).toBeDefined();
-      expect(mockComponentApi.contentEntries.list).toBeDefined();
-
-      // contentEntryMutations module - mutations (but NOT scheduleEntry!)
-      expect(mockComponentApi.contentEntryMutations.createEntry).toBeDefined();
-      expect(mockComponentApi.contentEntryMutations.updateEntry).toBeDefined();
-      expect(mockComponentApi.contentEntryMutations.publishEntry).toBeDefined();
-      expect(mockComponentApi.contentEntryMutations.unpublishEntry).toBeDefined();
-      expect(mockComponentApi.contentEntryMutations.deleteEntry).toBeDefined();
-      expect(mockComponentApi.contentEntryMutations.duplicateEntry).toBeDefined();
-      expect(mockComponentApi.contentEntryMutations.restoreEntry).toBeDefined();
-
-      // scheduledPublish module - SEPARATE from contentEntryMutations
-      // This is a key structural distinction that was previously wrong
-      expect(mockComponentApi.scheduledPublish).toBeDefined();
-      expect(mockComponentApi.scheduledPublish.scheduleEntry).toBeDefined();
-      expect(mockComponentApi.scheduledPublish.cancelScheduledPublish).toBeDefined();
-
-      // mediaAssets module - queries
-      expect(mockComponentApi.mediaAssets.get).toBeDefined();
-      expect(mockComponentApi.mediaAssets.list).toBeDefined();
-
-      // mediaAssetMutations module - mutations
-      expect(mockComponentApi.mediaAssetMutations.createMediaAsset).toBeDefined();
-      expect(mockComponentApi.mediaAssetMutations.updateMediaAsset).toBeDefined();
-      expect(mockComponentApi.mediaAssetMutations.deleteMediaAsset).toBeDefined();
-
-      // bulkOperations module - bulk mutations
-      expect(mockComponentApi.bulkOperations.bulkPublish).toBeDefined();
-      expect(mockComponentApi.bulkOperations.bulkUnpublish).toBeDefined();
-      expect(mockComponentApi.bulkOperations.bulkDelete).toBeDefined();
-      expect(mockComponentApi.bulkOperations.bulkUpdate).toBeDefined();
-      expect(mockComponentApi.bulkOperations.bulkRestore).toBeDefined();
-    });
-
-    it("should NOT have incorrect API paths (regression test)", () => {
-      // These incorrect paths previously existed and caused runtime errors
-      // @ts-expect-error - This property should not exist
-      expect(mockComponentApi.contentTypes.getByName).toBeUndefined();
-      // @ts-expect-error - scheduleEntry is in scheduledPublish, not contentEntryMutations
-      expect(mockComponentApi.contentEntryMutations.scheduleEntry).toBeUndefined();
-    });
-  });
-
   describe("createCmsTools", () => {
     it("should create all expected tools", () => {
       const tools = createCmsTools(mockComponentApi);

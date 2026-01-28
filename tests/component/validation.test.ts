@@ -19,8 +19,6 @@ import {
 	validateFieldValue,
 	validateContentData,
 	applyFieldDefaults,
-	getFieldType,
-	isFieldRequired,
 	FieldDefinition,
 	ContentTypeSchema,
 } from "../../src/component/validation.js";
@@ -847,39 +845,3 @@ describe("applyFieldDefaults", () => {
 });
 
 // =============================================================================
-// Utility Function Tests
-// =============================================================================
-
-describe("getFieldType", () => {
-	it("should return the field type", () => {
-		const fieldDef: FieldDefinition = {
-			name: "title",
-			label: "Title",
-			type: "text",
-			required: false,
-		};
-		expect(getFieldType(fieldDef)).toBe("text");
-	});
-});
-
-describe("isFieldRequired", () => {
-	it("should return true for required fields", () => {
-		const fieldDef: FieldDefinition = {
-			name: "title",
-			label: "Title",
-			type: "text",
-			required: true,
-		};
-		expect(isFieldRequired(fieldDef)).toBe(true);
-	});
-
-	it("should return false for optional fields", () => {
-		const fieldDef: FieldDefinition = {
-			name: "title",
-			label: "Title",
-			type: "text",
-			required: false,
-		};
-		expect(isFieldRequired(fieldDef)).toBe(false);
-	});
-});

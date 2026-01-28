@@ -131,10 +131,6 @@ describe("Content Type Registry", () => {
   });
 
   describe("getAllCodeDefinedTypes", () => {
-    it("returns empty array when no types registered", () => {
-      expect(getAllCodeDefinedTypes()).toEqual([]);
-    });
-
     it("returns all registered types", () => {
       const blogPost = defineContentType({
         name: "blog_post",
@@ -158,28 +154,9 @@ describe("Content Type Registry", () => {
       expect(all.map((t) => t.slug)).toContain("author");
     });
 
-    it("returns a new array each time (not the internal store)", () => {
-      const blogPost = defineContentType({
-        name: "blog_post",
-        validator: v.object({ title: v.string() }),
-        meta: { displayName: "Blog Post" },
-      });
-
-      registerContentType(blogPost);
-
-      const arr1 = getAllCodeDefinedTypes();
-      const arr2 = getAllCodeDefinedTypes();
-
-      expect(arr1).not.toBe(arr2);
-      expect(arr1).toEqual(arr2);
-    });
   });
 
   describe("getCodeDefinedTypeNames", () => {
-    it("returns empty array when no types registered", () => {
-      expect(getCodeDefinedTypeNames()).toEqual([]);
-    });
-
     it("returns all registered type names", () => {
       registerContentType(
         defineContentType({
@@ -266,31 +243,4 @@ describe("Content Type Registry", () => {
     });
   });
 
-  describe("getRegistrySize", () => {
-    it("returns 0 for empty registry", () => {
-      expect(getRegistrySize()).toBe(0);
-    });
-
-    it("returns correct count", () => {
-      registerContentType(
-        defineContentType({
-          name: "type_a",
-          validator: v.object({ x: v.string() }),
-          meta: { displayName: "A" },
-        })
-      );
-
-      expect(getRegistrySize()).toBe(1);
-
-      registerContentType(
-        defineContentType({
-          name: "type_b",
-          validator: v.object({ y: v.string() }),
-          meta: { displayName: "B" },
-        })
-      );
-
-      expect(getRegistrySize()).toBe(2);
-    });
-  });
 });

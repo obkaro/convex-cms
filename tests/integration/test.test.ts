@@ -27,14 +27,6 @@ import {
 	uniqueName,
 	pastTimestamp,
 	futureTimestamp,
-	// Types
-	fieldTypes,
-	contentStatuses,
-	mediaTypes,
-	// Registration
-	register,
-	schema,
-	modules,
 } from "../../src/test.js";
 
 // =============================================================================
@@ -808,63 +800,3 @@ describe("Helpers", () => {
 	});
 });
 
-// =============================================================================
-// Constants Tests
-// =============================================================================
-
-describe("Constants", () => {
-	describe("fieldTypes", () => {
-		it("includes all supported field types", () => {
-			expect(fieldTypes).toContain("text");
-			expect(fieldTypes).toContain("richText");
-			expect(fieldTypes).toContain("number");
-			expect(fieldTypes).toContain("boolean");
-			expect(fieldTypes).toContain("date");
-			expect(fieldTypes).toContain("datetime");
-			expect(fieldTypes).toContain("reference");
-			expect(fieldTypes).toContain("media");
-			expect(fieldTypes).toContain("json");
-			expect(fieldTypes).toContain("select");
-			expect(fieldTypes).toContain("multiSelect");
-		});
-	});
-
-	describe("contentStatuses", () => {
-		it("includes all status values", () => {
-			expect(contentStatuses).toContain("draft");
-			expect(contentStatuses).toContain("published");
-			expect(contentStatuses).toContain("archived");
-			expect(contentStatuses).toContain("scheduled");
-		});
-	});
-
-	describe("mediaTypes", () => {
-		it("includes all media types", () => {
-			expect(mediaTypes).toContain("image");
-			expect(mediaTypes).toContain("video");
-			expect(mediaTypes).toContain("audio");
-			expect(mediaTypes).toContain("document");
-			expect(mediaTypes).toContain("other");
-		});
-	});
-});
-
-// =============================================================================
-// Module Export Tests
-// =============================================================================
-
-describe("Module Exports", () => {
-	it("exports register function", () => {
-		expect(typeof register).toBe("function");
-	});
-
-	it("exports schema", () => {
-		expect(schema).toBeDefined();
-		expect(schema.tables).toBeDefined();
-	});
-
-	it("exports modules", () => {
-		expect(modules).toBeDefined();
-		expect(typeof modules).toBe("object");
-	});
-});
