@@ -437,11 +437,14 @@ export type TypedAdminAPI<T extends ContentTypeHelpersSchema, TBase> = {
  *
  * This is applied to BaseAdminAPI so the exported type works directly with
  * useQuery/useMutation without additional type assertions.
+ *
+ * Note: The ComponentPath parameter is set to `string | undefined` to match
+ * how Convex generates types for component functions.
  */
 export type ToFunctionRefs<T> = T extends RegisteredQuery<infer V, infer Args, infer Returns>
-  ? FunctionReference<"query", V, Args, Awaited<Returns>>
+  ? FunctionReference<"query", V, Args, Awaited<Returns>, string | undefined>
   : T extends RegisteredMutation<infer V, infer Args, infer Returns>
-    ? FunctionReference<"mutation", V, Args, Awaited<Returns>>
+    ? FunctionReference<"mutation", V, Args, Awaited<Returns>, string | undefined>
     : T extends object
       ? { [K in keyof T]: ToFunctionRefs<T[K]> }
       : T;
