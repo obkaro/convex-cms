@@ -13,11 +13,16 @@ export default defineConfig({
     alias: {
       "@": path.resolve(__dirname, "./src"),
       "@convex": path.resolve(__dirname, "./convex"),
-      // Resolve admin package's internal aliases
       "~": path.resolve(__dirname, "./node_modules/convex-cms/admin/src"),
     },
   },
   optimizeDeps: {
-    exclude: ["use-sync-external-store"],
+    include: [
+      "use-sync-external-store",
+      "use-sync-external-store/shim",
+      "use-sync-external-store/shim/with-selector",
+      "@tanstack/react-store",
+      "@radix-ui/react-use-is-hydrated",
+    ],
   },
 });

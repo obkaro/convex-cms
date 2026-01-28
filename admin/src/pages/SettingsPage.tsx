@@ -126,22 +126,110 @@ export interface SettingsPageProps {
 	navigation: AdminNavigation;
 }
 
-export function SettingsPage({
+// Unconfigured settings page (no useQuery needed)
+function SettingsPageUnconfigured() {
+	return (
+		<RouteGuard requiredPermission={{ resource: "settings", action: "manage" }}>
+			<div className="space-y-6 p-6">
+				<CmsPageHeader
+					title="Settings"
+					description="Configure your CMS settings and preferences."
+				/>
+
+				<div className="space-y-6">
+					<AppearanceSection />
+
+					<Alert>
+						<Info className="size-4" />
+						<AlertDescription>
+							<strong>Settings not configured.</strong> To enable CMS settings,
+							export{" "}
+							<code className="rounded bg-muted px-1 py-0.5 text-xs">
+								getSettings
+							</code>
+							,{" "}
+							<code className="rounded bg-muted px-1 py-0.5 text-xs">
+								updateSettings
+							</code>
+							, and{" "}
+							<code className="rounded bg-muted px-1 py-0.5 text-xs">
+								resetSettings
+							</code>{" "}
+							from your{" "}
+							<code className="rounded bg-muted px-1 py-0.5 text-xs">
+								convex/admin.ts
+							</code>{" "}
+							file.
+						</AlertDescription>
+					</Alert>
+
+					<CmsSurface elevation="base" className="p-6">
+						<div className="mb-4 flex items-center gap-2">
+							<h2 className="text-lg font-semibold text-foreground">Features</h2>
+							<Badge variant="secondary" className="gap-1">
+								<Lock className="size-3" />
+								Default values
+							</Badge>
+						</div>
+						<p className="mb-4 text-sm text-muted-foreground">
+							Showing default feature flags. Configure settings in your admin
+							API to customize.
+						</p>
+						<div className="space-y-4">
+							{(
+								[
+									"versioning",
+									"scheduling",
+									"localization",
+									"mediaManagement",
+								] as const
+							).map((feature) => (
+								<div
+									key={feature}
+									className="flex items-center justify-between opacity-75"
+								>
+									<div>
+										<Label className="text-sm font-medium capitalize">
+											{feature}
+										</Label>
+									</div>
+									<Switch checked={DEFAULT_FEATURES[feature]} disabled={true} />
+								</div>
+							))}
+						</div>
+					</CmsSurface>
+
+					<CmsSurface elevation="base" className="p-6">
+						<h2 className="mb-4 text-lg font-semibold text-foreground">API</h2>
+						<div className="space-y-4">
+							<div>
+								<Label className="text-sm font-medium">
+									Convex Deployment URL
+								</Label>
+								<code className="mt-1 block rounded-md bg-muted px-3 py-2 text-sm">
+									{import.meta.env.VITE_CONVEX_URL || "Not configured"}
+								</code>
+							</div>
+						</div>
+					</CmsSurface>
+				</div>
+			</div>
+		</RouteGuard>
+	);
+}
+
+// Configured settings page with query
+function SettingsPageConfigured({
 	api,
-	navigation: _navigation,
-}: SettingsPageProps) {
+}: {
+	api: CmsAdminApi & { getSettings: NonNullable<CmsAdminApi["getSettings"]> };
+}) {
 	const { canManageSettings } = usePermissions();
 	const canEdit = canManageSettings();
 	const adminConfig = useAdminConfig();
 
-	const isConfigured = useMemo(() => {
-		return api.getSettings != null;
-	}, [api]);
-
-	const settings = useQuery(
-		isConfigured ? api.getSettings : ("skip" as unknown as typeof api.getSettings),
-		isConfigured ? {} : "skip"
-	);
+	// Proper skip pattern: valid function ref, args as second param
+	const settings = useQuery(api.getSettings, {});
 
 	const updateSettingsMutation = useMutation(
 		api.updateSettings ?? ((() => {}) as unknown as typeof api.updateSettings)
@@ -197,7 +285,7 @@ export function SettingsPage({
 	);
 
 	const handleSave = useCallback(async () => {
-		if (!formData || !isDirty || !isConfigured || !api.updateSettings) return;
+		if (!formData || !isDirty || !api.updateSettings) return;
 
 		setFeedbackStatus("saving");
 		setErrorMessage(null);
@@ -257,7 +345,7 @@ export function SettingsPage({
 				error instanceof Error ? error.message : "Failed to reset settings",
 			);
 		}
-	}, [isConfigured, api.resetSettings, resetSettingsMutation]);
+	}, [api.resetSettings, resetSettingsMutation]);
 
 	const handleDiscard = useCallback(() => {
 		if (normalizedSettings) {
@@ -267,71 +355,6 @@ export function SettingsPage({
 			setErrorMessage(null);
 		}
 	}, [normalizedSettings]);
-
-	if (!isConfigured) {
-		return (
-			<RouteGuard
-				requiredPermission={{ resource: "settings", action: "manage" }}
-			>
-				<div className="space-y-6 p-6">
-					<CmsPageHeader
-						title="Settings"
-						description="Configure your CMS settings and preferences."
-					/>
-
-					<div className="space-y-6">
-						<AppearanceSection />
-
-						<Alert>
-							<Info className="size-4" />
-							<AlertDescription>
-								<strong>Settings not configured.</strong> To enable CMS settings, export{" "}
-								<code className="rounded bg-muted px-1 py-0.5 text-xs">getSettings</code>,{" "}
-								<code className="rounded bg-muted px-1 py-0.5 text-xs">updateSettings</code>, and{" "}
-								<code className="rounded bg-muted px-1 py-0.5 text-xs">resetSettings</code> from your{" "}
-								<code className="rounded bg-muted px-1 py-0.5 text-xs">convex/admin.ts</code> file.
-							</AlertDescription>
-						</Alert>
-
-						<CmsSurface elevation="base" className="p-6">
-							<div className="mb-4 flex items-center gap-2">
-								<h2 className="text-lg font-semibold text-foreground">Features</h2>
-								<Badge variant="secondary" className="gap-1">
-									<Lock className="size-3" />
-									Default values
-								</Badge>
-							</div>
-							<p className="mb-4 text-sm text-muted-foreground">
-								Showing default feature flags. Configure settings in your admin API to customize.
-							</p>
-							<div className="space-y-4">
-								{(["versioning", "scheduling", "localization", "mediaManagement"] as const).map((feature) => (
-									<div key={feature} className="flex items-center justify-between opacity-75">
-										<div>
-											<Label className="text-sm font-medium capitalize">{feature}</Label>
-										</div>
-										<Switch checked={DEFAULT_FEATURES[feature]} disabled={true} />
-									</div>
-								))}
-							</div>
-						</CmsSurface>
-
-						<CmsSurface elevation="base" className="p-6">
-							<h2 className="mb-4 text-lg font-semibold text-foreground">API</h2>
-							<div className="space-y-4">
-								<div>
-									<Label className="text-sm font-medium">Convex Deployment URL</Label>
-									<code className="mt-1 block rounded-md bg-muted px-3 py-2 text-sm">
-										{import.meta.env.VITE_CONVEX_URL || "Not configured"}
-									</code>
-								</div>
-							</div>
-						</CmsSurface>
-					</div>
-				</div>
-			</RouteGuard>
-		);
-	}
 
 	if (settings === undefined) {
 		return (
@@ -546,4 +569,25 @@ export function SettingsPage({
 			</div>
 		</RouteGuard>
 	);
+}
+
+// Main wrapper that decides which component to render
+export function SettingsPage({
+	api,
+	navigation: _navigation,
+}: SettingsPageProps) {
+	// Check if settings API is configured
+	if (api.getSettings) {
+		return (
+			<SettingsPageConfigured
+				api={
+					api as CmsAdminApi & {
+						getSettings: NonNullable<CmsAdminApi["getSettings"]>;
+					}
+				}
+			/>
+		);
+	}
+
+	return <SettingsPageUnconfigured />;
 }

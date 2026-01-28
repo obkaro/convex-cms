@@ -18,8 +18,12 @@ export interface Settings {
 }
 
 type SettingsApi = {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  getSettings: FunctionReference<"query", "public", Record<string, never>, Settings | null>;
+  getSettings: FunctionReference<
+    "query",
+    "public",
+    Record<string, never>,
+    Settings | null
+  >;
 };
 
 interface SettingsConfigContextValue {
@@ -27,21 +31,22 @@ interface SettingsConfigContextValue {
   settings: Settings | undefined;
 }
 
-const SettingsConfigContext = createContext<SettingsConfigContextValue | null>(null);
+const SettingsConfigContext = createContext<SettingsConfigContextValue | null>(
+  null
+);
 
-export function SettingsConfigProvider({
+// Component that queries settings (only rendered when api is provided)
+function SettingsConfigProviderWithQuery({
   baseConfig,
   children,
   api,
 }: {
   baseConfig: AdminConfig;
   children: ReactNode;
-  api?: SettingsApi;
+  api: SettingsApi;
 }) {
-  // Use skip pattern when api is not provided
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const queryArg = api ? api.getSettings : ("skip" as any);
-  const settings = useQuery(queryArg) as Settings | undefined;
+  // Proper skip pattern: function ref first, args (or "skip") second
+  const settings = useQuery(api.getSettings, {}) ?? undefined;
 
   const mergedConfig = useMemo((): AdminConfig => {
     if (!settings) return baseConfig;
@@ -50,7 +55,8 @@ export function SettingsConfigProvider({
       ...baseConfig,
       navigation: {
         ...baseConfig.navigation,
-        showMedia: baseConfig.navigation.showMedia && settings.features.mediaManagement,
+        showMedia:
+          baseConfig.navigation.showMedia && settings.features.mediaManagement,
       },
     };
   }, [baseConfig, settings]);
@@ -69,10 +75,60 @@ export function SettingsConfigProvider({
   );
 }
 
+// Component without query (when api is not provided)
+function SettingsConfigProviderWithoutQuery({
+  baseConfig,
+  children,
+}: {
+  baseConfig: AdminConfig;
+  children: ReactNode;
+}) {
+  const contextValue = useMemo(
+    () => ({ baseConfig, settings: undefined }),
+    [baseConfig]
+  );
+
+  return (
+    <SettingsConfigContext.Provider value={contextValue}>
+      <AdminConfigProvider config={baseConfig}>{children}</AdminConfigProvider>
+    </SettingsConfigContext.Provider>
+  );
+}
+
+export function SettingsConfigProvider({
+  baseConfig,
+  children,
+  api,
+}: {
+  baseConfig: AdminConfig;
+  children: ReactNode;
+  api?: SettingsApi;
+}) {
+  // Use component splitting to avoid calling useQuery without a valid function ref
+  if (api) {
+    return (
+      <SettingsConfigProviderWithQuery
+        baseConfig={baseConfig}
+        api={api}
+        children={children}
+      />
+    );
+  }
+
+  return (
+    <SettingsConfigProviderWithoutQuery
+      baseConfig={baseConfig}
+      children={children}
+    />
+  );
+}
+
 export function useSettingsConfig(): SettingsConfigContextValue {
   const ctx = useContext(SettingsConfigContext);
   if (!ctx) {
-    throw new Error("useSettingsConfig must be used within SettingsConfigProvider");
+    throw new Error(
+      "useSettingsConfig must be used within SettingsConfigProvider"
+    );
   }
   return ctx;
 }

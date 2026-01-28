@@ -231,7 +231,10 @@ function ConvexProviderWrapper({
   return (
     <ConvexProvider client={convex}>
       <ApiProvider api={api.admin}>
-        <SettingsConfigProvider baseConfig={adminConfig}>
+        <SettingsConfigProvider
+          baseConfig={adminConfig}
+          api={{ getSettings: api.admin.getSettings }}
+        >
           {children}
         </SettingsConfigProvider>
       </ApiProvider>
