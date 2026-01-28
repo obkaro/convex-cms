@@ -36,6 +36,7 @@
 
 import { useConvex } from "convex/react";
 import { useMemo } from "react";
+import { cn } from "../lib/cn";
 import { SettingsConfigProvider } from "../contexts/SettingsConfigContext";
 import {
   AuthProvider,
@@ -46,7 +47,6 @@ import {
 import { ThemeProvider } from "../contexts/ThemeContext";
 import { RouteGuard } from "../components/RouteGuard";
 import { resolveAdminConfig } from "../lib/admin-config";
-import { cn } from "../lib/cn";
 import type { CmsAdminProps, CmsAdminAuthConfig } from "./types";
 import { ApiProvider } from "./contexts/ApiContext";
 import {

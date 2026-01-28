@@ -36,9 +36,7 @@ function pathToRoute(path: string): EmbedRoute {
 export function EmbedSidebar() {
   const { currentPath, navigate, navigateToContentType } = useEmbedNavigation();
   const config = useAdminConfig();
-  const { navItems, branding,
-    // layout
-  } = config;
+  const { navItems, branding, layout } = config;
   const api = useApi();
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -154,9 +152,14 @@ export function EmbedSidebar() {
     </Collapsible>
   );
 
+  const sidebarWidth = layout.sidebarWidth;
+
   return (
     <>
-      <aside className="sticky top-0 z-40 flex h-full flex-col overflow-hidden border-r border-sidebar-border bg-sidebar">
+      <aside
+        className="fixed inset-y-0 left-0 z-50 flex flex-col border-r border-sidebar-border bg-sidebar"
+        style={{ width: sidebarWidth }}
+      >
         <div className="flex h-14 items-center gap-2 border-b border-sidebar-border px-4">
           <button
             type="button"

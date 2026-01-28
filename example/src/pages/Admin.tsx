@@ -18,26 +18,25 @@ import { CmsAdmin } from "convex-cms/admin";
 
 export function Admin() {
 	return (
-		<div className="h-screen">
-			<CmsAdmin
-				api={api.admin}
-				auth={{
-					getUser: () => ({
-						id: "demo-user",
-						name: "Demo User",
-						email: "demo@example.com",
-					}),
-					getUserRole: () => "admin",
-					onLogout: () => {
-						window.location.href = "/";
-					},
-				}}
-				config={{
-					branding: {
-						appName: "Tempo CMS",
-					},
-				}}
-			/>
-		</div>
+		<CmsAdmin
+			api={api.admin}
+			auth={{
+				getUser: () => ({
+					id: "demo-user",
+					name: "Demo User",
+					email: "demo@example.com",
+				}),
+				getUserRole: () => "admin",
+				onLogout: () => {
+					window.location.href = "/";
+				},
+			}}
+			config={{
+				branding: {
+					appName: "Tempo CMS",
+				},
+			}}
+			className="h-screen"
+		/>
 	);
 }

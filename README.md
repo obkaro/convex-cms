@@ -120,6 +120,33 @@ Leverage included features or extend and customize within your own convex functi
 
 Both modes call the same functions from your `convex/admin.ts`.
 
+### Embedding with Theme Modes
+
+When embedding CmsAdmin in your React app, you can control how it handles CSS variables:
+
+```tsx
+// Isolated mode (default) - admin uses its own theme
+<CmsAdmin api={api.admin} auth={authConfig} themeMode="isolated" />
+
+// Inherit mode - admin inherits your app's CSS variables (for shadcn apps)
+<CmsAdmin api={api.admin} auth={authConfig} themeMode="inherit" />
+```
+
+| Mode | Behavior |
+|------|----------|
+| `isolated` | Admin defines all CSS variables, ignoring parent app styles |
+| `inherit` | Admin inherits parent's shadcn variables, only defines sidebar fallbacks |
+
+**Critical for Tailwind 4 apps:** If Tailwind utility classes aren't applying to the embedded admin, add a `@source` directive to your app's CSS:
+
+```css
+/* your-app/src/index.css */
+@import "tailwindcss";
+@source "../node_modules/convex-cms/admin/dist/**/*.js";
+```
+
+This tells Tailwind to scan the admin's compiled JavaScript for utility classes.
+
 ## Documentation
 
 | Guide | Description |

@@ -20,7 +20,7 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Embedded mode - scope styles to container */
+  /* Embedded mode - scoped base styles */
   [data-cms-admin] {
     @apply bg-background text-foreground;
     font-feature-settings: 'rlig' 1, 'calt' 1;
@@ -30,47 +30,21 @@
 }
 
 @layer utilities {
-  /* Status badge colors - using semantic variables */
+  /* Status badge colors */
   .status-draft {
-    @apply bg-muted text-muted-foreground;
+    @apply bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300;
   }
 
   .status-published {
-    @apply bg-diff-added-bg text-diff-added-foreground;
+    @apply bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400;
   }
 
   .status-scheduled {
-    @apply bg-info-bg text-info-foreground;
+    @apply bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400;
   }
 
   .status-archived {
-    @apply bg-diff-modified-bg text-diff-modified-foreground;
-  }
-
-  /* Diff change indicators */
-  .diff-added {
-    @apply bg-diff-added-bg border-diff-added-border text-diff-added-foreground;
-  }
-
-  .diff-removed {
-    @apply bg-diff-removed-bg border-diff-removed-border text-diff-removed-foreground;
-  }
-
-  .diff-modified {
-    @apply bg-diff-modified-bg border-diff-modified-border text-diff-modified-foreground;
-  }
-
-  /* Icon badges for diff */
-  .diff-icon-added {
-    @apply bg-diff-added/20 text-diff-added;
-  }
-
-  .diff-icon-removed {
-    @apply bg-diff-removed/20 text-diff-removed;
-  }
-
-  .diff-icon-modified {
-    @apply bg-diff-modified/20 text-diff-modified;
+    @apply bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400;
   }
 
   /* Surface elevations */
