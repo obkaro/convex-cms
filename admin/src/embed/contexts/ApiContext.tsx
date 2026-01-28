@@ -9,7 +9,11 @@
 import { createContext, useContext, type ReactNode } from "react";
 import type { BaseAdminAPI } from "convex-cms";
 
-export type CmsAdminApi = BaseAdminAPI;
+// CmsAdminApi accepts BaseAdminAPI with optional namespaced exports.
+// This allows the API to work with Convex's FilterApi which removes
+// non-FunctionReference types (the namespaced objects get filtered out).
+type NamespacedKeys = "stats" | "settings" | "contentTypes" | "entries" | "bulk" | "trash" | "contentLock" | "versions" | "media" | "taxonomies";
+export type CmsAdminApi = Omit<BaseAdminAPI, NamespacedKeys> & Partial<Pick<BaseAdminAPI, NamespacedKeys>>;
 
 const ApiContext = createContext<CmsAdminApi | null>(null);
 
