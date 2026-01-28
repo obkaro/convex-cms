@@ -39,9 +39,9 @@ export function SettingsConfigProvider({
   api?: SettingsApi;
 }) {
   // Use skip pattern when api is not provided
-  const settings = useQuery(
-    api ? api.getSettings : "skip"
-  ) as Settings | undefined;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const queryArg = api ? api.getSettings : ("skip" as any);
+  const settings = useQuery(queryArg) as Settings | undefined;
 
   const mergedConfig = useMemo((): AdminConfig => {
     if (!settings) return baseConfig;
