@@ -1,4 +1,5 @@
-import { useQuery, type FunctionReference } from "convex/react";
+import { useQuery } from "convex/react";
+import type { FunctionReference } from "convex/server";
 import { createContext, useContext, useMemo, type ReactNode } from "react";
 import type { AdminConfig } from "~/lib/admin-config";
 import { AdminConfigProvider } from "./AdminConfigContext";

@@ -123,6 +123,17 @@ export const {
 	getSettings,
 	updateSettings,
 	resetSettings,
+	// Namespaced exports for CmsAdmin component
+	stats,
+	settings,
+	contentTypes,
+	entries,
+	bulk,
+	trash,
+	contentLock,
+	versions,
+	media,
+	taxonomies,
 } = defineAdminAPI(components.cms, {
 	contentTypes: { changelogEntry, roadmapItem },
 });
