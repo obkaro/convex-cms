@@ -1,6 +1,6 @@
 import { useCmsQuery, type InferData } from "convex-cms/react";
-import { api } from "../../../convex/_generated/api";
-import { changelogEntry } from "../../../convex/cms";
+import { api } from "@convex/_generated/api";
+import { changelogEntry } from "@convex/cms";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Calendar } from "lucide-react";

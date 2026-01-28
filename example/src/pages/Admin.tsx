@@ -9,7 +9,7 @@
  * in the auth config (Clerk, Auth0, Convex Auth, etc.).
  */
 
-import { api } from "../../convex/_generated/api";
+import { api } from "@convex/_generated/api";
 import { CmsAdmin } from "convex-cms/admin";
 
 export function Admin() {
