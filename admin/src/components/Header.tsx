@@ -1,6 +1,6 @@
 import { useRouterState, useNavigate, Link } from '@tanstack/react-router'
 import { useAuth, useAdminConfig, useBreadcrumbContext } from '~/contexts'
-import { getRole } from '../../../src/component/roles'
+import { getRole } from 'convex-cms'
 import {
   Breadcrumb,
   BreadcrumbItem,
