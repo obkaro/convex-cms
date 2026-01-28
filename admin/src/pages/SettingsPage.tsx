@@ -307,10 +307,10 @@ function SettingsPageConfigured({
 				error instanceof Error ? error.message : "Failed to save settings",
 			);
 		}
-	}, [formData, isDirty, isConfigured, api.updateSettings, updateSettingsMutation]);
+	}, [formData, isDirty, api.updateSettings, updateSettingsMutation]);
 
 	const handleReset = useCallback(async () => {
-		if (!isConfigured || !api.resetSettings) return;
+		if (!api.resetSettings) return;
 
 		const confirmed = window.confirm(
 			"Are you sure you want to reset all settings to their defaults? This action cannot be undone.",
