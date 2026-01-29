@@ -39,7 +39,7 @@ import {
   type Resource,
   type Action,
   type OwnershipScope,
-} from 'convex-cms';
+} from '../../../src/component/index';
 
 // =============================================================================
 // Types

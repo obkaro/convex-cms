@@ -58,7 +58,8 @@
     "./admin/theme.css": "./admin/src/styles/theme.css",
     "./admin/tailwind-config.css": "./admin/src/styles/tailwind-config.css",
     "./admin/src": "./admin/src",
-    "./admin/tailwind.preset": "./admin/tailwind.preset.cjs"
+    "./admin/tailwind.preset": "./admin/tailwind.preset.cjs",
+    "./admin/index.css": "./admin/src/index.css"
   },
   "files": [
     "dist",

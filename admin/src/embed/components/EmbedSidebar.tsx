@@ -77,7 +77,7 @@ export function EmbedSidebar() {
         type="button"
         onClick={() => handleNavClick(item)}
         className={cn(
-          "flex w-full items-center gap-3 rounded-md px-2 py-2 text-left text-sm font-medium transition-colors",
+          "flex w-full hover:cursor-pointer items-center gap-3 rounded-md px-2 py-2 text-left text-sm font-medium transition-colors",
           isActive(item.path, item.exact)
             ? "bg-sidebar-accent text-sidebar-accent-foreground"
             : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
@@ -98,7 +98,7 @@ export function EmbedSidebar() {
     <Collapsible key={item.id} defaultOpen={isContentActive}>
       <CollapsibleTrigger
         className={cn(
-          "flex w-full items-center gap-3 rounded-md px-2 py-2 text-sm font-medium transition-colors",
+          "flex w-full hover:cursor-pointer items-center gap-3 rounded-md px-2 py-2 text-sm font-medium transition-colors",
           isContentActive
             ? "bg-sidebar-accent text-sidebar-accent-foreground"
             : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground",
@@ -115,7 +115,7 @@ export function EmbedSidebar() {
             type="button"
             onClick={() => navigate("content")}
             className={cn(
-              "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors",
+              "flex w-full hover:cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors",
               normalizedPath === "/content"
                 ? "bg-sidebar-accent/60 text-sidebar-accent-foreground"
                 : "text-sidebar-foreground/80 hover:bg-sidebar-accent/30 hover:text-sidebar-accent-foreground"
@@ -129,7 +129,7 @@ export function EmbedSidebar() {
               type="button"
               onClick={() => navigateToContentType(type._id)}
               className={cn(
-                "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors",
+                "flex w-full hover:cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors",
                 normalizedPath === `/entries/type/${type._id}`
                   ? "bg-sidebar-accent/60 text-sidebar-accent-foreground"
                   : "text-sidebar-foreground/80 hover:bg-sidebar-accent/30 hover:text-sidebar-accent-foreground"
@@ -157,19 +157,19 @@ export function EmbedSidebar() {
   return (
     <>
       <aside
-        className="fixed inset-y-0 left-0 z-50 flex flex-col border-r border-sidebar-border bg-sidebar"
+        className="fixed inset-y-0 left-0 z-50 flex flex-col border-r bg-sidebar"
         style={{ width: sidebarWidth }}
       >
-        <div className="flex h-14 items-center gap-2 border-b border-sidebar-border px-4">
+        <div className="flex h-14 items-center gap-2 px-4">
           <button
             type="button"
             onClick={() => navigate("dashboard")}
             className="flex items-center gap-2 font-semibold text-sidebar-foreground"
           >
             {branding.logo ? (
-              <img src={branding.logo} alt={branding.appName} className="size-8" />
+              <img src={branding.logo} alt={branding.appName} className="size-8 bg-primary" />
             ) : (
-              <div className="flex size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+              <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-sidebar-primary-foreground">
                 <Layers className="size-4" />
               </div>
             )}
@@ -197,10 +197,10 @@ export function EmbedSidebar() {
           )}
         </nav>
 
-        <div className="border-t border-sidebar-border p-4">
+        <div className="p-4">
           <div className="flex items-center justify-between text-xs text-sidebar-foreground/60">
             <span>Version</span>
-            <span className="font-mono">0.1.0</span>
+            <span className="font-mono">0.0.11</span>
           </div>
         </div>
       </aside>

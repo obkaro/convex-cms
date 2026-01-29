@@ -6,7 +6,7 @@ import {
 } from "@tanstack/react-router";
 import { ConvexProvider, ConvexReactClient } from "convex/react";
 import { useMemo, type ReactNode } from "react";
-import globalsCss from "~/styles/globals.css?url";
+import globalsCss from "~/index.css?url";
 import { AdminLayout, RouteGuard } from "~/components";
 import {
   AuthProvider,

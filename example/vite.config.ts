@@ -15,9 +15,7 @@ export default defineConfig({
       "@convex": path.resolve(__dirname, "./convex"),
       "~": path.resolve(__dirname, "../admin/src"),
       // CSS paths FIRST (most specific) - Vite matches greedily
-      "convex-cms/admin/theme.css": path.resolve(__dirname, "../admin/src/styles/theme.css"),
-      "convex-cms/admin/tailwind-config.css": path.resolve(__dirname, "../admin/src/styles/tailwind-config.css"),
-      "convex-cms/admin/globals.css": path.resolve(__dirname, "../admin/src/styles/globals.css"),
+      "convex-cms/admin/index.css": path.resolve(__dirname, "../admin/src/index.css"),
       // Subpath exports
       "convex-cms/admin/src": path.resolve(__dirname, "../admin/src"),
       "convex-cms/admin": path.resolve(__dirname, "../admin/src/embed/index.tsx"),

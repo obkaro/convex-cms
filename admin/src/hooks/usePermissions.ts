@@ -30,7 +30,7 @@ import {
   type Action,
   type OwnershipScope,
   type Permission,
-} from 'convex-cms';
+} from '../../../src/component/index';
 
 // =============================================================================
 // Types
