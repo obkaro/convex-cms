@@ -11,6 +11,7 @@ A headless CMS built as a [Convex Component](https://docs.convex.dev/components)
 
 [Live Demo](https://convex-cms-example.vercel.app)
 
+
 ## Quick Start
 
 ### 1. Install
@@ -51,6 +52,8 @@ If you're building on Convex and need content management without the overhead of
 - **Data independence:** CMS that lives in your own convex deployment, extendable and customizable with your convex functions
 - **Agent-native content management:** Pre-built tools useful for AI agent integration with `@convex-dev/agent`
 
+
+
 ## Features
 
 | Feature | What it does |
@@ -61,6 +64,8 @@ If you're building on Convex and need content management without the overhead of
 | **Admin API** | Pre-built functions that power the admin UI |
 | **CLI Admin UI** | Run for local development, content entry, and management |
 | **Embedded Admin UI** | Ship the admin interface as part of your React app |
+
+
 
 ## In Practice
 
@@ -79,7 +84,8 @@ CMS Client + agent tools. Pre-built tools for AI-driven workflows.
 *Any combination of these features works together seamlessly. Pick what fits your workflow.*
 
 
-## Batteries Included
+
+## Included Batteries
 
 Leverage included features or extend and customize within your own convex functions to your desire.
 
@@ -106,6 +112,9 @@ Leverage included features or extend and customize within your own convex functi
 - **Event system.** All mutations emit events for async processing
 - **Agent tools.** 23 pre-built tools with Zod schemas for AI integration
 - **Query builder.** Fluent API for complex content queries
+
+
+
 
 ### Admin UI
 - **Pre-built React interface.** CLI mode for development, embeddable for production
@@ -145,6 +154,9 @@ When embedding CmsAdmin in your React app, you can control how it handles CSS va
 
 This tells Tailwind to scan the admin's compiled JavaScript for utility classes.
 
+
+
+
 ## Documentation
 
 | Guide | Description |
@@ -168,14 +180,23 @@ This tells Tailwind to scan the admin's compiled JavaScript for utility classes.
 | [Field Types](./docs/api/field-types.md) | All 13 field types |
 | [Configuration](./docs/api/configuration.md) | All config options |
 
+
+
+
 ## Requirements
 
 - Convex ^1.17.0
 - Node.js 18+
 
+
+
+
 ## License
 
 Apache-2.0
+
+
+
 
 ## Support
 
