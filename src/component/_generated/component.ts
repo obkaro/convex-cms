@@ -962,7 +962,10 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 options?: {
                   maxLength?: number;
                   minLength?: number;
+                  multiline?: boolean;
                   pattern?: string;
+                  patternMessage?: string;
+                  placeholder?: string;
                 };
                 required: boolean;
                 searchable?: boolean;
@@ -978,7 +981,9 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                   max?: number;
                   min?: number;
                   precision?: number;
+                  prefix?: string;
                   step?: number;
+                  suffix?: string;
                 };
                 required: boolean;
                 searchable?: boolean;
@@ -1004,6 +1009,8 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 options?: {
                   allowedBlocks?: Array<string>;
                   allowedMarks?: Array<string>;
+                  maxLength?: number;
+                  placeholder?: string;
                 };
                 required: boolean;
                 searchable?: boolean;
@@ -1018,6 +1025,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 options?: {
                   allowedMimeTypes?: Array<string>;
                   maxFileSize?: number;
+                  maxItems?: number;
                   mediaType?:
                     | "image"
                     | "video"
@@ -1047,7 +1055,11 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options?: { options?: Array<{ label: string; value: string }> };
+                options?: {
+                  maxSelections?: number;
+                  minSelections?: number;
+                  options?: Array<{ label: string; value: string }>;
+                };
                 required: boolean;
                 searchable?: boolean;
                 type: "multiSelect";
@@ -1074,7 +1086,12 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options?: { allowMultiple?: boolean };
+                options?: {
+                  allowMultiple?: boolean;
+                  depth?: number;
+                  maxSelections?: number;
+                  taxonomyName?: string;
+                };
                 required: boolean;
                 searchable?: boolean;
                 type: "category";
@@ -1096,7 +1113,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options?: { max?: number; min?: number };
+                options?: { format?: string; max?: number; min?: number };
                 required: boolean;
                 searchable?: boolean;
                 type: "date";
@@ -1107,7 +1124,12 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options?: { max?: number; min?: number };
+                options?: {
+                  format?: string;
+                  max?: number;
+                  min?: number;
+                  timezone?: string;
+                };
                 required: boolean;
                 searchable?: boolean;
                 type: "datetime";
@@ -1120,6 +1142,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 name: string;
                 options?: {
                   allowedContentTypes?: Array<string>;
+                  maxItems?: number;
                   minItems?: number;
                   multiple?: boolean;
                 };
@@ -1152,7 +1175,10 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 options?: {
                   maxLength?: number;
                   minLength?: number;
+                  multiline?: boolean;
                   pattern?: string;
+                  patternMessage?: string;
+                  placeholder?: string;
                 };
                 required: boolean;
                 searchable?: boolean;
@@ -1168,7 +1194,9 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                   max?: number;
                   min?: number;
                   precision?: number;
+                  prefix?: string;
                   step?: number;
+                  suffix?: string;
                 };
                 required: boolean;
                 searchable?: boolean;
@@ -1194,6 +1222,8 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 options?: {
                   allowedBlocks?: Array<string>;
                   allowedMarks?: Array<string>;
+                  maxLength?: number;
+                  placeholder?: string;
                 };
                 required: boolean;
                 searchable?: boolean;
@@ -1208,6 +1238,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 options?: {
                   allowedMimeTypes?: Array<string>;
                   maxFileSize?: number;
+                  maxItems?: number;
                   mediaType?:
                     | "image"
                     | "video"
@@ -1237,7 +1268,11 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options?: { options?: Array<{ label: string; value: string }> };
+                options?: {
+                  maxSelections?: number;
+                  minSelections?: number;
+                  options?: Array<{ label: string; value: string }>;
+                };
                 required: boolean;
                 searchable?: boolean;
                 type: "multiSelect";
@@ -1264,7 +1299,12 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options?: { allowMultiple?: boolean };
+                options?: {
+                  allowMultiple?: boolean;
+                  depth?: number;
+                  maxSelections?: number;
+                  taxonomyName?: string;
+                };
                 required: boolean;
                 searchable?: boolean;
                 type: "category";
@@ -1286,7 +1326,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options?: { max?: number; min?: number };
+                options?: { format?: string; max?: number; min?: number };
                 required: boolean;
                 searchable?: boolean;
                 type: "date";
@@ -1297,7 +1337,12 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options?: { max?: number; min?: number };
+                options?: {
+                  format?: string;
+                  max?: number;
+                  min?: number;
+                  timezone?: string;
+                };
                 required: boolean;
                 searchable?: boolean;
                 type: "datetime";
@@ -1310,6 +1355,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 name: string;
                 options?: {
                   allowedContentTypes?: Array<string>;
+                  maxItems?: number;
                   minItems?: number;
                   multiple?: boolean;
                 };
@@ -1373,7 +1419,10 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 options?: {
                   maxLength?: number;
                   minLength?: number;
+                  multiline?: boolean;
                   pattern?: string;
+                  patternMessage?: string;
+                  placeholder?: string;
                 };
                 required: boolean;
                 searchable?: boolean;
@@ -1389,7 +1438,9 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                   max?: number;
                   min?: number;
                   precision?: number;
+                  prefix?: string;
                   step?: number;
+                  suffix?: string;
                 };
                 required: boolean;
                 searchable?: boolean;
@@ -1415,6 +1466,8 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 options?: {
                   allowedBlocks?: Array<string>;
                   allowedMarks?: Array<string>;
+                  maxLength?: number;
+                  placeholder?: string;
                 };
                 required: boolean;
                 searchable?: boolean;
@@ -1429,6 +1482,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 options?: {
                   allowedMimeTypes?: Array<string>;
                   maxFileSize?: number;
+                  maxItems?: number;
                   mediaType?:
                     | "image"
                     | "video"
@@ -1458,7 +1512,11 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options?: { options?: Array<{ label: string; value: string }> };
+                options?: {
+                  maxSelections?: number;
+                  minSelections?: number;
+                  options?: Array<{ label: string; value: string }>;
+                };
                 required: boolean;
                 searchable?: boolean;
                 type: "multiSelect";
@@ -1485,7 +1543,12 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options?: { allowMultiple?: boolean };
+                options?: {
+                  allowMultiple?: boolean;
+                  depth?: number;
+                  maxSelections?: number;
+                  taxonomyName?: string;
+                };
                 required: boolean;
                 searchable?: boolean;
                 type: "category";
@@ -1507,7 +1570,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options?: { max?: number; min?: number };
+                options?: { format?: string; max?: number; min?: number };
                 required: boolean;
                 searchable?: boolean;
                 type: "date";
@@ -1518,7 +1581,12 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options?: { max?: number; min?: number };
+                options?: {
+                  format?: string;
+                  max?: number;
+                  min?: number;
+                  timezone?: string;
+                };
                 required: boolean;
                 searchable?: boolean;
                 type: "datetime";
@@ -1531,6 +1599,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 name: string;
                 options?: {
                   allowedContentTypes?: Array<string>;
+                  maxItems?: number;
                   minItems?: number;
                   multiple?: boolean;
                 };
@@ -1578,7 +1647,10 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 options?: {
                   maxLength?: number;
                   minLength?: number;
+                  multiline?: boolean;
                   pattern?: string;
+                  patternMessage?: string;
+                  placeholder?: string;
                 };
                 required: boolean;
                 searchable?: boolean;
@@ -1594,7 +1666,9 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                   max?: number;
                   min?: number;
                   precision?: number;
+                  prefix?: string;
                   step?: number;
+                  suffix?: string;
                 };
                 required: boolean;
                 searchable?: boolean;
@@ -1620,6 +1694,8 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 options?: {
                   allowedBlocks?: Array<string>;
                   allowedMarks?: Array<string>;
+                  maxLength?: number;
+                  placeholder?: string;
                 };
                 required: boolean;
                 searchable?: boolean;
@@ -1634,6 +1710,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 options?: {
                   allowedMimeTypes?: Array<string>;
                   maxFileSize?: number;
+                  maxItems?: number;
                   mediaType?:
                     | "image"
                     | "video"
@@ -1663,7 +1740,11 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options?: { options?: Array<{ label: string; value: string }> };
+                options?: {
+                  maxSelections?: number;
+                  minSelections?: number;
+                  options?: Array<{ label: string; value: string }>;
+                };
                 required: boolean;
                 searchable?: boolean;
                 type: "multiSelect";
@@ -1690,7 +1771,12 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options?: { allowMultiple?: boolean };
+                options?: {
+                  allowMultiple?: boolean;
+                  depth?: number;
+                  maxSelections?: number;
+                  taxonomyName?: string;
+                };
                 required: boolean;
                 searchable?: boolean;
                 type: "category";
@@ -1712,7 +1798,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options?: { max?: number; min?: number };
+                options?: { format?: string; max?: number; min?: number };
                 required: boolean;
                 searchable?: boolean;
                 type: "date";
@@ -1723,7 +1809,12 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options?: { max?: number; min?: number };
+                options?: {
+                  format?: string;
+                  max?: number;
+                  min?: number;
+                  timezone?: string;
+                };
                 required: boolean;
                 searchable?: boolean;
                 type: "datetime";
@@ -1736,6 +1827,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 name: string;
                 options?: {
                   allowedContentTypes?: Array<string>;
+                  maxItems?: number;
                   minItems?: number;
                   multiple?: boolean;
                 };
@@ -1778,7 +1870,10 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 options?: {
                   maxLength?: number;
                   minLength?: number;
+                  multiline?: boolean;
                   pattern?: string;
+                  patternMessage?: string;
+                  placeholder?: string;
                 };
                 required: boolean;
                 searchable?: boolean;
@@ -1794,7 +1889,9 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                   max?: number;
                   min?: number;
                   precision?: number;
+                  prefix?: string;
                   step?: number;
+                  suffix?: string;
                 };
                 required: boolean;
                 searchable?: boolean;
@@ -1820,6 +1917,8 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 options?: {
                   allowedBlocks?: Array<string>;
                   allowedMarks?: Array<string>;
+                  maxLength?: number;
+                  placeholder?: string;
                 };
                 required: boolean;
                 searchable?: boolean;
@@ -1834,6 +1933,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 options?: {
                   allowedMimeTypes?: Array<string>;
                   maxFileSize?: number;
+                  maxItems?: number;
                   mediaType?:
                     | "image"
                     | "video"
@@ -1863,7 +1963,11 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options?: { options?: Array<{ label: string; value: string }> };
+                options?: {
+                  maxSelections?: number;
+                  minSelections?: number;
+                  options?: Array<{ label: string; value: string }>;
+                };
                 required: boolean;
                 searchable?: boolean;
                 type: "multiSelect";
@@ -1890,7 +1994,12 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options?: { allowMultiple?: boolean };
+                options?: {
+                  allowMultiple?: boolean;
+                  depth?: number;
+                  maxSelections?: number;
+                  taxonomyName?: string;
+                };
                 required: boolean;
                 searchable?: boolean;
                 type: "category";
@@ -1912,7 +2021,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options?: { max?: number; min?: number };
+                options?: { format?: string; max?: number; min?: number };
                 required: boolean;
                 searchable?: boolean;
                 type: "date";
@@ -1923,7 +2032,12 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 label: string;
                 localized?: boolean;
                 name: string;
-                options?: { max?: number; min?: number };
+                options?: {
+                  format?: string;
+                  max?: number;
+                  min?: number;
+                  timezone?: string;
+                };
                 required: boolean;
                 searchable?: boolean;
                 type: "datetime";
@@ -1936,6 +2050,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 name: string;
                 options?: {
                   allowedContentTypes?: Array<string>;
+                  maxItems?: number;
                   minItems?: number;
                   multiple?: boolean;
                 };
@@ -1992,7 +2107,10 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                   options?: {
                     maxLength?: number;
                     minLength?: number;
+                    multiline?: boolean;
                     pattern?: string;
+                    patternMessage?: string;
+                    placeholder?: string;
                   };
                   required: boolean;
                   searchable?: boolean;
@@ -2008,7 +2126,9 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                     max?: number;
                     min?: number;
                     precision?: number;
+                    prefix?: string;
                     step?: number;
+                    suffix?: string;
                   };
                   required: boolean;
                   searchable?: boolean;
@@ -2034,6 +2154,8 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                   options?: {
                     allowedBlocks?: Array<string>;
                     allowedMarks?: Array<string>;
+                    maxLength?: number;
+                    placeholder?: string;
                   };
                   required: boolean;
                   searchable?: boolean;
@@ -2048,6 +2170,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                   options?: {
                     allowedMimeTypes?: Array<string>;
                     maxFileSize?: number;
+                    maxItems?: number;
                     mediaType?:
                       | "image"
                       | "video"
@@ -2080,6 +2203,8 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                   localized?: boolean;
                   name: string;
                   options?: {
+                    maxSelections?: number;
+                    minSelections?: number;
                     options?: Array<{ label: string; value: string }>;
                   };
                   required: boolean;
@@ -2108,7 +2233,12 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                   label: string;
                   localized?: boolean;
                   name: string;
-                  options?: { allowMultiple?: boolean };
+                  options?: {
+                    allowMultiple?: boolean;
+                    depth?: number;
+                    maxSelections?: number;
+                    taxonomyName?: string;
+                  };
                   required: boolean;
                   searchable?: boolean;
                   type: "category";
@@ -2130,7 +2260,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                   label: string;
                   localized?: boolean;
                   name: string;
-                  options?: { max?: number; min?: number };
+                  options?: { format?: string; max?: number; min?: number };
                   required: boolean;
                   searchable?: boolean;
                   type: "date";
@@ -2141,7 +2271,12 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                   label: string;
                   localized?: boolean;
                   name: string;
-                  options?: { max?: number; min?: number };
+                  options?: {
+                    format?: string;
+                    max?: number;
+                    min?: number;
+                    timezone?: string;
+                  };
                   required: boolean;
                   searchable?: boolean;
                   type: "datetime";
@@ -2154,6 +2289,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                   name: string;
                   options?: {
                     allowedContentTypes?: Array<string>;
+                    maxItems?: number;
                     minItems?: number;
                     multiple?: boolean;
                   };
