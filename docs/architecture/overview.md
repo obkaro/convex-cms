@@ -44,7 +44,7 @@ This document explains the architecture of Convex CMS and how it integrates with
 │  │  └──────────┘  └──────────┘  └──────────┘  └──────────┘  │  │
 │  │  ┌──────────────────────────────────────────────────────┐ │  │
 │  │  │                  CMS Database Tables                  │ │  │
-│  │  │  (13 isolated tables - separate from your app)       │ │  │
+│  │  │  (14 isolated tables, separate from your app)        │ │  │
 │  │  └──────────────────────────────────────────────────────┘ │  │
 │  └───────────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────────┘
@@ -56,7 +56,7 @@ Convex CMS is built as a **Convex Component**, which provides:
 
 ### Isolation
 
-- **Separate Database**: The CMS has its own 13 tables, completely isolated from your app's tables
+- **Separate Database**: The CMS has its own 14 tables, completely isolated from your app's tables
 - **No Direct Access**: The component cannot read your app's tables, and you cannot directly query CMS tables
 - **Function Boundary**: All communication happens through defined component functions
 

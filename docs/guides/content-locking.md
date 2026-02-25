@@ -2,6 +2,8 @@
 
 Content locking prevents concurrent edit conflicts by allowing only one user to edit a content entry at a time. Locks automatically expire to prevent orphaned locks from blocking content indefinitely.
 
+> **Note**: Content locking functions are available through the Admin API (`defineAdminAPI`) or by calling component functions directly. The examples below show the API patterns used by the Admin UI backend.
+
 ## How It Works
 
 1. User opens content for editing → acquires lock
@@ -30,46 +32,51 @@ Content locking prevents concurrent edit conflicts by allowing only one user to 
 ### Acquiring a Lock
 
 ```typescript
-import { cms } from "./cms";
+// In your convex/admin.ts (via defineAdminAPI)
+// or call component functions directly
+const result = await ctx.runMutation(
+  components.convexCms.contentLock.acquire,
+  {
+    entryId,
+    userId: currentUserId,
+    durationMs: 30 * 60 * 1000, // 30 minutes (optional)
+  }
+);
 
-const result = await cms.contentLock.acquire(ctx, {
-  id: entryId,
-  userId: currentUserId,
-  lockDuration: 30 * 60 * 1000, // 30 minutes (optional)
-});
-
-if (result.success) {
+if (result.acquired) {
   // Lock acquired, user can edit
-  console.log("Editing enabled until", new Date(result.entry.lockExpiresAt));
+  console.log("Editing enabled until", new Date(result.expiresAt));
 } else {
   // Lock held by another user
-  console.log(`Locked by ${result.currentLockHolder}`);
-  console.log(`Expires at ${new Date(result.currentLockExpiresAt)}`);
+  console.log(`Locked by ${result.lockedBy}`);
+  console.log(`Expires at ${new Date(result.expiresAt)}`);
 }
 ```
 
 ### Checking Lock Status
 
 ```typescript
-const status = await cms.contentLock.check(ctx, {
-  id: entryId,
-});
+const status = await ctx.runQuery(
+  components.convexCms.contentLock.check,
+  { entryId }
+);
 
 console.log(status.isLocked);      // true if currently locked
 console.log(status.lockedBy);      // user ID of lock holder
-console.log(status.lockExpiresAt); // expiration timestamp
-console.log(status.timeRemaining); // ms until expiration
-console.log(status.isExpired);     // true if lock was held but expired
+console.log(status.expiresAt);     // expiration timestamp
 ```
 
 ### Releasing a Lock
 
 ```typescript
 // Release when done editing
-await cms.contentLock.release(ctx, {
-  id: entryId,
-  userId: currentUserId,
-});
+await ctx.runMutation(
+  components.convexCms.contentLock.release,
+  {
+    entryId,
+    userId: currentUserId,
+  }
+);
 ```
 
 ### Renewing a Lock
@@ -80,11 +87,14 @@ For long editing sessions, renew the lock periodically:
 // Renew every 15 minutes during editing
 setInterval(async () => {
   try {
-    await cms.contentLock.renew(ctx, {
-      id: entryId,
-      userId: currentUserId,
-      lockDuration: 30 * 60 * 1000, // Reset to 30 minutes
-    });
+    await ctx.runMutation(
+      components.convexCms.contentLock.renew,
+      {
+        entryId,
+        userId: currentUserId,
+        durationMs: 30 * 60 * 1000, // Reset to 30 minutes
+      }
+    );
   } catch (error) {
     // Lock may have expired or been force-released
     console.log("Lock renewal failed:", error.message);
@@ -98,10 +108,13 @@ setInterval(async () => {
 When a user abandons an editing session without releasing their lock:
 
 ```typescript
-await cms.contentLock.forceRelease(ctx, {
-  id: entryId,
-  releasedBy: adminUserId, // For audit trail
-});
+await ctx.runMutation(
+  components.convexCms.contentLock.forceRelease,
+  {
+    entryId,
+    releasedBy: adminUserId, // For audit trail
+  }
+);
 ```
 
 ## Lock Behavior
@@ -157,15 +170,17 @@ The Admin UI automatically:
 Administrators can view all currently locked content:
 
 ```typescript
-const locked = await cms.contentLock.listLocked(ctx, {
-  contentTypeId: optionalFilter,
-  lockedBy: optionalUserFilter,
-  paginationOpts: { numItems: 50 },
-});
+const locked = await ctx.runQuery(
+  components.convexCms.contentLock.listLocked,
+  {
+    contentTypeId: optionalFilter,
+    lockedBy: optionalUserFilter,
+    paginationOpts: { numItems: 50 },
+  }
+);
 
 for (const entry of locked.page) {
   console.log(`${entry._id} locked by ${entry.lockedBy}`);
-  console.log(`  Time remaining: ${entry.timeRemaining / 1000}s`);
 }
 ```
 
@@ -192,7 +207,10 @@ for (const entry of locked.page) {
 
 ```typescript
 try {
-  await cms.contentLock.release(ctx, { id: entryId, userId: userId });
+  await ctx.runMutation(
+    components.convexCms.contentLock.release,
+    { entryId, userId }
+  );
 } catch (error) {
   if (error.message.includes("not locked")) {
     // Entry was already unlocked (expired or force-released)

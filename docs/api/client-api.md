@@ -27,12 +27,9 @@ The client organizes methods into namespaces:
 - `cms.mediaAssets` - Media files
 - `cms.mediaFolders` - Folder organization
 - `cms.mediaVariants` - Image variants
-- `cms.taxonomies` - Taxonomy definitions
-- `cms.taxonomyTerms` - Tags and categories
-- `cms.contentEntryTags` - Entry-term associations
-- `cms.mediaAssetTags` - Media-term associations
-- `cms.contentLock` - Content locking for concurrent editing
 - `cms.locale` - Locale configuration and resolution
+
+> **Note**: Taxonomy and content locking operations are available via the Admin API (`defineAdminAPI`). See [Admin API Reference](./admin-api.md).
 
 ---
 
