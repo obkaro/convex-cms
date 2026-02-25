@@ -5,8 +5,9 @@
  */
 
 import * as clack from "@clack/prompts";
+import type { SchemaTemplate } from "../templates/schemas/index.js";
 
-export type SchemaTemplate = "blog" | "docs" | "landing" | "blank";
+export type { SchemaTemplate };
 
 export interface InitPromptResult {
   template: SchemaTemplate;
@@ -27,12 +28,17 @@ const TEMPLATE_OPTIONS = [
   {
     value: "landing" as const,
     label: "Landing Page",
-    hint: "hero, features, testimonials",
+    hint: "hero, features, testimonials, FAQ",
+  },
+  {
+    value: "ecommerce" as const,
+    label: "E-commerce",
+    hint: "product, category, FAQ",
   },
   {
     value: "blank" as const,
     label: "Blank",
-    hint: "no schemas",
+    hint: "starter blog post",
   },
 ] as const;
 

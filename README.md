@@ -34,7 +34,15 @@ export default app;
 
 ### 3. Initialize
 
-**For Admin UI:** Run `pnpm convex-cms init` then `pnpm convex-cms admin`
+```bash
+pnpm convex-cms init --template blog
+```
+
+This generates 3 files (`convex/cms.ts`, `convex/admin.ts`, `convex/content.ts`) and updates `convex/convex.config.ts`.
+
+**Available templates:** `blog`, `docs`, `landing`, `ecommerce`, `blank`
+
+**For Admin UI:** Run `pnpm convex-cms admin` after init
 → [Full Admin UI Setup](./docs/guides/admin-ui-setup.md)
 
 **For Custom Functions:** Create a CMS client and use it in your functions

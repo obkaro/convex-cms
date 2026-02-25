@@ -23,8 +23,12 @@ const TEMPLATE_CONFIGS: Record<SchemaTemplate, AdminTemplateConfig> = {
     contentTypesObject: "docPage, docSection, docNavigation",
   },
   landing: {
-    contentTypeImports: "heroSection, featureBlock, testimonial, ctaSection",
-    contentTypesObject: "heroSection, featureBlock, testimonial, ctaSection",
+    contentTypeImports: "page, heroSection, featureBlock, testimonial, faq, ctaSection",
+    contentTypesObject: "page, heroSection, featureBlock, testimonial, faq, ctaSection",
+  },
+  ecommerce: {
+    contentTypeImports: "product, productCategory, faq",
+    contentTypesObject: "product, productCategory, faq",
   },
   blank: {
     contentTypeImports: "blogPost",

@@ -33,13 +33,18 @@ app.use(cms);
 export default app;
 ```
 
-### 3. Create Admin API Functions
+### 3. Create CMS Files
 
 ```bash
 pnpm convex-cms init
 ```
 
-This creates `convex/admin.ts` with all the functions the Admin UI needs. The file exports functions like `listContentTypes`, `getEntry`, `publishEntry`, etc.
+This creates 3 files:
+- `convex/cms.ts` — Content type definitions and typed helpers
+- `convex/admin.ts` — Admin API functions the Admin UI calls
+- `convex/content.ts` — Public content queries for your frontend
+
+It also updates `convex/convex.config.ts` to register the CMS component.
 
 ### 4. Start Convex
 

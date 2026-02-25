@@ -16,6 +16,8 @@ export function getContentTemplate(template: SchemaTemplate): string {
       return CONTENT_DOCS_TEMPLATE;
     case "landing":
       return CONTENT_LANDING_TEMPLATE;
+    case "ecommerce":
+      return CONTENT_ECOMMERCE_TEMPLATE;
     case "blank":
     default:
       return CONTENT_BLANK_TEMPLATE;
@@ -30,36 +32,21 @@ const CONTENT_BLANK_TEMPLATE = `/**
  */
 
 import { query } from "./_generated/server";
-import { content } from "./cms";
-
-export const getBlogPosts = query({
-  args: {},
-  handler: async (ctx) => {
-    // Using typed helper - result.page[].data is fully typed
-    const result = await content.blog.list(ctx, { status: "published" });
-
-    // Return entries with data flattened for easier frontend consumption
-    return result.page.map((entry) => ({
-      _id: entry._id,
-      ...entry.data,
-    }));
-  },
-});
-`;
-
-const CONTENT_BLOG_TEMPLATE = `/**
- * Public content queries for the frontend - Blog Template
- *
- * These queries use the typed helpers from cms.ts for type-safe data access.
- * The content helpers provide full TypeScript inference for all fields.
- */
-
-import { query } from "./_generated/server";
 import { v } from "convex/values";
 import { content } from "./cms";
 
 export const getBlogPosts = query({
   args: {},
+  returns: v.array(
+    v.object({
+      _id: v.string(),
+      title: v.string(),
+      slug: v.string(),
+      content: v.string(),
+      excerpt: v.optional(v.string()),
+      publishedAt: v.optional(v.number()),
+    })
+  ),
   handler: async (ctx) => {
     const result = await content.blog.list(ctx, { status: "published" });
 
@@ -72,21 +59,106 @@ export const getBlogPosts = query({
 
 export const getBlogPostBySlug = query({
   args: { slug: v.string() },
+  returns: v.union(
+    v.object({
+      _id: v.string(),
+      title: v.string(),
+      slug: v.string(),
+      content: v.string(),
+      excerpt: v.optional(v.string()),
+      publishedAt: v.optional(v.number()),
+    }),
+    v.null()
+  ),
   handler: async (ctx, { slug }) => {
-    const result = await content.blog.list(ctx, { status: "published" });
-
-    const post = result.page.find((entry) => entry.data.slug === slug);
-    if (!post) return null;
+    const entry = await content.blog.getBySlug(ctx, { slug, status: "published" });
+    if (!entry) return null;
 
     return {
-      _id: post._id,
-      ...post.data,
+      _id: entry._id,
+      ...entry.data,
+    };
+  },
+});
+`;
+
+// Shared field validators referenced by both list and single-item return types
+const BLOG_POST_FIELDS = `{
+      _id: v.string(),
+      title: v.string(),
+      slug: v.string(),
+      excerpt: v.optional(v.string()),
+      content: v.string(),
+      featuredImage: v.optional(v.string()),
+      publishedAt: v.optional(v.number()),
+      author: v.optional(v.string()),
+      tags: v.optional(v.array(v.string())),
+      metaTitle: v.optional(v.string()),
+      metaDescription: v.optional(v.string()),
+    }`;
+
+const CONTENT_BLOG_TEMPLATE = `/**
+ * Public content queries for the frontend - Blog Template
+ *
+ * These queries use the typed helpers from cms.ts for type-safe data access.
+ */
+
+import { query } from "./_generated/server";
+import { v } from "convex/values";
+import { content } from "./cms";
+
+const blogPostFields = v.object(${BLOG_POST_FIELDS});
+
+const authorFields = v.object({
+  _id: v.string(),
+  name: v.string(),
+  slug: v.string(),
+  bio: v.optional(v.string()),
+  avatar: v.optional(v.string()),
+  email: v.optional(v.string()),
+  website: v.optional(v.string()),
+});
+
+const categoryFields = v.object({
+  _id: v.string(),
+  name: v.string(),
+  slug: v.string(),
+  description: v.optional(v.string()),
+  color: v.optional(v.string()),
+  parentCategory: v.optional(v.string()),
+  sortOrder: v.optional(v.number()),
+});
+
+export const getBlogPosts = query({
+  args: {},
+  returns: v.array(blogPostFields),
+  handler: async (ctx) => {
+    const result = await content.blog.list(ctx, { status: "published" });
+
+    return result.page.map((entry) => ({
+      _id: entry._id,
+      ...entry.data,
+    }));
+  },
+});
+
+export const getBlogPostBySlug = query({
+  args: { slug: v.string() },
+  returns: v.union(blogPostFields, v.null()),
+  handler: async (ctx, { slug }) => {
+    const entry = await content.blog.getBySlug(ctx, { slug, status: "published" });
+    if (!entry) return null;
+
+    return {
+      _id: entry._id,
+      ...entry.data,
     };
   },
 });
 
 export const getAuthors = query({
   args: {},
+  returns: v.array(authorFields),
   handler: async (ctx) => {
     const result = await content.author.list(ctx, { status: "published" });
 
@@ -99,6 +171,7 @@ export const getAuthors = query({
 
 export const getCategories = query({
   args: {},
+  returns: v.array(categoryFields),
   handler: async (ctx) => {
     const result = await content.category.list(ctx, { status: "published" });
 
@@ -114,15 +187,40 @@ const CONTENT_DOCS_TEMPLATE = `/**
  * Public content queries for the frontend - Documentation Template
  *
  * These queries use the typed helpers from cms.ts for type-safe data access.
- * The content helpers provide full TypeScript inference for all fields.
  */
 
 import { query } from "./_generated/server";
 import { v } from "convex/values";
 import { content } from "./cms";
 
+const docPageFields = v.object({
+  _id: v.string(),
+  title: v.string(),
+  slug: v.string(),
+  content: v.string(),
+  order: v.number(),
+  sectionId: v.optional(v.string()),
+  parentPageId: v.optional(v.string()),
+  description: v.optional(v.string()),
+  tags: v.optional(v.array(v.string())),
+  relatedPages: v.optional(v.array(v.string())),
+  version: v.optional(v.string()),
+});
+
+const docSectionFields = v.object({
+  _id: v.string(),
+  name: v.string(),
+  slug: v.string(),
+  order: v.number(),
+  description: v.optional(v.string()),
+  icon: v.optional(v.string()),
+  isCollapsible: v.optional(v.boolean()),
+  defaultExpanded: v.optional(v.boolean()),
+});
+
 export const getDocPages = query({
   args: {},
+  returns: v.array(docPageFields),
   handler: async (ctx) => {
     const result = await content.docPage.list(ctx, { status: "published" });
 
@@ -135,25 +233,24 @@ export const getDocPages = query({
 
 export const getDocPageBySlug = query({
   args: { slug: v.string() },
+  returns: v.union(docPageFields, v.null()),
   handler: async (ctx, { slug }) => {
-    const result = await content.docPage.list(ctx, { status: "published" });
-
-    const page = result.page.find((entry) => entry.data.slug === slug);
-    if (!page) return null;
+    const entry = await content.docPage.getBySlug(ctx, { slug, status: "published" });
+    if (!entry) return null;
 
     return {
-      _id: page._id,
-      ...page.data,
+      _id: entry._id,
+      ...entry.data,
     };
   },
 });
 
 export const getDocSections = query({
   args: {},
+  returns: v.array(docSectionFields),
   handler: async (ctx) => {
     const result = await content.docSection.list(ctx, { status: "published" });
 
-    // Sort by order
     return result.page
       .map((entry) => ({
         _id: entry._id,
@@ -165,13 +262,33 @@ export const getDocSections = query({
 
 export const getDocNavigation = query({
   args: {},
+  returns: v.union(
+    v.object({
+      _id: v.string(),
+      name: v.string(),
+      items: v.array(
+        v.object({
+          type: v.union(
+            v.literal("page"),
+            v.literal("section"),
+            v.literal("link"),
+            v.literal("divider")
+          ),
+          label: v.optional(v.string()),
+          targetId: v.optional(v.string()),
+          url: v.optional(v.string()),
+          children: v.optional(v.array(v.string())),
+        })
+      ),
+      isDefault: v.optional(v.boolean()),
+    }),
+    v.null()
+  ),
   handler: async (ctx) => {
     const result = await content.docNavigation.list(ctx, { status: "published" });
 
-    // Find the default navigation
     const defaultNav = result.page.find((entry) => entry.data.isDefault);
     if (!defaultNav) {
-      // Return first nav if no default
       const first = result.page[0];
       if (!first) return null;
       return { _id: first._id, ...first.data };
@@ -189,14 +306,110 @@ const CONTENT_LANDING_TEMPLATE = `/**
  * Public content queries for the frontend - Landing Page Template
  *
  * These queries use the typed helpers from cms.ts for type-safe data access.
- * The content helpers provide full TypeScript inference for all fields.
  */
 
 import { query } from "./_generated/server";
+import { v } from "convex/values";
 import { content } from "./cms";
+
+const pageFields = v.object({
+  _id: v.string(),
+  title: v.string(),
+  slug: v.string(),
+  content: v.string(),
+  metaTitle: v.optional(v.string()),
+  metaDescription: v.optional(v.string()),
+  featuredImage: v.optional(v.string()),
+});
+
+const heroFields = v.object({
+  _id: v.string(),
+  headline: v.string(),
+  subheadline: v.optional(v.string()),
+  ctaText: v.optional(v.string()),
+  ctaUrl: v.optional(v.string()),
+  secondaryCtaText: v.optional(v.string()),
+  secondaryCtaUrl: v.optional(v.string()),
+  backgroundImage: v.optional(v.string()),
+  alignment: v.optional(
+    v.union(v.literal("left"), v.literal("center"), v.literal("right"))
+  ),
+  theme: v.optional(v.union(v.literal("light"), v.literal("dark"))),
+});
+
+const featureFields = v.object({
+  _id: v.string(),
+  title: v.string(),
+  description: v.string(),
+  icon: v.optional(v.string()),
+  image: v.optional(v.string()),
+  order: v.number(),
+  link: v.optional(v.string()),
+  linkText: v.optional(v.string()),
+});
+
+const testimonialFields = v.object({
+  _id: v.string(),
+  quote: v.string(),
+  authorName: v.string(),
+  authorTitle: v.optional(v.string()),
+  company: v.optional(v.string()),
+  avatar: v.optional(v.string()),
+  companyLogo: v.optional(v.string()),
+  rating: v.optional(v.number()),
+  featured: v.optional(v.boolean()),
+});
+
+const faqFields = v.object({
+  _id: v.string(),
+  question: v.string(),
+  answer: v.string(),
+  category: v.optional(v.string()),
+  order: v.number(),
+});
+
+const ctaFields = v.object({
+  _id: v.string(),
+  headline: v.string(),
+  description: v.optional(v.string()),
+  buttonText: v.string(),
+  buttonUrl: v.string(),
+  secondaryText: v.optional(v.string()),
+  secondaryUrl: v.optional(v.string()),
+  backgroundColor: v.optional(v.string()),
+  backgroundImage: v.optional(v.string()),
+});
+
+export const getPages = query({
+  args: {},
+  returns: v.array(pageFields),
+  handler: async (ctx) => {
+    const result = await content.page.list(ctx, { status: "published" });
+
+    return result.page.map((entry) => ({
+      _id: entry._id,
+      ...entry.data,
+    }));
+  },
+});
+
+export const getPageBySlug = query({
+  args: { slug: v.string() },
+  returns: v.union(pageFields, v.null()),
+  handler: async (ctx, { slug }) => {
+    const entry = await content.page.getBySlug(ctx, { slug, status: "published" });
+    if (!entry) return null;
+
+    return {
+      _id: entry._id,
+      ...entry.data,
+    };
+  },
+});
 
 export const getHeroSections = query({
   args: {},
+  returns: v.array(heroFields),
   handler: async (ctx) => {
     const result = await content.hero.list(ctx, { status: "published" });
 
@@ -209,10 +422,10 @@ export const getHeroSections = query({
 
 export const getFeatureBlocks = query({
   args: {},
+  returns: v.array(featureFields),
   handler: async (ctx) => {
     const result = await content.feature.list(ctx, { status: "published" });
 
-    // Sort by order
     return result.page
       .map((entry) => ({
         _id: entry._id,
@@ -224,6 +437,7 @@ export const getFeatureBlocks = query({
 
 export const getTestimonials = query({
   args: {},
+  returns: v.array(testimonialFields),
   handler: async (ctx) => {
     const result = await content.testimonial.list(ctx, { status: "published" });
 
@@ -236,10 +450,10 @@ export const getTestimonials = query({
 
 export const getFeaturedTestimonials = query({
   args: {},
+  returns: v.array(testimonialFields),
   handler: async (ctx) => {
     const result = await content.testimonial.list(ctx, { status: "published" });
 
-    // Filter to featured only
     return result.page
       .filter((entry) => entry.data.featured)
       .map((entry) => ({
@@ -249,8 +463,24 @@ export const getFeaturedTestimonials = query({
   },
 });
 
+export const getFAQs = query({
+  args: {},
+  returns: v.array(faqFields),
+  handler: async (ctx) => {
+    const result = await content.faq.list(ctx, { status: "published" });
+
+    return result.page
+      .map((entry) => ({
+        _id: entry._id,
+        ...entry.data,
+      }))
+      .sort((a, b) => a.order - b.order);
+  },
+});
+
 export const getCtaSections = query({
   args: {},
+  returns: v.array(ctaFields),
   handler: async (ctx) => {
     const result = await content.cta.list(ctx, { status: "published" });
 
@@ -258,6 +488,134 @@ export const getCtaSections = query({
       _id: entry._id,
       ...entry.data,
     }));
+  },
+});
+`;
+
+const CONTENT_ECOMMERCE_TEMPLATE = `/**
+ * Public content queries for the frontend - E-commerce Template
+ *
+ * These queries use the typed helpers from cms.ts for type-safe data access.
+ */
+
+import { query } from "./_generated/server";
+import { v } from "convex/values";
+import { content } from "./cms";
+
+const productFields = v.object({
+  _id: v.string(),
+  name: v.string(),
+  slug: v.string(),
+  description: v.string(),
+  shortDescription: v.optional(v.string()),
+  price: v.number(),
+  compareAtPrice: v.optional(v.number()),
+  sku: v.optional(v.string()),
+  featuredImage: v.optional(v.string()),
+  gallery: v.optional(v.array(v.string())),
+  category: v.optional(v.string()),
+  tags: v.optional(v.array(v.string())),
+  inStock: v.optional(v.boolean()),
+  featured: v.optional(v.boolean()),
+  metaTitle: v.optional(v.string()),
+  metaDescription: v.optional(v.string()),
+});
+
+const productCategoryFields = v.object({
+  _id: v.string(),
+  name: v.string(),
+  slug: v.string(),
+  description: v.optional(v.string()),
+  image: v.optional(v.string()),
+  parentCategory: v.optional(v.string()),
+  order: v.number(),
+});
+
+const faqFields = v.object({
+  _id: v.string(),
+  question: v.string(),
+  answer: v.string(),
+  category: v.optional(
+    v.union(
+      v.literal("Shipping"),
+      v.literal("Returns"),
+      v.literal("Payments"),
+      v.literal("Products"),
+      v.literal("General")
+    )
+  ),
+  order: v.number(),
+});
+
+export const getProducts = query({
+  args: {},
+  returns: v.array(productFields),
+  handler: async (ctx) => {
+    const result = await content.product.list(ctx, { status: "published" });
+
+    return result.page.map((entry) => ({
+      _id: entry._id,
+      ...entry.data,
+    }));
+  },
+});
+
+export const getProductBySlug = query({
+  args: { slug: v.string() },
+  returns: v.union(productFields, v.null()),
+  handler: async (ctx, { slug }) => {
+    const entry = await content.product.getBySlug(ctx, { slug, status: "published" });
+    if (!entry) return null;
+
+    return {
+      _id: entry._id,
+      ...entry.data,
+    };
+  },
+});
+
+export const getFeaturedProducts = query({
+  args: {},
+  returns: v.array(productFields),
+  handler: async (ctx) => {
+    const result = await content.product.list(ctx, { status: "published" });
+
+    return result.page
+      .filter((entry) => entry.data.featured)
+      .map((entry) => ({
+        _id: entry._id,
+        ...entry.data,
+      }));
+  },
+});
+
+export const getProductCategories = query({
+  args: {},
+  returns: v.array(productCategoryFields),
+  handler: async (ctx) => {
+    const result = await content.productCategory.list(ctx, { status: "published" });
+
+    return result.page
+      .map((entry) => ({
+        _id: entry._id,
+        ...entry.data,
+      }))
+      .sort((a, b) => a.order - b.order);
+  },
+});
+
+export const getFAQs = query({
+  args: {},
+  returns: v.array(faqFields),
+  handler: async (ctx) => {
+    const result = await content.faq.list(ctx, { status: "published" });
+
+    return result.page
+      .map((entry) => ({
+        _id: entry._id,
+        ...entry.data,
+      }))
+      .sort((a, b) => a.order - b.order);
   },
 });
 `;

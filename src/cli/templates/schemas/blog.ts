@@ -8,18 +8,13 @@
 export const CMS_BLOG_TEMPLATE = `/**
  * CMS Setup - Blog Template
  *
- * This file defines content types and creates typed helpers for type-safe access.
- *
- * Architecture:
- * - defineContentType() creates schema definitions for the admin API
- * - createTypedHelpers() creates type-safe CRUD helpers for programmatic access
- * - Both work together: definitions go to admin API, helpers provide typed access
+ * Content types: Blog Post, Author, Category
+ * Uses defineContentType() for schema definitions and createTypedHelpers() for typed CRUD access.
  *
  * @example Type-safe queries in Convex functions
  * \`\`\`typescript
  * import { content } from "./cms";
  *
- * // Fully typed - data fields have correct types
  * const posts = await content.blog.list(ctx, { status: "published" });
  * posts.page[0].data.title;  // string
  * \`\`\`
@@ -46,20 +41,40 @@ export const blogPost = defineContentType({
     publishedAt: v.optional(v.number()),
     author: v.optional(v.string()),
     tags: v.optional(v.array(v.string())),
+    metaTitle: v.optional(v.string()),
+    metaDescription: v.optional(v.string()),
   }),
   meta: {
     displayName: "Blog Post",
     titleField: "title",
     slugField: "slug",
     fields: {
-      title: { label: "Title", maxLength: 200, searchable: true },
-      slug: { label: "URL Slug", description: "URL-friendly identifier" },
-      excerpt: { label: "Excerpt", maxLength: 300 },
-      content: { label: "Content", renderAs: "richText" },
-      featuredImage: { label: "Featured Image", renderAs: "media" },
-      publishedAt: { label: "Publish Date", renderAs: "datetime" },
-      author: { label: "Author" },
-      tags: { label: "Tags", renderAs: "tags" },
+      title: { searchable: true, maxLength: 200, placeholder: "Post title" },
+      slug: {
+        pattern: "^[a-z0-9-]+$",
+        patternMessage: "Only lowercase letters, numbers, and hyphens",
+        description: "URL-friendly identifier",
+      },
+      excerpt: { maxLength: 300, placeholder: "Brief summary for listings" },
+      content: { renderAs: "richText", searchable: true },
+      featuredImage: {
+        renderAs: "media",
+        allowedMimeTypes: ["image/*"],
+        maxFileSize: 5 * 1024 * 1024,
+      },
+      publishedAt: { renderAs: "datetime" },
+      author: { renderAs: "reference", allowedContentTypes: ["author"] },
+      tags: { renderAs: "tags", allowCreate: true, maxTags: 10 },
+      metaTitle: {
+        maxLength: 60,
+        placeholder: "SEO title (defaults to post title)",
+        description: "Title shown in search results",
+      },
+      metaDescription: {
+        maxLength: 160,
+        placeholder: "SEO description",
+        description: "Description shown in search results",
+      },
     },
   },
 });
@@ -72,26 +87,26 @@ export const author = defineContentType({
     bio: v.optional(v.string()),
     avatar: v.optional(v.string()),
     email: v.optional(v.string()),
-    socialLinks: v.optional(
-      v.object({
-        twitter: v.optional(v.string()),
-        linkedin: v.optional(v.string()),
-        github: v.optional(v.string()),
-        website: v.optional(v.string()),
-      })
-    ),
+    website: v.optional(v.string()),
   }),
   meta: {
     displayName: "Author",
     titleField: "name",
     slugField: "slug",
     fields: {
-      name: { label: "Full Name", searchable: true },
-      slug: { label: "URL Slug" },
-      bio: { label: "Biography", renderAs: "richText" },
-      avatar: { label: "Profile Photo", renderAs: "media" },
-      email: { label: "Email Address" },
-      socialLinks: { label: "Social Links", renderAs: "json" },
+      name: { searchable: true, maxLength: 100 },
+      slug: {
+        pattern: "^[a-z0-9-]+$",
+        patternMessage: "Only lowercase letters, numbers, and hyphens",
+      },
+      bio: { renderAs: "richText" },
+      avatar: {
+        renderAs: "media",
+        allowedMimeTypes: ["image/*"],
+        maxFileSize: 2 * 1024 * 1024,
+      },
+      email: { placeholder: "author@example.com" },
+      website: { placeholder: "https://..." },
     },
   },
 });
@@ -104,17 +119,22 @@ export const category = defineContentType({
     description: v.optional(v.string()),
     color: v.optional(v.string()),
     parentCategory: v.optional(v.string()),
+    sortOrder: v.optional(v.number()),
   }),
   meta: {
     displayName: "Category",
     titleField: "name",
     slugField: "slug",
     fields: {
-      name: { label: "Category Name", searchable: true },
-      slug: { label: "URL Slug" },
-      description: { label: "Description" },
-      color: { label: "Color", description: "Hex color for UI display" },
-      parentCategory: { label: "Parent Category" },
+      name: { searchable: true, maxLength: 100 },
+      slug: {
+        pattern: "^[a-z0-9-]+$",
+        patternMessage: "Only lowercase letters, numbers, and hyphens",
+      },
+      description: { maxLength: 500 },
+      color: { placeholder: "#3B82F6", description: "Hex color for UI display" },
+      parentCategory: { renderAs: "reference", allowedContentTypes: ["category"] },
+      sortOrder: { min: 0, description: "Lower numbers appear first" },
     },
   },
 });
@@ -122,8 +142,6 @@ export const category = defineContentType({
 // =============================================================================
 // TYPED HELPERS
 // =============================================================================
-// Create type-safe CRUD helpers for programmatic access.
-// Use these in Convex functions for fully typed data access.
 
 export const content = createTypedHelpers(components.cms, {
   blog: blogPost,

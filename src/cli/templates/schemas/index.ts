@@ -19,7 +19,12 @@ export {
   LANDING_SCHEMA_DESCRIPTION,
 } from "./landing.js";
 
-export type SchemaTemplate = "blog" | "docs" | "landing" | "blank";
+export {
+  CMS_ECOMMERCE_TEMPLATE,
+  ECOMMERCE_SCHEMA_DESCRIPTION,
+} from "./ecommerce.js";
+
+export type SchemaTemplate = "blog" | "docs" | "landing" | "ecommerce" | "blank";
 
 export const SCHEMA_TEMPLATE_INFO: Record<
   SchemaTemplate,
@@ -27,6 +32,7 @@ export const SCHEMA_TEMPLATE_INFO: Record<
 > = {
   blog: { description: "Blog (post, author, category)" },
   docs: { description: "Documentation (page, section, navigation)" },
-  landing: { description: "Landing Page (hero, features, testimonials)" },
-  blank: { description: "Blank (no schemas)" },
+  landing: { description: "Landing Page (hero, features, testimonials, FAQ)" },
+  ecommerce: { description: "E-commerce (product, category, FAQ)" },
+  blank: { description: "Blank (starter blog post)" },
 };

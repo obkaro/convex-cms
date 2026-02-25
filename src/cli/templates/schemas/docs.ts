@@ -8,18 +8,13 @@
 export const CMS_DOCS_TEMPLATE = `/**
  * CMS Setup - Documentation Template
  *
- * This file defines content types and creates typed helpers for type-safe access.
- *
- * Architecture:
- * - defineContentType() creates schema definitions for the admin API
- * - createTypedHelpers() creates type-safe CRUD helpers for programmatic access
- * - Both work together: definitions go to admin API, helpers provide typed access
+ * Content types: Documentation Page, Documentation Section, Navigation Tree
+ * Uses defineContentType() for schema definitions and createTypedHelpers() for typed CRUD access.
  *
  * @example Type-safe queries in Convex functions
  * \`\`\`typescript
  * import { content } from "./cms";
  *
- * // Fully typed - data fields have correct types
  * const pages = await content.docPage.list(ctx, { status: "published" });
  * pages.page[0].data.title;  // string
  * \`\`\`
@@ -45,25 +40,37 @@ export const docPage = defineContentType({
     sectionId: v.optional(v.string()),
     parentPageId: v.optional(v.string()),
     description: v.optional(v.string()),
-    lastUpdatedBy: v.optional(v.string()),
     tags: v.optional(v.array(v.string())),
     relatedPages: v.optional(v.array(v.string())),
+    version: v.optional(v.string()),
   }),
   meta: {
     displayName: "Documentation Page",
     titleField: "title",
     slugField: "slug",
     fields: {
-      title: { label: "Page Title", searchable: true },
-      slug: { label: "URL Slug" },
-      content: { label: "Content", renderAs: "richText", searchable: true },
-      order: { label: "Display Order" },
-      sectionId: { label: "Section" },
-      parentPageId: { label: "Parent Page" },
-      description: { label: "Meta Description", maxLength: 160 },
-      lastUpdatedBy: { label: "Last Updated By" },
-      tags: { label: "Tags", renderAs: "tags" },
-      relatedPages: { label: "Related Pages", renderAs: "json" },
+      title: { searchable: true, maxLength: 200 },
+      slug: {
+        pattern: "^[a-z0-9-]+$",
+        patternMessage: "Only lowercase letters, numbers, and hyphens",
+      },
+      content: { renderAs: "richText", searchable: true },
+      order: { min: 0, description: "Sort position within section" },
+      sectionId: {
+        renderAs: "reference",
+        allowedContentTypes: ["documentation_section"],
+      },
+      parentPageId: {
+        renderAs: "reference",
+        allowedContentTypes: ["documentation_page"],
+      },
+      description: { maxLength: 160, description: "Search result excerpt" },
+      tags: { renderAs: "tags", allowCreate: true },
+      relatedPages: { renderAs: "json", description: "IDs of related pages" },
+      version: {
+        placeholder: "e.g., v2.0",
+        description: "Documentation version this page applies to",
+      },
     },
   },
 });
@@ -84,13 +91,16 @@ export const docSection = defineContentType({
     titleField: "name",
     slugField: "slug",
     fields: {
-      name: { label: "Section Name", searchable: true },
-      slug: { label: "URL Slug" },
-      order: { label: "Display Order" },
-      description: { label: "Description" },
-      icon: { label: "Icon", description: "Icon name or emoji" },
-      isCollapsible: { label: "Collapsible" },
-      defaultExpanded: { label: "Expanded by Default" },
+      name: { searchable: true, maxLength: 100 },
+      slug: {
+        pattern: "^[a-z0-9-]+$",
+        patternMessage: "Only lowercase letters, numbers, and hyphens",
+      },
+      order: { min: 0 },
+      description: { maxLength: 300 },
+      icon: { placeholder: "e.g., \\u{1F4DA} or icon-name" },
+      isCollapsible: { description: "Whether section can be collapsed in sidebar" },
+      defaultExpanded: { description: "Expand by default in sidebar" },
     },
   },
 });
@@ -119,9 +129,9 @@ export const docNavigation = defineContentType({
     displayName: "Navigation Tree",
     titleField: "name",
     fields: {
-      name: { label: "Navigation Name", searchable: true },
-      items: { label: "Navigation Items", renderAs: "json" },
-      isDefault: { label: "Default Navigation" },
+      name: { searchable: true },
+      items: { renderAs: "json" },
+      isDefault: { description: "Use as the default navigation tree" },
     },
   },
 });
@@ -129,8 +139,6 @@ export const docNavigation = defineContentType({
 // =============================================================================
 // TYPED HELPERS
 // =============================================================================
-// Create type-safe CRUD helpers for programmatic access.
-// Use these in Convex functions for fully typed data access.
 
 export const content = createTypedHelpers(components.cms, {
   docPage: docPage,

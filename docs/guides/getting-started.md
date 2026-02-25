@@ -245,6 +245,8 @@ For visual content management, add the Admin UI. See [Admin UI Setup](./admin-ui
 
 ## Alternative: Code-First Schema Definition
 
+> **Shortcut:** `pnpm convex-cms init` generates code-first schemas by default. It uses `defineContentType()` + `createTypedHelpers()` for type-safe content access without manual setup.
+
 The tutorial above uses the **imperative API** (runtime content type creation). For type-safe applications with stable schemas, consider the **code-first approach**:
 
 ```typescript

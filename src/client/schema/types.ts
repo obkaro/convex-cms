@@ -51,6 +51,8 @@ export type FieldRenderAs =
   | "json"
   | "select"
   | "multiSelect"
+  | "tags"
+  | "category"
   | "slug"
   | "code"
   | "color"

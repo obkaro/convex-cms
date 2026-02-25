@@ -1,25 +1,20 @@
 /**
  * Landing page cms.ts template
  *
- * Content types: Hero Section, Feature Block, Testimonial, CTA Section
+ * Content types: Page, Hero Section, Feature Block, Testimonial, FAQ, CTA Section
  * Includes typed helpers for programmatic access
  */
 
 export const CMS_LANDING_TEMPLATE = `/**
  * CMS Setup - Landing Page Template
  *
- * This file defines content types and creates typed helpers for type-safe access.
- *
- * Architecture:
- * - defineContentType() creates schema definitions for the admin API
- * - createTypedHelpers() creates type-safe CRUD helpers for programmatic access
- * - Both work together: definitions go to admin API, helpers provide typed access
+ * Content types: Page, Hero Section, Feature Block, Testimonial, FAQ, CTA Section
+ * Uses defineContentType() for schema definitions and createTypedHelpers() for typed CRUD access.
  *
  * @example Type-safe queries in Convex functions
  * \`\`\`typescript
  * import { content } from "./cms";
  *
- * // Fully typed - data fields have correct types
  * const heroes = await content.hero.list(ctx, { status: "published" });
  * heroes.page[0].data.headline;  // string
  * \`\`\`
@@ -35,6 +30,41 @@ import { v } from "convex/values";
 // CONTENT TYPE DEFINITIONS
 // =============================================================================
 
+export const page = defineContentType({
+  name: "Page",
+  validator: v.object({
+    title: v.string(),
+    slug: v.string(),
+    content: v.string(),
+    metaTitle: v.optional(v.string()),
+    metaDescription: v.optional(v.string()),
+    featuredImage: v.optional(v.string()),
+  }),
+  meta: {
+    displayName: "Page",
+    titleField: "title",
+    slugField: "slug",
+    fields: {
+      title: { searchable: true, maxLength: 200 },
+      slug: {
+        pattern: "^[a-z0-9-]+$",
+        patternMessage: "Only lowercase letters, numbers, and hyphens",
+      },
+      content: { renderAs: "richText", searchable: true },
+      metaTitle: {
+        maxLength: 60,
+        placeholder: "SEO title",
+        description: "Title shown in search results",
+      },
+      metaDescription: {
+        maxLength: 160,
+        placeholder: "SEO description",
+      },
+      featuredImage: { renderAs: "media", allowedMimeTypes: ["image/*"] },
+    },
+  },
+});
+
 export const heroSection = defineContentType({
   name: "Hero Section",
   validator: v.object({
@@ -45,7 +75,6 @@ export const heroSection = defineContentType({
     secondaryCtaText: v.optional(v.string()),
     secondaryCtaUrl: v.optional(v.string()),
     backgroundImage: v.optional(v.string()),
-    backgroundVideo: v.optional(v.string()),
     alignment: v.optional(
       v.union(v.literal("left"), v.literal("center"), v.literal("right"))
     ),
@@ -55,16 +84,14 @@ export const heroSection = defineContentType({
     displayName: "Hero Section",
     titleField: "headline",
     fields: {
-      headline: { label: "Headline", searchable: true },
-      subheadline: { label: "Subheadline" },
-      ctaText: { label: "Primary CTA Text" },
-      ctaUrl: { label: "Primary CTA URL" },
-      secondaryCtaText: { label: "Secondary CTA Text" },
-      secondaryCtaUrl: { label: "Secondary CTA URL" },
-      backgroundImage: { label: "Background Image", renderAs: "media" },
-      backgroundVideo: { label: "Background Video URL" },
+      headline: { searchable: true, maxLength: 120 },
+      subheadline: { maxLength: 200 },
+      ctaText: { placeholder: "Get Started", maxLength: 50 },
+      ctaUrl: { placeholder: "https://...", description: "Primary button link" },
+      secondaryCtaText: { placeholder: "Learn More", maxLength: 50 },
+      secondaryCtaUrl: { placeholder: "https://...", description: "Secondary button link" },
+      backgroundImage: { renderAs: "media", allowedMimeTypes: ["image/*"] },
       alignment: {
-        label: "Text Alignment",
         renderAs: "select",
         options: [
           { value: "left", label: "Left" },
@@ -73,7 +100,6 @@ export const heroSection = defineContentType({
         ],
       },
       theme: {
-        label: "Color Theme",
         renderAs: "select",
         options: [
           { value: "light", label: "Light" },
@@ -99,13 +125,13 @@ export const featureBlock = defineContentType({
     displayName: "Feature Block",
     titleField: "title",
     fields: {
-      title: { label: "Feature Title", searchable: true },
-      description: { label: "Description", renderAs: "richText" },
-      icon: { label: "Icon", description: "Icon name or emoji" },
-      image: { label: "Feature Image", renderAs: "media" },
-      order: { label: "Display Order" },
-      link: { label: "Learn More URL" },
-      linkText: { label: "Link Text" },
+      title: { searchable: true, maxLength: 100 },
+      description: { renderAs: "richText" },
+      icon: { placeholder: "e.g., \\u{1F680} or icon-name" },
+      image: { renderAs: "media", allowedMimeTypes: ["image/*"] },
+      order: { min: 0, description: "Display order" },
+      link: { placeholder: "https://...", description: "Learn more URL" },
+      linkText: { maxLength: 50, placeholder: "Learn more" },
     },
   },
 });
@@ -126,14 +152,42 @@ export const testimonial = defineContentType({
     displayName: "Testimonial",
     titleField: "authorName",
     fields: {
-      quote: { label: "Quote", renderAs: "richText", searchable: true },
-      authorName: { label: "Author Name" },
-      authorTitle: { label: "Author Title" },
-      company: { label: "Company Name" },
-      avatar: { label: "Author Photo", renderAs: "media" },
-      companyLogo: { label: "Company Logo", renderAs: "media" },
-      rating: { label: "Rating", min: 1, max: 5 },
-      featured: { label: "Featured Testimonial" },
+      quote: { renderAs: "richText", searchable: true, maxLength: 1000 },
+      authorName: { maxLength: 100 },
+      authorTitle: { placeholder: "e.g., CTO", maxLength: 100 },
+      company: { maxLength: 100 },
+      avatar: {
+        renderAs: "media",
+        allowedMimeTypes: ["image/*"],
+        maxFileSize: 2 * 1024 * 1024,
+      },
+      companyLogo: {
+        renderAs: "media",
+        allowedMimeTypes: ["image/*"],
+        maxFileSize: 1 * 1024 * 1024,
+      },
+      rating: { min: 1, max: 5, step: 1, precision: 0 },
+      featured: { description: "Show in featured testimonials section" },
+    },
+  },
+});
+
+export const faq = defineContentType({
+  name: "FAQ",
+  validator: v.object({
+    question: v.string(),
+    answer: v.string(),
+    category: v.optional(v.string()),
+    order: v.number(),
+  }),
+  meta: {
+    displayName: "FAQ",
+    titleField: "question",
+    fields: {
+      question: { searchable: true, maxLength: 200 },
+      answer: { renderAs: "richText" },
+      category: { placeholder: "e.g., Billing, Technical" },
+      order: { min: 0, description: "Display order" },
     },
   },
 });
@@ -154,14 +208,14 @@ export const ctaSection = defineContentType({
     displayName: "CTA Section",
     titleField: "headline",
     fields: {
-      headline: { label: "Headline", searchable: true },
-      description: { label: "Description" },
-      buttonText: { label: "Button Text" },
-      buttonUrl: { label: "Button URL" },
-      secondaryText: { label: "Secondary Button Text" },
-      secondaryUrl: { label: "Secondary Button URL" },
-      backgroundColor: { label: "Background Color" },
-      backgroundImage: { label: "Background Image", renderAs: "media" },
+      headline: { searchable: true, maxLength: 100 },
+      description: { maxLength: 300 },
+      buttonText: { maxLength: 50 },
+      buttonUrl: { placeholder: "https://..." },
+      secondaryText: { maxLength: 50 },
+      secondaryUrl: { placeholder: "https://..." },
+      backgroundColor: { placeholder: "#3B82F6", description: "Hex background color" },
+      backgroundImage: { renderAs: "media", allowedMimeTypes: ["image/*"] },
     },
   },
 });
@@ -169,15 +223,15 @@ export const ctaSection = defineContentType({
 // =============================================================================
 // TYPED HELPERS
 // =============================================================================
-// Create type-safe CRUD helpers for programmatic access.
-// Use these in Convex functions for fully typed data access.
 
 export const content = createTypedHelpers(components.cms, {
+  page: page,
   hero: heroSection,
   feature: featureBlock,
   testimonial: testimonial,
+  faq: faq,
   cta: ctaSection,
 });
 `;
 
-export const LANDING_SCHEMA_DESCRIPTION = "Landing Page (hero, features, testimonials)";
+export const LANDING_SCHEMA_DESCRIPTION = "Landing Page (hero, features, testimonials, FAQ)";

@@ -57,6 +57,8 @@ export const blogPost = defineContentType({
       slug: {
         label: "URL Slug",
         description: "URL-friendly identifier",
+        pattern: "^[a-z0-9-]+$",
+        patternMessage: "Only lowercase letters, numbers, and hyphens",
       },
       content: {
         label: "Content",

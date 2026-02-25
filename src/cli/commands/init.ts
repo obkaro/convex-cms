@@ -35,6 +35,7 @@ import {
   CMS_BLOG_TEMPLATE,
   CMS_DOCS_TEMPLATE,
   CMS_LANDING_TEMPLATE,
+  CMS_ECOMMERCE_TEMPLATE,
 } from "../templates/schemas/index.js";
 
 export interface InitOptions {
@@ -46,6 +47,7 @@ const TEMPLATE_DESCRIPTIONS: Record<SchemaTemplate, string> = {
   blog: "Blog content types",
   docs: "Documentation content types",
   landing: "Landing page content types",
+  ecommerce: "E-commerce content types",
   blank: "Blank starter",
 };
 
@@ -57,6 +59,8 @@ function getCmsTemplate(template: SchemaTemplate): string {
       return CMS_DOCS_TEMPLATE;
     case "landing":
       return CMS_LANDING_TEMPLATE;
+    case "ecommerce":
+      return CMS_ECOMMERCE_TEMPLATE;
     case "blank":
     default:
       return CMS_CLIENT_TEMPLATE;
@@ -64,7 +68,7 @@ function getCmsTemplate(template: SchemaTemplate): string {
 }
 
 function validateTemplate(template: string): template is SchemaTemplate {
-  return ["blog", "docs", "landing", "blank"].includes(template);
+  return ["blog", "docs", "landing", "ecommerce", "blank"].includes(template);
 }
 
 export async function initCommand(options: InitOptions): Promise<void> {
@@ -85,7 +89,7 @@ export async function initCommand(options: InitOptions): Promise<void> {
   if (options.template) {
     if (!validateTemplate(options.template)) {
       logError(`Invalid template: ${options.template}`);
-      logInfo("Valid templates: blog, docs, landing, blank");
+      logInfo("Valid templates: blog, docs, landing, ecommerce, blank");
       process.exit(1);
     }
     template = options.template;
