@@ -167,12 +167,14 @@ getUserRole: async (ctx, { userId }) => {
 
 ### customRoles
 
-Define custom roles beyond built-in ones.
+Define custom roles beyond built-in ones. This is an array of role objects, each requiring `name`, `displayName`, `description`, and `permissions`.
 
 ```typescript
-customRoles: {
-  contentManager: {
+customRoles: [
+  {
+    name: "content-manager",
     displayName: "Content Manager",
+    description: "Can manage all content and media but not settings",
     permissions: [
       { resource: "contentTypes", action: "read", scope: "all" },
       { resource: "contentEntries", action: "create", scope: "all" },
@@ -180,23 +182,25 @@ customRoles: {
       { resource: "contentEntries", action: "update", scope: "all" },
       { resource: "contentEntries", action: "delete", scope: "own" },
       { resource: "contentEntries", action: "publish", scope: "all" },
-      { resource: "mediaAssets", action: "*", scope: "all" },
+      { resource: "mediaItems", action: "create", scope: "all" },
+      { resource: "mediaItems", action: "read", scope: "all" },
+      { resource: "mediaItems", action: "update", scope: "all" },
+      { resource: "mediaItems", action: "delete", scope: "all" },
     ],
-    // Optional: restrict to specific content types
-    contentTypeRestrictions: ["blog_post", "page"],
-    // Optional: restrict to specific locales
-    localeRestrictions: ["en", "es"],
+    // Optional: restrict permissions to specific content types
+    // contentTypes: ["blog_post", "page"],  // on individual permissions
   },
 
-  translator: {
+  {
+    name: "translator",
     displayName: "Translator",
+    description: "Can read and update content entries",
     permissions: [
       { resource: "contentEntries", action: "read", scope: "all" },
       { resource: "contentEntries", action: "update", scope: "all" },
     ],
-    localeRestrictions: ["es", "fr", "de"],
   },
-}
+]
 ```
 
 ### authorizationHooks
@@ -207,7 +211,7 @@ Custom authorization logic hooks.
 authorizationHooks: {
   // Run before RBAC check
   beforeRbac: async (context) => {
-    console.log(`Auth check: ${context.userId} -> ${context.action}`);
+    console.log(`Auth check: ${context.userId} -> ${context.operation}`);
     return { allowed: true };
   },
 
@@ -259,36 +263,51 @@ Implement rate limiting via hooks.
 
 ```typescript
 rateLimitHooks: {
-  // Check if action is allowed
+  // Check if operation is allowed (should NOT modify state)
   check: async (context) => {
     const result = await checkRateLimit({
       userId: context.userId,
-      action: context.action,
-      resource: context.resource,
+      operation: context.operation,
+      category: context.operationCategory,
     });
 
     return {
       allowed: result.remaining > 0,
-      remaining: result.remaining,
-      resetAt: result.resetAt,
+      reason: result.remaining <= 0 ? "Rate limit exceeded" : undefined,
+      retryAt: result.resetAt,
+      rateLimitInfo: {
+        remaining: result.remaining,
+        limit: result.limit,
+      },
     };
   },
 
-  // Consume a rate limit token
+  // Consume a rate limit token (called after check passes)
   consume: async (context) => {
-    await consumeRateLimit({
+    const result = await consumeRateLimit({
       userId: context.userId,
-      action: context.action,
+      operation: context.operation,
     });
+
+    return {
+      allowed: true,
+      consumed: true,
+    };
   },
 
-  // Get rate limit configuration
+  // Dynamic rate limit configuration
   getConfig: async (context) => {
     return {
-      limit: 100,
-      window: "1h",
+      enabled: true,
+      config: {
+        rate: 100,
+        period: 3600000,  // 1 hour in ms
+      },
     };
   },
+
+  // Skip rate limiting for admin role
+  skipForAdmin: true,
 }
 ```
 
@@ -333,16 +352,25 @@ export const cms = createCmsClient(components.convexCms, {
     return user?.cmsRole ?? "viewer";
   },
 
-  customRoles: {
-    blogEditor: {
+  customRoles: [
+    {
+      name: "blog-editor",
       displayName: "Blog Editor",
+      description: "Can manage blog posts and media",
       permissions: [
-        { resource: "contentEntries", action: "*", scope: "all" },
-        { resource: "mediaAssets", action: "*", scope: "all" },
+        { resource: "contentTypes", action: "read" },
+        { resource: "contentEntries", action: "create", contentTypes: ["blog_post"] },
+        { resource: "contentEntries", action: "read", scope: "all", contentTypes: ["blog_post"] },
+        { resource: "contentEntries", action: "update", scope: "all", contentTypes: ["blog_post"] },
+        { resource: "contentEntries", action: "delete", scope: "all", contentTypes: ["blog_post"] },
+        { resource: "contentEntries", action: "publish", scope: "all", contentTypes: ["blog_post"] },
+        { resource: "mediaItems", action: "create" },
+        { resource: "mediaItems", action: "read" },
+        { resource: "mediaItems", action: "update" },
+        { resource: "mediaItems", action: "delete" },
       ],
-      contentTypeRestrictions: ["blog_post", "author"],
     },
-  },
+  ],
 
   authorizationHooks: {
     onDeny: async (context) => {

@@ -283,16 +283,18 @@ const blogPost = await cms.contentTypes.create(ctx, {
   name: "blog_post",
   displayName: "Blog Post",
   fields: [
-    { name: "title", type: "text", required: true },
-    { name: "content", type: "richText", required: true },
+    { name: "title", label: "Title", type: "text", required: true },
+    { name: "content", label: "Content", type: "richText", required: true },
 
     // Flat tags field
     {
       name: "tags",
+      label: "Tags",
       type: "tags",
+      required: false,
       options: {
-        taxonomyName: "blog_tags",
-        allowInlineCreation: true,  // Allow creating new tags on the fly
+        taxonomyId: blogTagsTaxonomyId,
+        allowCreate: true,  // Allow creating new tags on the fly
         maxTags: 10,
       },
     },
@@ -300,11 +302,12 @@ const blogPost = await cms.contentTypes.create(ctx, {
     // Hierarchical category field
     {
       name: "category",
+      label: "Category",
       type: "category",
       required: true,
       options: {
         taxonomyName: "product_categories",
-        multiple: false,
+        allowMultiple: false,
         depth: 2,  // Only show top 2 levels in picker
       },
     },

@@ -125,14 +125,14 @@ The client wrapper (`createCmsClient`) provides:
 ```typescript
 // Raw component call (untyped)
 await ctx.runMutation(components.convexCms.contentEntryMutations.create, {
-  contentTypeId,
+  contentTypeName,
   data,
 });
 
 // Client wrapper (typed)
 await cms.contentEntries.create(ctx, {
-  contentTypeId,  // Autocomplete for Id<"content_types">
-  data,           // Type-checked against content type
+  contentTypeName,  // Autocomplete for content type names
+  data,             // Type-checked against content type
 });
 ```
 
@@ -141,7 +141,7 @@ await cms.contentEntries.create(ctx, {
 ```typescript
 const cms = createCmsClient(components.convexCms, {
   defaultLocale: "en",
-  getUserRole: async ({ userId }) => lookupRole(userId),
+  getUserRole: async (ctx, { userId }) => lookupRole(ctx, userId),
 });
 
 // Every call automatically includes configuration
@@ -155,7 +155,7 @@ await cms.contentEntries.create(ctx, { ... });
 // Namespaced methods for discoverability
 cms.contentTypes.create()
 cms.contentEntries.publish()
-cms.mediaAssets.upload()
+cms.mediaAssets.generateUploadUrl()
 cms.versions.rollback()
 ```
 

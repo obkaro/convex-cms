@@ -42,10 +42,10 @@ Will AI agents manage content?
 ```typescript
 // convex/convex.config.ts
 import { defineApp } from "convex/server";
-import convexCms from "convex-cms/convex.config";
+import cms from "convex-cms/convex.config";
 
 const app = defineApp();
-app.use(convexCms);
+app.use(cms);
 export default app;
 ```
 
@@ -59,7 +59,7 @@ export const {
   getEntry,
   publishEntry,
   // ... all admin functions
-} = defineAdminAPI(components.convexCms);
+} = defineAdminAPI(components.cms);
 ```
 
 ```tsx
@@ -91,7 +91,7 @@ export const {
 import { createCmsClient } from "convex-cms";
 import { components } from "./_generated/api";
 
-export const cms = createCmsClient(components.convexCms, {
+export const cms = createCmsClient(components.cms, {
   permissiveMode: true, // For development
 });
 ```
@@ -117,13 +117,13 @@ export const createPost = mutation({
   handler: async (ctx, args) => {
     // Create and immediately publish
     const entry = await cms.contentEntries.create(ctx, {
-      contentTypeId: blogTypeId,
+      contentTypeName: "blog_post",
       data: args,
       createdBy: "system",
     });
     await cms.contentEntries.publish(ctx, {
       id: entry._id,
-      publishedBy: "system",
+      updatedBy: "system",
     });
     return entry;
   },
@@ -162,7 +162,7 @@ export const {
   getEntry,
   publishEntry,
   // ... all admin functions
-} = defineAdminAPI(components.convexCms, {
+} = defineAdminAPI(components.cms, {
   auth: async (ctx, operation) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Unauthorized");
@@ -176,10 +176,10 @@ export const {
 import { createCmsClient } from "convex-cms";
 import { components } from "./_generated/api";
 
-export const cms = createCmsClient(components.convexCms, {
-  getUserRole: async ({ userId }) => {
+export const cms = createCmsClient(components.cms, {
+  getUserRole: async (ctx, { userId }) => {
     // Map your users to CMS roles
-    const user = await db.get(userId);
+    const user = await ctx.db.get(userId);
     return user?.cmsRole ?? "viewer";
   },
 });
@@ -254,11 +254,11 @@ export default function AdminPage() {
 ```typescript
 // convex/convex.config.ts
 import { defineApp } from "convex/server";
-import convexCms from "convex-cms/convex.config";
+import cms from "convex-cms/convex.config";
 
 const app = defineApp();
-app.use(convexCms, { name: "tenant1Cms" });
-app.use(convexCms, { name: "tenant2Cms" });
+app.use(cms, { name: "tenant1Cms" });
+app.use(cms, { name: "tenant2Cms" });
 // ...
 export default app;
 ```
@@ -272,15 +272,16 @@ Each tenant gets completely isolated tables.
 import { createCmsClient } from "convex-cms";
 import { components } from "./_generated/api";
 
-export const cms = createCmsClient(components.convexCms, {
+export const cms = createCmsClient(components.cms, {
   authorizationHooks: {
-    authorize: async (ctx, { userId, operation }) => {
+    authorize: async (context) => {
+      const { ctx, userId, resourceId } = context;
       const user = await getUser(ctx, userId);
       const tenantId = user?.tenantId;
 
       // Only allow operations on own tenant's content
-      if (operation.resourceId) {
-        const resource = await getResource(ctx, operation.resourceId);
+      if (resourceId) {
+        const resource = await getResource(ctx, resourceId);
         if (resource.tenantId !== tenantId) {
           return { allowed: false, reason: "Wrong tenant" };
         }
@@ -310,7 +311,7 @@ export const cms = createCmsClient(components.convexCms, {
 import { createCmsTools } from "convex-cms";
 import { components } from "./_generated/api";
 
-export const cmsTools = createCmsTools(components.convexCms, {
+export const cmsTools = createCmsTools(components.cms, {
   defaultUserId: "content-agent",
 });
 ```
@@ -356,7 +357,7 @@ Give agents only the tools they need:
 ```typescript
 // Read-only research agent
 const { listContentEntries, searchContent, getContentEntry } =
-  createCmsTools(components.convexCms);
+  createCmsTools(components.cms);
 
 const researchAgent = new Agent(components.agent, {
   name: "Content Researcher",
@@ -365,7 +366,7 @@ const researchAgent = new Agent(components.agent, {
 
 // Publishing workflow agent
 const { publishEntry, unpublishEntry, scheduleEntry, bulkPublish } =
-  createCmsTools(components.convexCms);
+  createCmsTools(components.cms);
 
 const publishingAgent = new Agent(components.agent, {
   name: "Publishing Workflow",
@@ -408,7 +409,7 @@ Add `createCmsClient` alongside your existing `defineAdminAPI`:
 import { createCmsClient } from "convex-cms";
 import { components } from "./_generated/api";
 
-export const cms = createCmsClient(components.convexCms);
+export const cms = createCmsClient(components.cms);
 ```
 
 Now you can use `cms.*` in your custom functions while Admin UI continues working.
@@ -425,7 +426,7 @@ import { components } from "./_generated/api";
 export const {
   listContentTypes,
   // ... all admin functions
-} = defineAdminAPI(components.convexCms);
+} = defineAdminAPI(components.cms);
 ```
 
 Run `pnpm convex-cms admin` to access the Admin UI.

@@ -106,6 +106,9 @@ export const textFieldDefinitionValidator = v.object({
 		minLength: v.optional(v.number()),
 		maxLength: v.optional(v.number()),
 		pattern: v.optional(v.string()),
+		patternMessage: v.optional(v.string()),
+		placeholder: v.optional(v.string()),
+		multiline: v.optional(v.boolean()),
 	})),
 });
 
@@ -117,6 +120,8 @@ export const numberFieldDefinitionValidator = v.object({
 		max: v.optional(v.number()),
 		step: v.optional(v.number()),
 		precision: v.optional(v.number()),
+		prefix: v.optional(v.string()),
+		suffix: v.optional(v.string()),
 	})),
 });
 
@@ -135,6 +140,8 @@ export const richTextFieldDefinitionValidator = v.object({
 	options: v.optional(v.object({
 		allowedBlocks: v.optional(v.array(v.string())),
 		allowedMarks: v.optional(v.array(v.string())),
+		maxLength: v.optional(v.number()),
+		placeholder: v.optional(v.string()),
 	})),
 });
 
@@ -146,6 +153,7 @@ export const mediaFieldDefinitionValidator = v.object({
 		allowedMimeTypes: v.optional(v.array(v.string())),
 		maxFileSize: v.optional(v.number()),
 		multiple: v.optional(v.boolean()),
+		maxItems: v.optional(v.number()),
 	})),
 });
 
@@ -180,6 +188,9 @@ export const categoryFieldDefinitionValidator = v.object({
 	type: v.literal("category"),
 	options: v.optional(v.object({
 		allowMultiple: v.optional(v.boolean()),
+		taxonomyName: v.optional(v.string()),
+		maxSelections: v.optional(v.number()),
+		depth: v.optional(v.number()),
 	})),
 });
 
@@ -198,6 +209,7 @@ export const referenceFieldDefinitionValidator = v.object({
 		allowedContentTypes: v.optional(v.array(v.string())),
 		multiple: v.optional(v.boolean()),
 		minItems: v.optional(v.number()),
+		maxItems: v.optional(v.number()),
 	})),
 });
 
@@ -213,6 +225,8 @@ export const multiSelectFieldDefinitionValidator = v.object({
 				}),
 			),
 		),
+		minSelections: v.optional(v.number()),
+		maxSelections: v.optional(v.number()),
 	})),
 });
 
@@ -222,6 +236,7 @@ export const dateFieldDefinitionValidator = v.object({
 	options: v.optional(v.object({
 		min: v.optional(v.number()),
 		max: v.optional(v.number()),
+		format: v.optional(v.string()),
 	})),
 });
 
@@ -231,6 +246,8 @@ export const datetimeFieldDefinitionValidator = v.object({
 	options: v.optional(v.object({
 		min: v.optional(v.number()),
 		max: v.optional(v.number()),
+		timezone: v.optional(v.string()),
+		format: v.optional(v.string()),
 	})),
 });
 

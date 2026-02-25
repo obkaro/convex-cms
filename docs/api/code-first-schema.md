@@ -85,7 +85,7 @@ interface ContentTypeConfig<TName, TValidator> {
   /**
    * UI and behavior configuration.
    */
-  meta?: ContentTypeMeta<TValidator>;
+  meta: ContentTypeMeta<TValidator>;
 }
 ```
 
@@ -95,14 +95,18 @@ interface ContentTypeConfig<TName, TValidator> {
 interface ContentTypeMeta<TValidator> {
   /**
    * Human-readable name for admin UI.
-   * @default Derived from name
    */
-  displayName?: string;
+  displayName: string;
 
   /**
    * Help text for content editors.
    */
   description?: string;
+
+  /**
+   * Icon identifier for the admin UI (e.g., emoji or icon name).
+   */
+  icon?: string;
 
   /**
    * Field to use as the entry title in lists.
@@ -121,6 +125,11 @@ interface ContentTypeMeta<TValidator> {
    * @default false
    */
   singleton?: boolean;
+
+  /**
+   * Display order in admin UI navigation.
+   */
+  sortOrder?: number;
 
   /**
    * Field-level metadata for UI hints and validation.
@@ -153,7 +162,7 @@ interface FieldMeta {
   patternMessage?: string;     // Error message for pattern
   multiline?: boolean;         // Use textarea
 
-  // Number fields
+  // Number fields (min/max also used as timestamps for date/datetime fields)
   min?: number;
   max?: number;
   step?: number;
@@ -166,18 +175,21 @@ interface FieldMeta {
   falseLabel?: string;         // Label when false
 
   // Date/datetime fields
-  minDate?: string;            // ISO format
-  maxDate?: string;
-  timezone?: string;           // IANA timezone
+  // (use min/max from Number fields as timestamps in ms since epoch)
+  timezone?: string;           // IANA timezone (datetime only)
   format?: string;             // Display format
 
-  // Reference/media fields
-  allowedContentTypes?: string[];  // Restrict references
-  allowedMimeTypes?: string[];     // Restrict media types
-  multiple?: boolean;          // Allow arrays
+  // Reference fields
+  allowedContentTypes?: string[];  // Restrict to these content types
+  multiple?: boolean;          // Allow multiple references
   minItems?: number;
   maxItems?: number;
-  maxFileSize?: number;        // Bytes
+  allowInlineCreation?: boolean;   // Create referenced entries inline
+
+  // Media fields
+  mediaType?: string;          // "image" | "video" | "audio" | "document" | "other"
+  allowedMimeTypes?: string[];     // Restrict MIME types
+  maxFileSize?: number;        // Max file size in bytes
 
   // Select fields
   options?: Array<{ value: string; label: string }>;
@@ -188,14 +200,17 @@ interface FieldMeta {
   allowedBlocks?: string[];    // Allowed block types
   allowedMarks?: string[];     // Allowed inline formatting
 
-  // Taxonomy fields (tags/category)
-  taxonomyId?: string;
-  taxonomyName?: string;       // Alternative to ID
+  // Tags fields
+  taxonomyId?: string;         // Taxonomy ID for tag selection
   allowCreate?: boolean;       // Create terms inline
   maxTags?: number;
   minTags?: number;
+
+  // Category fields
+  allowMultiple?: boolean;     // Allow multiple categories
+  taxonomyName?: string;       // Taxonomy name for category selection
+  // (also uses maxSelections from Select fields)
   depth?: number;              // Max category depth
-  allowMultiple?: boolean;     // Multiple categories
 }
 ```
 
@@ -251,6 +266,7 @@ const blogPost = defineContentType({
     content: v.string(),  // Would infer "text"
   }),
   meta: {
+    displayName: "Blog Post",
     fields: {
       content: {
         renderAs: "richText",  // Override to rich text editor
@@ -288,7 +304,7 @@ const contentSchema = createContentSchema({
 
 // Access definitions
 contentSchema.hasContentType("blog_post");  // true
-contentSchema.getContentType("author");     // AuthorDefinition
+contentSchema.getDefinition("author");      // AuthorDefinition
 ```
 
 ---
@@ -366,6 +382,22 @@ Converts a code-first definition to the database format for registration.
 function toFieldDefinitions(
   definition: ContentTypeDefinition
 ): DatabaseFieldDefinition[]
+```
+
+Each `DatabaseFieldDefinition` includes:
+
+```typescript
+interface DatabaseFieldDefinition {
+  name: string;
+  label: string;       // Required - derived from FieldMeta.label or field name
+  type: string;
+  required: boolean;
+  searchable?: boolean;
+  localized?: boolean;
+  description?: string;
+  defaultValue?: unknown;
+  options?: Record<string, unknown>;
+}
 ```
 
 ### Registering Code-First Types

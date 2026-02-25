@@ -4,10 +4,12 @@ Convex CMS provides comprehensive media management including uploads, folder org
 
 ## Overview
 
-The media system consists of:
-- **Media Assets** - Files stored in Convex File Storage with metadata
-- **Media Folders** - Hierarchical organization structure
-- **Media Variants** - Derived versions (thumbnails, responsive sizes)
+The media system uses a **unified `mediaItems` table** — both assets and folders live in the same table, distinguished by a `kind` field (`"asset"` or `"folder"`). Folders are simply `mediaItems` rows with `kind: "folder"`, and assets reference their parent folder via `parentId` (which points to another `mediaItems` row).
+
+The system consists of:
+- **Media Assets** (`kind: "asset"`) - Files stored in Convex File Storage with metadata (`storageId`, `mimeType`, `width`, `height`, `duration`, `altText`, `name`, `title`, `description`, `parentId`, `path`, `tags`, `size`, `metadata`)
+- **Media Folders** (`kind: "folder"`) - Hierarchical organization structure (`name`, `title`, `description`, `parentId`, `path`, `sortOrder`)
+- **Media Variants** - Derived versions (thumbnails, responsive sizes) stored in a separate `mediaVariants` table
 
 ---
 
@@ -52,22 +54,14 @@ function MediaUploader() {
     // Create asset record
     return await createAsset({
       storageId,
-      filename: file.name,
+      name: file.name,
       mimeType: file.type,
       size: file.size,
-      type: getMediaType(file.type),
     });
   };
   // ...
 }
 
-function getMediaType(mimeType: string) {
-  if (mimeType.startsWith("image/")) return "image";
-  if (mimeType.startsWith("video/")) return "video";
-  if (mimeType.startsWith("audio/")) return "audio";
-  if (mimeType === "application/pdf") return "document";
-  return "other";
-}
 ```
 
 ### 3. Create Asset Record
@@ -76,19 +70,12 @@ function getMediaType(mimeType: string) {
 export const createAsset = mutation({
   args: {
     storageId: v.id("_storage"),
-    filename: v.string(),
+    name: v.string(),
     mimeType: v.string(),
-    size: v.number(),
-    type: v.union(
-      v.literal("image"),
-      v.literal("video"),
-      v.literal("audio"),
-      v.literal("document"),
-      v.literal("other")
-    ),
+    size: v.optional(v.number()),
     title: v.optional(v.string()),
     altText: v.optional(v.string()),
-    folderId: v.optional(v.id("media_folders")),
+    parentId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     return await cms.mediaAssets.create(ctx, args);
@@ -105,7 +92,7 @@ export const createAsset = mutation({
 ```typescript
 const asset = await cms.mediaAssets.get(ctx, assetId);
 // Returns asset with resolved URL:
-// { _id, filename, url, mimeType, ... }
+// { _id, name, url, mimeType, ... }
 ```
 
 ### List Assets
@@ -120,9 +107,9 @@ const images = await cms.mediaAssets.list(ctx, {
   limit: 20,
 });
 
-// Filter by folder
+// Filter by parent folder
 const folderAssets = await cms.mediaAssets.list(ctx, {
-  folderId: folderId,
+  parentId: parentId,
 });
 
 // Search
@@ -284,7 +271,7 @@ await cms.mediaAssets.update(ctx, {
   title: "New Title",
   description: "Updated description",
   altText: "Alt text for accessibility",
-  folderId: newFolderId,
+  parentId: newParentId,
 });
 ```
 
@@ -372,10 +359,12 @@ const refs = await cms.mediaAssets.findReferences(ctx, { assetId });
 ```typescript
 {
   name: "featuredImage",
+  label: "Featured Image",
   type: "media",
+  required: true,
   options: {
-    allowedTypes: ["image/*"],
-    maxSize: 5 * 1024 * 1024,  // 5MB
+    allowedMimeTypes: ["image/*"],
+    maxFileSize: 5 * 1024 * 1024,  // 5MB
   },
 }
 ```
@@ -385,9 +374,11 @@ const refs = await cms.mediaAssets.findReferences(ctx, { assetId });
 ```typescript
 {
   name: "gallery",
+  label: "Gallery",
   type: "media",
+  required: false,
   options: {
-    allowedTypes: ["image/*"],
+    allowedMimeTypes: ["image/*"],
     multiple: true,
     maxItems: 10,
   },
@@ -399,14 +390,16 @@ const refs = await cms.mediaAssets.findReferences(ctx, { assetId });
 ```typescript
 {
   name: "attachment",
+  label: "Attachment",
   type: "media",
+  required: false,
   options: {
-    allowedTypes: [
+    allowedMimeTypes: [
       "application/pdf",
       "application/msword",
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     ],
-    maxSize: 10 * 1024 * 1024,  // 10MB
+    maxFileSize: 10 * 1024 * 1024,  // 10MB
   },
 }
 ```

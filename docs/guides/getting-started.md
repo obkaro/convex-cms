@@ -81,8 +81,8 @@ export const setupBlog = mutation({
   args: {},
   handler: async (ctx) => {
     // Check if already exists
-    const types = await cms.contentTypes.list(ctx);
-    if (types.items.find(t => t.name === "blog_post")) {
+    const existing = await cms.contentTypes.getByName(ctx, "blog_post");
+    if (existing) {
       return { message: "Already set up!" };
     }
 
@@ -90,12 +90,13 @@ export const setupBlog = mutation({
     const blogPost = await cms.contentTypes.create(ctx, {
       name: "blog_post",
       displayName: "Blog Post",
+      createdBy: "system",
       fields: [
-        { name: "title", type: "text", required: true },
-        { name: "slug", type: "text", required: true },
-        { name: "content", type: "richText", required: true },
-        { name: "excerpt", type: "text" },
-        { name: "featured", type: "boolean", defaultValue: false },
+        { name: "title", label: "Title", type: "text", required: true },
+        { name: "slug", label: "Slug", type: "text", required: true },
+        { name: "content", label: "Content", type: "richText", required: true },
+        { name: "excerpt", label: "Excerpt", type: "text", required: false },
+        { name: "featured", label: "Featured", type: "boolean", required: false, defaultValue: false },
       ],
       slugField: "slug",
       titleField: "title",
@@ -119,16 +120,13 @@ import { cms } from "./cms";
 export const listPosts = query({
   args: {},
   handler: async (ctx) => {
-    const types = await cms.contentTypes.list(ctx);
-    const blogType = types.items.find(t => t.name === "blog_post");
-    if (!blogType) return [];
-
     const result = await cms.contentEntries.list(ctx, {
-      contentTypeId: blogType._id,
+      contentTypeName: "blog_post",
       status: "published",
+      paginationOpts: { numItems: 50, cursor: null },
     });
 
-    return result.items;
+    return result.page;
   },
 });
 
@@ -151,14 +149,10 @@ export const createPost = mutation({
     excerpt: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const types = await cms.contentTypes.list(ctx);
-    const blogType = types.items.find(t => t.name === "blog_post");
-    if (!blogType) throw new Error("Run setup first!");
-
     const slug = args.title.toLowerCase().replace(/\s+/g, "-");
 
     return await cms.contentEntries.create(ctx, {
-      contentTypeId: blogType._id,
+      contentTypeName: "blog_post",
       data: {
         title: args.title,
         slug,
@@ -172,7 +166,7 @@ export const createPost = mutation({
 
 // Publish a post
 export const publishPost = mutation({
-  args: { id: v.id("content_entries") },
+  args: { id: v.string() },
   handler: async (ctx, { id }) => {
     return await cms.contentEntries.publish(ctx, { id });
   },
