@@ -965,7 +965,10 @@ export declare const components: {
                 options?: {
                   maxLength?: number;
                   minLength?: number;
+                  multiline?: boolean;
                   pattern?: string;
+                  patternMessage?: string;
+                  placeholder?: string;
                 };
                 required: boolean;
                 searchable?: boolean;
@@ -981,7 +984,9 @@ export declare const components: {
                   max?: number;
                   min?: number;
                   precision?: number;
+                  prefix?: string;
                   step?: number;
+                  suffix?: string;
                 };
                 required: boolean;
                 searchable?: boolean;
@@ -1007,6 +1012,8 @@ export declare const components: {
                 options?: {
                   allowedBlocks?: Array<string>;
                   allowedMarks?: Array<string>;
+                  maxLength?: number;
+                  placeholder?: string;
                 };
                 required: boolean;
                 searchable?: boolean;
@@ -1021,6 +1028,7 @@ export declare const components: {
                 options?: {
                   allowedMimeTypes?: Array<string>;
                   maxFileSize?: number;
+                  maxItems?: number;
                   mediaType?:
                     | "image"
                     | "video"
@@ -1050,7 +1058,11 @@ export declare const components: {
                 label: string;
                 localized?: boolean;
                 name: string;
-                options?: { options?: Array<{ label: string; value: string }> };
+                options?: {
+                  maxSelections?: number;
+                  minSelections?: number;
+                  options?: Array<{ label: string; value: string }>;
+                };
                 required: boolean;
                 searchable?: boolean;
                 type: "multiSelect";
@@ -1077,7 +1089,12 @@ export declare const components: {
                 label: string;
                 localized?: boolean;
                 name: string;
-                options?: { allowMultiple?: boolean };
+                options?: {
+                  allowMultiple?: boolean;
+                  depth?: number;
+                  maxSelections?: number;
+                  taxonomyName?: string;
+                };
                 required: boolean;
                 searchable?: boolean;
                 type: "category";
@@ -1099,7 +1116,7 @@ export declare const components: {
                 label: string;
                 localized?: boolean;
                 name: string;
-                options?: { max?: number; min?: number };
+                options?: { format?: string; max?: number; min?: number };
                 required: boolean;
                 searchable?: boolean;
                 type: "date";
@@ -1110,7 +1127,12 @@ export declare const components: {
                 label: string;
                 localized?: boolean;
                 name: string;
-                options?: { max?: number; min?: number };
+                options?: {
+                  format?: string;
+                  max?: number;
+                  min?: number;
+                  timezone?: string;
+                };
                 required: boolean;
                 searchable?: boolean;
                 type: "datetime";
@@ -1123,6 +1145,7 @@ export declare const components: {
                 name: string;
                 options?: {
                   allowedContentTypes?: Array<string>;
+                  maxItems?: number;
                   minItems?: number;
                   multiple?: boolean;
                 };
@@ -1155,7 +1178,10 @@ export declare const components: {
                 options?: {
                   maxLength?: number;
                   minLength?: number;
+                  multiline?: boolean;
                   pattern?: string;
+                  patternMessage?: string;
+                  placeholder?: string;
                 };
                 required: boolean;
                 searchable?: boolean;
@@ -1171,7 +1197,9 @@ export declare const components: {
                   max?: number;
                   min?: number;
                   precision?: number;
+                  prefix?: string;
                   step?: number;
+                  suffix?: string;
                 };
                 required: boolean;
                 searchable?: boolean;
@@ -1197,6 +1225,8 @@ export declare const components: {
                 options?: {
                   allowedBlocks?: Array<string>;
                   allowedMarks?: Array<string>;
+                  maxLength?: number;
+                  placeholder?: string;
                 };
                 required: boolean;
                 searchable?: boolean;
@@ -1211,6 +1241,7 @@ export declare const components: {
                 options?: {
                   allowedMimeTypes?: Array<string>;
                   maxFileSize?: number;
+                  maxItems?: number;
                   mediaType?:
                     | "image"
                     | "video"
@@ -1240,7 +1271,11 @@ export declare const components: {
                 label: string;
                 localized?: boolean;
                 name: string;
-                options?: { options?: Array<{ label: string; value: string }> };
+                options?: {
+                  maxSelections?: number;
+                  minSelections?: number;
+                  options?: Array<{ label: string; value: string }>;
+                };
                 required: boolean;
                 searchable?: boolean;
                 type: "multiSelect";
@@ -1267,7 +1302,12 @@ export declare const components: {
                 label: string;
                 localized?: boolean;
                 name: string;
-                options?: { allowMultiple?: boolean };
+                options?: {
+                  allowMultiple?: boolean;
+                  depth?: number;
+                  maxSelections?: number;
+                  taxonomyName?: string;
+                };
                 required: boolean;
                 searchable?: boolean;
                 type: "category";
@@ -1289,7 +1329,7 @@ export declare const components: {
                 label: string;
                 localized?: boolean;
                 name: string;
-                options?: { max?: number; min?: number };
+                options?: { format?: string; max?: number; min?: number };
                 required: boolean;
                 searchable?: boolean;
                 type: "date";
@@ -1300,7 +1340,12 @@ export declare const components: {
                 label: string;
                 localized?: boolean;
                 name: string;
-                options?: { max?: number; min?: number };
+                options?: {
+                  format?: string;
+                  max?: number;
+                  min?: number;
+                  timezone?: string;
+                };
                 required: boolean;
                 searchable?: boolean;
                 type: "datetime";
@@ -1313,6 +1358,7 @@ export declare const components: {
                 name: string;
                 options?: {
                   allowedContentTypes?: Array<string>;
+                  maxItems?: number;
                   minItems?: number;
                   multiple?: boolean;
                 };
@@ -1374,7 +1420,10 @@ export declare const components: {
                 options?: {
                   maxLength?: number;
                   minLength?: number;
+                  multiline?: boolean;
                   pattern?: string;
+                  patternMessage?: string;
+                  placeholder?: string;
                 };
                 required: boolean;
                 searchable?: boolean;
@@ -1390,7 +1439,9 @@ export declare const components: {
                   max?: number;
                   min?: number;
                   precision?: number;
+                  prefix?: string;
                   step?: number;
+                  suffix?: string;
                 };
                 required: boolean;
                 searchable?: boolean;
@@ -1416,6 +1467,8 @@ export declare const components: {
                 options?: {
                   allowedBlocks?: Array<string>;
                   allowedMarks?: Array<string>;
+                  maxLength?: number;
+                  placeholder?: string;
                 };
                 required: boolean;
                 searchable?: boolean;
@@ -1430,6 +1483,7 @@ export declare const components: {
                 options?: {
                   allowedMimeTypes?: Array<string>;
                   maxFileSize?: number;
+                  maxItems?: number;
                   mediaType?:
                     | "image"
                     | "video"
@@ -1459,7 +1513,11 @@ export declare const components: {
                 label: string;
                 localized?: boolean;
                 name: string;
-                options?: { options?: Array<{ label: string; value: string }> };
+                options?: {
+                  maxSelections?: number;
+                  minSelections?: number;
+                  options?: Array<{ label: string; value: string }>;
+                };
                 required: boolean;
                 searchable?: boolean;
                 type: "multiSelect";
@@ -1486,7 +1544,12 @@ export declare const components: {
                 label: string;
                 localized?: boolean;
                 name: string;
-                options?: { allowMultiple?: boolean };
+                options?: {
+                  allowMultiple?: boolean;
+                  depth?: number;
+                  maxSelections?: number;
+                  taxonomyName?: string;
+                };
                 required: boolean;
                 searchable?: boolean;
                 type: "category";
@@ -1508,7 +1571,7 @@ export declare const components: {
                 label: string;
                 localized?: boolean;
                 name: string;
-                options?: { max?: number; min?: number };
+                options?: { format?: string; max?: number; min?: number };
                 required: boolean;
                 searchable?: boolean;
                 type: "date";
@@ -1519,7 +1582,12 @@ export declare const components: {
                 label: string;
                 localized?: boolean;
                 name: string;
-                options?: { max?: number; min?: number };
+                options?: {
+                  format?: string;
+                  max?: number;
+                  min?: number;
+                  timezone?: string;
+                };
                 required: boolean;
                 searchable?: boolean;
                 type: "datetime";
@@ -1532,6 +1600,7 @@ export declare const components: {
                 name: string;
                 options?: {
                   allowedContentTypes?: Array<string>;
+                  maxItems?: number;
                   minItems?: number;
                   multiple?: boolean;
                 };
@@ -1579,7 +1648,10 @@ export declare const components: {
                 options?: {
                   maxLength?: number;
                   minLength?: number;
+                  multiline?: boolean;
                   pattern?: string;
+                  patternMessage?: string;
+                  placeholder?: string;
                 };
                 required: boolean;
                 searchable?: boolean;
@@ -1595,7 +1667,9 @@ export declare const components: {
                   max?: number;
                   min?: number;
                   precision?: number;
+                  prefix?: string;
                   step?: number;
+                  suffix?: string;
                 };
                 required: boolean;
                 searchable?: boolean;
@@ -1621,6 +1695,8 @@ export declare const components: {
                 options?: {
                   allowedBlocks?: Array<string>;
                   allowedMarks?: Array<string>;
+                  maxLength?: number;
+                  placeholder?: string;
                 };
                 required: boolean;
                 searchable?: boolean;
@@ -1635,6 +1711,7 @@ export declare const components: {
                 options?: {
                   allowedMimeTypes?: Array<string>;
                   maxFileSize?: number;
+                  maxItems?: number;
                   mediaType?:
                     | "image"
                     | "video"
@@ -1664,7 +1741,11 @@ export declare const components: {
                 label: string;
                 localized?: boolean;
                 name: string;
-                options?: { options?: Array<{ label: string; value: string }> };
+                options?: {
+                  maxSelections?: number;
+                  minSelections?: number;
+                  options?: Array<{ label: string; value: string }>;
+                };
                 required: boolean;
                 searchable?: boolean;
                 type: "multiSelect";
@@ -1691,7 +1772,12 @@ export declare const components: {
                 label: string;
                 localized?: boolean;
                 name: string;
-                options?: { allowMultiple?: boolean };
+                options?: {
+                  allowMultiple?: boolean;
+                  depth?: number;
+                  maxSelections?: number;
+                  taxonomyName?: string;
+                };
                 required: boolean;
                 searchable?: boolean;
                 type: "category";
@@ -1713,7 +1799,7 @@ export declare const components: {
                 label: string;
                 localized?: boolean;
                 name: string;
-                options?: { max?: number; min?: number };
+                options?: { format?: string; max?: number; min?: number };
                 required: boolean;
                 searchable?: boolean;
                 type: "date";
@@ -1724,7 +1810,12 @@ export declare const components: {
                 label: string;
                 localized?: boolean;
                 name: string;
-                options?: { max?: number; min?: number };
+                options?: {
+                  format?: string;
+                  max?: number;
+                  min?: number;
+                  timezone?: string;
+                };
                 required: boolean;
                 searchable?: boolean;
                 type: "datetime";
@@ -1737,6 +1828,7 @@ export declare const components: {
                 name: string;
                 options?: {
                   allowedContentTypes?: Array<string>;
+                  maxItems?: number;
                   minItems?: number;
                   multiple?: boolean;
                 };
@@ -1778,7 +1870,10 @@ export declare const components: {
                 options?: {
                   maxLength?: number;
                   minLength?: number;
+                  multiline?: boolean;
                   pattern?: string;
+                  patternMessage?: string;
+                  placeholder?: string;
                 };
                 required: boolean;
                 searchable?: boolean;
@@ -1794,7 +1889,9 @@ export declare const components: {
                   max?: number;
                   min?: number;
                   precision?: number;
+                  prefix?: string;
                   step?: number;
+                  suffix?: string;
                 };
                 required: boolean;
                 searchable?: boolean;
@@ -1820,6 +1917,8 @@ export declare const components: {
                 options?: {
                   allowedBlocks?: Array<string>;
                   allowedMarks?: Array<string>;
+                  maxLength?: number;
+                  placeholder?: string;
                 };
                 required: boolean;
                 searchable?: boolean;
@@ -1834,6 +1933,7 @@ export declare const components: {
                 options?: {
                   allowedMimeTypes?: Array<string>;
                   maxFileSize?: number;
+                  maxItems?: number;
                   mediaType?:
                     | "image"
                     | "video"
@@ -1863,7 +1963,11 @@ export declare const components: {
                 label: string;
                 localized?: boolean;
                 name: string;
-                options?: { options?: Array<{ label: string; value: string }> };
+                options?: {
+                  maxSelections?: number;
+                  minSelections?: number;
+                  options?: Array<{ label: string; value: string }>;
+                };
                 required: boolean;
                 searchable?: boolean;
                 type: "multiSelect";
@@ -1890,7 +1994,12 @@ export declare const components: {
                 label: string;
                 localized?: boolean;
                 name: string;
-                options?: { allowMultiple?: boolean };
+                options?: {
+                  allowMultiple?: boolean;
+                  depth?: number;
+                  maxSelections?: number;
+                  taxonomyName?: string;
+                };
                 required: boolean;
                 searchable?: boolean;
                 type: "category";
@@ -1912,7 +2021,7 @@ export declare const components: {
                 label: string;
                 localized?: boolean;
                 name: string;
-                options?: { max?: number; min?: number };
+                options?: { format?: string; max?: number; min?: number };
                 required: boolean;
                 searchable?: boolean;
                 type: "date";
@@ -1923,7 +2032,12 @@ export declare const components: {
                 label: string;
                 localized?: boolean;
                 name: string;
-                options?: { max?: number; min?: number };
+                options?: {
+                  format?: string;
+                  max?: number;
+                  min?: number;
+                  timezone?: string;
+                };
                 required: boolean;
                 searchable?: boolean;
                 type: "datetime";
@@ -1936,6 +2050,7 @@ export declare const components: {
                 name: string;
                 options?: {
                   allowedContentTypes?: Array<string>;
+                  maxItems?: number;
                   minItems?: number;
                   multiple?: boolean;
                 };
@@ -1991,7 +2106,10 @@ export declare const components: {
                   options?: {
                     maxLength?: number;
                     minLength?: number;
+                    multiline?: boolean;
                     pattern?: string;
+                    patternMessage?: string;
+                    placeholder?: string;
                   };
                   required: boolean;
                   searchable?: boolean;
@@ -2007,7 +2125,9 @@ export declare const components: {
                     max?: number;
                     min?: number;
                     precision?: number;
+                    prefix?: string;
                     step?: number;
+                    suffix?: string;
                   };
                   required: boolean;
                   searchable?: boolean;
@@ -2033,6 +2153,8 @@ export declare const components: {
                   options?: {
                     allowedBlocks?: Array<string>;
                     allowedMarks?: Array<string>;
+                    maxLength?: number;
+                    placeholder?: string;
                   };
                   required: boolean;
                   searchable?: boolean;
@@ -2047,6 +2169,7 @@ export declare const components: {
                   options?: {
                     allowedMimeTypes?: Array<string>;
                     maxFileSize?: number;
+                    maxItems?: number;
                     mediaType?:
                       | "image"
                       | "video"
@@ -2079,6 +2202,8 @@ export declare const components: {
                   localized?: boolean;
                   name: string;
                   options?: {
+                    maxSelections?: number;
+                    minSelections?: number;
                     options?: Array<{ label: string; value: string }>;
                   };
                   required: boolean;
@@ -2107,7 +2232,12 @@ export declare const components: {
                   label: string;
                   localized?: boolean;
                   name: string;
-                  options?: { allowMultiple?: boolean };
+                  options?: {
+                    allowMultiple?: boolean;
+                    depth?: number;
+                    maxSelections?: number;
+                    taxonomyName?: string;
+                  };
                   required: boolean;
                   searchable?: boolean;
                   type: "category";
@@ -2129,7 +2259,7 @@ export declare const components: {
                   label: string;
                   localized?: boolean;
                   name: string;
-                  options?: { max?: number; min?: number };
+                  options?: { format?: string; max?: number; min?: number };
                   required: boolean;
                   searchable?: boolean;
                   type: "date";
@@ -2140,7 +2270,12 @@ export declare const components: {
                   label: string;
                   localized?: boolean;
                   name: string;
-                  options?: { max?: number; min?: number };
+                  options?: {
+                    format?: string;
+                    max?: number;
+                    min?: number;
+                    timezone?: string;
+                  };
                   required: boolean;
                   searchable?: boolean;
                   type: "datetime";
@@ -2153,6 +2288,7 @@ export declare const components: {
                   name: string;
                   options?: {
                     allowedContentTypes?: Array<string>;
+                    maxItems?: number;
                     minItems?: number;
                     multiple?: boolean;
                   };

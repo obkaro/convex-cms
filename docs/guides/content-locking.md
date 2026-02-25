@@ -2,10 +2,12 @@
 
 Content locking prevents concurrent edit conflicts by allowing only one user to edit a content entry at a time. Locks automatically expire to prevent orphaned locks from blocking content indefinitely.
 
+> **Note**: Content locking functions are available through the Admin API (`defineAdminAPI`) or by calling component functions directly. The examples below show the API patterns used by the Admin UI backend.
+
 ## How It Works
 
 1. User opens content for editing → acquires lock
-2. Lock auto-expires after configured duration (default 30 minutes)
+2. Lock auto-expires after configured duration (default 5 minutes)
 3. User can renew lock to extend their editing session
 4. User finishes editing → releases lock (or lock auto-expires)
 5. Admins can force-release locks if needed
@@ -30,17 +32,20 @@ Content locking prevents concurrent edit conflicts by allowing only one user to 
 ### Acquiring a Lock
 
 ```typescript
-import { cms } from "./cms";
-
-const result = await cms.contentLock.acquire(ctx, {
-  id: entryId,
-  userId: currentUserId,
-  lockDuration: 30 * 60 * 1000, // 30 minutes (optional)
-});
+// In your convex/admin.ts (via defineAdminAPI)
+// or call component functions directly
+const result = await ctx.runMutation(
+  components.convexCms.contentLock.acquireLock,
+  {
+    id: entryId,
+    userId: currentUserId,
+    lockDuration: 5 * 60 * 1000, // 5 minutes (optional, this is the default)
+  }
+);
 
 if (result.success) {
   // Lock acquired, user can edit
-  console.log("Editing enabled until", new Date(result.entry.lockExpiresAt));
+  console.log("Editing enabled");
 } else {
   // Lock held by another user
   console.log(`Locked by ${result.currentLockHolder}`);
@@ -51,25 +56,27 @@ if (result.success) {
 ### Checking Lock Status
 
 ```typescript
-const status = await cms.contentLock.check(ctx, {
-  id: entryId,
-});
+const status = await ctx.runQuery(
+  components.convexCms.contentLock.checkLock,
+  { id: entryId }
+);
 
 console.log(status.isLocked);      // true if currently locked
 console.log(status.lockedBy);      // user ID of lock holder
 console.log(status.lockExpiresAt); // expiration timestamp
-console.log(status.timeRemaining); // ms until expiration
-console.log(status.isExpired);     // true if lock was held but expired
 ```
 
 ### Releasing a Lock
 
 ```typescript
 // Release when done editing
-await cms.contentLock.release(ctx, {
-  id: entryId,
-  userId: currentUserId,
-});
+await ctx.runMutation(
+  components.convexCms.contentLock.releaseLock,
+  {
+    id: entryId,
+    userId: currentUserId,
+  }
+);
 ```
 
 ### Renewing a Lock
@@ -77,20 +84,23 @@ await cms.contentLock.release(ctx, {
 For long editing sessions, renew the lock periodically:
 
 ```typescript
-// Renew every 15 minutes during editing
+// Renew every 2 minutes during editing
 setInterval(async () => {
   try {
-    await cms.contentLock.renew(ctx, {
-      id: entryId,
-      userId: currentUserId,
-      lockDuration: 30 * 60 * 1000, // Reset to 30 minutes
-    });
+    await ctx.runMutation(
+      components.convexCms.contentLock.renewLock,
+      {
+        id: entryId,
+        userId: currentUserId,
+        lockDuration: 5 * 60 * 1000, // Reset to 5 minutes
+      }
+    );
   } catch (error) {
     // Lock may have expired or been force-released
     console.log("Lock renewal failed:", error.message);
     // Prompt user to re-acquire or save their work
   }
-}, 15 * 60 * 1000);
+}, 2 * 60 * 1000);
 ```
 
 ### Force-Releasing a Lock (Admin)
@@ -98,10 +108,13 @@ setInterval(async () => {
 When a user abandons an editing session without releasing their lock:
 
 ```typescript
-await cms.contentLock.forceRelease(ctx, {
-  id: entryId,
-  releasedBy: adminUserId, // For audit trail
-});
+await ctx.runMutation(
+  components.convexCms.contentLock.forceReleaseLock,
+  {
+    id: entryId,
+    releasedBy: adminUserId, // For audit trail
+  }
+);
 ```
 
 ## Lock Behavior
@@ -137,7 +150,7 @@ const cms = createCmsClient(components.convexCms, {
 
 ### Lock Duration Limits
 
-- **Default duration**: 30 minutes
+- **Default duration**: 5 minutes
 - **Maximum duration**: 4 hours
 
 Requested durations are clamped to these limits.
@@ -157,15 +170,17 @@ The Admin UI automatically:
 Administrators can view all currently locked content:
 
 ```typescript
-const locked = await cms.contentLock.listLocked(ctx, {
-  contentTypeId: optionalFilter,
-  lockedBy: optionalUserFilter,
-  paginationOpts: { numItems: 50 },
-});
+const locked = await ctx.runQuery(
+  components.convexCms.contentLock.listLockedEntries,
+  {
+    contentTypeName: optionalFilter,
+    lockedBy: optionalUserFilter,
+    paginationOpts: { numItems: 50 },
+  }
+);
 
 for (const entry of locked.page) {
   console.log(`${entry._id} locked by ${entry.lockedBy}`);
-  console.log(`  Time remaining: ${entry.timeRemaining / 1000}s`);
 }
 ```
 
@@ -183,7 +198,7 @@ for (const entry of locked.page) {
 ## Best Practices
 
 1. **Always release locks**: Release when navigation or editing completes
-2. **Set up periodic renewal**: Renew every 15 minutes for long sessions
+2. **Set up periodic renewal**: Renew every 2 minutes for long sessions
 3. **Handle renewal failures**: Prompt user to save work if renewal fails
 4. **Use force-release sparingly**: Only for genuinely abandoned locks
 5. **Show lock status in UI**: Prevent users from trying to edit locked content
@@ -192,7 +207,10 @@ for (const entry of locked.page) {
 
 ```typescript
 try {
-  await cms.contentLock.release(ctx, { id: entryId, userId: userId });
+  await ctx.runMutation(
+    components.convexCms.contentLock.releaseLock,
+    { id: entryId, userId }
+  );
 } catch (error) {
   if (error.message.includes("not locked")) {
     // Entry was already unlocked (expired or force-released)

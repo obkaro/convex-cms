@@ -32,11 +32,8 @@ const featured = await cms.contentEntries
 ### Content Type Filtering
 
 ```typescript
-// By content type name
+// Filter by content type name
 .contentType("blog_post")
-
-// By content type ID
-.contentTypeById(contentTypeId)
 ```
 
 ### Status Filtering

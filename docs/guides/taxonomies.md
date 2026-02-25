@@ -7,85 +7,121 @@ Taxonomies are classification systems for organizing content. Convex CMS support
 
 Both content entries and media assets can be tagged with taxonomy terms.
 
+> **Note**: Taxonomy operations are available through the Admin API (`defineAdminAPI`) or by calling component functions directly. The examples below show the API patterns used by the Admin UI backend.
+
 ## Quick Start
 
 ### Creating a Taxonomy
 
 ```typescript
-import { cms } from "./cms";
-
 // Create a flat taxonomy for blog tags
-const tagsTaxonomy = await cms.taxonomies.create(ctx, {
-  name: "blog_tags",
-  displayName: "Blog Tags",
-  isHierarchical: false,
-  description: "Tags for blog posts",
-});
+const tagsTaxonomy = await ctx.runMutation(
+  components.convexCms.taxonomyMutations.createTaxonomy,
+  {
+    name: "blog_tags",
+    displayName: "Blog Tags",
+    isHierarchical: false,
+    description: "Tags for blog posts",
+    createdBy: userId,
+  }
+);
 
 // Create a hierarchical taxonomy for product categories
-const categoriesTaxonomy = await cms.taxonomies.create(ctx, {
-  name: "product_categories",
-  displayName: "Product Categories",
-  isHierarchical: true,
-  description: "Product category hierarchy",
-});
+const categoriesTaxonomy = await ctx.runMutation(
+  components.convexCms.taxonomyMutations.createTaxonomy,
+  {
+    name: "product_categories",
+    displayName: "Product Categories",
+    isHierarchical: true,
+    description: "Product category hierarchy",
+    createdBy: userId,
+  }
+);
 ```
 
 ### Creating Terms
 
 ```typescript
 // Create flat tags
-await cms.taxonomyTerms.create(ctx, {
-  taxonomyId: tagsTaxonomy._id,
-  name: "JavaScript",
-  slug: "javascript",
-});
+await ctx.runMutation(
+  components.convexCms.taxonomyMutations.createTerm,
+  {
+    taxonomyId: tagsTaxonomy._id,
+    name: "JavaScript",
+    slug: "javascript",
+    createdBy: userId,
+  }
+);
 
-await cms.taxonomyTerms.create(ctx, {
-  taxonomyId: tagsTaxonomy._id,
-  name: "TypeScript",
-  slug: "typescript",
-});
+await ctx.runMutation(
+  components.convexCms.taxonomyMutations.createTerm,
+  {
+    taxonomyId: tagsTaxonomy._id,
+    name: "TypeScript",
+    slug: "typescript",
+    createdBy: userId,
+  }
+);
 
 // Create hierarchical categories
-const electronics = await cms.taxonomyTerms.create(ctx, {
-  taxonomyId: categoriesTaxonomy._id,
-  name: "Electronics",
-  slug: "electronics",
-});
+const electronics = await ctx.runMutation(
+  components.convexCms.taxonomyMutations.createTerm,
+  {
+    taxonomyId: categoriesTaxonomy._id,
+    name: "Electronics",
+    slug: "electronics",
+    createdBy: userId,
+  }
+);
 
 // Create child category
-await cms.taxonomyTerms.create(ctx, {
-  taxonomyId: categoriesTaxonomy._id,
-  name: "Phones",
-  slug: "phones",
-  parentId: electronics._id,
-});
+await ctx.runMutation(
+  components.convexCms.taxonomyMutations.createTerm,
+  {
+    taxonomyId: categoriesTaxonomy._id,
+    name: "Phones",
+    slug: "phones",
+    parentId: electronics._id,
+    createdBy: userId,
+  }
+);
 ```
 
 ### Assigning Terms to Content
 
 ```typescript
 // Add a tag to an entry
-await cms.contentEntryTags.addTerm(ctx, {
-  entryId: blogPostId,
-  termId: javascriptTagId,
-  fieldName: "tags",
-});
+await ctx.runMutation(
+  components.convexCms.taxonomyMutations.addTermToEntry,
+  {
+    entryId: blogPostId,
+    termId: javascriptTagId,
+    fieldName: "tags",
+    createdBy: userId,
+  }
+);
 
 // Set all tags for an entry (replaces existing)
-await cms.contentEntryTags.setTerms(ctx, {
-  entryId: blogPostId,
-  fieldName: "tags",
-  termIds: [javascriptTagId, typescriptTagId],
-});
+await ctx.runMutation(
+  components.convexCms.taxonomyMutations.setEntryTerms,
+  {
+    entryId: blogPostId,
+    fieldName: "tags",
+    termIds: [javascriptTagId, typescriptTagId],
+    updatedBy: userId,
+  }
+);
 
 // Remove a tag
-await cms.contentEntryTags.removeTerm(ctx, {
-  entryId: blogPostId,
-  termId: javascriptTagId,
-  fieldName: "tags",
-});
+await ctx.runMutation(
+  components.convexCms.taxonomyMutations.removeTermFromEntry,
+  {
+    entryId: blogPostId,
+    termId: javascriptTagId,
+    fieldName: "tags",
+    updatedBy: userId,
+  }
+);
 ```
 
 ## Querying Taxonomies
@@ -93,45 +129,47 @@ await cms.contentEntryTags.removeTerm(ctx, {
 ### List All Taxonomies
 
 ```typescript
-const taxonomies = await cms.taxonomies.list(ctx, {
-  isActive: true,
-});
+const taxonomies = await ctx.runQuery(
+  components.convexCms.taxonomies.list,
+  { isActive: true }
+);
 ```
 
 ### Get Taxonomy by Name
 
 ```typescript
-const taxonomy = await cms.taxonomies.get(ctx, {
-  name: "blog_tags",
-});
+const taxonomy = await ctx.runQuery(
+  components.convexCms.taxonomies.get,
+  { name: "blog_tags" }
+);
 ```
 
 ### List Terms in a Taxonomy
 
 ```typescript
 // All terms in a taxonomy
-const tags = await cms.taxonomyTerms.list(ctx, {
-  taxonomyId: tagsTaxonomyId,
-});
+const tags = await ctx.runQuery(
+  components.convexCms.taxonomies.listTerms,
+  { taxonomyId: tagsTaxonomyId }
+);
 
 // Only root-level terms (for hierarchical)
-const rootCategories = await cms.taxonomyTerms.list(ctx, {
-  taxonomyId: categoriesTaxonomyId,
-  rootOnly: true,
-});
+const rootCategories = await ctx.runQuery(
+  components.convexCms.taxonomies.listTerms,
+  {
+    taxonomyId: categoriesTaxonomyId,
+    depth: 0,
+  }
+);
 
 // Children of a specific term
-const phoneSubcategories = await cms.taxonomyTerms.list(ctx, {
-  taxonomyId: categoriesTaxonomyId,
-  parentId: phonesCategoryId,
-});
-
-// Sort by popularity
-const popularTags = await cms.taxonomyTerms.list(ctx, {
-  taxonomyId: tagsTaxonomyId,
-  sortBy: "usageCount",
-  sortDirection: "desc",
-});
+const phoneSubcategories = await ctx.runQuery(
+  components.convexCms.taxonomies.listTerms,
+  {
+    taxonomyId: categoriesTaxonomyId,
+    parentId: phonesCategoryId,
+  }
+);
 ```
 
 ### Get Hierarchical Tree
@@ -139,9 +177,10 @@ const popularTags = await cms.taxonomyTerms.list(ctx, {
 For nested category pickers, get the full tree structure:
 
 ```typescript
-const tree = await cms.taxonomyTerms.getHierarchy(ctx, {
-  taxonomyId: categoriesTaxonomyId,
-});
+const tree = await ctx.runQuery(
+  components.convexCms.taxonomies.getTermsHierarchy,
+  { taxonomyId: categoriesTaxonomyId }
+);
 
 // Returns nested structure:
 // [
@@ -161,12 +200,14 @@ const tree = await cms.taxonomyTerms.getHierarchy(ctx, {
 For tag input autocomplete:
 
 ```typescript
-const suggestions = await cms.taxonomyTerms.suggest(ctx, {
-  taxonomyId: tagsTaxonomyId,
-  query: "java",
-  limit: 5,
-  excludeIds: alreadySelectedTagIds,
-});
+const suggestions = await ctx.runQuery(
+  components.convexCms.taxonomies.suggestTerms,
+  {
+    taxonomyId: tagsTaxonomyId,
+    query: "java",
+    limit: 5,
+  }
+);
 // Returns: [{ name: "JavaScript" }, { name: "Java" }, ...]
 ```
 
@@ -176,26 +217,33 @@ const suggestions = await cms.taxonomyTerms.suggest(ctx, {
 
 ```typescript
 // All terms assigned to an entry
-const entryTags = await cms.contentEntryTags.getByEntry(ctx, {
-  entryId: blogPostId,
-});
+const entryTags = await ctx.runQuery(
+  components.convexCms.taxonomies.getTermsByEntry,
+  { entryId: blogPostId }
+);
 
 // Terms from a specific field only
-const primaryTags = await cms.contentEntryTags.getByEntry(ctx, {
-  entryId: blogPostId,
-  fieldName: "tags",
-});
+const primaryTags = await ctx.runQuery(
+  components.convexCms.taxonomies.getTermsByEntry,
+  {
+    entryId: blogPostId,
+    fieldName: "tags",
+  }
+);
 ```
 
 ### Get Entries with a Term
 
 ```typescript
 // Find all entries tagged with "JavaScript"
-const jsEntries = await cms.contentEntryTags.getEntriesByTerm(ctx, {
-  termId: javascriptTagId,
-  status: "published",
-  paginationOpts: { numItems: 20 },
-});
+const jsEntries = await ctx.runQuery(
+  components.convexCms.taxonomies.getEntriesByTerm,
+  {
+    termId: javascriptTagId,
+    status: "published",
+    paginationOpts: { numItems: 20 },
+  }
+);
 ```
 
 ## Media Asset Taxonomies
@@ -204,20 +252,26 @@ Media assets can also be tagged:
 
 ```typescript
 // Add a term to a media asset
-await cms.mediaAssetTags.addTerm(ctx, {
-  mediaId: imageId,
-  termId: landscapeCategoryId,
-});
+await ctx.runMutation(
+  components.convexCms.taxonomyMutations.addTermToMedia,
+  {
+    mediaId: imageId,
+    termId: landscapeCategoryId,
+    createdBy: userId,
+  }
+);
 
 // Get terms for a media asset
-const mediaTags = await cms.mediaAssetTags.getByMedia(ctx, {
-  mediaId: imageId,
-});
+const mediaTags = await ctx.runQuery(
+  components.convexCms.taxonomies.getTermsByMedia,
+  { mediaId: imageId }
+);
 
 // Get media assets with a specific term
-const landscapeImages = await cms.mediaAssetTags.getMediaByTerm(ctx, {
-  termId: landscapeCategoryId,
-});
+const landscapeImages = await ctx.runQuery(
+  components.convexCms.taxonomies.getMediaByTerm,
+  { termId: landscapeCategoryId }
+);
 ```
 
 ## Using with Field Types
@@ -229,16 +283,18 @@ const blogPost = await cms.contentTypes.create(ctx, {
   name: "blog_post",
   displayName: "Blog Post",
   fields: [
-    { name: "title", type: "text", required: true },
-    { name: "content", type: "richText", required: true },
+    { name: "title", label: "Title", type: "text", required: true },
+    { name: "content", label: "Content", type: "richText", required: true },
 
     // Flat tags field
     {
       name: "tags",
+      label: "Tags",
       type: "tags",
+      required: false,
       options: {
-        taxonomyName: "blog_tags",
-        allowInlineCreation: true,  // Allow creating new tags on the fly
+        taxonomyId: blogTagsTaxonomyId,
+        allowCreate: true,  // Allow creating new tags on the fly
         maxTags: 10,
       },
     },
@@ -246,11 +302,12 @@ const blogPost = await cms.contentTypes.create(ctx, {
     // Hierarchical category field
     {
       name: "category",
+      label: "Category",
       type: "category",
       required: true,
       options: {
         taxonomyName: "product_categories",
-        multiple: false,
+        allowMultiple: false,
         depth: 2,  // Only show top 2 levels in picker
       },
     },
@@ -266,12 +323,15 @@ Each term tracks its usage count automatically. This is useful for:
 - Building tag clouds
 
 ```typescript
-const popularTags = await cms.taxonomyTerms.list(ctx, {
-  taxonomyId: tagsTaxonomyId,
-  sortBy: "usageCount",
-  sortDirection: "desc",
-  paginationOpts: { numItems: 10 },
-});
+const popularTags = await ctx.runQuery(
+  components.convexCms.taxonomies.listTerms,
+  {
+    taxonomyId: tagsTaxonomyId,
+    sortBy: "usageCount",
+    sortDirection: "desc",
+    limit: 10,
+  }
+);
 ```
 
 ## Admin API Functions

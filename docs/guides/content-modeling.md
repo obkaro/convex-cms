@@ -53,9 +53,12 @@ export const createBlogType = mutation({
       description: "Articles for the company blog",
       icon: "document-text",
 
+      createdBy: "user_123",
+
       fields: [
         {
           name: "title",
+          label: "Title",
           type: "text",
           required: true,
           searchable: true,
@@ -63,38 +66,50 @@ export const createBlogType = mutation({
         },
         {
           name: "slug",
+          label: "Slug",
           type: "text",
           required: true,
           description: "URL-friendly identifier",
         },
         {
           name: "content",
+          label: "Content",
           type: "richText",
           required: true,
           searchable: true,
         },
         {
           name: "excerpt",
+          label: "Excerpt",
           type: "text",
+          required: false,
           options: { maxLength: 500 },
         },
         {
           name: "featuredImage",
+          label: "Featured Image",
           type: "media",
-          options: { allowedTypes: ["image/*"] },
+          required: false,
+          options: { allowedMimeTypes: ["image/*"] },
         },
         {
           name: "author",
+          label: "Author",
           type: "reference",
-          options: { contentTypes: ["author"] },
+          required: false,
+          options: { allowedContentTypes: ["author"] },
         },
         {
           name: "publishedAt",
+          label: "Published At",
           type: "datetime",
+          required: false,
         },
         {
           name: "featured",
+          label: "Featured",
           type: "boolean",
+          required: false,
           defaultValue: false,
         },
       ],
@@ -115,10 +130,11 @@ Each field has the following properties:
 interface FieldDefinition {
   // Required
   name: string;        // Unique identifier within the content type
+  label: string;       // Human-readable label shown in the UI
   type: FieldType;     // One of the supported field types
+  required: boolean;   // Must have a value
 
   // Optional
-  required?: boolean;          // Must have a value (default: false)
   searchable?: boolean;        // Include in search index (default: false)
   localized?: boolean;         // Per-locale values (default: false)
   description?: string;        // Help text shown in editor
@@ -139,8 +155,8 @@ interface FieldDefinition {
 | `datetime` | Date with time | `string` |
 | `select` | Single choice | `string` |
 | `multiSelect` | Multiple choices | `string[]` |
-| `reference` | Link to other entries | `Id` or `Id[]` |
-| `media` | Link to media assets | `Id` or `Id[]` |
+| `reference` | Link to other entries | `string` or `string[]` |
+| `media` | Link to media assets | `string` or `string[]` |
 | `json` | Arbitrary JSON | `any` |
 | `tags` | Flat taxonomy tags | `string[]` |
 | `category` | Hierarchical category | `string` |
@@ -158,10 +174,11 @@ await cms.contentTypes.create(ctx, {
   name: "site_settings",
   displayName: "Site Settings",
   singleton: true,
+  createdBy: "user_123",
   fields: [
-    { name: "siteName", type: "text", required: true },
-    { name: "logo", type: "media" },
-    { name: "contactEmail", type: "text" },
+    { name: "siteName", label: "Site Name", type: "text", required: true },
+    { name: "logo", label: "Logo", type: "media", required: false },
+    { name: "contactEmail", label: "Contact Email", type: "text", required: false },
   ],
 });
 ```
@@ -209,11 +226,8 @@ export const createBlogPost = mutation({
     content: v.string(),
   },
   handler: async (ctx, args) => {
-    const types = await cms.contentTypes.list(ctx);
-    const blogType = types.items.find(t => t.name === "blog_post");
-
     const entry = await cms.contentEntries.create(ctx, {
-      contentTypeId: blogType._id,
+      contentTypeName: "blog_post",
       data: {
         title: args.title,
         content: args.content,
@@ -231,7 +245,7 @@ export const createBlogPost = mutation({
 
 ```typescript
 const entry = await cms.contentEntries.create(ctx, {
-  contentTypeId: blogType._id,
+  contentTypeName: "blog_post",
   slug: "my-custom-url-slug",
   data: { title: "My Post Title", content: "..." },
 });
@@ -241,7 +255,7 @@ const entry = await cms.contentEntries.create(ctx, {
 
 ```typescript
 const entry = await cms.contentEntries.create(ctx, {
-  contentTypeId: blogType._id,
+  contentTypeName: "blog_post",
   locale: "es",
   primaryEntryId: englishEntry._id,
   data: { title: "Título del artículo", content: "..." },
@@ -306,16 +320,18 @@ const entry = await cms.contentEntries.getBySlug(ctx, {
 
 // List with filters
 const result = await cms.contentEntries.list(ctx, {
-  contentTypeId: blogType._id,
+  contentTypeName: "blog_post",
   status: "published",
   locale: "en",
-  limit: 10,
+  paginationOpts: { numItems: 10, cursor: null },
 });
+// result = { page: [...], continueCursor: string, isDone: boolean }
 
 // Search
 const result = await cms.contentEntries.list(ctx, {
-  contentTypeId: blogType._id,
+  contentTypeName: "blog_post",
   search: "typescript react",
+  paginationOpts: { numItems: 25, cursor: null },
 });
 ```
 
@@ -418,9 +434,9 @@ Rollback creates a new version with the old content (preserves full history).
 Only mark fields as `searchable: true` that users will actually search:
 
 ```typescript
-{ name: "title", type: "text", searchable: true },      // Yes
-{ name: "content", type: "richText", searchable: true }, // Yes
-{ name: "slug", type: "text", searchable: false },       // No
+{ name: "title", label: "Title", type: "text", required: true, searchable: true },      // Yes
+{ name: "content", label: "Content", type: "richText", required: true, searchable: true }, // Yes
+{ name: "slug", label: "Slug", type: "text", required: true, searchable: false },       // No
 ```
 
 ### Localization
@@ -428,8 +444,8 @@ Only mark fields as `searchable: true` that users will actually search:
 Enable localization only for fields that vary by locale:
 
 ```typescript
-{ name: "title", type: "text", localized: true },       // Translatable
-{ name: "price", type: "number", localized: false },    // Same everywhere
+{ name: "title", label: "Title", type: "text", required: true, localized: true },       // Translatable
+{ name: "price", label: "Price", type: "number", required: true, localized: false },    // Same everywhere
 ```
 
 ---

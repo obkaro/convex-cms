@@ -44,7 +44,7 @@ This document explains the architecture of Convex CMS and how it integrates with
 │  │  └──────────┘  └──────────┘  └──────────┘  └──────────┘  │  │
 │  │  ┌──────────────────────────────────────────────────────┐ │  │
 │  │  │                  CMS Database Tables                  │ │  │
-│  │  │  (13 isolated tables - separate from your app)       │ │  │
+│  │  │  (14 isolated tables, separate from your app)        │ │  │
 │  │  └──────────────────────────────────────────────────────┘ │  │
 │  └───────────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────────┘
@@ -56,7 +56,7 @@ Convex CMS is built as a **Convex Component**, which provides:
 
 ### Isolation
 
-- **Separate Database**: The CMS has its own 13 tables, completely isolated from your app's tables
+- **Separate Database**: The CMS has its own 14 tables, completely isolated from your app's tables
 - **No Direct Access**: The component cannot read your app's tables, and you cannot directly query CMS tables
 - **Function Boundary**: All communication happens through defined component functions
 
@@ -125,14 +125,14 @@ The client wrapper (`createCmsClient`) provides:
 ```typescript
 // Raw component call (untyped)
 await ctx.runMutation(components.convexCms.contentEntryMutations.create, {
-  contentTypeId,
+  contentTypeName,
   data,
 });
 
 // Client wrapper (typed)
 await cms.contentEntries.create(ctx, {
-  contentTypeId,  // Autocomplete for Id<"content_types">
-  data,           // Type-checked against content type
+  contentTypeName,  // Autocomplete for content type names
+  data,             // Type-checked against content type
 });
 ```
 
@@ -141,7 +141,7 @@ await cms.contentEntries.create(ctx, {
 ```typescript
 const cms = createCmsClient(components.convexCms, {
   defaultLocale: "en",
-  getUserRole: async ({ userId }) => lookupRole(userId),
+  getUserRole: async (ctx, { userId }) => lookupRole(ctx, userId),
 });
 
 // Every call automatically includes configuration
@@ -155,7 +155,7 @@ await cms.contentEntries.create(ctx, { ... });
 // Namespaced methods for discoverability
 cms.contentTypes.create()
 cms.contentEntries.publish()
-cms.mediaAssets.upload()
+cms.mediaAssets.generateUploadUrl()
 cms.versions.rollback()
 ```
 

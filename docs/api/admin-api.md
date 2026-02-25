@@ -1,8 +1,8 @@
 # Admin API Reference
 
-The Admin API provides **60+ backend functions** across **11 domains** for the CMS Admin UI. Use `defineAdminAPI` to create these functions in your Convex app.
+The Admin API provides **100+ backend functions** across **15 domains** for the CMS Admin UI. Use `defineAdminAPI` to create these functions in your Convex app.
 
-**Domains:** Dashboard (1) • Settings (3) • Content Types (7) • Entries (15) • Bulk Ops (5) • Trash (6) • Content Lock (6) • Versions (4) • Media Assets (11) • Media Folders (8) • Media Variants (12) • Taxonomies (6) • Terms (9) • Entry-Term (6) • Media-Term (6)
+**Domains:** Dashboard (1) • Settings (3) • Content Types (7) • Entries (14) • Bulk Ops (5) • Trash (6) • Content Lock (6) • Versions (4) • Media Assets (11) • Media Folders (8) • Media Variants (12) • Taxonomies (6) • Terms (9) • Entry-Term (6) • Media-Term (6)
 
 ## Overview
 
@@ -79,18 +79,24 @@ The `operation` parameter is a discriminated union with the operation type and r
 
 ```typescript
 type AdminOperation =
+  // Dashboard
+  | { type: "getDashboardStats" }
+  // Settings
+  | { type: "getSettings" }
+  | { type: "updateSettings" }
+  | { type: "resetSettings" }
   // Content Types
   | { type: "listContentTypes" }
-  | { type: "getContentType"; id: string }
+  | { type: "getContentType"; id?: string; name?: string }
   | { type: "createContentType" }
   | { type: "updateContentType"; id: string }
   | { type: "deleteContentType"; id: string }
-  | { type: "checkSchemaDrift" }
   | { type: "syncContentTypes" }
+  | { type: "checkSchemaDrift" }
   // Entries
-  | { type: "listEntries"; contentTypeId: string }
+  | { type: "listEntries"; contentTypeName?: string }
   | { type: "getEntry"; id: string }
-  | { type: "createEntry"; contentTypeId: string }
+  | { type: "createEntry"; contentTypeName: string }
   | { type: "updateEntry"; id: string }
   | { type: "publishEntry"; id: string }
   | { type: "unpublishEntry"; id: string }
@@ -99,6 +105,34 @@ type AdminOperation =
   | { type: "scheduleEntry"; id: string }
   | { type: "cancelScheduledEntry"; id: string }
   | { type: "getScheduledEntries" }
+  | { type: "restoreEntry"; id: string }
+  | { type: "getEntryBySlug"; contentTypeName: string; slug: string }
+  | { type: "getEntryBySlugAndTypeName"; contentTypeName: string; slug: string }
+  // Bulk Operations
+  | { type: "bulkPublish" }
+  | { type: "bulkUnpublish" }
+  | { type: "bulkDelete" }
+  | { type: "bulkUpdate" }
+  | { type: "bulkRestore" }
+  // Trash
+  | { type: "getTrashConfig" }
+  | { type: "listTrash" }
+  | { type: "getTrashStats" }
+  | { type: "updateTrashConfig" }
+  | { type: "emptyTrash" }
+  | { type: "runTrashCleanup" }
+  // Content Lock
+  | { type: "checkContentLock"; id: string }
+  | { type: "listLockedContent" }
+  | { type: "acquireContentLock"; id: string }
+  | { type: "releaseContentLock"; id: string }
+  | { type: "renewContentLock"; id: string }
+  | { type: "forceReleaseContentLock"; id: string }
+  // Versions
+  | { type: "getVersionHistory"; entryId: string }
+  | { type: "getVersion"; entryId: string }
+  | { type: "compareVersions"; entryId: string }
+  | { type: "rollbackVersion"; entryId: string }
   // Media Assets
   | { type: "listMediaAssets" }
   | { type: "getMediaAsset"; id: string }
@@ -106,7 +140,10 @@ type AdminOperation =
   | { type: "updateMediaAsset"; id: string }
   | { type: "deleteMediaAsset"; id: string }
   | { type: "restoreMediaAsset"; id: string }
+  | { type: "permanentDeleteMediaAsset"; id: string }
+  | { type: "bulkPermanentDeleteMediaAssets" }
   | { type: "moveMediaAssets" }
+  | { type: "getMediaTrashCount" }
   // Media Folders
   | { type: "listMediaFolders" }
   | { type: "getMediaFolder"; id: string }
@@ -116,10 +153,52 @@ type AdminOperation =
   | { type: "moveMediaFolder"; id: string }
   | { type: "deleteMediaFolder"; id: string }
   | { type: "restoreMediaFolder"; id: string }
+  // Media Variants
+  | { type: "listMediaVariants"; assetId: string }
+  | { type: "getMediaVariant"; id: string }
+  | { type: "getBestMediaVariant"; assetId: string }
+  | { type: "getMediaResponsiveSrcset"; assetId: string }
+  | { type: "getMediaVariantPresets" }
+  | { type: "getMediaAssetWithVariants"; assetId: string }
+  | { type: "createMediaVariant" }
+  | { type: "requestMediaVariantGeneration" }
+  | { type: "deleteMediaVariant"; id: string }
+  | { type: "deleteMediaAssetVariants"; assetId: string }
+  | { type: "generateMediaVariantsFromPresets" }
+  | { type: "restoreMediaVariant"; id: string }
   // Upload
   | { type: "generateUploadUrl" }
-  // Stats
-  | { type: "getDashboardStats" };
+  // Taxonomies
+  | { type: "getTaxonomy"; id?: string; name?: string }
+  | { type: "listTaxonomies" }
+  | { type: "createTaxonomy" }
+  | { type: "updateTaxonomy"; id: string }
+  | { type: "deleteTaxonomy"; id: string }
+  | { type: "restoreTaxonomy"; id: string }
+  // Terms
+  | { type: "getTerm"; id?: string }
+  | { type: "listTerms"; taxonomyId: string }
+  | { type: "getTermsHierarchy"; taxonomyId: string }
+  | { type: "suggestTerms"; taxonomyId: string }
+  | { type: "countTerms"; taxonomyId: string }
+  | { type: "createTerm"; taxonomyId: string }
+  | { type: "updateTerm"; id: string }
+  | { type: "deleteTerm"; id: string }
+  | { type: "restoreTerm"; id: string }
+  // Entry-Term Relations
+  | { type: "getTermsByEntry"; entryId: string }
+  | { type: "getEntriesByTerm"; termId: string }
+  | { type: "setEntryTerms"; entryId: string }
+  | { type: "addTermToEntry"; entryId: string }
+  | { type: "removeTermFromEntry"; entryId: string }
+  | { type: "createTermAndAddToEntry"; entryId: string }
+  // Media-Term Relations
+  | { type: "getTermsByMedia"; mediaId: string }
+  | { type: "getMediaByTerm"; termId: string }
+  | { type: "setMediaTerms"; mediaId: string }
+  | { type: "addTermToMedia"; mediaId: string }
+  | { type: "removeTermFromMedia"; mediaId: string }
+  | { type: "createTermAndAddToMedia"; mediaId: string };
 ```
 
 ### Fine-Grained Access Control

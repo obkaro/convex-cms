@@ -26,10 +26,10 @@ pnpm add convex-cms
 ```typescript
 // convex/convex.config.ts
 import { defineApp } from "convex/server";
-import convexCms from "convex-cms/convex.config";
+import cms from "convex-cms/convex.config";
 
 const app = defineApp();
-app.use(convexCms);
+app.use(cms);
 export default app;
 ```
 
@@ -112,41 +112,48 @@ This uses mock authentication with a demo admin user.
 
 ## Embed Mode
 
-Embed the Admin UI in your React application for production use.
+Embed the Admin UI in your React application for production use. The `CmsAdmin` component must be rendered inside a `ConvexProvider`.
 
 ```tsx
-import { CmsAdmin } from "convex-cms/admin/embed";
+import { ConvexProvider, ConvexReactClient } from "convex/react";
+import { CmsAdmin } from "convex-cms/admin";
 import { api } from "./convex/_generated/api";
+
+const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL);
 
 function AdminPage() {
   return (
-    <CmsAdmin
-      api={api.admin}
-      convexUrl={import.meta.env.VITE_CONVEX_URL}
-      auth={{
-        getUser: () => ({
-          id: currentUser.id,
-          name: currentUser.name,
-          email: currentUser.email,
-        }),
-        getUserRole: (userId) => getUserCmsRole(userId),
-        onLogout: () => signOut(),
-      }}
-    />
+    <ConvexProvider client={convex}>
+      <CmsAdmin
+        api={api.admin}
+        auth={{
+          getUser: () => ({
+            id: currentUser.id,
+            name: currentUser.name,
+            email: currentUser.email,
+          }),
+          getUserRole: (userId) => getUserCmsRole(userId),
+          onLogout: () => signOut(),
+        }}
+      />
+    </ConvexProvider>
   );
 }
 ```
 
 ### CmsAdmin Props
 
+**Important:** `CmsAdmin` must be rendered inside a `ConvexProvider`. It uses `useConvex()` internally to connect to your Convex deployment.
+
 | Prop | Type | Required | Description |
 |------|------|----------|-------------|
 | `api` | `CmsAdminApi` | Yes | Your `api.admin` from generated types |
-| `convexUrl` | `string` | Yes | Your Convex deployment URL |
 | `auth` | `CmsAdminAuthConfig` | Yes | Authentication configuration |
 | `config` | `Partial<AdminConfig>` | No | UI customization |
 | `basePath` | `string` | No | Base URL path (default: `/admin`) |
 | `className` | `string` | No | CSS class for the container |
+| `themeMode` | `"isolated" \| "inherit"` | No | CSS variable scoping (default: `isolated`) |
+| `darkModeControl` | `"independent" \| "follow-parent"` | No | Dark mode behavior (default: `independent`) |
 | `initialRoute` | `EmbedRoute` | No | Starting route (default: `dashboard`) |
 | `onNavigate` | `function` | No | Callback when navigation occurs |
 
@@ -180,7 +187,7 @@ interface CmsAdminUser {
 
 ```tsx
 import { useUser, useClerk } from "@clerk/clerk-react";
-import { CmsAdmin } from "convex-cms/admin/embed";
+import { CmsAdmin } from "convex-cms/admin";
 import { api } from "./convex/_generated/api";
 
 function AdminPage() {
@@ -193,7 +200,6 @@ function AdminPage() {
   return (
     <CmsAdmin
       api={api.admin}
-      convexUrl={import.meta.env.VITE_CONVEX_URL}
       auth={{
         getUser: () => ({
           id: user.id,
@@ -217,7 +223,7 @@ function AdminPage() {
 ```tsx
 import { useConvexAuth } from "convex/react";
 import { useQuery } from "convex/react";
-import { CmsAdmin } from "convex-cms/admin/embed";
+import { CmsAdmin } from "convex-cms/admin";
 import { api } from "./convex/_generated/api";
 
 function AdminPage() {
@@ -230,7 +236,6 @@ function AdminPage() {
   return (
     <CmsAdmin
       api={api.admin}
-      convexUrl={import.meta.env.VITE_CONVEX_URL}
       auth={{
         getUser: () => user ? {
           id: user._id,
@@ -251,7 +256,7 @@ function AdminPage() {
 
 ```tsx
 import { useAuth } from "./your-auth-provider";
-import { CmsAdmin } from "convex-cms/admin/embed";
+import { CmsAdmin } from "convex-cms/admin";
 import { api } from "./convex/_generated/api";
 
 function AdminPage() {
@@ -263,7 +268,6 @@ function AdminPage() {
   return (
     <CmsAdmin
       api={api.admin}
-      convexUrl={import.meta.env.VITE_CONVEX_URL}
       auth={{
         getUser: () => ({
           id: user.id,
@@ -298,7 +302,7 @@ export const {
   listContentTypes,
   getEntry,
   // ... all exports
-} = defineAdminAPI(components.convexCms, {
+} = defineAdminAPI(components.cms, {
   auth: async (ctx, operation) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
@@ -328,7 +332,7 @@ See [Admin API Reference](../api/admin-api.md) for all operation types.
 Customize the Admin UI appearance and behavior:
 
 ```tsx
-import { CmsAdmin, defineAdminConfig } from "convex-cms/admin/embed";
+import { CmsAdmin, defineAdminConfig } from "convex-cms/admin";
 
 const config = defineAdminConfig({
   branding: {
@@ -371,7 +375,6 @@ const config = defineAdminConfig({
 
 <CmsAdmin
   api={api.admin}
-  convexUrl={import.meta.env.VITE_CONVEX_URL}
   auth={authConfig}
   config={config}
 />
@@ -452,9 +455,10 @@ And that your `convex/admin.ts` exports all required functions. See [Admin API R
 
 ### Auth not working in embed mode
 
-1. Check that `getUser` returns a valid user object with `id`
-2. Check that `getUserRole` returns one of: `admin`, `editor`, `author`, `viewer`
-3. Check browser console for errors
+1. Verify `CmsAdmin` is rendered inside a `ConvexProvider`
+2. Check that `getUser` returns a valid user object with `id`
+3. Check that `getUserRole` returns one of: `admin`, `editor`, `author`, `viewer`
+4. Check browser console for errors
 
 ### Media uploads failing
 

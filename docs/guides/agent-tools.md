@@ -143,7 +143,7 @@ const blogType = await getContentType.handler(ctx, { name: "blog_post" });
 
 // 2. Create a new entry
 const entry = await createContentEntry.handler(ctx, {
-  contentTypeId: blogType._id,
+  contentTypeName: "blog_post",
   data: {
     title: "AI-Generated Article",
     slug: "ai-generated-article",

@@ -29,10 +29,9 @@ All field types share these properties:
 ```typescript
 interface FieldDefinition {
   name: string;           // Unique identifier (camelCase recommended)
+  label: string;          // Human-readable label
   type: FieldType;        // One of the types below
-
-  // Optional properties
-  required?: boolean;     // Must have value (default: false)
+  required: boolean;      // Must have value
   searchable?: boolean;   // Include in search index (default: false)
   localized?: boolean;    // Per-locale values (default: false)
   description?: string;   // Help text for editors
@@ -66,6 +65,7 @@ interface TextOptions {
 // Simple text
 {
   name: "title",
+  label: "Title",
   type: "text",
   required: true,
 }
@@ -73,6 +73,7 @@ interface TextOptions {
 // With validation
 {
   name: "email",
+  label: "Email Address",
   type: "text",
   required: true,
   options: {
@@ -84,7 +85,9 @@ interface TextOptions {
 // Multiline
 {
   name: "excerpt",
+  label: "Excerpt",
   type: "text",
+  required: false,
   options: {
     multiline: true,
     maxLength: 500,
@@ -95,7 +98,9 @@ interface TextOptions {
 // URL field
 {
   name: "website",
+  label: "Website",
   type: "text",
+  required: false,
   options: {
     pattern: "^https?://.*",
     patternMessage: "Must be a valid URL starting with http:// or https://",
@@ -113,20 +118,12 @@ HTML-formatted rich text with WYSIWYG editing.
 
 ```typescript
 interface RichTextOptions {
+  allowedBlocks?: string[];  // Restrict block types
+  allowedMarks?: string[];   // Restrict inline formatting
   maxLength?: number;        // Max characters (excluding HTML tags)
-  allowedFormats?: string[]; // Restrict formatting options
   placeholder?: string;      // Placeholder text
 }
 ```
-
-### Allowed Formats
-
-- `bold`, `italic`, `underline`, `strikethrough`
-- `heading1`, `heading2`, `heading3`
-- `orderedList`, `bulletList`
-- `link`, `image`
-- `blockquote`, `codeBlock`
-- `table`
 
 ### Examples
 
@@ -134,6 +131,7 @@ interface RichTextOptions {
 // Full rich text
 {
   name: "content",
+  label: "Content",
   type: "richText",
   required: true,
 }
@@ -141,9 +139,12 @@ interface RichTextOptions {
 // Limited formatting
 {
   name: "bio",
+  label: "Biography",
   type: "richText",
+  required: false,
   options: {
-    allowedFormats: ["bold", "italic", "link"],
+    allowedMarks: ["bold", "italic"],
+    allowedBlocks: ["paragraph", "link"],
     maxLength: 2000,
   },
 }
@@ -151,15 +152,17 @@ interface RichTextOptions {
 // Blog content
 {
   name: "body",
+  label: "Body",
   type: "richText",
+  required: true,
   searchable: true,
   options: {
-    allowedFormats: [
-      "bold", "italic", "underline",
-      "heading1", "heading2", "heading3",
+    allowedBlocks: [
+      "paragraph", "heading1", "heading2", "heading3",
       "orderedList", "bulletList",
-      "link", "image", "blockquote", "codeBlock",
+      "blockquote", "codeBlock", "image",
     ],
+    allowedMarks: ["bold", "italic", "underline", "link"],
   },
 }
 ```
@@ -189,7 +192,9 @@ interface NumberOptions {
 // Integer
 {
   name: "quantity",
+  label: "Quantity",
   type: "number",
+  required: false,
   options: {
     min: 0,
     max: 999,
@@ -200,6 +205,7 @@ interface NumberOptions {
 // Currency
 {
   name: "price",
+  label: "Price",
   type: "number",
   required: true,
   options: {
@@ -213,7 +219,9 @@ interface NumberOptions {
 // Percentage
 {
   name: "discount",
+  label: "Discount",
   type: "number",
+  required: false,
   options: {
     min: 0,
     max: 100,
@@ -224,7 +232,9 @@ interface NumberOptions {
 // Rating
 {
   name: "rating",
+  label: "Rating",
   type: "number",
+  required: false,
   options: {
     min: 1,
     max: 5,
@@ -254,14 +264,18 @@ interface BooleanOptions {
 // Simple toggle
 {
   name: "featured",
+  label: "Featured",
   type: "boolean",
+  required: false,
   defaultValue: false,
 }
 
 // With labels
 {
   name: "isActive",
+  label: "Active Status",
   type: "boolean",
+  required: false,
   defaultValue: true,
   options: {
     trueLabel: "Active",
@@ -272,8 +286,9 @@ interface BooleanOptions {
 // Consent flag
 {
   name: "acceptedTerms",
+  label: "Accepted Terms",
   type: "boolean",
-  required: true,  // Must be explicitly set
+  required: true,
 }
 ```
 
@@ -287,9 +302,9 @@ Date without time component.
 
 ```typescript
 interface DateOptions {
-  minDate?: string;       // Earliest allowed date (ISO format)
-  maxDate?: string;       // Latest allowed date (ISO format)
-  format?: string;        // Display format (default: "yyyy-MM-dd")
+  min?: number;           // Earliest allowed (timestamp ms)
+  max?: number;           // Latest allowed (timestamp ms)
+  format?: string;        // Display format
 }
 ```
 
@@ -299,26 +314,31 @@ interface DateOptions {
 // Simple date
 {
   name: "birthDate",
+  label: "Birth Date",
   type: "date",
+  required: false,
 }
 
 // With constraints
 {
   name: "eventDate",
+  label: "Event Date",
   type: "date",
   required: true,
   options: {
-    minDate: "2026-01-01",
-    maxDate: "2025-12-31",
+    min: 1704067200000,  // 2024-01-01
+    max: 1767139200000,  // 2025-12-31
   },
 }
 
 // Past dates only
 {
   name: "foundedDate",
+  label: "Founded Date",
   type: "date",
+  required: false,
   options: {
-    maxDate: new Date().toISOString().split("T")[0],  // Today
+    max: Date.now(),
   },
 }
 ```
@@ -333,8 +353,8 @@ Date with time component.
 
 ```typescript
 interface DatetimeOptions {
-  minDate?: string;       // Earliest allowed (ISO format)
-  maxDate?: string;       // Latest allowed (ISO format)
+  min?: number;           // Earliest allowed (timestamp ms)
+  max?: number;           // Latest allowed (timestamp ms)
   timezone?: string;      // IANA timezone (e.g., "America/New_York")
   format?: string;        // Display format
 }
@@ -346,6 +366,7 @@ interface DatetimeOptions {
 // Event time
 {
   name: "eventTime",
+  label: "Event Time",
   type: "datetime",
   required: true,
 }
@@ -353,7 +374,9 @@ interface DatetimeOptions {
 // With timezone
 {
   name: "meetingTime",
+  label: "Meeting Time",
   type: "datetime",
+  required: false,
   options: {
     timezone: "America/New_York",
   },
@@ -362,9 +385,11 @@ interface DatetimeOptions {
 // Future only
 {
   name: "scheduledPublishAt",
+  label: "Scheduled Publish",
   type: "datetime",
+  required: false,
   options: {
-    minDate: new Date().toISOString(),
+    min: Date.now(),
   },
 }
 ```
@@ -379,11 +404,10 @@ Single selection from predefined options.
 
 ```typescript
 interface SelectOptions {
-  options: Array<{
+  options?: Array<{
     value: string;        // Stored value
     label: string;        // Display label
   }>;
-  defaultValue?: string;  // Default selected value
 }
 ```
 
@@ -393,6 +417,7 @@ interface SelectOptions {
 // Status field
 {
   name: "status",
+  label: "Status",
   type: "select",
   required: true,
   defaultValue: "draft",
@@ -409,7 +434,9 @@ interface SelectOptions {
 // Priority
 {
   name: "priority",
+  label: "Priority",
   type: "select",
+  required: false,
   options: {
     options: [
       { value: "low", label: "Low" },
@@ -417,14 +444,15 @@ interface SelectOptions {
       { value: "high", label: "High" },
       { value: "critical", label: "Critical" },
     ],
-    defaultValue: "medium",
   },
 }
 
 // Category (non-hierarchical)
 {
   name: "department",
+  label: "Department",
   type: "select",
+  required: false,
   options: {
     options: [
       { value: "engineering", label: "Engineering" },
@@ -446,7 +474,7 @@ Multiple selections from predefined options.
 
 ```typescript
 interface MultiSelectOptions {
-  options: Array<{
+  options?: Array<{
     value: string;
     label: string;
   }>;
@@ -461,7 +489,9 @@ interface MultiSelectOptions {
 // Features list
 {
   name: "features",
+  label: "Features",
   type: "multiSelect",
+  required: false,
   options: {
     options: [
       { value: "wifi", label: "WiFi" },
@@ -476,6 +506,7 @@ interface MultiSelectOptions {
 // With constraints
 {
   name: "skills",
+  label: "Skills",
   type: "multiSelect",
   required: true,
   options: {
@@ -502,9 +533,10 @@ Link to other content entries.
 
 ```typescript
 interface ReferenceOptions {
-  contentTypes?: string[];  // Restrict to specific types (names)
-  multiple?: boolean;       // Allow multiple references
-  maxItems?: number;        // Max references (if multiple)
+  allowedContentTypes?: string[];  // Restrict to specific types (names)
+  multiple?: boolean;              // Allow multiple references
+  minItems?: number;               // Min references (if multiple)
+  maxItems?: number;               // Max references (if multiple)
 }
 ```
 
@@ -514,19 +546,22 @@ interface ReferenceOptions {
 // Single reference
 {
   name: "author",
+  label: "Author",
   type: "reference",
   required: true,
   options: {
-    contentTypes: ["author"],
+    allowedContentTypes: ["author"],
   },
 }
 
 // Multiple references
 {
   name: "relatedPosts",
+  label: "Related Posts",
   type: "reference",
+  required: false,
   options: {
-    contentTypes: ["blog_post"],
+    allowedContentTypes: ["blog_post"],
     multiple: true,
     maxItems: 5,
   },
@@ -535,7 +570,9 @@ interface ReferenceOptions {
 // Any content type
 {
   name: "linkedContent",
+  label: "Linked Content",
   type: "reference",
+  required: false,
   options: {
     multiple: true,
     maxItems: 10,
@@ -545,9 +582,11 @@ interface ReferenceOptions {
 // Self-referencing (e.g., parent page)
 {
   name: "parentPage",
+  label: "Parent Page",
   type: "reference",
+  required: false,
   options: {
-    contentTypes: ["page"],  // Same type as current
+    allowedContentTypes: ["page"],
   },
 }
 ```
@@ -562,10 +601,11 @@ Link to media assets (images, videos, documents).
 
 ```typescript
 interface MediaOptions {
-  allowedTypes?: string[];  // MIME type patterns (e.g., "image/*")
-  maxSize?: number;         // Max file size in bytes
-  multiple?: boolean;       // Allow multiple assets
-  maxItems?: number;        // Max assets (if multiple)
+  mediaType?: "image" | "video" | "audio" | "document" | "other";
+  allowedMimeTypes?: string[];   // MIME type patterns (e.g., "image/*")
+  maxFileSize?: number;          // Max file size in bytes
+  multiple?: boolean;            // Allow multiple assets
+  maxItems?: number;             // Max assets (if multiple)
 }
 ```
 
@@ -575,18 +615,22 @@ interface MediaOptions {
 // Single image
 {
   name: "featuredImage",
+  label: "Featured Image",
   type: "media",
+  required: false,
   options: {
-    allowedTypes: ["image/*"],
+    mediaType: "image",
   },
 }
 
 // Image gallery
 {
   name: "gallery",
+  label: "Gallery",
   type: "media",
+  required: false,
   options: {
-    allowedTypes: ["image/*"],
+    mediaType: "image",
     multiple: true,
     maxItems: 20,
   },
@@ -595,33 +639,40 @@ interface MediaOptions {
 // Document attachment
 {
   name: "resume",
+  label: "Resume",
   type: "media",
+  required: false,
   options: {
-    allowedTypes: [
+    mediaType: "document",
+    allowedMimeTypes: [
       "application/pdf",
       "application/msword",
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     ],
-    maxSize: 10 * 1024 * 1024,  // 10MB
+    maxFileSize: 10 * 1024 * 1024,  // 10MB
   },
 }
 
 // Video
 {
   name: "video",
+  label: "Video",
   type: "media",
+  required: false,
   options: {
-    allowedTypes: ["video/*"],
-    maxSize: 100 * 1024 * 1024,  // 100MB
+    mediaType: "video",
+    maxFileSize: 100 * 1024 * 1024,  // 100MB
   },
 }
 
 // Any media
 {
   name: "attachment",
+  label: "Attachment",
   type: "media",
+  required: false,
   options: {
-    maxSize: 25 * 1024 * 1024,
+    maxFileSize: 25 * 1024 * 1024,
   },
 }
 ```
@@ -637,7 +688,6 @@ Arbitrary JSON data structures.
 ```typescript
 interface JsonOptions {
   schema?: object;          // JSON Schema for validation
-  defaultValue?: object;    // Default JSON structure
 }
 ```
 
@@ -647,13 +697,17 @@ interface JsonOptions {
 // Unstructured JSON
 {
   name: "metadata",
+  label: "Metadata",
   type: "json",
+  required: false,
 }
 
 // With schema
 {
   name: "seoSettings",
+  label: "SEO Settings",
   type: "json",
+  required: false,
   options: {
     schema: {
       type: "object",
@@ -665,19 +719,15 @@ interface JsonOptions {
       },
       required: ["title"],
     },
-    defaultValue: {
-      title: "",
-      description: "",
-      keywords: [],
-      noIndex: false,
-    },
   },
 }
 
 // Flexible data
 {
   name: "customFields",
+  label: "Custom Fields",
   type: "json",
+  required: false,
   options: {
     schema: {
       type: "object",
@@ -697,9 +747,10 @@ Tag field linked to a taxonomy (flat structure).
 
 ```typescript
 interface TagsOptions {
-  taxonomyName: string;       // Name of the taxonomy
-  allowInlineCreation?: boolean;  // Create new tags on the fly
-  maxTags?: number;           // Maximum number of tags
+  taxonomyId?: string;          // ID of the taxonomy
+  allowCreate?: boolean;        // Allow creating new tags on the fly
+  maxTags?: number;             // Maximum number of tags
+  minTags?: number;             // Minimum number of tags
 }
 ```
 
@@ -709,10 +760,12 @@ interface TagsOptions {
 // Blog tags
 {
   name: "tags",
+  label: "Tags",
   type: "tags",
+  required: false,
   options: {
-    taxonomyName: "blog_tags",
-    allowInlineCreation: true,
+    taxonomyId: "your_taxonomy_id",
+    allowCreate: true,
     maxTags: 10,
   },
 }
@@ -720,10 +773,12 @@ interface TagsOptions {
 // Predefined tags only
 {
   name: "topics",
+  label: "Topics",
   type: "tags",
+  required: false,
   options: {
-    taxonomyName: "topics",
-    allowInlineCreation: false,
+    taxonomyId: "your_taxonomy_id",
+    allowCreate: false,
   },
 }
 ```
@@ -738,10 +793,10 @@ Hierarchical category field linked to a taxonomy.
 
 ```typescript
 interface CategoryOptions {
-  taxonomyName: string;       // Name of the hierarchical taxonomy
-  multiple?: boolean;         // Allow multiple categories
-  maxSelections?: number;     // Max categories (if multiple)
-  depth?: number;             // Max depth to show in picker
+  taxonomyName?: string;        // Name of the hierarchical taxonomy
+  allowMultiple?: boolean;      // Allow multiple categories
+  maxSelections?: number;       // Max categories (if allowMultiple)
+  depth?: number;               // Max depth to show in picker
 }
 ```
 
@@ -751,6 +806,7 @@ interface CategoryOptions {
 // Single category
 {
   name: "category",
+  label: "Category",
   type: "category",
   required: true,
   options: {
@@ -761,10 +817,12 @@ interface CategoryOptions {
 // Multiple categories
 {
   name: "categories",
+  label: "Categories",
   type: "category",
+  required: false,
   options: {
     taxonomyName: "article_categories",
-    multiple: true,
+    allowMultiple: true,
     maxSelections: 3,
   },
 }
@@ -772,10 +830,12 @@ interface CategoryOptions {
 // Limited depth
 {
   name: "primaryCategory",
+  label: "Primary Category",
   type: "category",
+  required: false,
   options: {
     taxonomyName: "store_categories",
-    depth: 2,  // Only show top 2 levels
+    depth: 2,
   },
 }
 ```
@@ -794,8 +854,8 @@ Each field type has automatic validation:
 | richText | maxLength (text content) |
 | number | min, max, step |
 | boolean | must be true/false |
-| date | valid date, minDate, maxDate |
-| datetime | valid datetime, minDate, maxDate |
+| date | valid date, min, max |
+| datetime | valid datetime, min, max |
 | select | value must be in options |
 | multiSelect | values must be in options, min/max selections |
 | reference | must be valid entry ID(s) |
@@ -806,22 +866,7 @@ Each field type has automatic validation:
 
 ### Custom Validation
 
-For complex validation, use the `validate` hook:
-
-```typescript
-const cms = createCmsClient(components.convexCms, {
-  hooks: {
-    beforeCreate: async (ctx, { contentType, data }) => {
-      // Custom validation
-      if (contentType.name === "product") {
-        if (data.salePrice && data.salePrice >= data.price) {
-          throw new Error("Sale price must be less than regular price");
-        }
-      }
-    },
-  },
-});
-```
+For custom validation logic, use `authorizationHooks.operationHooks` when configuring the CMS client. Operation hooks run before mutations and can reject invalid data by throwing errors.
 
 ---
 
@@ -831,14 +876,14 @@ const cms = createCmsClient(components.convexCms, {
 
 ```typescript
 // Good: camelCase, descriptive
-{ name: "publishedAt", type: "datetime" }
-{ name: "featuredImage", type: "media" }
-{ name: "relatedPosts", type: "reference" }
+{ name: "publishedAt", label: "Published At", type: "datetime", required: false }
+{ name: "featuredImage", label: "Featured Image", type: "media", required: false }
+{ name: "relatedPosts", label: "Related Posts", type: "reference", required: false }
 
 // Avoid: inconsistent casing, abbreviations
-{ name: "pub_date", type: "datetime" }
-{ name: "img", type: "media" }
-{ name: "related", type: "reference" }
+{ name: "pub_date", label: "Pub Date", type: "datetime", required: false }
+{ name: "img", label: "Image", type: "media", required: false }
+{ name: "related", label: "Related", type: "reference", required: false }
 ```
 
 ### Descriptions
@@ -848,7 +893,9 @@ Add descriptions for complex fields:
 ```typescript
 {
   name: "metaDescription",
+  label: "Meta Description",
   type: "text",
+  required: false,
   description: "SEO description shown in search results. Keep under 160 characters.",
   options: { maxLength: 160 },
 }
@@ -861,8 +908,10 @@ Provide sensible defaults:
 ```typescript
 {
   name: "status",
+  label: "Status",
   type: "select",
-  defaultValue: "draft",  // New entries start as drafts
+  required: true,
+  defaultValue: "draft",
   options: { ... },
 }
 ```
@@ -873,12 +922,12 @@ Only mark fields that users will search:
 
 ```typescript
 // Searchable: user-facing content
-{ name: "title", type: "text", searchable: true }
-{ name: "content", type: "richText", searchable: true }
+{ name: "title", label: "Title", type: "text", required: true, searchable: true }
+{ name: "content", label: "Content", type: "richText", required: true, searchable: true }
 
 // Not searchable: internal/metadata
-{ name: "slug", type: "text", searchable: false }
-{ name: "sortOrder", type: "number", searchable: false }
+{ name: "slug", label: "Slug", type: "text", required: true, searchable: false }
+{ name: "sortOrder", label: "Sort Order", type: "number", required: false, searchable: false }
 ```
 
 ---
