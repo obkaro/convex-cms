@@ -175,7 +175,7 @@ This tells Tailwind to scan the admin's compiled JavaScript for utility classes.
 | Reference | Description |
 |-----------|-------------|
 | [Client API](./docs/api/client-api.md) | createCmsClient methods |
-| [Admin API](./docs/api/admin-api.md) | 60+ defineAdminAPI functions |
+| [Admin API](./docs/api/admin-api.md) | 100+ defineAdminAPI functions |
 | [Code-First Schema](./docs/api/code-first-schema.md) | TypeScript-first content types |
 | [Field Types](./docs/api/field-types.md) | All 13 field types |
 | [Configuration](./docs/api/configuration.md) | All config options |

@@ -66,7 +66,7 @@ A headless CMS built as a Convex Component. Content management that runs inside 
 
 | Reference | Description |
 |-----------|-------------|
-| [Admin API](./api/admin-api.md) | 60+ `defineAdminAPI` functions across 11 domains |
+| [Admin API](./api/admin-api.md) | 100+ `defineAdminAPI` functions across 15 domains |
 | [Client API](./api/client-api.md) | `createCmsClient` methods and query builder |
 | [Field Types](./api/field-types.md) | All 13 field types |
 | [Configuration](./api/configuration.md) | All config options |
