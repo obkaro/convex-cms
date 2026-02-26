@@ -35,7 +35,11 @@ jobs:
       - name: Publish (alpha)
         if: contains(github.ref_name, 'alpha')
         run: npm publish --tag alpha --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ""
 
       - name: Publish (latest)
         if: "!contains(github.ref_name, 'alpha')"
         run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ""
