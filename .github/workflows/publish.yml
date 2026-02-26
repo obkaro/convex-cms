@@ -35,8 +35,8 @@ jobs:
 
       - name: Publish (alpha)
         if: contains(github.ref_name, 'alpha')
-        run: pnpm publish --tag alpha --no-git-checks --provenance
+        run: npm publish --tag alpha --provenance --access public
 
       - name: Publish (latest)
         if: "!contains(github.ref_name, 'alpha')"
-        run: pnpm publish --no-git-checks --provenance
+        run: npm publish --provenance --access public
