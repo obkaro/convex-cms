@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { useMutation } from "convex/react";
 import { useApi } from "~/embed/contexts/ApiContext";
-import type { FieldType, ContentType } from "convex-cms/types";
+import type { FieldType, ContentType } from "~/lib/cmsExports";
 import { CmsDialog } from "~/components/cmsds/CmsDialog";
 import { CmsButton } from "~/components/cmsds/CmsButton";
 import { Input } from "~/components/ui/input";

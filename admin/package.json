@@ -58,6 +58,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "convex-cms": "workspace:*",
     "@playwright/test": "^1.57.0",
     "@types/node": "^25.0.10",
     "@types/react": "^19.2.9",

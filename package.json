@@ -28,6 +28,10 @@
       "types": "./dist/client/types.d.ts",
       "default": "./dist/client/types.js"
     },
+    "./roles": {
+      "types": "./dist/component/roles.d.ts",
+      "default": "./dist/component/roles.js"
+    },
     "./config": {
       "types": "./dist/client/config.d.ts",
       "default": "./dist/client/config.js"
