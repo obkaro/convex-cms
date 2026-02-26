@@ -20,6 +20,7 @@ export default defineConfig({
       "convex-cms/admin/src": path.resolve(__dirname, "../admin/src"),
       "convex-cms/admin": path.resolve(__dirname, "../admin/src/embed/index.tsx"),
       "convex-cms/react": path.resolve(__dirname, "../src/react/index.ts"),
+      "convex-cms/roles": path.resolve(__dirname, "../src/component/roles.ts"),
       "convex-cms/types": path.resolve(__dirname, "../src/client/types.ts"),
       "convex-cms/config": path.resolve(__dirname, "../src/client/config.ts"),
       // Main package LAST

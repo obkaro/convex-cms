@@ -383,8 +383,11 @@ const canEditBlogs = await cms.hasContentTypePermissionForUser(
 
 ### In React (Admin UI)
 
+> **Note:** `usePermissions` is available inside the Admin UI (both CLI and embed mode). It's not a public export for use in your own app components.
+
 ```typescript
-import { usePermissions } from "@convex-cms/admin";
+// Inside CMS admin components
+import { usePermissions } from "~/hooks";
 
 function PublishButton({ entryId }) {
   const { hasPermission } = usePermissions();

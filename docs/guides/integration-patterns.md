@@ -218,7 +218,7 @@ export const getPostBySlug = query({
 
 ```tsx
 // app/admin/page.tsx - embedded Admin UI
-import { CmsAdmin } from "convex-cms/admin/embed";
+import { CmsAdmin } from "convex-cms/admin";
 import { api } from "@/convex/_generated/api";
 
 export default function AdminPage() {
