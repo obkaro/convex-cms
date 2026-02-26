@@ -39,7 +39,7 @@ import {
   type Resource,
   type Action,
   type OwnershipScope,
-} from '../../../src/component/index';
+} from '../../../src/component/roles';
 
 // =============================================================================
 // Types

@@ -76,7 +76,7 @@
     "build:component": "tsc --project tsconfig.build.json",
     "build:codegen": "pnpm convex codegen --component-dir ./src/component && pnpm build",
     "build:cli": "tsc --project tsconfig.cli.json",
-    "build:admin": "cd admin && pnpm build && rm -rf ../admin-dist && cp -r .output ../admin-dist",
+    "build:admin": "cd admin && pnpm build && rm -rf ../admin-dist && cp -r dist ../admin-dist",
     "build:clean": "rm -rf dist *.tsbuildinfo && pnpm build:codegen",
     "dev": "npm-run-all2 --parallel dev:*",
     "dev:component": "pnpm convex codegen --component-dir ./src/component",

@@ -30,7 +30,7 @@ import {
   type Action,
   type OwnershipScope,
   type Permission,
-} from '../../../src/component/index';
+} from '../../../src/component/roles';
 
 // =============================================================================
 // Types
