@@ -96,8 +96,8 @@
     "codegen:all": "pnpm codegen && pnpm build:component && cd example && pnpm convex codegen && cd ../admin && pnpm convex codegen",
     "verify": "pnpm codegen:all && pnpm typecheck:all && pnpm lint && pnpm test",
     "preversion": "pnpm verify",
-    "alpha": "pnpm version prerelease --preid=alpha && pnpm publish --tag alpha && git push --follow-tags",
-    "release": "pnpm version patch && pnpm publish && git push --follow-tags"
+    "alpha": "pnpm version prerelease --preid=alpha && git push --follow-tags",
+    "release": "pnpm version patch && git push --follow-tags"
   },
   "keywords": [
     "convex",
