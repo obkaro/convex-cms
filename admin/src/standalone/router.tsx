@@ -48,13 +48,18 @@ import {
 	ArrowUpDown,
 } from "lucide-react";
 import { useSettingsConfig } from "~/contexts";
+import { AdminLayout } from "~/components";
 import { adminApi } from "~/lib/adminApi";
 import { useTanStackNavigation } from "~/lib/tanstack-adapter";
 
 // --- Root ---
 
 const rootRoute = createRootRoute({
-	component: () => <Outlet />,
+	component: () => (
+		<AdminLayout>
+			<Outlet />
+		</AdminLayout>
+	),
 });
 
 // --- Thin wrapper routes ---

@@ -1,7 +1,7 @@
 import { ConvexProvider, ConvexReactClient } from "convex/react";
 import { useMemo, type ReactNode } from "react";
 import { RouterProvider } from "@tanstack/react-router";
-import { AdminLayout, RouteGuard } from "~/components";
+import { RouteGuard } from "~/components";
 import {
 	AuthProvider,
 	BreadcrumbProvider,
@@ -86,9 +86,7 @@ export function App() {
 						onLogout={authConfig.onLogout}
 					>
 						<RouteGuard>
-							<AdminLayout>
-								<RouterProvider router={router} />
-							</AdminLayout>
+							<RouterProvider router={router} />
 						</RouteGuard>
 					</AuthProvider>
 				</ConvexProviderWrapper>
