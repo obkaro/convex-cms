@@ -26,6 +26,8 @@ import { v } from "convex/values";
 /** Symbol keys for CMS field metadata (avoids string key collisions) */
 export const CMS_FIELD_TYPE = Symbol.for("cms:fieldType");
 export const CMS_FIELD_OPTIONS = Symbol.for("cms:fieldOptions");
+/** Marker on inner fields that survives v.optional() wrapping */
+export const CMS_FIELD_MARKER = Symbol.for("cms:fieldMarker");
 
 /**
  * Attach CMS metadata to a Convex validator.
@@ -46,22 +48,58 @@ function withCmsMetadata<T>(
 
 /**
  * Check if a validator has CMS field type metadata.
+ *
+ * Checks the validator directly first, then falls back to checking
+ * inner fields for the marker Symbol (which survives v.optional() wrapping).
  */
 export function getCmsFieldType(validator: unknown): string | undefined {
-  return (validator as Record<symbol, unknown>)?.[CMS_FIELD_TYPE] as
-    | string
-    | undefined;
+  const v = validator as Record<symbol | string, unknown>;
+
+  // Direct check (non-optional case)
+  if (v?.[CMS_FIELD_TYPE]) {
+    return v[CMS_FIELD_TYPE] as string;
+  }
+
+  // Fallback: check inner fields for marker (optional-wrapped case)
+  const fields = v?.fields as Record<string, Record<symbol, unknown>> | undefined;
+  if (fields) {
+    for (const fieldValidator of Object.values(fields)) {
+      if (fieldValidator?.[CMS_FIELD_MARKER]) {
+        return fieldValidator[CMS_FIELD_MARKER] as string;
+      }
+    }
+  }
+
+  return undefined;
 }
 
 /**
  * Get CMS field options from a validator.
+ *
+ * Same fallback logic as getCmsFieldType — checks inner fields when
+ * the top-level Symbol was lost by v.optional() wrapping.
  */
 export function getCmsFieldOptions(
   validator: unknown
 ): Record<string, unknown> | undefined {
-  return (validator as Record<symbol, unknown>)?.[CMS_FIELD_OPTIONS] as
-    | Record<string, unknown>
-    | undefined;
+  const v = validator as Record<symbol | string, unknown>;
+
+  // Direct check
+  if (v?.[CMS_FIELD_OPTIONS]) {
+    return v[CMS_FIELD_OPTIONS] as Record<string, unknown>;
+  }
+
+  // Fallback: check inner fields for options
+  const fields = v?.fields as Record<string, Record<symbol, unknown>> | undefined;
+  if (fields) {
+    for (const fieldValidator of Object.values(fields)) {
+      if (fieldValidator?.[CMS_FIELD_OPTIONS]) {
+        return fieldValidator[CMS_FIELD_OPTIONS] as Record<string, unknown>;
+      }
+    }
+  }
+
+  return undefined;
 }
 
 export const fields = {
@@ -83,12 +121,17 @@ export const fields = {
    * ```
    */
   money(options?: { currency?: string }) {
+    const amountValidator = v.number();
+    const fieldOptions = { defaultCurrency: options?.currency ?? "CAD" };
+
+    // Mark the amount validator with CMS metadata so it survives v.optional()
+    (amountValidator as unknown as Record<symbol, unknown>)[CMS_FIELD_MARKER] = "money";
+    (amountValidator as unknown as Record<symbol, unknown>)[CMS_FIELD_OPTIONS] = fieldOptions;
+
     const validator = v.object({
-      amount: v.number(),
+      amount: amountValidator,
       currency: v.string(),
     });
-    return withCmsMetadata(validator, "money", {
-      defaultCurrency: options?.currency ?? "CAD",
-    });
+    return withCmsMetadata(validator, "money", fieldOptions);
   },
 };
