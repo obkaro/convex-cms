@@ -534,7 +534,9 @@ export const suggestTerms = query({
 		taxonomyId: v.id("taxonomies"),
 		query: v.string(),
 		limit: v.optional(v.number()),
-		excludeIds: v.optional(v.array(v.id("taxonomyTerms"))),
+		// Accept plain strings so tag fields with legacy string labels don't crash.
+		// Only valid taxonomy term IDs are used for exclusion; others are ignored.
+		excludeIds: v.optional(v.array(v.string())),
 	},
 	returns: v.array(taxonomyTermDoc),
 	handler: async (ctx, args) => {
@@ -545,7 +547,14 @@ export const suggestTerms = query({
 			excludeIds = [],
 		} = args;
 
-		const excludeSet = new Set(excludeIds);
+		// Validate each excludeId — only include actual taxonomy term IDs
+		const excludeSet = new Set<string>();
+		for (const id of excludeIds) {
+			const normalized = ctx.db.normalizeId("taxonomyTerms", id);
+			if (normalized) {
+				excludeSet.add(normalized);
+			}
+		}
 
 		if (!searchQuery || searchQuery.trim().length === 0) {
 			// Return popular terms if no query

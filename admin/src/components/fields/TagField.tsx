@@ -1,13 +1,14 @@
 import { useState, useCallback, useRef, useEffect, useId } from 'react'
 import { useQuery, useMutation } from 'convex/react'
-import { useApi } from '~/embed/contexts/ApiContext'
+import { useApi } from '../../embed/contexts/ApiContext'
+import { useTaxonomyId } from '../../hooks/useTaxonomyId'
 import { FieldWrapper } from './FieldWrapper'
 import type { BaseFieldProps } from './types'
-import { asTaxonomyId, asTaxonomyTermIds } from '../../types'
-import { Badge } from '~/components/ui/badge'
-import { Input } from '~/components/ui/input'
-import { Button } from '~/components/ui/button'
-import { cn } from '~/lib/cn'
+import { asTaxonomyId } from '../../types'
+import { Badge } from '../ui/badge'
+import { Input } from '../ui/input'
+import { Button } from '../ui/button'
+import { cn } from '../../lib/cn'
 import { X, Plus, Loader2 } from 'lucide-react'
 
 interface TaxonomyTermDisplay {
@@ -37,7 +38,7 @@ export function TagField({
   const api = useApi()
   const generatedId = useId()
   const fieldId = id ?? `field-${field.name}-${generatedId}`
-  const taxonomyId = field.options?.taxonomyId
+  const taxonomyId = useTaxonomyId(field.options)
   const allowCreate = field.options?.allowCreate ?? false
   const maxTags = field.options?.maxTags
   const minTags = field.options?.minTags
@@ -58,7 +59,7 @@ export function TagField({
           taxonomyId: asTaxonomyId(taxonomyId),
           query: inputValue,
           limit: 10,
-          excludeIds: asTaxonomyTermIds(value || []),
+          excludeIds: value || [],
         }
       : 'skip'
   )
@@ -215,7 +216,8 @@ export function TagField({
         <div className="flex flex-wrap items-center gap-1.5 p-2">
           {(value || []).map((termId) => {
             const term = selectedTermsMap.get(termId)
-            const tagName = term?.name ?? 'Loading...'
+            // If the term wasn't found (e.g. legacy string label), display the raw value
+            const tagName = term?.name ?? (selectedTermsResult ? termId : 'Loading...')
             const tagColor = term?.color
 
             return (
