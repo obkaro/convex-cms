@@ -11,6 +11,7 @@
 import type * as authorization from "../authorization.js";
 import type * as authorizationHooks from "../authorizationHooks.js";
 import type * as bulkOperations from "../bulkOperations.js";
+import type * as cmsUsers from "../cmsUsers.js";
 import type * as contentEntries from "../contentEntries.js";
 import type * as contentEntryMutations from "../contentEntryMutations.js";
 import type * as contentEntryValidation from "../contentEntryValidation.js";
@@ -67,6 +68,7 @@ const fullApi: ApiFromModules<{
   authorization: typeof authorization;
   authorizationHooks: typeof authorizationHooks;
   bulkOperations: typeof bulkOperations;
+  cmsUsers: typeof cmsUsers;
   contentEntries: typeof contentEntries;
   contentEntryMutations: typeof contentEntryMutations;
   contentEntryValidation: typeof contentEntryValidation;

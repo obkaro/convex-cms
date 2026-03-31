@@ -85,6 +85,81 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         Name
       >;
     };
+    cmsUsers: {
+      get: FunctionReference<
+        "query",
+        "internal",
+        { externalUserId: string },
+        {
+          _creationTime: number;
+          _id: string;
+          avatarUrl?: string;
+          createdAt: number;
+          createdBy?: string;
+          displayName?: string;
+          email?: string;
+          externalUserId: string;
+          lastAccessedAt?: number;
+          role: string;
+          status: "active" | "invited" | "revoked";
+          updatedAt?: number;
+          updatedBy?: string;
+        } | null,
+        Name
+      >;
+      invite: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          createdBy?: string;
+          displayName?: string;
+          email: string;
+          role: string;
+        },
+        string,
+        Name
+      >;
+      isEmpty: FunctionReference<"query", "internal", {}, boolean, Name>;
+      list: FunctionReference<
+        "query",
+        "internal",
+        {
+          limit?: number;
+          role?: string;
+          search?: string;
+          status?: "active" | "invited" | "revoked";
+        },
+        any,
+        Name
+      >;
+      revoke: FunctionReference<
+        "mutation",
+        "internal",
+        { externalUserId: string; updatedBy?: string },
+        any,
+        Name
+      >;
+      setRole: FunctionReference<
+        "mutation",
+        "internal",
+        { externalUserId: string; role: string; updatedBy?: string },
+        any,
+        Name
+      >;
+      upsert: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          avatarUrl?: string;
+          defaultRole?: string;
+          displayName?: string;
+          email?: string;
+          externalUserId: string;
+        },
+        { isNew: boolean; role: string; userId: string },
+        Name
+      >;
+    };
     contentEntries: {
       compareVersions: FunctionReference<
         "query",
@@ -1075,6 +1150,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                   maxTags?: number;
                   minTags?: number;
                   taxonomyId?: string;
+                  taxonomyName?: string;
                 };
                 required: boolean;
                 searchable?: boolean;
@@ -1090,6 +1166,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                   allowMultiple?: boolean;
                   depth?: number;
                   maxSelections?: number;
+                  taxonomyId?: string;
                   taxonomyName?: string;
                 };
                 required: boolean;
@@ -1288,6 +1365,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                   maxTags?: number;
                   minTags?: number;
                   taxonomyId?: string;
+                  taxonomyName?: string;
                 };
                 required: boolean;
                 searchable?: boolean;
@@ -1303,6 +1381,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                   allowMultiple?: boolean;
                   depth?: number;
                   maxSelections?: number;
+                  taxonomyId?: string;
                   taxonomyName?: string;
                 };
                 required: boolean;
@@ -1532,6 +1611,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                   maxTags?: number;
                   minTags?: number;
                   taxonomyId?: string;
+                  taxonomyName?: string;
                 };
                 required: boolean;
                 searchable?: boolean;
@@ -1547,6 +1627,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                   allowMultiple?: boolean;
                   depth?: number;
                   maxSelections?: number;
+                  taxonomyId?: string;
                   taxonomyName?: string;
                 };
                 required: boolean;
@@ -1760,6 +1841,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                   maxTags?: number;
                   minTags?: number;
                   taxonomyId?: string;
+                  taxonomyName?: string;
                 };
                 required: boolean;
                 searchable?: boolean;
@@ -1775,6 +1857,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                   allowMultiple?: boolean;
                   depth?: number;
                   maxSelections?: number;
+                  taxonomyId?: string;
                   taxonomyName?: string;
                 };
                 required: boolean;
@@ -1983,6 +2066,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                   maxTags?: number;
                   minTags?: number;
                   taxonomyId?: string;
+                  taxonomyName?: string;
                 };
                 required: boolean;
                 searchable?: boolean;
@@ -1998,6 +2082,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                   allowMultiple?: boolean;
                   depth?: number;
                   maxSelections?: number;
+                  taxonomyId?: string;
                   taxonomyName?: string;
                 };
                 required: boolean;
@@ -2222,6 +2307,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                     maxTags?: number;
                     minTags?: number;
                     taxonomyId?: string;
+                    taxonomyName?: string;
                   };
                   required: boolean;
                   searchable?: boolean;
@@ -2237,6 +2323,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                     allowMultiple?: boolean;
                     depth?: number;
                     maxSelections?: number;
+                    taxonomyId?: string;
                     taxonomyName?: string;
                   };
                   required: boolean;
@@ -2515,7 +2602,8 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 | "select"
                 | "multiSelect"
                 | "tags"
-                | "category";
+                | "category"
+                | "money";
             }>;
             icon?: string;
             name: string;
@@ -2619,7 +2707,8 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                   | "select"
                   | "multiSelect"
                   | "tags"
-                  | "category";
+                  | "category"
+                  | "money";
               }>;
               icon?: string;
               name: string;
@@ -2727,7 +2816,8 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                   | "select"
                   | "multiSelect"
                   | "tags"
-                  | "category";
+                  | "category"
+                  | "money";
               }>;
               icon?: string;
               name: string;
