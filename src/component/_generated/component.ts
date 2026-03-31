@@ -1031,6 +1031,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1049,6 +1050,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1067,6 +1069,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1078,6 +1081,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1094,6 +1098,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1116,6 +1121,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1127,6 +1133,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1142,6 +1149,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1159,6 +1167,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1176,6 +1185,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1187,6 +1197,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1198,6 +1209,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1214,6 +1226,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1230,6 +1243,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1246,6 +1260,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1278,6 +1293,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1296,6 +1312,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1314,6 +1331,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1325,6 +1343,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1341,6 +1360,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1363,6 +1383,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1374,6 +1395,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1389,6 +1411,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1406,6 +1429,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1423,6 +1447,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1434,6 +1459,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1445,6 +1471,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1461,6 +1488,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1477,6 +1505,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1493,6 +1522,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1556,6 +1586,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1574,6 +1605,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1592,6 +1624,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1603,6 +1636,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1619,6 +1653,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1641,6 +1676,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1652,6 +1688,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1667,6 +1704,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1684,6 +1722,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1701,6 +1740,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1712,6 +1752,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1723,6 +1764,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1739,6 +1781,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1755,6 +1798,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1771,6 +1815,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1818,6 +1863,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1836,6 +1882,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1854,6 +1901,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1865,6 +1913,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1881,6 +1930,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1903,6 +1953,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1914,6 +1965,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1929,6 +1981,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1946,6 +1999,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1963,6 +2017,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1974,6 +2029,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1985,6 +2041,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -2001,6 +2058,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -2017,6 +2075,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -2033,6 +2092,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -2075,6 +2135,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -2093,6 +2154,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -2111,6 +2173,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -2122,6 +2185,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -2138,6 +2202,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -2160,6 +2225,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -2171,6 +2237,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -2186,6 +2253,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -2203,6 +2271,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -2220,6 +2289,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -2231,6 +2301,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -2242,6 +2313,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -2258,6 +2330,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -2274,6 +2347,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -2290,6 +2364,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -2346,6 +2421,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
               | {
                   defaultValue?: any;
                   description?: string;
+                  group?: string;
                   label: string;
                   localized?: boolean;
                   name: string;
@@ -2364,6 +2440,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
               | {
                   defaultValue?: any;
                   description?: string;
+                  group?: string;
                   label: string;
                   localized?: boolean;
                   name: string;
@@ -2382,6 +2459,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
               | {
                   defaultValue?: any;
                   description?: string;
+                  group?: string;
                   label: string;
                   localized?: boolean;
                   name: string;
@@ -2393,6 +2471,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
               | {
                   defaultValue?: any;
                   description?: string;
+                  group?: string;
                   label: string;
                   localized?: boolean;
                   name: string;
@@ -2409,6 +2488,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
               | {
                   defaultValue?: any;
                   description?: string;
+                  group?: string;
                   label: string;
                   localized?: boolean;
                   name: string;
@@ -2431,6 +2511,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
               | {
                   defaultValue?: any;
                   description?: string;
+                  group?: string;
                   label: string;
                   localized?: boolean;
                   name: string;
@@ -2444,6 +2525,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
               | {
                   defaultValue?: any;
                   description?: string;
+                  group?: string;
                   label: string;
                   localized?: boolean;
                   name: string;
@@ -2459,6 +2541,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
               | {
                   defaultValue?: any;
                   description?: string;
+                  group?: string;
                   label: string;
                   localized?: boolean;
                   name: string;
@@ -2476,6 +2559,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
               | {
                   defaultValue?: any;
                   description?: string;
+                  group?: string;
                   label: string;
                   localized?: boolean;
                   name: string;
@@ -2493,6 +2577,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
               | {
                   defaultValue?: any;
                   description?: string;
+                  group?: string;
                   label: string;
                   localized?: boolean;
                   name: string;
@@ -2504,6 +2589,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
               | {
                   defaultValue?: any;
                   description?: string;
+                  group?: string;
                   label: string;
                   localized?: boolean;
                   name: string;
@@ -2515,6 +2601,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
               | {
                   defaultValue?: any;
                   description?: string;
+                  group?: string;
                   label: string;
                   localized?: boolean;
                   name: string;
@@ -2531,6 +2618,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
               | {
                   defaultValue?: any;
                   description?: string;
+                  group?: string;
                   label: string;
                   localized?: boolean;
                   name: string;
@@ -2547,6 +2635,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
               | {
                   defaultValue?: any;
                   description?: string;
+                  group?: string;
                   label: string;
                   localized?: boolean;
                   name: string;
@@ -2563,6 +2652,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
               | {
                   defaultValue?: any;
                   description?: string;
+                  group?: string;
                   label: string;
                   localized?: boolean;
                   name: string;

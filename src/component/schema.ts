@@ -101,6 +101,7 @@ export const baseFieldDefinition = {
 	localized: v.optional(v.boolean()),
 	description: v.optional(v.string()),
 	defaultValue: v.optional(v.any()),
+	group: v.optional(v.string()),
 };
 
 export const textFieldDefinitionValidator = v.object({
