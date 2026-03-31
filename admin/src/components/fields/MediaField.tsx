@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 import { useQuery } from 'convex/react'
-import { useApi } from '~/embed/contexts/ApiContext'
+import { useApi } from '../../embed/contexts/ApiContext'
 // IDs are strings when crossing component boundaries
 import { FieldWrapper } from './FieldWrapper'
 import type { BaseFieldProps } from './types'
@@ -11,19 +11,19 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '~/components/ui/dialog'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs'
-import { Input } from '~/components/ui/input'
+} from '../ui/dialog'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
+import { Input } from '../ui/input'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '~/components/ui/select'
-import { CmsButton } from '~/components/cmsds/CmsButton'
-import { CmsEmptyState } from '~/components/cmsds/CmsEmptyState'
-import { cn } from '~/lib/cn'
+} from '../ui/select'
+import { CmsButton } from '../cmsds/CmsButton'
+import { CmsEmptyState } from '../cmsds/CmsEmptyState'
+import { cn } from '../../lib/cn'
 import {
   Image,
   Video,
@@ -36,6 +36,7 @@ import {
   FolderOpen,
   Search,
   Check,
+  AlertTriangle,
 } from 'lucide-react'
 
 export interface MediaFieldProps extends BaseFieldProps<string | null> {
@@ -85,6 +86,10 @@ function formatFileSize(bytes: number): string {
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`
 }
 
+function isUrl(value: string): boolean {
+  return value.startsWith('http://') || value.startsWith('https://')
+}
+
 export function MediaField({
   field,
   value,
@@ -105,9 +110,15 @@ export function MediaField({
 
   const allowedMimeTypes = field.options?.allowedMimeTypes ?? []
 
+  // Detect if the stored value is a raw URL instead of a media asset ID.
+  // This happens when data was stored outside the admin panel (e.g. direct
+  // dashboard edits or typed helpers). Skip the getMediaAsset query for URLs
+  // since v.id("mediaItems") would reject them.
+  const valueIsUrl = typeof value === 'string' && isUrl(value)
+
   const selectedAsset = useQuery(
     api.getMediaAsset,
-    value ? { id: value } : 'skip'
+    value && !valueIsUrl ? { id: value } : 'skip'
   )
 
   const assetsResult = useQuery(
@@ -153,7 +164,48 @@ export function MediaField({
   return (
     <FieldWrapper field={field} error={error} className={className} id={fieldId}>
       <div className="space-y-2">
-        {value && selectedAsset ? (
+        {value && valueIsUrl ? (
+          <div className="flex items-center gap-3 rounded-lg border border-yellow-500/50 bg-yellow-500/5 p-3">
+            <div className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted">
+              <img
+                src={value}
+                alt="Unlinked media"
+                className="size-full object-cover"
+              />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5">
+                <AlertTriangle className="size-3.5 shrink-0 text-yellow-500" />
+                <p className="truncate text-sm font-medium text-foreground">
+                  Unlinked media
+                </p>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                This image is stored as a URL, not a media library asset. Use the picker to relink it.
+              </p>
+            </div>
+            {!disabled && !readOnly && (
+              <div className="flex shrink-0 items-center gap-1">
+                <CmsButton
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => setShowPicker(true)}
+                  title="Replace with media asset"
+                >
+                  <Pencil className="size-4" />
+                </CmsButton>
+                <CmsButton
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={handleClear}
+                  title="Remove media"
+                >
+                  <X className="size-4" />
+                </CmsButton>
+              </div>
+            )}
+          </div>
+        ) : value && selectedAsset ? (
           (() => {
             const selectedMediaType = getMediaTypeFromMimeType(selectedAsset.mimeType)
             return (

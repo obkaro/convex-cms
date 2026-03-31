@@ -38,6 +38,8 @@ export interface FieldOptions {
   // Media fields
   allowedMimeTypes?: string[];
   maxFileSize?: number;
+  /** When true, media fields accept external URLs in addition to media asset IDs. */
+  allowExternalUrls?: boolean;
 
   // Select fields
   options?: Array<{ value: string; label: string }>;
@@ -123,6 +125,18 @@ export type ValidationErrorCode =
 export type ValidationResult =
   | { valid: true; errors: [] }
   | { valid: false; errors: ValidationError[] };
+
+// =============================================================================
+// Shared Helpers
+// =============================================================================
+
+/**
+ * Check if a value looks like a URL rather than a Convex document ID.
+ * Used to reject accidentally stored URLs in ID-based fields (media, reference).
+ */
+function looksLikeUrl(value: string): boolean {
+	return value.startsWith("http://") || value.startsWith("https://");
+}
 
 // =============================================================================
 // Field Value Validators
@@ -719,6 +733,9 @@ export function validateMediaField(
   const errors: ValidationError[] = [];
   const { name, required, options } = fieldDef;
   const multiple = options?.multiple ?? false;
+  // Allow external URLs to be stored directly in media fields when opted in.
+  // Default is false — media fields expect media library asset IDs.
+  const allowExternalUrls = options?.allowExternalUrls ?? false;
 
   // Check required
   if (required && (value === null || value === undefined)) {
@@ -755,12 +772,20 @@ export function validateMediaField(
       });
     }
 
-    // Check each item is a string (valid ID format)
+    // Check each item is a string (valid ID format, not a URL unless opted in)
     for (const item of value) {
       if (typeof item !== "string") {
         errors.push({
           field: name,
           message: `${name} contains invalid media asset IDs`,
+          code: "INVALID_TYPE",
+        });
+        break;
+      }
+      if (!allowExternalUrls && looksLikeUrl(item)) {
+        errors.push({
+          field: name,
+          message: `${name} contains a URL instead of a media asset ID. Upload the file via the media library and use the returned asset ID.`,
           code: "INVALID_TYPE",
         });
         break;
@@ -789,6 +814,12 @@ export function validateMediaField(
       errors.push({
         field: name,
         message: `${name} must be a media asset ID`,
+        code: "INVALID_TYPE",
+      });
+    } else if (!allowExternalUrls && looksLikeUrl(value)) {
+      errors.push({
+        field: name,
+        message: `${name} contains a URL instead of a media asset ID. Upload the file via the media library and use the returned asset ID.`,
         code: "INVALID_TYPE",
       });
     }

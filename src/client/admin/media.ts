@@ -58,7 +58,15 @@ export function createMediaOperations(
       returns: v.union(adminMediaItemWithUrlDoc, v.null()),
       handler: async (ctx, args) => {
         await checkAuth(ctx, { type: "getMediaAsset", id: args.id });
-        return await ctx.runQuery(component.mediaAssets.get, args);
+        try {
+          return await ctx.runQuery(component.mediaAssets.get, args);
+        } catch {
+          // The inner query validates id with v.id("mediaItems").
+          // If the stored value is not a valid document ID (e.g. a URL
+          // that was stored before validation was tightened), return null
+          // instead of crashing the admin panel.
+          return null;
+        }
       },
     }),
 
