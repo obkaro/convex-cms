@@ -13,6 +13,7 @@ import { ReferenceField } from "./ReferenceField";
 import { TagField } from "./TagField";
 import { CategoryField } from "./CategoryField";
 import { MoneyField } from "./MoneyField";
+import { ArrayObjectField } from "./ArrayObjectField";
 import { DefaultFieldRenderer } from "./DefaultFieldRenderer";
 import { getFieldRenderer } from "./registry";
 
@@ -178,6 +179,19 @@ export function FieldRenderer({
             onChange as (
               value: { amount: number; currency: string } | null
             ) => void
+          }
+        />
+      );
+
+    case "arrayObject":
+      return (
+        <ArrayObjectField
+          {...commonProps}
+          value={
+            (value as Record<string, unknown>[] | null) ?? null
+          }
+          onChange={
+            onChange as (value: Record<string, unknown>[] | null) => void
           }
         />
       );

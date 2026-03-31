@@ -78,6 +78,21 @@ export interface FieldOptions {
 
   // Category fields
   allowMultiple?: boolean;
+
+  // Number field display
+  prefix?: string;
+  suffix?: string;
+
+  // Money fields
+  defaultCurrency?: string;
+
+  // ArrayObject fields
+  subFields?: FieldDefinition[];
+  itemLabel?: string;
+  maxItems?: number;
+
+  // Generic
+  [key: string]: unknown;
 }
 
 /**
@@ -175,6 +190,13 @@ export interface MoneyFieldProps
   /** Placeholder text */
   placeholder?: string;
 }
+
+/**
+ * Props for array-of-objects repeater field.
+ * Value is an array of records, each rendered as a card with sub-fields.
+ */
+export interface ArrayObjectFieldProps
+  extends BaseFieldProps<Record<string, unknown>[] | null> {}
 
 /**
  * Props for boolean toggle field.

@@ -57,7 +57,8 @@ export type FieldRenderAs =
   | "code"
   | "color"
   | "url"
-  | "email";
+  | "email"
+  | "arrayObject";
 
 /**
  * Metadata for a single field within a content type.
@@ -224,6 +225,24 @@ export interface FieldMeta {
    * @example ["CAD", "USD"]
    */
   allowedCurrencies?: string[];
+
+  // ==========================================================================
+  // ArrayObject Field Options
+  // ==========================================================================
+
+  /**
+   * Metadata for sub-fields within an arrayObject field.
+   * Keys are the field names within each array item's object.
+   * Uses the same FieldMeta type recursively.
+   */
+  subFields?: Record<string, FieldMeta>;
+
+  /**
+   * Label template for each array item card header.
+   * Can reference field names with `{fieldName}` syntax.
+   * @example "{name}" shows the item's `name` field as the card title
+   */
+  itemLabel?: string;
 
   // ==========================================================================
   // Boolean Field Options

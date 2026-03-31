@@ -376,7 +376,7 @@ export function toFieldDefinitions(
 
     const fieldType = meta.renderAs || inferFieldType(field.validatorType);
 
-    return {
+    const fieldDef: DatabaseFieldDefinition = {
       name: field.name,
       label: meta.label || field.name,
       type: fieldType,
@@ -386,6 +386,19 @@ export function toFieldDefinitions(
       description: meta.description,
       options: buildFieldOptions(fieldType, meta),
     };
+
+    // For arrayObject fields, extract sub-field definitions from the validator
+    if (fieldType === "arrayObject" && field.innerValidator) {
+      const subFields = extractSubFieldDefinitions(
+        field.innerValidator,
+        meta.subFields
+      );
+      if (subFields.length > 0) {
+        fieldDef.options = { ...fieldDef.options, subFields };
+      }
+    }
+
+    return fieldDef;
   });
 }
 
@@ -437,6 +450,73 @@ function extractValidatorFields(
   }
 
   return fields;
+}
+
+/**
+ * Extract sub-field definitions from an array-of-objects validator.
+ *
+ * For a field like `v.array(v.object({ name: v.string(), price: v.number() }))`,
+ * this extracts the inner object's fields and builds DatabaseFieldDefinition[]
+ * that the ArrayObjectField component can render.
+ *
+ * @internal
+ */
+function extractSubFieldDefinitions(
+  innerValidator: unknown,
+  subFieldMeta?: Record<string, FieldMeta>
+): DatabaseFieldDefinition[] {
+  const validatorAny = innerValidator as {
+    kind?: string;
+    element?: unknown;
+    fields?: Record<string, { isOptional?: string; kind?: string; type?: string }>;
+  };
+
+  // Navigate: array validator has .element, which should be an object validator with .fields
+  let objectValidator = validatorAny;
+
+  // If this is the array validator itself, get its element
+  if (validatorAny.kind === "array" && validatorAny.element) {
+    objectValidator = validatorAny.element as typeof validatorAny;
+  }
+
+  // The object validator should have .fields
+  if (!objectValidator.fields || objectValidator.kind !== "object") {
+    return [];
+  }
+
+  const meta = subFieldMeta || {};
+  const subFields: DatabaseFieldDefinition[] = [];
+
+  for (const [name, fieldValidator] of Object.entries(objectValidator.fields)) {
+    const fieldMeta = meta[name] || {};
+    const validatorType = fieldValidator?.type || fieldValidator?.kind || "unknown";
+    const isOptional = fieldValidator?.isOptional === "optional";
+    const fieldType = fieldMeta.renderAs || inferFieldType(validatorType);
+
+    const fieldDef: DatabaseFieldDefinition = {
+      name,
+      label: fieldMeta.label || name,
+      type: fieldType,
+      required: !isOptional,
+      description: fieldMeta.description,
+      options: buildFieldOptions(fieldType, fieldMeta),
+    };
+
+    // Recurse for nested arrayObject sub-fields
+    if (fieldType === "arrayObject" && fieldValidator) {
+      const nestedSubFields = extractSubFieldDefinitions(
+        fieldValidator,
+        fieldMeta.subFields
+      );
+      if (nestedSubFields.length > 0) {
+        fieldDef.options = { ...fieldDef.options, subFields: nestedSubFields };
+      }
+    }
+
+    subFields.push(fieldDef);
+  }
+
+  return subFields;
 }
 
 /**
@@ -518,6 +598,7 @@ function buildFieldOptions(
 
     case "tags": {
       if (meta.taxonomyId !== undefined) options.taxonomyId = meta.taxonomyId;
+      if (meta.taxonomyName !== undefined) options.taxonomyName = meta.taxonomyName;
       if (meta.allowCreate !== undefined) options.allowCreate = meta.allowCreate;
       if (meta.maxTags !== undefined) options.maxTags = meta.maxTags;
       if (meta.minTags !== undefined) options.minTags = meta.minTags;
@@ -525,6 +606,8 @@ function buildFieldOptions(
     }
 
     case "category": {
+      if (meta.taxonomyId !== undefined) options.taxonomyId = meta.taxonomyId;
+      if (meta.taxonomyName !== undefined) options.taxonomyName = meta.taxonomyName;
       if (meta.allowMultiple !== undefined) options.allowMultiple = meta.allowMultiple;
       break;
     }
@@ -545,6 +628,14 @@ function buildFieldOptions(
       if (meta.allowedContentTypes !== undefined) options.allowedContentTypes = meta.allowedContentTypes;
       if (meta.multiple !== undefined) options.multiple = meta.multiple;
       if (meta.minItems !== undefined) options.minItems = meta.minItems;
+      break;
+    }
+
+    case "arrayObject": {
+      if (meta.itemLabel !== undefined) options.itemLabel = meta.itemLabel;
+      if (meta.maxItems !== undefined) options.maxItems = meta.maxItems;
+      if (meta.minItems !== undefined) options.minItems = meta.minItems;
+      // subFields are computed separately in toFieldDefinitions and attached there
       break;
     }
   }

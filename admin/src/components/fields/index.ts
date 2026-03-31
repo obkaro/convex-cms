@@ -14,6 +14,7 @@ export { TextField } from './TextField';
 export { TextAreaField } from './TextAreaField';
 export { NumberField } from './NumberField';
 export { MoneyField } from './MoneyField';
+export { ArrayObjectField } from './ArrayObjectField';
 export { BooleanField } from './BooleanField';
 export { DateField } from './DateField';
 export { RichTextField } from './RichTextField';
@@ -49,6 +50,7 @@ export type {
   TextAreaFieldProps,
   NumberFieldProps,
   MoneyFieldProps,
+  ArrayObjectFieldProps,
   BooleanFieldProps,
   DateFieldProps,
   RichTextFieldProps,

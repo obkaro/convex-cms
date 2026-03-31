@@ -139,6 +139,11 @@ const FIELD_TYPE_INFO: Record<
 		icon: <DollarSign className="size-4" />,
 		description: "Currency amount in minor units",
 	},
+	arrayObject: {
+		label: "Array of Objects",
+		icon: <List className="size-4" />,
+		description: "Repeatable structured items",
+	},
 };
 
 interface ContentTypeFormModalProps {
