@@ -1,20 +1,20 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { useMutation } from "convex/react";
-import { useApi } from "~/embed/contexts/ApiContext";
-import type { FieldType, ContentType } from "~/lib/cmsExports";
-import { CmsDialog } from "~/components/cmsds/CmsDialog";
-import { CmsButton } from "~/components/cmsds/CmsButton";
-import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
-import { Textarea } from "~/components/ui/textarea";
-import { Checkbox } from "~/components/ui/checkbox";
+import { useApi } from "../embed/contexts/ApiContext";
+import type { FieldType, ContentType } from "../lib/cmsExports";
+import { CmsDialog } from "./cmsds/CmsDialog";
+import { CmsButton } from "./cmsds/CmsButton";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
+import { Textarea } from "./ui/textarea";
+import { Checkbox } from "./ui/checkbox";
 import {
 	Select,
 	SelectContent,
 	SelectItem,
 	SelectTrigger,
 	SelectValue,
-} from "~/components/ui/select";
+} from "./ui/select";
 import {
 	Plus,
 	X,
@@ -33,8 +33,9 @@ import {
 	Tag,
 	FolderOpen,
 	Code2,
+	DollarSign,
 } from "lucide-react";
-import { cn } from "~/lib/cn";
+import { cn } from "../lib/cn";
 import { BreakingChangesWarningDialog } from "./BreakingChangesWarningDialog";
 
 interface SelectOption {
@@ -132,6 +133,11 @@ const FIELD_TYPE_INFO: Record<
 		label: "Category",
 		icon: <FolderOpen className="size-4" />,
 		description: "Taxonomy category selection",
+	},
+	money: {
+		label: "Money",
+		icon: <DollarSign className="size-4" />,
+		description: "Currency amount in minor units",
 	},
 };
 
