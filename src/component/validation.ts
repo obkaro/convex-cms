@@ -32,8 +32,10 @@ export interface FieldOptions {
   // Reference fields
   allowedContentTypes?: string[];
   multiple?: boolean;
-  /** Minimum number of references required (only applies when multiple is true) */
+  /** Minimum number of items (references, arrayObject) */
   minItems?: number;
+  /** Maximum number of items (arrayObject) */
+  maxItems?: number;
 
   // Media fields
   allowedMimeTypes?: string[];
@@ -972,6 +974,78 @@ export function validateJsonField(
 }
 
 /**
+ * Validate an arrayObject field value.
+ *
+ * arrayObject fields store arrays of structured objects (e.g. modifiers,
+ * operating hours). Validation checks the array structure and enforces
+ * min/max item counts.
+ */
+export function validateArrayObjectField(
+  value: unknown,
+  fieldDef: FieldDefinition
+): ValidationError[] {
+  const errors: ValidationError[] = [];
+  const { name, required, options } = fieldDef;
+
+  // Check required
+  if (required && (value === null || value === undefined)) {
+    errors.push({
+      field: name,
+      message: `${name} is required`,
+      code: "REQUIRED",
+    });
+    return errors;
+  }
+
+  // Skip further validation if empty and not required
+  if (value === null || value === undefined) {
+    return errors;
+  }
+
+  // Must be an array
+  if (!Array.isArray(value)) {
+    errors.push({
+      field: name,
+      message: `${name} must be an array`,
+      code: "INVALID_TYPE",
+    });
+    return errors;
+  }
+
+  // Min items
+  if (options?.minItems !== undefined && value.length < options.minItems) {
+    errors.push({
+      field: name,
+      message: `${name} requires at least ${options.minItems} item${options.minItems === 1 ? "" : "s"}`,
+      code: "MIN_ITEMS",
+    });
+  }
+
+  // Max items
+  const maxItems = options?.maxItems ?? options?.max;
+  if (maxItems !== undefined && value.length > maxItems) {
+    errors.push({
+      field: name,
+      message: `${name} can have at most ${maxItems} item${maxItems === 1 ? "" : "s"}`,
+      code: "MAX_ITEMS",
+    });
+  }
+
+  // Each item should be an object
+  for (let i = 0; i < value.length; i++) {
+    if (typeof value[i] !== "object" || value[i] === null || Array.isArray(value[i])) {
+      errors.push({
+        field: `${name}[${i}]`,
+        message: `${name}[${i}] must be an object`,
+        code: "INVALID_TYPE",
+      });
+    }
+  }
+
+  return errors;
+}
+
+/**
  * Validate a tags field value against its configuration.
  *
  * Tags fields store arrays of taxonomy term IDs for flexible content categorization.
@@ -1244,6 +1318,8 @@ function validateSingleValue(
       return validateCategoryField(value, fieldDef);
     case "money":
       return validateMoneyField(value, fieldDef);
+    case "arrayObject":
+      return validateArrayObjectField(value, fieldDef);
     default: {
       // Unknown field type
       return [
