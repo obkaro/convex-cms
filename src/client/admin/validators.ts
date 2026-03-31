@@ -22,6 +22,8 @@ import {
   dateFieldDefinitionValidator,
   datetimeFieldDefinitionValidator,
   referenceFieldDefinitionValidator,
+  moneyFieldDefinitionValidator,
+  arrayObjectFieldDefinitionValidator,
   contentStatusValidator,
   mediaTypeValidator,
   variantTypeValidator,
@@ -82,6 +84,7 @@ export const adminTagsFieldDefinitionValidator = v.object({
   options: v.optional(
     v.object({
       taxonomyId: v.optional(v.string()),
+      taxonomyName: v.optional(v.string()),
       allowCreate: v.optional(v.boolean()),
       maxTags: v.optional(v.number()),
       minTags: v.optional(v.number()),
@@ -102,7 +105,9 @@ export const adminFieldDefinitionValidator = v.union(
   jsonFieldDefinitionValidator,
   dateFieldDefinitionValidator,
   datetimeFieldDefinitionValidator,
-  referenceFieldDefinitionValidator
+  referenceFieldDefinitionValidator,
+  moneyFieldDefinitionValidator,
+  arrayObjectFieldDefinitionValidator,
 );
 
 // =============================================================================

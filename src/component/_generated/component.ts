@@ -1227,6 +1227,38 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 searchable?: boolean;
                 type: "reference";
               }
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options?: {
+                  allowedCurrencies?: Array<string>;
+                  defaultCurrency?: string;
+                  max?: number;
+                  min?: number;
+                };
+                required: boolean;
+                searchable?: boolean;
+                type: "money";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options?: {
+                  itemLabel?: string;
+                  maxItems?: number;
+                  minItems?: number;
+                  subFields?: any;
+                };
+                required: boolean;
+                searchable?: boolean;
+                type: "arrayObject";
+              }
           >;
           icon?: string;
           name: string;
@@ -1441,6 +1473,38 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 required: boolean;
                 searchable?: boolean;
                 type: "reference";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options?: {
+                  allowedCurrencies?: Array<string>;
+                  defaultCurrency?: string;
+                  max?: number;
+                  min?: number;
+                };
+                required: boolean;
+                searchable?: boolean;
+                type: "money";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options?: {
+                  itemLabel?: string;
+                  maxItems?: number;
+                  minItems?: number;
+                  subFields?: any;
+                };
+                required: boolean;
+                searchable?: boolean;
+                type: "arrayObject";
               }
           >;
           icon?: string;
@@ -1688,6 +1752,38 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 searchable?: boolean;
                 type: "reference";
               }
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options?: {
+                  allowedCurrencies?: Array<string>;
+                  defaultCurrency?: string;
+                  max?: number;
+                  min?: number;
+                };
+                required: boolean;
+                searchable?: boolean;
+                type: "money";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options?: {
+                  itemLabel?: string;
+                  maxItems?: number;
+                  minItems?: number;
+                  subFields?: any;
+                };
+                required: boolean;
+                searchable?: boolean;
+                type: "arrayObject";
+              }
           >;
           force?: boolean;
           icon?: string;
@@ -1918,6 +2014,38 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 searchable?: boolean;
                 type: "reference";
               }
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options?: {
+                  allowedCurrencies?: Array<string>;
+                  defaultCurrency?: string;
+                  max?: number;
+                  min?: number;
+                };
+                required: boolean;
+                searchable?: boolean;
+                type: "money";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options?: {
+                  itemLabel?: string;
+                  maxItems?: number;
+                  minItems?: number;
+                  subFields?: any;
+                };
+                required: boolean;
+                searchable?: boolean;
+                type: "arrayObject";
+              }
           >;
           icon?: string;
           isActive: boolean;
@@ -2142,6 +2270,38 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 required: boolean;
                 searchable?: boolean;
                 type: "reference";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options?: {
+                  allowedCurrencies?: Array<string>;
+                  defaultCurrency?: string;
+                  max?: number;
+                  min?: number;
+                };
+                required: boolean;
+                searchable?: boolean;
+                type: "money";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options?: {
+                  itemLabel?: string;
+                  maxItems?: number;
+                  minItems?: number;
+                  subFields?: any;
+                };
+                required: boolean;
+                searchable?: boolean;
+                type: "arrayObject";
               }
           >;
           icon?: string;
@@ -2383,6 +2543,38 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                   required: boolean;
                   searchable?: boolean;
                   type: "reference";
+                }
+              | {
+                  defaultValue?: any;
+                  description?: string;
+                  label: string;
+                  localized?: boolean;
+                  name: string;
+                  options?: {
+                    allowedCurrencies?: Array<string>;
+                    defaultCurrency?: string;
+                    max?: number;
+                    min?: number;
+                  };
+                  required: boolean;
+                  searchable?: boolean;
+                  type: "money";
+                }
+              | {
+                  defaultValue?: any;
+                  description?: string;
+                  label: string;
+                  localized?: boolean;
+                  name: string;
+                  options?: {
+                    itemLabel?: string;
+                    maxItems?: number;
+                    minItems?: number;
+                    subFields?: any;
+                  };
+                  required: boolean;
+                  searchable?: boolean;
+                  type: "arrayObject";
                 }
             >;
             icon?: string;

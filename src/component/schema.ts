@@ -255,6 +255,28 @@ export const datetimeFieldDefinitionValidator = v.object({
 	})),
 });
 
+export const moneyFieldDefinitionValidator = v.object({
+	...baseFieldDefinition,
+	type: v.literal("money"),
+	options: v.optional(v.object({
+		min: v.optional(v.number()),
+		max: v.optional(v.number()),
+		defaultCurrency: v.optional(v.string()),
+		allowedCurrencies: v.optional(v.array(v.string())),
+	})),
+});
+
+export const arrayObjectFieldDefinitionValidator = v.object({
+	...baseFieldDefinition,
+	type: v.literal("arrayObject"),
+	options: v.optional(v.object({
+		subFields: v.optional(v.any()),
+		itemLabel: v.optional(v.string()),
+		maxItems: v.optional(v.number()),
+		minItems: v.optional(v.number()),
+	})),
+});
+
 export const fieldDefinitionValidator = v.union(
 	textFieldDefinitionValidator,
 	numberFieldDefinitionValidator,
@@ -269,6 +291,8 @@ export const fieldDefinitionValidator = v.union(
 	dateFieldDefinitionValidator,
 	datetimeFieldDefinitionValidator,
 	referenceFieldDefinitionValidator,
+	moneyFieldDefinitionValidator,
+	arrayObjectFieldDefinitionValidator,
 );
 
 const contentTypeFields = {
