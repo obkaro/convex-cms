@@ -16,6 +16,7 @@ export const fieldTypes = [
 	"tags",
 	"category",
 	"money",
+	"arrayObject",
 ] as const;
 
 export const fieldTypeValidator = v.union(
@@ -33,6 +34,7 @@ export const fieldTypeValidator = v.union(
 	v.literal("tags"),
 	v.literal("category"),
 	v.literal("money"),
+	v.literal("arrayObject"),
 );
 
 /**

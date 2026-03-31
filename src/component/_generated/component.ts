@@ -2795,7 +2795,8 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 | "multiSelect"
                 | "tags"
                 | "category"
-                | "money";
+                | "money"
+                | "arrayObject";
             }>;
             icon?: string;
             name: string;
@@ -2900,7 +2901,8 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                   | "multiSelect"
                   | "tags"
                   | "category"
-                  | "money";
+                  | "money"
+                  | "arrayObject";
               }>;
               icon?: string;
               name: string;
@@ -3009,7 +3011,8 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                   | "multiSelect"
                   | "tags"
                   | "category"
-                  | "money";
+                  | "money"
+                  | "arrayObject";
               }>;
               icon?: string;
               name: string;
