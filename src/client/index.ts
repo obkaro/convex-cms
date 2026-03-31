@@ -1167,6 +1167,9 @@ export type {
 //
 // See ./agentTools.ts for the full API.
 
+// --- Semantic Field Helpers ---
+export { fields } from "./fields.js";
+
 // --- Code-Only Schema System ---
 export {
   // Core functions
@@ -1197,6 +1200,7 @@ export {
 export {
   createCms,
   createTypedHelpers,
+  createTaxonomyHelpers,
   type CmsInstance,
   type ContentTypeHelpers,
   type TypedHelpersResult,
@@ -1205,6 +1209,9 @@ export {
   type ContentEntryWithData,
   type DefineContentListOptions,
   type DefineContentPaginatedResult,
+  type TaxonomyHelpers,
+  type TaxonomyTerm,
+  type Taxonomy,
 } from "./defineContent.js";
 
 // Re-export schema types

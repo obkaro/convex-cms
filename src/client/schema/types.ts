@@ -131,6 +131,15 @@ export interface FieldMeta {
    */
   defaultValue?: unknown;
 
+  /**
+   * Group name for organizing fields into sections in the admin editor.
+   * Fields with the same group are rendered together in a collapsible section.
+   * Fields without a group go into a default section.
+   * Groups appear in the order they're first encountered.
+   * @example "pricing", "media", "seo"
+   */
+  group?: string;
+
   // ==========================================================================
   // Text Field Options
   // ==========================================================================

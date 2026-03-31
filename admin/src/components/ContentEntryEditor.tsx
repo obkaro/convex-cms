@@ -1,16 +1,17 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { useMutation } from 'convex/react'
-import { useApi } from '~/embed/contexts/ApiContext'
+import { useApi } from '../embed/contexts/ApiContext'
 import { FieldRenderer } from './fields/FieldRenderer'
+import { FieldGroupSection, groupFields } from './FieldGroupSection'
 import { VersionHistory } from './VersionHistory'
 import type { FieldDefinition, FieldError } from './fields/types'
-import { parseServerError, isRetryableError } from '~/utils'
-import { useSettingsConfig } from '~/contexts'
-import { CmsButton } from '~/components/cmsds/CmsButton'
-import { CmsStatusBadge } from '~/components/cmsds/CmsStatusBadge'
-import { CmsDialog, CmsConfirmDialog } from '~/components/cmsds/CmsDialog'
-import { Badge as _Badge } from '~/components/ui/badge'
-import { Input } from '~/components/ui/input'
+import { parseServerError, isRetryableError } from '../utils'
+import { useSettingsConfig } from '../contexts'
+import { CmsButton } from './cmsds/CmsButton'
+import { CmsStatusBadge } from './cmsds/CmsStatusBadge'
+import { CmsDialog, CmsConfirmDialog } from './cmsds/CmsDialog'
+import { Badge as _Badge } from './ui/badge'
+import { Input } from './ui/input'
 import {
   CheckCircle,
   AlertCircle,
@@ -19,7 +20,7 @@ import {
   History,
   Clock,
 } from 'lucide-react'
-import { cn } from '~/lib/cn'
+import { cn } from '../lib/cn'
 
 function formatDateTimeLocal(timestamp: number): string {
   const date = new Date(timestamp)
@@ -782,18 +783,44 @@ export function ContentEntryEditor({
       )}
 
       {/* Fields */}
-      <div className="space-y-4">
-        {contentType.fields.map((field) => (
-          <FieldRenderer
-            key={field.name}
-            field={field}
-            value={formData[field.name]}
-            onChange={(value) => handleFieldChange(field.name, value)}
-            error={fieldErrors[field.name]}
-            disabled={isSubmitting}
-          />
-        ))}
-      </div>
+      {(() => {
+        const groups = groupFields(contentType.fields as FieldDefinition[])
+        const isSingleDefaultGroup =
+          groups.length === 1 && groups[0].name === '__default__'
+
+        if (isSingleDefaultGroup) {
+          // No groups defined — render flat for backward compatibility
+          return (
+            <div className="space-y-4">
+              {contentType.fields.map((field) => (
+                <FieldRenderer
+                  key={field.name}
+                  field={field}
+                  value={formData[field.name]}
+                  onChange={(value) => handleFieldChange(field.name, value)}
+                  error={fieldErrors[field.name]}
+                  disabled={isSubmitting}
+                />
+              ))}
+            </div>
+          )
+        }
+
+        return (
+          <div className="space-y-6">
+            {groups.map((group) => (
+              <FieldGroupSection
+                key={group.name}
+                group={group}
+                formData={formData}
+                fieldErrors={fieldErrors}
+                isSubmitting={isSubmitting}
+                onFieldChange={handleFieldChange}
+              />
+            ))}
+          </div>
+        )
+      })()}
 
       {/* Footer */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-t pt-4">

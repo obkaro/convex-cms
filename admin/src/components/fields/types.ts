@@ -117,6 +117,8 @@ export interface FieldDefinition {
   defaultValue?: unknown;
   /** Type-specific options */
   options?: FieldOptions;
+  /** Group name for organizing fields into sections in the editor */
+  group?: string;
 }
 
 /**

@@ -54,6 +54,7 @@ import type {
   FieldMeta,
 } from "./types.js";
 import { toSlug, isValidSlug, type ToSlugType } from "../utils/toSlug.js";
+import { getCmsFieldType, getCmsFieldOptions } from "../fields.js";
 
 // =============================================================================
 // Content Type Name/Slug Handling
@@ -343,6 +344,7 @@ export interface DatabaseFieldDefinition {
   description?: string;
   defaultValue?: unknown;
   options?: Record<string, unknown>;
+  group?: string;
 }
 
 /**
@@ -374,7 +376,8 @@ export function toFieldDefinitions(
   return validatorFields.map((field) => {
     const meta = fieldMeta[field.name as keyof typeof fieldMeta] || {};
 
-    const fieldType = meta.renderAs || inferFieldType(field.validatorType);
+    const fieldType =
+      meta.renderAs || inferFieldType(field.validatorType, field.innerValidator);
 
     const fieldDef: DatabaseFieldDefinition = {
       name: field.name,
@@ -384,8 +387,15 @@ export function toFieldDefinitions(
       searchable: meta.searchable,
       localized: meta.localized,
       description: meta.description,
+      group: meta.group,
       options: buildFieldOptions(fieldType, meta),
     };
+
+    // Merge CMS field helper options (e.g. defaultCurrency from fields.money())
+    const cmsOptions = getCmsFieldOptions(field.innerValidator);
+    if (cmsOptions) {
+      fieldDef.options = { ...fieldDef.options, ...cmsOptions };
+    }
 
     // For arrayObject fields, extract sub-field definitions from the validator
     if (fieldType === "arrayObject" && field.innerValidator) {
@@ -524,7 +534,16 @@ function extractSubFieldDefinitions(
  *
  * @internal
  */
-function inferFieldType(validatorType: string): string {
+function inferFieldType(
+  validatorType: string,
+  innerValidator?: unknown
+): string {
+  // Check for CMS field helper metadata (e.g. fields.money())
+  const cmsType = getCmsFieldType(innerValidator);
+  if (cmsType) {
+    return cmsType;
+  }
+
   const typeMap: Record<string, string> = {
     string: "text",
     number: "number",
