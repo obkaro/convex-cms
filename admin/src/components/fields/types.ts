@@ -167,6 +167,16 @@ export interface NumberFieldProps extends BaseFieldProps<number | null> {
 }
 
 /**
+ * Props for money input field.
+ * Value is { amount: number (minor units), currency: string (ISO 4217) }.
+ */
+export interface MoneyFieldProps
+  extends BaseFieldProps<{ amount: number; currency: string } | null> {
+  /** Placeholder text */
+  placeholder?: string;
+}
+
+/**
  * Props for boolean toggle field.
  */
 export interface BooleanFieldProps extends BaseFieldProps<boolean> {

@@ -1,8 +1,8 @@
 import { useId, type ChangeEvent } from 'react'
 import { FieldWrapper } from './FieldWrapper'
 import type { NumberFieldProps } from './types'
-import { Input } from '~/components/ui/input'
-import { cn } from '~/lib/cn'
+import { Input } from '../ui/input'
+import { cn } from '../../lib/cn'
 
 export function NumberField({
   field,
@@ -39,30 +39,61 @@ export function NumberField({
     }
   }
 
-  const { min, max, step, precision } = field.options ?? {}
+  const { min, max, step, precision, prefix, suffix } = (field.options ?? {}) as {
+    min?: number
+    max?: number
+    step?: number
+    precision?: number
+    prefix?: string
+    suffix?: string
+  }
   const computedStep = step ?? (precision !== undefined ? Math.pow(10, -precision) : 'any')
+
+  const input = (
+    <Input
+      type="number"
+      id={id}
+      name={field.name}
+      value={value ?? ''}
+      onChange={handleChange}
+      disabled={disabled}
+      readOnly={readOnly}
+      required={field.required}
+      min={min}
+      max={max}
+      step={computedStep}
+      placeholder={placeholder}
+      className={cn(
+        prefix && 'pl-8',
+        suffix && 'pr-12',
+        error && 'border-destructive focus-visible:ring-destructive'
+      )}
+      aria-invalid={!!error}
+      aria-describedby={
+        error ? `${id}-error` : field.description ? `${id}-description` : undefined
+      }
+    />
+  )
 
   return (
     <FieldWrapper field={field} error={error} className={className} id={id}>
-      <Input
-        type="number"
-        id={id}
-        name={field.name}
-        value={value ?? ''}
-        onChange={handleChange}
-        disabled={disabled}
-        readOnly={readOnly}
-        required={field.required}
-        min={min}
-        max={max}
-        step={computedStep}
-        placeholder={placeholder}
-        className={cn(error && 'border-destructive focus-visible:ring-destructive')}
-        aria-invalid={!!error}
-        aria-describedby={
-          error ? `${id}-error` : field.description ? `${id}-description` : undefined
-        }
-      />
+      {prefix || suffix ? (
+        <div className="relative">
+          {prefix && (
+            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+              {prefix}
+            </span>
+          )}
+          {input}
+          {suffix && (
+            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-muted-foreground">
+              {suffix}
+            </span>
+          )}
+        </div>
+      ) : (
+        input
+      )}
       {(min !== undefined || max !== undefined) && (
         <span className="mt-1 block text-xs text-muted-foreground">
           {min !== undefined && max !== undefined

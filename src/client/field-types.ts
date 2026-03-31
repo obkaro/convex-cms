@@ -101,6 +101,33 @@ const BUILT_IN_TYPES: FieldTypeDefinition[] = [
     validator: v.union(v.string(), v.array(v.string()), v.null()),
     defaultValue: null,
   },
+  {
+    name: "money",
+    displayName: "Money",
+    icon: "DollarSign",
+    validator: v.object({ amount: v.number(), currency: v.string() }),
+    defaultValue: { amount: 0, currency: "CAD" },
+    extractSearchText: (value: unknown) => {
+      const v = value as { amount?: number };
+      return String((v?.amount ?? 0) / 100);
+    },
+    validate: (value: unknown) => {
+      if (typeof value !== "object" || value === null) {
+        return { valid: false, error: "Money value must be an object with amount and currency" };
+      }
+      const v = value as Record<string, unknown>;
+      if (typeof v.amount !== "number" || !Number.isInteger(v.amount)) {
+        return { valid: false, error: "Amount must be a whole number in minor units (e.g. cents)" };
+      }
+      if (v.amount < 0) {
+        return { valid: false, error: "Amount cannot be negative" };
+      }
+      if (typeof v.currency !== "string" || v.currency.length !== 3) {
+        return { valid: false, error: "Currency must be a 3-letter ISO 4217 code" };
+      }
+      return { valid: true };
+    },
+  },
 ];
 
 BUILT_IN_TYPES.forEach((type) => fieldTypeRegistry.set(type.name, type));

@@ -27,6 +27,7 @@ const BUILT_IN_RENDERERS = new Set([
   "reference",
   "tags",
   "category",
+  "money",
 ]);
 
 export function registerFieldRenderer(fieldType: string, renderer: FieldRendererComponent): void {

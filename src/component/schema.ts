@@ -15,6 +15,7 @@ export const fieldTypes = [
 	"multiSelect",
 	"tags",
 	"category",
+	"money",
 ] as const;
 
 export const fieldTypeValidator = v.union(
@@ -31,6 +32,7 @@ export const fieldTypeValidator = v.union(
 	v.literal("multiSelect"),
 	v.literal("tags"),
 	v.literal("category"),
+	v.literal("money"),
 );
 
 /**
@@ -176,7 +178,8 @@ export const tagsFieldDefinitionValidator = v.object({
 	...baseFieldDefinition,
 	type: v.literal("tags"),
 	options: v.optional(v.object({
-		taxonomyId: v.optional(v.id("taxonomies")),
+		taxonomyId: v.optional(v.string()),
+		taxonomyName: v.optional(v.string()),
 		allowCreate: v.optional(v.boolean()),
 		maxTags: v.optional(v.number()),
 		minTags: v.optional(v.number()),
@@ -187,8 +190,9 @@ export const categoryFieldDefinitionValidator = v.object({
 	...baseFieldDefinition,
 	type: v.literal("category"),
 	options: v.optional(v.object({
-		allowMultiple: v.optional(v.boolean()),
+		taxonomyId: v.optional(v.string()),
 		taxonomyName: v.optional(v.string()),
+		allowMultiple: v.optional(v.boolean()),
 		maxSelections: v.optional(v.number()),
 		depth: v.optional(v.number()),
 	})),
@@ -522,6 +526,22 @@ const schema = defineSchema({
 		.index("by_taxonomy", ["taxonomyId"])
 		.index("by_media_and_taxonomy", ["mediaId", "taxonomyId"])
 		.index("by_taxonomy_and_term", ["taxonomyId", "termId"]),
+	cmsUserRoles: defineTable({
+		externalUserId: v.string(),
+		role: v.string(),
+		displayName: v.optional(v.string()),
+		email: v.optional(v.string()),
+		avatarUrl: v.optional(v.string()),
+		lastAccessedAt: v.optional(v.number()),
+		createdAt: v.number(),
+		createdBy: v.optional(v.string()),
+		updatedAt: v.optional(v.number()),
+		updatedBy: v.optional(v.string()),
+		status: v.union(v.literal("active"), v.literal("invited"), v.literal("revoked")),
+	})
+		.index("by_external_user_id", ["externalUserId"])
+		.index("by_role", ["role"])
+		.index("by_status", ["status"]),
 	trashConfig: defineTable({
 		retentionDays: v.number(),
 		autoCleanupEnabled: v.boolean(),

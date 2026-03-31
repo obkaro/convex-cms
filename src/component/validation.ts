@@ -46,8 +46,9 @@ export interface FieldOptions {
   allowedBlocks?: string[];
   allowedMarks?: string[];
 
-  // Tag fields
+  // Tag and category fields
   taxonomyId?: string;
+  taxonomyName?: string;
   allowCreate?: boolean;
   maxTags?: number;
   minTags?: number;
@@ -304,6 +305,100 @@ export function validateNumberField(
       field: name,
       message: `${name} must be at most ${options.max}`,
       code: "MAX_VALUE",
+    });
+  }
+
+  return errors;
+}
+
+/**
+ * Validate a money field value against its configuration.
+ *
+ * Money fields store `{ amount: number, currency: string }` where
+ * `amount` is in minor units (e.g. cents) and `currency` is ISO 4217.
+ */
+export function validateMoneyField(
+  value: unknown,
+  fieldDef: FieldDefinition
+): ValidationError[] {
+  const errors: ValidationError[] = [];
+  const { name, required, options } = fieldDef;
+
+  // Check required
+  if (required && (value === null || value === undefined)) {
+    errors.push({
+      field: name,
+      message: `${name} is required`,
+      code: "REQUIRED",
+    });
+    return errors;
+  }
+
+  // Skip further validation if empty and not required
+  if (value === null || value === undefined) {
+    return errors;
+  }
+
+  // Structure check
+  if (typeof value !== "object" || !("amount" in value) || !("currency" in value)) {
+    errors.push({
+      field: name,
+      message: `${name} must have amount and currency`,
+      code: "INVALID_TYPE",
+    });
+    return errors;
+  }
+
+  const money = value as { amount: unknown; currency: unknown };
+
+  // Amount must be an integer (minor units)
+  if (typeof money.amount !== "number" || isNaN(money.amount)) {
+    errors.push({
+      field: name,
+      message: `${name} amount must be a number`,
+      code: "INVALID_TYPE",
+    });
+    return errors;
+  }
+
+  if (!Number.isInteger(money.amount)) {
+    errors.push({
+      field: name,
+      message: `${name} amount must be a whole number (minor units)`,
+      code: "NOT_INTEGER",
+    });
+  }
+
+  if (money.amount < 0) {
+    errors.push({
+      field: name,
+      message: `${name} amount cannot be negative`,
+      code: "MIN_VALUE",
+    });
+  }
+
+  // Min/max from options (if provided, in minor units)
+  if (options?.min !== undefined && money.amount < options.min) {
+    errors.push({
+      field: name,
+      message: `${name} must be at least ${options.min}`,
+      code: "MIN_VALUE",
+    });
+  }
+  if (options?.max !== undefined && money.amount > options.max) {
+    errors.push({
+      field: name,
+      message: `${name} must be at most ${options.max}`,
+      code: "MAX_VALUE",
+    });
+  }
+
+  // Currency must be a 3-letter string
+  if (typeof money.currency !== "string" || money.currency.length !== 3) {
+    errors.push({
+      field: name,
+      message: `${name} currency must be a 3-letter ISO 4217 code`,
+      code: "INVALID_TYPE",
     });
   }
 
@@ -1116,6 +1211,8 @@ function validateSingleValue(
       return validateTagsField(value, fieldDef);
     case "category":
       return validateCategoryField(value, fieldDef);
+    case "money":
+      return validateMoneyField(value, fieldDef);
     default: {
       // Unknown field type
       return [

@@ -13,6 +13,7 @@ export { FieldRenderer } from './FieldRenderer';
 export { TextField } from './TextField';
 export { TextAreaField } from './TextAreaField';
 export { NumberField } from './NumberField';
+export { MoneyField } from './MoneyField';
 export { BooleanField } from './BooleanField';
 export { DateField } from './DateField';
 export { RichTextField } from './RichTextField';
@@ -47,6 +48,7 @@ export type {
   TextFieldProps,
   TextAreaFieldProps,
   NumberFieldProps,
+  MoneyFieldProps,
   BooleanFieldProps,
   DateFieldProps,
   RichTextFieldProps,

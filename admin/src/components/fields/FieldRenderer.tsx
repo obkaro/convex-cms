@@ -12,6 +12,7 @@ import { MediaField } from "./MediaField";
 import { ReferenceField } from "./ReferenceField";
 import { TagField } from "./TagField";
 import { CategoryField } from "./CategoryField";
+import { MoneyField } from "./MoneyField";
 import { DefaultFieldRenderer } from "./DefaultFieldRenderer";
 import { getFieldRenderer } from "./registry";
 
@@ -163,6 +164,21 @@ export function FieldRenderer({
           {...commonProps}
           value={(value as string | string[] | null) ?? null}
           onChange={onChange as (value: string | string[] | null) => void}
+        />
+      );
+
+    case "money":
+      return (
+        <MoneyField
+          {...commonProps}
+          value={
+            (value as { amount: number; currency: string } | null) ?? null
+          }
+          onChange={
+            onChange as (
+              value: { amount: number; currency: string } | null
+            ) => void
+          }
         />
       );
 

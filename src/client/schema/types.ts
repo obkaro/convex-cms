@@ -209,6 +209,23 @@ export interface FieldMeta {
   suffix?: string;
 
   // ==========================================================================
+  // Money Field Options
+  // ==========================================================================
+
+  /**
+   * Default currency for money fields (ISO 4217 code).
+   * @example "CAD", "USD", "EUR"
+   */
+  defaultCurrency?: string;
+
+  /**
+   * Allowed currencies for money fields.
+   * If set, only these currencies can be selected.
+   * @example ["CAD", "USD"]
+   */
+  allowedCurrencies?: string[];
+
+  // ==========================================================================
   // Boolean Field Options
   // ==========================================================================
 
