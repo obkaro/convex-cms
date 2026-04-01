@@ -1,26 +1,33 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { useMutation } from 'convex/react'
+import { toast } from 'sonner'
 import { useApi } from '../embed/contexts/ApiContext'
-import { FieldRenderer } from './fields/FieldRenderer'
-import { FieldGroupSection, groupFields } from './FieldGroupSection'
 import { VersionHistory } from './VersionHistory'
 import type { FieldDefinition, FieldError } from './fields/types'
 import { parseServerError, isRetryableError } from '../utils'
 import { useSettingsConfig } from '../contexts'
-import { CmsButton } from './cmsds/CmsButton'
-import { CmsStatusBadge } from './cmsds/CmsStatusBadge'
-import { CmsDialog, CmsConfirmDialog } from './cmsds/CmsDialog'
-import { Badge as _Badge } from './ui/badge'
-import { Input } from './ui/input'
 import {
-  CheckCircle,
-  AlertCircle,
-  Loader2,
-  RefreshCw,
-  History,
-  Clock,
-} from 'lucide-react'
-import { cn } from '../lib/cn'
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from './ui/alert-dialog'
+import {
+  EditorToolbar,
+  EditorContentPanel,
+  EditorPropertiesPanel,
+  ScheduleModal,
+  PublishConfirmModal,
+  DeleteConfirmModal,
+} from './editor'
+import { Sheet, SheetContent, SheetTitle } from './ui/sheet'
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from './ui/drawer'
+
+// --- Utility functions ---
 
 function formatDateTimeLocal(timestamp: number): string {
   const date = new Date(timestamp)
@@ -82,6 +89,8 @@ function transformDataForBackend(
   return transformed
 }
 
+// --- Types ---
+
 export interface ContentType {
   _id: string
   name: string
@@ -112,10 +121,15 @@ interface ContentEntryEditorProps {
   onSave?: (entry: ContentEntry) => void
   onCancel?: () => void
   onDelete?: () => void
+  onNavigateToEntry?: (entryId: string) => void
+  onNavigateToNewEntry?: () => void
+  siblingEntries?: Array<{ _id: string; title: string }>
   autosaveEnabled?: boolean
   autosaveInterval?: number
   canDelete?: boolean
 }
+
+// --- Main Component ---
 
 export function ContentEntryEditor({
   contentType,
@@ -123,11 +137,16 @@ export function ContentEntryEditor({
   onSave,
   onCancel,
   onDelete,
+  onNavigateToEntry,
+  onNavigateToNewEntry,
+  siblingEntries,
   autosaveEnabled = true,
   autosaveInterval = 30000,
   canDelete: canDeleteProp = false,
 }: ContentEntryEditorProps) {
   const { settings } = useSettingsConfig()
+
+  // --- Initial data ---
 
   const getInitialData = useCallback(() => {
     if (entry) {
@@ -167,37 +186,19 @@ export function ContentEntryEditor({
     return defaults
   }, [contentType.fields, entry])
 
-  const [formData, setFormData] =
-    useState<Record<string, unknown>>(getInitialData)
+  // --- State ---
+
+  const [formData, setFormData] = useState<Record<string, unknown>>(getInitialData)
   const [fieldErrors, setFieldErrors] = useState<Record<string, FieldError>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isDirty, setIsDirty] = useState(false)
-  const [_lastSavedData, setLastSavedData] = useState<Record<
-    string,
-    unknown
-  > | null>(entry ? { ...entry.data } : null)
-  const [autosaveStatus, setAutosaveStatus] = useState<
-    'idle' | 'saving' | 'saved' | 'error'
-  >('idle')
+  const [_lastSavedData, setLastSavedData] = useState<Record<string, unknown> | null>(
+    entry ? { ...entry.data } : null
+  )
+  const [autosaveStatus, setAutosaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [autosaveError, setAutosaveError] = useState<string | null>(null)
   const [autosaveRetryCount, setAutosaveRetryCount] = useState(0)
-  const [submitError, setSubmitError] = useState<string | null>(null)
-  const [saveSuccess, setSaveSuccess] = useState(false)
   const maxAutosaveRetries = 3
-
-  const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const formDataRef = useRef(formData)
-  formDataRef.current = formData
-
-  const api = useApi()
-  const createEntry = useMutation(api.createEntry)
-  const updateEntry = useMutation(api.updateEntry)
-  const publishEntry = useMutation(api.publishEntry)
-  const unpublishEntry = useMutation(api.unpublishEntry)
-  const scheduleEntry = useMutation(api.scheduleEntry)
-  const cancelScheduleEntry = useMutation(api.cancelScheduledEntry)
-  const deleteEntryMutation = useMutation(api.deleteEntry)
-  const duplicateEntryMutation = useMutation(api.duplicateEntry)
 
   const [showScheduleModal, setShowScheduleModal] = useState(false)
   const [scheduleDateTime, setScheduleDateTime] = useState<string>(() => {
@@ -209,22 +210,50 @@ export function ContentEntryEditor({
   const [isPublishing, setIsPublishing] = useState(false)
   const [publishError, setPublishError] = useState<string | null>(null)
 
+  const [showConfirmModal, setShowConfirmModal] = useState(false)
+  const [confirmAction, setConfirmAction] = useState<'publish' | 'unpublish' | null>(null)
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+
+  const [isDuplicating, setIsDuplicating] = useState(false)
+  const [isArchiving, setIsArchiving] = useState(false)
+  const [showVersionHistory, setShowVersionHistory] = useState(false)
+  const [showMobileProperties, setShowMobileProperties] = useState(false)
+  const [showUnsavedWarning, setShowUnsavedWarning] = useState(false)
+
+  const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const formDataRef = useRef(formData)
+  formDataRef.current = formData
+
+  // --- Mutations ---
+
+  const api = useApi()
+  const createEntry = useMutation(api.createEntry)
+  const updateEntry = useMutation(api.updateEntry)
+  const publishEntry = useMutation(api.publishEntry)
+  const unpublishEntry = useMutation(api.unpublishEntry)
+  const scheduleEntry = useMutation(api.scheduleEntry)
+  const cancelScheduleEntry = useMutation(api.cancelScheduledEntry)
+  const deleteEntryMutation = useMutation(api.deleteEntry)
+  const duplicateEntryMutation = useMutation(api.duplicateEntry)
+
+  // --- Effects ---
+
   useEffect(() => {
     const newData = getInitialData()
     setFormData(newData)
     setFieldErrors({})
     setIsDirty(false)
     setLastSavedData(entry ? { ...entry.data } : null)
-    setSubmitError(null)
   }, [entry?._id, getInitialData])
 
-  const handleFieldChange = useCallback((fieldName: string, value: unknown) => {
-    setFormData((prev) => {
-      const updated = { ...prev, [fieldName]: value }
-      return updated
-    })
-    setIsDirty(true)
+  // --- Field handling ---
 
+  const handleFieldChange = useCallback((fieldName: string, value: unknown) => {
+    setFormData((prev) => ({ ...prev, [fieldName]: value }))
+    setIsDirty(true)
     setFieldErrors((prev) => {
       if (prev[fieldName]) {
         const { [fieldName]: _removed, ...rest } = prev
@@ -233,6 +262,8 @@ export function ContentEntryEditor({
       return prev
     })
   }, [])
+
+  // --- Validation ---
 
   const validateForm = useCallback(async (): Promise<boolean> => {
     const errors: Record<string, FieldError> = {}
@@ -248,10 +279,7 @@ export function ContentEntryEditor({
           (Array.isArray(value) && value.length === 0)
 
         if (isEmpty) {
-          errors[field.name] = {
-            message: `${field.label} is required`,
-            code: 'REQUIRED',
-          }
+          errors[field.name] = { message: `${field.label} is required`, code: 'REQUIRED' }
           continue
         }
       }
@@ -262,79 +290,47 @@ export function ContentEntryEditor({
             const strValue = String(value)
             const opts = field.options
             if (opts?.minLength && strValue.length < opts.minLength) {
-              errors[field.name] = {
-                message: `Minimum ${opts.minLength} characters required`,
-                code: 'MIN_LENGTH',
-              }
+              errors[field.name] = { message: `Minimum ${opts.minLength} characters required`, code: 'MIN_LENGTH' }
             } else if (opts?.maxLength && strValue.length > opts.maxLength) {
-              errors[field.name] = {
-                message: `Maximum ${opts.maxLength} characters allowed`,
-                code: 'MAX_LENGTH',
-              }
+              errors[field.name] = { message: `Maximum ${opts.maxLength} characters allowed`, code: 'MAX_LENGTH' }
             } else if (opts?.pattern) {
               const regex = new RegExp(opts.pattern)
               if (!regex.test(strValue)) {
-                errors[field.name] = {
-                  message: 'Value does not match the required format',
-                  code: 'PATTERN_MISMATCH',
-                }
+                errors[field.name] = { message: 'Value does not match the required format', code: 'PATTERN_MISMATCH' }
               }
             }
             break
           }
-
           case 'number': {
             const numValue = Number(value)
             const opts = field.options
             if (isNaN(numValue)) {
-              errors[field.name] = {
-                message: 'Must be a valid number',
-                code: 'INVALID_TYPE',
-              }
+              errors[field.name] = { message: 'Must be a valid number', code: 'INVALID_TYPE' }
             } else {
               if (opts?.min !== undefined && numValue < opts.min) {
-                errors[field.name] = {
-                  message: `Minimum value is ${opts.min}`,
-                  code: 'MIN_VALUE',
-                }
+                errors[field.name] = { message: `Minimum value is ${opts.min}`, code: 'MIN_VALUE' }
               } else if (opts?.max !== undefined && numValue > opts.max) {
-                errors[field.name] = {
-                  message: `Maximum value is ${opts.max}`,
-                  code: 'MAX_VALUE',
-                }
+                errors[field.name] = { message: `Maximum value is ${opts.max}`, code: 'MAX_VALUE' }
               } else if (opts?.precision === 0 && !Number.isInteger(numValue)) {
-                errors[field.name] = {
-                  message: 'Must be a whole number',
-                  code: 'NOT_INTEGER',
-                }
+                errors[field.name] = { message: 'Must be a whole number', code: 'NOT_INTEGER' }
               }
             }
             break
           }
-
           case 'select': {
             const opts = field.options
             if (opts?.options && !opts.options.some((o) => o.value === value)) {
-              errors[field.name] = {
-                message: 'Please select a valid option',
-                code: 'INVALID_OPTION',
-              }
+              errors[field.name] = { message: 'Please select a valid option', code: 'INVALID_OPTION' }
             }
             break
           }
-
           case 'multiSelect': {
             const opts = field.options
             if (Array.isArray(value) && opts?.options) {
               const validValues = opts.options.map((o) => o.value)
-              const invalid = value.filter(
-                (v) => !validValues.includes(String(v))
-              )
+              const invalid = value.filter((v) => !validValues.includes(String(v)))
               if (invalid.length > 0) {
-                errors[field.name] = {
-                  message: 'Contains invalid options',
-                  code: 'INVALID_OPTION',
-                }
+                errors[field.name] = { message: 'Contains invalid options', code: 'INVALID_OPTION' }
               }
             }
             break
@@ -347,10 +343,11 @@ export function ContentEntryEditor({
     return Object.keys(errors).length === 0
   }, [contentType.fields, formData])
 
+  // --- Autosave ---
+
   const autosaveDraft = useCallback(
     async (retryAttempt = 0) => {
       if (!isDirty || !entry) return
-
       if (entry.status !== 'draft') return
 
       try {
@@ -366,29 +363,18 @@ export function ContentEntryEditor({
         setAutosaveStatus('saved')
         setIsDirty(false)
         setAutosaveRetryCount(0)
-
-        setTimeout(() => {
-          setAutosaveStatus('idle')
-        }, 3000)
+        setTimeout(() => setAutosaveStatus('idle'), 3000)
       } catch (error) {
         console.error('Autosave failed:', error)
-
-        const errorMessage =
-          error instanceof Error ? error.message : 'Failed to save'
-        const canRetry =
-          isRetryableError(error) && retryAttempt < maxAutosaveRetries
+        const errorMessage = error instanceof Error ? error.message : 'Failed to save'
+        const canRetry = isRetryableError(error) && retryAttempt < maxAutosaveRetries
 
         if (canRetry) {
           const retryDelay = Math.min(1000 * Math.pow(2, retryAttempt), 10000)
           setAutosaveStatus('error')
-          setAutosaveError(
-            `Save failed, retrying in ${Math.round(retryDelay / 1000)}s...`
-          )
+          setAutosaveError(`Save failed, retrying in ${Math.round(retryDelay / 1000)}s...`)
           setAutosaveRetryCount(retryAttempt + 1)
-
-          setTimeout(() => {
-            autosaveDraft(retryAttempt + 1)
-          }, retryDelay)
+          setTimeout(() => autosaveDraft(retryAttempt + 1), retryDelay)
         } else {
           setAutosaveStatus('error')
           setAutosaveError(errorMessage)
@@ -405,39 +391,64 @@ export function ContentEntryEditor({
   }, [autosaveDraft])
 
   useEffect(() => {
-    if (!autosaveEnabled || !entry || entry.status !== 'draft') {
-      return
-    }
-
-    if (autosaveTimerRef.current) {
-      clearTimeout(autosaveTimerRef.current)
-    }
-
+    if (!autosaveEnabled || !entry || entry.status !== 'draft') return
+    if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current)
     if (isDirty) {
-      autosaveTimerRef.current = setTimeout(() => {
-        autosaveDraft()
-      }, autosaveInterval)
+      autosaveTimerRef.current = setTimeout(() => autosaveDraft(), autosaveInterval)
     }
-
     return () => {
-      if (autosaveTimerRef.current) {
-        clearTimeout(autosaveTimerRef.current)
-      }
+      if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current)
     }
   }, [autosaveEnabled, autosaveInterval, isDirty, entry, autosaveDraft])
 
-  const [showConfirmModal, setShowConfirmModal] = useState(false)
-  const [confirmAction, setConfirmAction] = useState<
-    'publish' | 'unpublish' | null
-  >(null)
+  // --- Handlers ---
 
-  const [showDeleteModal, setShowDeleteModal] = useState(false)
-  const [isDeleting, setIsDeleting] = useState(false)
-  const [deleteError, setDeleteError] = useState<string | null>(null)
+  const handleSubmit = useCallback(async () => {
+    const isValid = await validateForm()
+    if (!isValid) return
 
-  const [isDuplicating, setIsDuplicating] = useState(false)
-  const [isArchiving, setIsArchiving] = useState(false)
-  const [showVersionHistory, setShowVersionHistory] = useState(false)
+    setIsSubmitting(true)
+    try {
+      let savedEntry: ContentEntry
+      const dataForBackend = transformDataForBackend(formData, contentType.fields)
+
+      if (entry) {
+        savedEntry = (await updateEntry({ id: entry._id, data: dataForBackend })) as ContentEntry
+      } else {
+        savedEntry = (await createEntry({
+          contentTypeName: contentType.name,
+          data: dataForBackend,
+        })) as ContentEntry
+      }
+
+      setIsDirty(false)
+      setLastSavedData({ ...formData })
+      toast.success('Changes saved')
+      onSave?.(savedEntry)
+    } catch (error) {
+      const { fieldErrors: serverFieldErrors, generalError } = parseServerError(error)
+      const message = generalError ?? (error instanceof Error ? error.message : 'Failed to save entry')
+      toast.error('Failed to save', { description: message })
+      if (Object.keys(serverFieldErrors).length > 0) {
+        setFieldErrors((prev) => ({ ...prev, ...serverFieldErrors }))
+      }
+    } finally {
+      setIsSubmitting(false)
+    }
+  }, [validateForm, entry, formData, contentType.fields, contentType.name, contentType._id, createEntry, updateEntry, onSave])
+
+  const handleCancel = useCallback(() => {
+    if (isDirty) {
+      setShowUnsavedWarning(true)
+      return
+    }
+    onCancel?.()
+  }, [isDirty, onCancel])
+
+  const handleConfirmLeave = useCallback(() => {
+    setShowUnsavedWarning(false)
+    onCancel?.()
+  }, [onCancel])
 
   const handlePublishClick = useCallback(() => {
     setConfirmAction('publish')
@@ -451,52 +462,37 @@ export function ContentEntryEditor({
 
   const handleConfirmAction = useCallback(async () => {
     if (!entry || !confirmAction) return
-
     setShowConfirmModal(false)
     setIsPublishing(true)
     setPublishError(null)
 
     try {
       if (confirmAction === 'publish') {
-        const publishedEntry = (await publishEntry({
-          id: entry._id,
-          changeDescription: 'Published from editor',
-        })) as ContentEntry
+        const publishedEntry = (await publishEntry({ id: entry._id, changeDescription: 'Published from editor' })) as ContentEntry
+        toast.success('Entry published')
         onSave?.(publishedEntry)
       } else {
-        const draftEntry = (await unpublishEntry({
-          id: entry._id,
-        })) as ContentEntry
+        const draftEntry = (await unpublishEntry({ id: entry._id })) as ContentEntry
+        toast.success('Entry unpublished')
         onSave?.(draftEntry)
       }
     } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : `Failed to ${confirmAction}`
-      setPublishError(message)
+      toast.error(`Failed to ${confirmAction}`, { description: error instanceof Error ? error.message : undefined })
     } finally {
       setIsPublishing(false)
       setConfirmAction(null)
     }
   }, [entry, confirmAction, publishEntry, unpublishEntry, onSave])
 
-  const handlePublish = useCallback(async () => {
+  const handlePublishNow = useCallback(async () => {
     if (!entry) return
-
     setIsPublishing(true)
-    setPublishError(null)
-
     try {
-      const publishedEntry = (await publishEntry({
-        id: entry._id,
-        changeDescription: 'Published from editor',
-      })) as ContentEntry
+      const publishedEntry = (await publishEntry({ id: entry._id, changeDescription: 'Published from editor' })) as ContentEntry
+      toast.success('Entry published')
       onSave?.(publishedEntry)
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'Failed to publish'
-      setPublishError(message)
+      toast.error('Failed to publish', { description: error instanceof Error ? error.message : undefined })
     } finally {
       setIsPublishing(false)
     }
@@ -504,29 +500,19 @@ export function ContentEntryEditor({
 
   const handleSchedule = useCallback(async () => {
     if (!entry) return
-
     const publishAt = parseDateTimeLocal(scheduleDateTime)
-    const minimumTime = Date.now() + 60 * 1000
-
-    if (publishAt < minimumTime) {
+    if (publishAt < Date.now() + 60 * 1000) {
       setPublishError('Schedule time must be at least 1 minute in the future')
       return
     }
-
     setIsPublishing(true)
     setPublishError(null)
-
     try {
-      const scheduledEntry = (await scheduleEntry({
-        id: entry._id,
-        publishAt,
-      })) as ContentEntry
+      const scheduledEntry = (await scheduleEntry({ id: entry._id, publishAt })) as ContentEntry
       setShowScheduleModal(false)
       onSave?.(scheduledEntry)
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'Failed to schedule'
-      setPublishError(message)
+      setPublishError(error instanceof Error ? error.message : 'Failed to schedule')
     } finally {
       setIsPublishing(false)
     }
@@ -534,19 +520,13 @@ export function ContentEntryEditor({
 
   const handleCancelSchedule = useCallback(async () => {
     if (!entry) return
-
     setIsPublishing(true)
     setPublishError(null)
-
     try {
-      const draftEntry = (await cancelScheduleEntry({
-        id: entry._id,
-      })) as ContentEntry
+      const draftEntry = (await cancelScheduleEntry({ id: entry._id })) as ContentEntry
       onSave?.(draftEntry)
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'Failed to cancel schedule'
-      setPublishError(message)
+      setPublishError(error instanceof Error ? error.message : 'Failed to cancel schedule')
     } finally {
       setIsPublishing(false)
     }
@@ -559,21 +539,14 @@ export function ContentEntryEditor({
 
   const handleDeleteConfirm = useCallback(async () => {
     if (!entry) return
-
     setIsDeleting(true)
     setDeleteError(null)
-
     try {
-      await deleteEntryMutation({
-        id: entry._id,
-        hardDelete: false,
-      })
+      await deleteEntryMutation({ id: entry._id, hardDelete: false })
       setShowDeleteModal(false)
       onDelete?.()
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'Failed to delete entry'
-      setDeleteError(message)
+      setDeleteError(error instanceof Error ? error.message : 'Failed to delete entry')
     } finally {
       setIsDeleting(false)
     }
@@ -581,19 +554,13 @@ export function ContentEntryEditor({
 
   const handleDuplicate = useCallback(async () => {
     if (!entry) return
-
     setIsDuplicating(true)
-    setSubmitError(null)
-
     try {
-      const duplicatedEntry = (await duplicateEntryMutation({
-        sourceEntryId: entry._id,
-      })) as ContentEntry
+      const duplicatedEntry = (await duplicateEntryMutation({ sourceEntryId: entry._id })) as ContentEntry
+      toast.success('Entry duplicated')
       onSave?.(duplicatedEntry)
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'Failed to duplicate entry'
-      setSubmitError(message)
+      toast.error('Failed to duplicate', { description: error instanceof Error ? error.message : undefined })
     } finally {
       setIsDuplicating(false)
     }
@@ -601,483 +568,196 @@ export function ContentEntryEditor({
 
   const handleArchive = useCallback(async () => {
     if (!entry) return
-
     setIsArchiving(true)
-    setSubmitError(null)
-
     try {
-      const archivedEntry = (await updateEntry({
-        id: entry._id,
-        status: 'archived',
-      })) as ContentEntry
+      const archivedEntry = (await updateEntry({ id: entry._id, status: 'archived' })) as ContentEntry
+      toast.success('Entry archived')
       onSave?.(archivedEntry)
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'Failed to archive entry'
-      setSubmitError(message)
+      toast.error('Failed to archive', { description: error instanceof Error ? error.message : undefined })
     } finally {
       setIsArchiving(false)
     }
   }, [entry, updateEntry, onSave])
 
-  const handleSubmit = useCallback(
-    async (e: React.FormEvent) => {
-      e.preventDefault()
-      setSubmitError(null)
+  // --- Derived ---
 
-      const isValid = await validateForm()
-      if (!isValid) {
-        return
-      }
+  const entryTitle = contentType.titleField
+    ? (formData[contentType.titleField] as string) || undefined
+    : undefined
 
-      setIsSubmitting(true)
+  const hasScheduling = !!settings?.features.scheduling
+  const hasVersioning = !!settings?.features.versioning
 
-      try {
-        let savedEntry: ContentEntry
-
-        const dataForBackend = transformDataForBackend(
-          formData,
-          contentType.fields
-        )
-
-        if (entry) {
-          savedEntry = (await updateEntry({
-            id: entry._id,
-            data: dataForBackend,
-          })) as ContentEntry
-        } else {
-          savedEntry = (await createEntry({
-            contentTypeName: contentType.name,
-            data: dataForBackend,
-          })) as ContentEntry
-        }
-
-        setIsDirty(false)
-        setLastSavedData({ ...formData })
-        setSaveSuccess(true)
-        setTimeout(() => setSaveSuccess(false), 3000)
-        onSave?.(savedEntry)
-      } catch (error) {
-        const { fieldErrors: serverFieldErrors, generalError } =
-          parseServerError(error)
-        const message =
-          generalError ??
-          (error instanceof Error ? error.message : 'Failed to save entry')
-
-        setSubmitError(message)
-
-        if (Object.keys(serverFieldErrors).length > 0) {
-          setFieldErrors((prev) => ({ ...prev, ...serverFieldErrors }))
-        }
-      } finally {
-        setIsSubmitting(false)
-      }
-    },
-    [
-      validateForm,
-      entry,
-      formData,
-      contentType._id,
-      createEntry,
-      updateEntry,
-      onSave,
-    ]
-  )
-
-  const handleCancel = useCallback(() => {
-    if (isDirty) {
-      const confirmed = window.confirm(
-        'You have unsaved changes. Are you sure you want to leave?'
-      )
-      if (!confirmed) return
-    }
-    onCancel?.()
-  }, [isDirty, onCancel])
-
-  const getAutosaveStatusText = () => {
-    switch (autosaveStatus) {
-      case 'saving':
-        return autosaveRetryCount > 0
-          ? `Retrying (${autosaveRetryCount}/${maxAutosaveRetries})...`
-          : 'Saving...'
-      case 'saved':
-        return 'Draft saved'
-      case 'error':
-        return autosaveError ?? 'Autosave failed'
-      default:
-        return null
-    }
-  }
+  // --- Render ---
 
   return (
-    <form className="space-y-6" onSubmit={handleSubmit}>
-      {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <h2 className="text-xl font-semibold">
-            {entry ? 'Edit' : 'Create'} {contentType.displayName}
-          </h2>
-          {entry && <CmsStatusBadge status={entry.status} />}
+    <div className="flex h-full flex-col">
+      {/* Sticky Toolbar */}
+      <EditorToolbar
+        contentType={contentType}
+        entry={entry}
+        entryTitle={entryTitle}
+        isDirty={isDirty}
+        isSubmitting={isSubmitting}
+        isPublishing={isPublishing}
+        autosaveStatus={autosaveStatus}
+        autosaveError={autosaveError}
+        autosaveRetryCount={autosaveRetryCount}
+        maxAutosaveRetries={maxAutosaveRetries}
+        canDelete={canDeleteProp}
+        hasScheduling={hasScheduling}
+        onSave={handleSubmit}
+        onCancel={handleCancel}
+        onPublishClick={handlePublishClick}
+        onUnpublishClick={handleUnpublishClick}
+        onScheduleClick={() => setShowScheduleModal(true)}
+        onCancelSchedule={handleCancelSchedule}
+        onPublishNow={handlePublishNow}
+        onDuplicate={handleDuplicate}
+        onArchive={handleArchive}
+        onDelete={handleDeleteClick}
+        onAutosaveRetry={handleAutosaveRetry}
+        onToggleProperties={() => setShowMobileProperties(true)}
+        siblingEntries={siblingEntries}
+        onNavigateToEntry={onNavigateToEntry}
+        onNavigateToNewEntry={onNavigateToNewEntry}
+      />
+
+      {/* Unsaved changes warning */}
+      <AlertDialog open={showUnsavedWarning} onOpenChange={setShowUnsavedWarning}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Unsaved changes</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have unsaved changes that will be lost if you leave.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep editing</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmLeave} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Discard changes
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Two-panel layout — each panel scrolls independently */}
+      <div className="flex min-h-0 flex-1">
+        {/* Content panel — independent scroll */}
+        <div className="min-w-0 flex-1 overflow-y-auto p-6">
+          <EditorContentPanel
+            fields={contentType.fields as FieldDefinition[]}
+            formData={formData}
+            fieldErrors={fieldErrors}
+            isSubmitting={isSubmitting}
+            onFieldChange={handleFieldChange}
+          />
         </div>
 
-        <div className="flex items-center gap-3">
-          {autosaveStatus !== 'idle' && (
-            <div className="flex items-center gap-2">
-              <span
-                className={cn(
-                  'flex items-center gap-1.5 text-sm',
-                  autosaveStatus === 'saving' && 'text-muted-foreground',
-                  autosaveStatus === 'saved' && 'text-success',
-                  autosaveStatus === 'error' && 'text-destructive'
-                )}
-                data-testid="autosave-status"
-              >
-                {autosaveStatus === 'saving' && (
-                  <Loader2 className="size-3 animate-spin" />
-                )}
-                {autosaveStatus === 'saved' && (
-                  <CheckCircle className="size-3" />
-                )}
-                {autosaveStatus === 'error' && (
-                  <AlertCircle className="size-3" />
-                )}
-                {getAutosaveStatusText()}
-              </span>
-              {autosaveStatus === 'error' && autosaveRetryCount === 0 && (
-                <button
-                  type="button"
-                  onClick={handleAutosaveRetry}
-                  className="text-sm text-primary hover:underline"
-                  data-testid="autosave-retry-button"
-                >
-                  <RefreshCw className="size-3" />
-                </button>
-              )}
-            </div>
-          )}
-
-          {isDirty && (
-            <span className="text-sm text-warning">Unsaved changes</span>
-          )}
-        </div>
+        {/* Properties panel — independent scroll, desktop only */}
+        {entry && (
+          <aside className="hidden w-80 shrink-0 overflow-y-auto border-l p-6 lg:block">
+            <EditorPropertiesPanel
+              entry={entry}
+              hasScheduling={hasScheduling}
+              hasVersioning={hasVersioning}
+              canDelete={canDeleteProp}
+              isSubmitting={isSubmitting}
+              isPublishing={isPublishing}
+              isDuplicating={isDuplicating}
+              isArchiving={isArchiving}
+              isDeleting={isDeleting}
+              onPublishClick={handlePublishClick}
+              onUnpublishClick={handleUnpublishClick}
+              onScheduleClick={() => setShowScheduleModal(true)}
+              onCancelSchedule={handleCancelSchedule}
+              onPublishNow={handlePublishNow}
+              onDuplicate={handleDuplicate}
+              onArchive={handleArchive}
+              onDelete={handleDeleteClick}
+              onViewHistory={() => setShowVersionHistory(true)}
+            />
+          </aside>
+        )}
       </div>
 
-      {/* Success/Error Messages */}
-      {saveSuccess && (
-        <div
-          className="diff-added flex items-center gap-2 rounded-lg border px-4 py-3 text-sm"
-          role="status"
-        >
-          <CheckCircle className="size-4" />
-          Changes saved successfully
-        </div>
-      )}
-
-      {(submitError || publishError) && (
-        <div
-          className="diff-removed rounded-lg border px-4 py-3 text-sm"
-          role="alert"
-        >
-          <span className="font-medium">Error:</span> {submitError || publishError}
-        </div>
-      )}
-
-      {/* Fields */}
-      {(() => {
-        const groups = groupFields(contentType.fields as FieldDefinition[])
-        const isSingleDefaultGroup =
-          groups.length === 1 && groups[0].name === '__default__'
-
-        if (isSingleDefaultGroup) {
-          // No groups defined — render flat for backward compatibility
-          return (
-            <div className="space-y-4">
-              {contentType.fields.map((field) => (
-                <FieldRenderer
-                  key={field.name}
-                  field={field}
-                  value={formData[field.name]}
-                  onChange={(value) => handleFieldChange(field.name, value)}
-                  error={fieldErrors[field.name]}
-                  disabled={isSubmitting}
-                />
-              ))}
-            </div>
-          )
-        }
-
-        return (
-          <div className="space-y-6">
-            {groups.map((group) => (
-              <FieldGroupSection
-                key={group.name}
-                group={group}
-                formData={formData}
-                fieldErrors={fieldErrors}
+      {/* Mobile properties drawer (bottom sheet) */}
+      {entry && (
+        <Drawer open={showMobileProperties} onOpenChange={setShowMobileProperties}>
+          <DrawerContent>
+            <DrawerHeader>
+              <DrawerTitle>Properties</DrawerTitle>
+            </DrawerHeader>
+            <div className="overflow-y-auto px-4 pb-6">
+              <EditorPropertiesPanel
+                entry={entry}
+                hasScheduling={hasScheduling}
+                hasVersioning={hasVersioning}
+                canDelete={canDeleteProp}
                 isSubmitting={isSubmitting}
-                onFieldChange={handleFieldChange}
+                isPublishing={isPublishing}
+                isDuplicating={isDuplicating}
+                isArchiving={isArchiving}
+                isDeleting={isDeleting}
+                onPublishClick={handlePublishClick}
+                onUnpublishClick={handleUnpublishClick}
+                onScheduleClick={() => setShowScheduleModal(true)}
+                onCancelSchedule={handleCancelSchedule}
+                onPublishNow={handlePublishNow}
+                onDuplicate={handleDuplicate}
+                onArchive={handleArchive}
+                onDelete={handleDeleteClick}
+                onViewHistory={() => setShowVersionHistory(true)}
               />
-            ))}
-          </div>
-        )
-      })()}
-
-      {/* Footer */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-t pt-4">
-        <div className="flex flex-wrap items-center gap-2">
-          {entry && canDeleteProp && (
-            <CmsButton
-              type="button"
-              variant="danger"
-              onClick={handleDeleteClick}
-              disabled={
-                isSubmitting ||
-                isPublishing ||
-                isDeleting ||
-                isDuplicating
-              }
-              loading={isDeleting}
-              data-testid="delete-button"
-            >
-              Delete
-            </CmsButton>
-          )}
-
-          {entry && (
-            <CmsButton
-              type="button"
-              variant="secondary"
-              onClick={handleDuplicate}
-              disabled={
-                isSubmitting ||
-                isPublishing ||
-                isDeleting ||
-                isDuplicating ||
-                isArchiving
-              }
-              loading={isDuplicating}
-              data-testid="duplicate-button"
-            >
-              Duplicate
-            </CmsButton>
-          )}
-
-          {entry &&
-            (entry.status === 'draft' || entry.status === 'scheduled') && (
-              <CmsButton
-                type="button"
-                variant="secondary"
-                onClick={handleArchive}
-                disabled={
-                  isSubmitting ||
-                  isPublishing ||
-                  isDeleting ||
-                  isDuplicating ||
-                  isArchiving
-                }
-                loading={isArchiving}
-                data-testid="archive-button"
-              >
-                Archive
-              </CmsButton>
-            )}
-
-          {entry && (
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              {settings?.features.versioning && (
-                <button
-                  type="button"
-                  onClick={() => setShowVersionHistory(true)}
-                  className="flex items-center gap-2 rounded-md border bg-muted/30 px-3 py-1.5 transition-colors hover:bg-muted/50"
-                >
-                  <History className="size-4 text-muted-foreground" />
-                  <span className="text-xs font-medium text-foreground">
-                    Version {entry.version}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    View history
-                  </span>
-                </button>
-              )}
-
-              {entry.lastPublishedAt && (
-                <span
-                  className="text-xs"
-                  data-testid="last-published-time"
-                >
-                  Last published:{' '}
-                  {new Date(entry.lastPublishedAt).toLocaleString()}
-                </span>
-              )}
-
-              {settings?.features.scheduling &&
-                entry.status === 'scheduled' &&
-                entry.scheduledPublishAt && (
-                  <span
-                    className="flex items-center gap-1 text-xs text-info"
-                    data-testid="scheduled-time"
-                  >
-                    <Clock className="size-3" />
-                    Scheduled:{' '}
-                    {new Date(entry.scheduledPublishAt).toLocaleString()}
-                  </span>
-                )}
             </div>
-          )}
-        </div>
+          </DrawerContent>
+        </Drawer>
+      )}
 
-        <div className="flex flex-wrap items-center gap-2">
-          <CmsButton
-            type="button"
-            variant="outline"
-            onClick={handleCancel}
-            disabled={isSubmitting || isPublishing}
-          >
-            Cancel
-          </CmsButton>
+      {/* Version History sheet */}
+      {hasVersioning && entry && (
+        <Sheet open={showVersionHistory} onOpenChange={setShowVersionHistory}>
+          <SheetContent side="right" className="w-96 sm:w-[420px]">
+            <SheetTitle>Version History</SheetTitle>
+            <VersionHistory
+              entryId={entry._id}
+              currentVersion={entry.version}
+              onRollbackComplete={() => setShowVersionHistory(false)}
+              onClose={() => setShowVersionHistory(false)}
+            />
+          </SheetContent>
+        </Sheet>
+      )}
 
-          <CmsButton
-            type="submit"
-            variant="primary"
-            disabled={isSubmitting || isPublishing}
-            loading={isSubmitting}
-          >
-            {entry ? 'Save Changes' : 'Create Entry'}
-          </CmsButton>
-
-          {entry && (
-            <>
-              {entry.status === 'draft' && (
-                <>
-                  {settings?.features.scheduling && (
-                    <CmsButton
-                      type="button"
-                      variant="secondary"
-                      onClick={() => setShowScheduleModal(true)}
-                      disabled={isSubmitting || isPublishing}
-                    >
-                      Schedule
-                    </CmsButton>
-                  )}
-                  <CmsButton
-                    type="button"
-                    variant="success"
-                    onClick={handlePublishClick}
-                    disabled={isSubmitting || isPublishing}
-                    loading={isPublishing}
-                    data-testid="publish-button"
-                  >
-                    Publish Now
-                  </CmsButton>
-                </>
-              )}
-
-              {settings?.features.scheduling && entry.status === 'scheduled' && (
-                <>
-                  <CmsButton
-                    type="button"
-                    variant="secondary"
-                    onClick={handleCancelSchedule}
-                    disabled={isSubmitting || isPublishing}
-                  >
-                    Cancel Schedule
-                  </CmsButton>
-                  <CmsButton
-                    type="button"
-                    variant="success"
-                    onClick={handlePublish}
-                    disabled={isSubmitting || isPublishing}
-                    loading={isPublishing}
-                  >
-                    Publish Now
-                  </CmsButton>
-                </>
-              )}
-
-              {entry.status === 'published' && (
-                <CmsButton
-                  type="button"
-                  variant="warning"
-                  onClick={handleUnpublishClick}
-                  disabled={isSubmitting || isPublishing}
-                  loading={isPublishing}
-                  data-testid="unpublish-button"
-                >
-                  Unpublish
-                </CmsButton>
-              )}
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* Schedule Modal */}
-      {settings?.features.scheduling && (
-        <CmsDialog
+      {/* Modals */}
+      {hasScheduling && (
+        <ScheduleModal
           open={showScheduleModal}
           onOpenChange={setShowScheduleModal}
-          title="Schedule Publication"
-          size="sm"
-          footer={
-            <>
-              <CmsButton
-                variant="outline"
-                onClick={() => setShowScheduleModal(false)}
-              >
-                Cancel
-              </CmsButton>
-              <CmsButton
-                variant="primary"
-                onClick={handleSchedule}
-                loading={isPublishing}
-              >
-                Schedule
-              </CmsButton>
-            </>
-          }
-        >
-          <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Choose when this content should be automatically published:
-            </p>
-            <Input
-              type="datetime-local"
-              value={scheduleDateTime}
-              onChange={(e) => setScheduleDateTime(e.target.value)}
-              min={formatDateTimeLocal(Date.now() + 60 * 1000)}
-            />
-            {publishError && (
-              <p className="text-sm text-destructive">{publishError}</p>
-            )}
-          </div>
-        </CmsDialog>
+          scheduleDateTime={scheduleDateTime}
+          onScheduleDateTimeChange={setScheduleDateTime}
+          onSchedule={handleSchedule}
+          isPublishing={isPublishing}
+          publishError={publishError}
+          minDateTime={formatDateTimeLocal(Date.now() + 60 * 1000)}
+        />
       )}
 
-      {/* Publish/Unpublish Confirmation Modal */}
-      <CmsConfirmDialog
-        open={showConfirmModal && confirmAction !== null}
+      <PublishConfirmModal
+        open={showConfirmModal}
         onOpenChange={(open) => {
           if (!open) {
             setShowConfirmModal(false)
             setConfirmAction(null)
           }
         }}
-        title={
-          confirmAction === 'publish' ? 'Confirm Publish' : 'Confirm Unpublish'
-        }
-        description={
-          confirmAction === 'publish'
-            ? 'Are you sure you want to publish this entry? It will become publicly visible.'
-            : 'Are you sure you want to unpublish this entry? It will no longer be publicly visible.'
-        }
-        confirmLabel={confirmAction === 'publish' ? 'Publish' : 'Unpublish'}
-        variant={confirmAction === 'publish' ? 'primary' : 'warning'}
+        action={confirmAction}
         onConfirm={handleConfirmAction}
-        isLoading={isPublishing}
+        isPublishing={isPublishing}
       />
 
-      {/* Delete Confirmation Modal */}
-      <CmsConfirmDialog
+      <DeleteConfirmModal
         open={showDeleteModal}
         onOpenChange={(open) => {
           if (!open && !isDeleting) {
@@ -1085,28 +765,10 @@ export function ContentEntryEditor({
             setDeleteError(null)
           }
         }}
-        title="Delete Entry"
-        description="Are you sure you want to delete this entry? It will be moved to the trash and can be restored within the retention period."
-        confirmLabel="Delete"
-        variant="danger"
         onConfirm={handleDeleteConfirm}
-        isLoading={isDeleting}
+        isDeleting={isDeleting}
         error={deleteError}
       />
-
-      {/* Version History Panel */}
-      {settings?.features.versioning && showVersionHistory && entry && (
-        <div className="fixed inset-y-0 right-0 z-50 flex w-96 flex-col shadow-xl">
-          <VersionHistory
-            entryId={entry._id}
-            currentVersion={entry.version}
-            onRollbackComplete={() => {
-              setShowVersionHistory(false)
-            }}
-            onClose={() => setShowVersionHistory(false)}
-          />
-        </div>
-      )}
-    </form>
+    </div>
   )
 }
