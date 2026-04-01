@@ -68,6 +68,209 @@ import type {
 type QueryCtx = Pick<GenericQueryCtx<GenericDataModel>, "runQuery">;
 type MutationCtx = Pick<GenericMutationCtx<GenericDataModel>, "runMutation" | "runQuery">;
 
+// =============================================================================
+// Taxonomy Term Resolution
+// =============================================================================
+
+/**
+ * Identifies fields in a content type that store taxonomy term IDs
+ * and need resolution to display names.
+ */
+function getTaxonomyFields(
+  meta: ContentTypeMeta | undefined
+): { fieldName: string; taxonomyName?: string; taxonomyId?: string }[] {
+  if (!meta?.fields) return [];
+  const result: { fieldName: string; taxonomyName?: string; taxonomyId?: string }[] = [];
+  for (const [fieldName, fieldMeta] of Object.entries(meta.fields)) {
+    if (!fieldMeta) continue;
+    if (
+      (fieldMeta.renderAs === "tags" || fieldMeta.renderAs === "category") &&
+      (fieldMeta.taxonomyName || fieldMeta.taxonomyId)
+    ) {
+      result.push({
+        fieldName,
+        taxonomyName: fieldMeta.taxonomyName,
+        taxonomyId: fieldMeta.taxonomyId,
+      });
+    }
+  }
+  return result;
+}
+
+/**
+ * Resolves taxonomy term IDs in entry data to human-readable names.
+ *
+ * For fields with `renderAs: "tags"` or `renderAs: "category"` that reference
+ * a taxonomy, replaces term ID arrays with term name arrays. This happens
+ * transparently so consumers get `["Halal", "Gluten-Free"]` instead of raw IDs.
+ */
+async function resolveEntryTerms<TData extends Record<string, unknown>>(
+  ctx: QueryCtx,
+  componentApi: GeneratedComponentApi,
+  data: TData,
+  taxonomyFields: { fieldName: string; taxonomyName?: string; taxonomyId?: string }[]
+): Promise<TData> {
+  if (taxonomyFields.length === 0) return data;
+
+  // Collect all unique taxonomy references and term IDs
+  const termIdsToResolve = new Set<string>();
+  const taxonomyNameToId = new Map<string, string>();
+
+  for (const field of taxonomyFields) {
+    const value = data[field.fieldName];
+    if (!value) continue;
+
+    const ids = Array.isArray(value) ? value : [value];
+    for (const id of ids) {
+      if (typeof id === "string" && id.length > 15) {
+        termIdsToResolve.add(id);
+      }
+    }
+
+    // Resolve taxonomy name → ID. Supports both taxonomyName and taxonomyId
+    // (taxonomyId may contain a name/slug for backwards compatibility).
+    const nameToResolve = field.taxonomyName ?? field.taxonomyId;
+    if (nameToResolve && !taxonomyNameToId.has(nameToResolve)) {
+      const taxonomy = await ctx.runQuery(componentApi.taxonomies.get, {
+        name: nameToResolve,
+      });
+      if (taxonomy) {
+        taxonomyNameToId.set(nameToResolve, taxonomy._id);
+      }
+    }
+  }
+
+  if (termIdsToResolve.size === 0) return data;
+
+  // Batch-fetch terms by taxonomy
+  const termIdToSlug = new Map<string, string>();
+  const resolvedTaxonomyIds = new Set<string>();
+
+  for (const field of taxonomyFields) {
+    // Resolve via name lookup first, fall back to raw taxonomyId as document ID
+    const nameKey = field.taxonomyName ?? field.taxonomyId;
+    const taxId = (nameKey ? taxonomyNameToId.get(nameKey) : undefined) ?? field.taxonomyId;
+    if (!taxId || resolvedTaxonomyIds.has(taxId)) continue;
+    resolvedTaxonomyIds.add(taxId);
+
+    const terms = await ctx.runQuery(componentApi.taxonomies.listTerms, {
+      taxonomyId: taxId as any, // component expects v.id("taxonomies")
+      paginationOpts: { numItems: 200, cursor: null },
+    });
+
+    for (const term of terms.page) {
+      // Resolve to slug (stable identifier) rather than name (display label).
+      // Consumers use slugs for filtering/matching; they can look up display
+      // names from their own taxonomy queries.
+      termIdToSlug.set(term._id, term.slug ?? term.name);
+    }
+  }
+
+  // Replace term IDs with slugs in a shallow copy of data
+  const resolved = { ...data };
+  for (const field of taxonomyFields) {
+    const value = resolved[field.fieldName];
+    if (!value) continue;
+
+    if (Array.isArray(value)) {
+      (resolved as any)[field.fieldName] = value.map(
+        (id: string) => termIdToSlug.get(id) ?? id
+      );
+    } else if (typeof value === "string") {
+      (resolved as any)[field.fieldName] = termIdToSlug.get(value) ?? value;
+    }
+  }
+
+  return resolved;
+}
+
+// =============================================================================
+// Media Asset URL Resolution
+// =============================================================================
+
+/**
+ * Identifies fields in a content type that store media asset IDs.
+ */
+function getMediaFields(
+  meta: ContentTypeMeta | undefined
+): string[] {
+  if (!meta?.fields) return [];
+  const result: string[] = [];
+  for (const [fieldName, fieldMeta] of Object.entries(meta.fields)) {
+    if (!fieldMeta) continue;
+    if (fieldMeta.renderAs === "media") {
+      result.push(fieldName);
+    }
+  }
+  return result;
+}
+
+/**
+ * Resolves media asset IDs in entry data to public URLs.
+ *
+ * For fields with `renderAs: "media"`, replaces asset document IDs with
+ * publicly accessible URLs from Convex storage. Handles both single values
+ * and arrays (galleries). Falls back to the original value if resolution fails.
+ */
+async function resolveEntryMedia<TData extends Record<string, unknown>>(
+  ctx: QueryCtx,
+  componentApi: GeneratedComponentApi,
+  data: TData,
+  mediaFieldNames: string[]
+): Promise<TData> {
+  if (mediaFieldNames.length === 0) return data;
+
+  // Collect all unique asset IDs
+  const assetIds = new Set<string>();
+  for (const fieldName of mediaFieldNames) {
+    const value = data[fieldName];
+    if (!value) continue;
+    const ids = Array.isArray(value) ? value : [value];
+    for (const id of ids) {
+      if (typeof id === "string" && id.length > 10) {
+        assetIds.add(id);
+      }
+    }
+  }
+
+  if (assetIds.size === 0) return data;
+
+  // Batch-fetch asset URLs in parallel
+  const idToUrl = new Map<string, string>();
+  const fetchPromises = Array.from(assetIds).map(async (id) => {
+    try {
+      const asset = await ctx.runQuery(componentApi.mediaAssets.get, {
+        id: id as any, // component expects v.id("mediaItems")
+      });
+      if (asset?.url) {
+        idToUrl.set(id, asset.url);
+      }
+    } catch {
+      // Invalid ID or asset not found — leave original value
+    }
+  });
+  await Promise.all(fetchPromises);
+
+  if (idToUrl.size === 0) return data;
+
+  // Replace asset IDs with URLs
+  const resolved = { ...data };
+  for (const fieldName of mediaFieldNames) {
+    const value = resolved[fieldName];
+    if (!value) continue;
+
+    if (Array.isArray(value)) {
+      (resolved as any)[fieldName] = value.map(
+        (id: string) => idToUrl.get(id) ?? id
+      );
+    } else if (typeof value === "string") {
+      (resolved as any)[fieldName] = idToUrl.get(value) ?? value;
+    }
+  }
+
+  return resolved;
+}
+
 /**
  * Display configuration for a content type.
  */
@@ -397,6 +600,27 @@ export function createCms(
       return entry as ContentEntryWithData<TData>;
     };
 
+    // Detect fields that need automatic resolution
+    const taxFields = getTaxonomyFields(definition.meta);
+    const mediaFields = getMediaFields(definition.meta);
+    const needsResolution = taxFields.length > 0 || mediaFields.length > 0;
+
+    // Resolve taxonomy term IDs and media asset IDs in entry data
+    const resolveEntry = async (
+      ctx: QueryCtx,
+      entry: ContentEntryWithData<TData> | null
+    ): Promise<ContentEntryWithData<TData> | null> => {
+      if (!entry || !needsResolution) return entry;
+      let data = entry.data;
+      if (taxFields.length > 0) {
+        data = await resolveEntryTerms(ctx, componentApi, data, taxFields);
+      }
+      if (mediaFields.length > 0) {
+        data = await resolveEntryMedia(ctx, componentApi, data, mediaFields);
+      }
+      return { ...entry, data };
+    };
+
     return {
       name: contentConfig.name,
       slug,
@@ -407,7 +631,7 @@ export function createCms(
           componentApi.contentEntries.get,
           { id: args.id }
         );
-        return toTypedEntry(result);
+        return resolveEntry(ctx, toTypedEntry(result));
       },
 
       async getBySlug(ctx, args) {
@@ -419,7 +643,7 @@ export function createCms(
             status: args.status,
           }
         );
-        return toTypedEntry(result);
+        return resolveEntry(ctx, toTypedEntry(result));
       },
 
       async list(ctx, args = {}) {
@@ -436,8 +660,9 @@ export function createCms(
             },
           }
         );
+        const page = (result.page || []).map(toTypedEntry).filter(Boolean) as ContentEntryWithData<TData>[];
         return {
-          page: (result.page || []).map(toTypedEntry).filter(Boolean) as ContentEntryWithData<TData>[],
+          page: await Promise.all(page.map((e) => resolveEntry(ctx, e))) as ContentEntryWithData<TData>[],
           continueCursor: result.continueCursor ?? null,
           isDone: result.isDone ?? true,
         };
@@ -616,19 +841,41 @@ export function createTypedHelpers<
 
     registerContentType(definition as ReturnType<typeof defineContentType>);
 
-    const toTypedEntry = <TData>(entry: unknown): ContentEntryWithData<TData> | null => {
+    type TData = InferDefinitionData<typeof definition>;
+
+    const toTypedEntry = (entry: unknown): ContentEntryWithData<TData> | null => {
       if (!entry) return null;
       return entry as ContentEntryWithData<TData>;
     };
 
-    const helpers: ContentTypeHelpers<InferDefinitionData<typeof definition>> = {
+    // Detect fields that need automatic resolution
+    const taxFields = getTaxonomyFields(definition.meta);
+    const mediaFields = getMediaFields(definition.meta);
+    const needsResolution = taxFields.length > 0 || mediaFields.length > 0;
+
+    const resolveEntry = async (
+      ctx: QueryCtx,
+      entry: ContentEntryWithData<TData> | null
+    ): Promise<ContentEntryWithData<TData> | null> => {
+      if (!entry || !needsResolution) return entry;
+      let data = entry.data as Record<string, unknown>;
+      if (taxFields.length > 0) {
+        data = await resolveEntryTerms(ctx, componentApi, data, taxFields);
+      }
+      if (mediaFields.length > 0) {
+        data = await resolveEntryMedia(ctx, componentApi, data, mediaFields);
+      }
+      return { ...entry, data: data as TData };
+    };
+
+    const helpers: ContentTypeHelpers<TData> = {
       name: definition.name,
       slug,
       definition: definition as ReturnType<typeof defineContentType>,
 
       async get(ctx, args) {
         const entry = await ctx.runQuery(componentApi.contentEntries.get, { id: args.id });
-        return toTypedEntry(entry);
+        return resolveEntry(ctx, toTypedEntry(entry));
       },
 
       async getBySlug(ctx, args) {
@@ -637,7 +884,7 @@ export function createTypedHelpers<
           slug: args.slug,
           status: args.status,
         });
-        return toTypedEntry(entry);
+        return resolveEntry(ctx, toTypedEntry(entry));
       },
 
       async list(ctx, args = {}) {
@@ -648,8 +895,9 @@ export function createTypedHelpers<
           includeDeleted: args.includeDeleted,
           paginationOpts: args.paginationOpts ?? { numItems: 50, cursor: null },
         });
+        const page = (result.page || []).map(toTypedEntry).filter(Boolean) as ContentEntryWithData<TData>[];
         return {
-          page: (result.page || []).map(toTypedEntry).filter(Boolean) as ContentEntryWithData<InferDefinitionData<typeof definition>>[],
+          page: await Promise.all(page.map((e) => resolveEntry(ctx, e))) as ContentEntryWithData<TData>[],
           continueCursor: result.continueCursor ?? null,
           isDone: result.isDone ?? true,
         };
@@ -707,4 +955,163 @@ export function createTypedHelpers<
   }
 
   return result;
+}
+
+// =============================================================================
+// Taxonomy Helpers
+// =============================================================================
+
+/**
+ * A taxonomy term as returned by the CMS.
+ *
+ * These are the classification labels (tags, categories) managed through
+ * the CMS admin Taxonomies section.
+ */
+export interface TaxonomyTerm {
+  _id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  color?: string;
+  icon?: string;
+  sortOrder?: number;
+  depth: number;
+  usageCount: number;
+  parentId?: string;
+}
+
+/**
+ * A taxonomy definition as returned by the CMS.
+ */
+export interface Taxonomy {
+  _id: string;
+  name: string;
+  displayName: string;
+  description?: string;
+  isHierarchical: boolean;
+  isActive: boolean;
+}
+
+/**
+ * Helpers for querying taxonomy terms from Convex functions.
+ *
+ * Created by `createTaxonomyHelpers()`. Provides a typed API for
+ * fetching terms by taxonomy name without manual query boilerplate.
+ *
+ * @example
+ * ```typescript
+ * const taxonomies = createTaxonomyHelpers(components.cms);
+ *
+ * // In a query:
+ * const categories = await taxonomies.getTerms(ctx, "menu_categories");
+ * // Returns TaxonomyTerm[] sorted by sortOrder
+ * ```
+ */
+export interface TaxonomyHelpers {
+  /**
+   * Get all terms in a taxonomy by name.
+   * Returns terms sorted by sortOrder, with display-ready fields.
+   */
+  getTerms(
+    ctx: QueryCtx,
+    taxonomyName: string,
+    options?: { limit?: number }
+  ): Promise<TaxonomyTerm[]>;
+
+  /**
+   * Get a single term by taxonomy name and term slug.
+   */
+  getTerm(
+    ctx: QueryCtx,
+    taxonomyName: string,
+    termSlug: string
+  ): Promise<TaxonomyTerm | null>;
+
+  /**
+   * List all active taxonomies.
+   */
+  listTaxonomies(ctx: QueryCtx): Promise<Taxonomy[]>;
+}
+
+/**
+ * Creates typed helpers for querying CMS taxonomies from Convex functions.
+ *
+ * This provides a clean API for taxonomy access without requiring consumers
+ * to write admin API query boilerplate or define their own term types.
+ *
+ * @example
+ * ```typescript
+ * // convex/cms.ts
+ * import { createTaxonomyHelpers } from "convex-cms";
+ * import { components } from "./_generated/api";
+ *
+ * export const taxonomies = createTaxonomyHelpers(components.cms);
+ *
+ * // convex/menu.ts
+ * import { taxonomies } from "./cms";
+ *
+ * export const getCategories = query({
+ *   args: {},
+ *   handler: async (ctx) => {
+ *     return taxonomies.getTerms(ctx, "menu_categories");
+ *   },
+ * });
+ * ```
+ */
+export function createTaxonomyHelpers(
+  componentApi: GeneratedComponentApi
+): TaxonomyHelpers {
+  // Cache taxonomy name → ID lookups per query context
+  const taxonomyNameCache = new Map<string, string>();
+
+  async function resolveTaxonomyId(
+    ctx: QueryCtx,
+    taxonomyName: string
+  ): Promise<string | null> {
+    if (taxonomyNameCache.has(taxonomyName)) {
+      return taxonomyNameCache.get(taxonomyName)!;
+    }
+    const taxonomy = await ctx.runQuery(componentApi.taxonomies.get, {
+      name: taxonomyName,
+    });
+    if (taxonomy) {
+      taxonomyNameCache.set(taxonomyName, taxonomy._id);
+      return taxonomy._id;
+    }
+    return null;
+  }
+
+  return {
+    async getTerms(ctx, taxonomyName, options) {
+      const taxonomyId = await resolveTaxonomyId(ctx, taxonomyName);
+      if (!taxonomyId) return [];
+
+      const result = await ctx.runQuery(componentApi.taxonomies.listTerms, {
+        taxonomyId: taxonomyId as any,
+        paginationOpts: { numItems: options?.limit ?? 100, cursor: null },
+      });
+
+      return (result.page as TaxonomyTerm[])
+        .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+    },
+
+    async getTerm(ctx, taxonomyName, termSlug) {
+      const taxonomyId = await resolveTaxonomyId(ctx, taxonomyName);
+      if (!taxonomyId) return null;
+
+      const term = await ctx.runQuery(componentApi.taxonomies.getTerm, {
+        taxonomyId: taxonomyId as any,
+        slug: termSlug,
+      });
+
+      return term as TaxonomyTerm | null;
+    },
+
+    async listTaxonomies(ctx) {
+      const result = await ctx.runQuery(componentApi.taxonomies.list, {
+        isActive: true,
+      });
+      return result.page as Taxonomy[];
+    },
+  };
 }

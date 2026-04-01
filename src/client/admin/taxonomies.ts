@@ -15,6 +15,17 @@ export function createTaxonomiesOperations(
   component: ComponentApi,
   checkAuth: (ctx: AuthContext, operation: AdminOperation) => Promise<string | null>
 ) {
+  async function resolveTaxonomyId(
+    ctx: { runQuery: typeof Function.prototype },
+    taxonomyIdOrName: string
+  ): Promise<string> {
+    const taxonomy = await ctx.runQuery(component.taxonomies.get, {
+      name: taxonomyIdOrName,
+    });
+    if (taxonomy) return taxonomy._id;
+    return taxonomyIdOrName;
+  }
+
   return {
     // =========================================================================
     // Taxonomy Queries
@@ -130,7 +141,10 @@ export function createTaxonomiesOperations(
       },
       handler: async (ctx, args) => {
         await checkAuth(ctx, { type: "getTerm", id: args.id });
-        return await ctx.runQuery(component.taxonomies.getTerm, args);
+        const taxonomyId = args.taxonomyId
+          ? await resolveTaxonomyId(ctx, args.taxonomyId)
+          : undefined;
+        return await ctx.runQuery(component.taxonomies.getTerm, { ...args, taxonomyId });
       },
     }),
 
@@ -153,7 +167,8 @@ export function createTaxonomiesOperations(
       },
       handler: async (ctx, args) => {
         await checkAuth(ctx, { type: "listTerms", taxonomyId: args.taxonomyId });
-        return await ctx.runQuery(component.taxonomies.listTerms, args);
+        const taxonomyId = await resolveTaxonomyId(ctx, args.taxonomyId);
+        return await ctx.runQuery(component.taxonomies.listTerms, { ...args, taxonomyId });
       },
     }),
 
@@ -164,9 +179,10 @@ export function createTaxonomiesOperations(
       },
       handler: async (ctx, args) => {
         await checkAuth(ctx, { type: "getTermsHierarchy", taxonomyId: args.taxonomyId });
+        const taxonomyId = await resolveTaxonomyId(ctx, args.taxonomyId);
         return await ctx.runQuery(
           component.taxonomies.getTermsHierarchy,
-          args
+          { ...args, taxonomyId }
         );
       },
     }),
@@ -180,7 +196,8 @@ export function createTaxonomiesOperations(
       },
       handler: async (ctx, args) => {
         await checkAuth(ctx, { type: "suggestTerms", taxonomyId: args.taxonomyId });
-        return await ctx.runQuery(component.taxonomies.suggestTerms, args);
+        const taxonomyId = await resolveTaxonomyId(ctx, args.taxonomyId);
+        return await ctx.runQuery(component.taxonomies.suggestTerms, { ...args, taxonomyId });
       },
     }),
 
@@ -191,7 +208,8 @@ export function createTaxonomiesOperations(
       },
       handler: async (ctx, args) => {
         await checkAuth(ctx, { type: "countTerms", taxonomyId: args.taxonomyId });
-        return await ctx.runQuery(component.taxonomies.countTerms, args);
+        const taxonomyId = await resolveTaxonomyId(ctx, args.taxonomyId);
+        return await ctx.runQuery(component.taxonomies.countTerms, { ...args, taxonomyId });
       },
     }),
 
@@ -213,9 +231,10 @@ export function createTaxonomiesOperations(
       },
       handler: async (ctx, args) => {
         await checkAuth(ctx, { type: "createTerm", taxonomyId: args.taxonomyId });
+        const taxonomyId = await resolveTaxonomyId(ctx, args.taxonomyId);
         return await ctx.runMutation(
           component.taxonomyMutations.createTerm,
-          args
+          { ...args, taxonomyId }
         );
       },
     }),
@@ -282,7 +301,10 @@ export function createTaxonomiesOperations(
       },
       handler: async (ctx, args) => {
         await checkAuth(ctx, { type: "getTermsByEntry", entryId: args.entryId });
-        return await ctx.runQuery(component.taxonomies.getTermsByEntry, args);
+        const taxonomyId = args.taxonomyId
+          ? await resolveTaxonomyId(ctx, args.taxonomyId)
+          : undefined;
+        return await ctx.runQuery(component.taxonomies.getTermsByEntry, { ...args, taxonomyId });
       },
     }),
 
@@ -361,9 +383,10 @@ export function createTaxonomiesOperations(
       },
       handler: async (ctx, args) => {
         await checkAuth(ctx, { type: "createTermAndAddToEntry", entryId: args.entryId });
+        const taxonomyId = await resolveTaxonomyId(ctx, args.taxonomyId);
         return await ctx.runMutation(
           component.taxonomyMutations.createTermAndAddToEntry,
-          args
+          { ...args, taxonomyId }
         );
       },
     }),
@@ -379,7 +402,10 @@ export function createTaxonomiesOperations(
       },
       handler: async (ctx, args) => {
         await checkAuth(ctx, { type: "getTermsByMedia", mediaId: args.mediaId });
-        return await ctx.runQuery(component.taxonomies.getTermsByMedia, args);
+        const taxonomyId = args.taxonomyId
+          ? await resolveTaxonomyId(ctx, args.taxonomyId)
+          : undefined;
+        return await ctx.runQuery(component.taxonomies.getTermsByMedia, { ...args, taxonomyId });
       },
     }),
 
@@ -407,9 +433,10 @@ export function createTaxonomiesOperations(
       },
       handler: async (ctx, args) => {
         await checkAuth(ctx, { type: "setMediaTerms", mediaId: args.mediaId });
+        const taxonomyId = await resolveTaxonomyId(ctx, args.taxonomyId);
         return await ctx.runMutation(
           component.taxonomyMutations.setMediaTerms,
-          args
+          { ...args, taxonomyId }
         );
       },
     }),
@@ -451,9 +478,10 @@ export function createTaxonomiesOperations(
       },
       handler: async (ctx, args) => {
         await checkAuth(ctx, { type: "createTermAndAddToMedia", mediaId: args.mediaId });
+        const taxonomyId = await resolveTaxonomyId(ctx, args.taxonomyId);
         return await ctx.runMutation(
           component.taxonomyMutations.createTermAndAddToMedia,
-          args
+          { ...args, taxonomyId }
         );
       },
     }),
