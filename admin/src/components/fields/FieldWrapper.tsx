@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react'
 import type { FieldDefinition, FieldError } from './types'
-import { Label } from '~/components/ui/label'
-import { cn } from '~/lib/cn'
+import { Field, FieldLabel, FieldDescription, FieldError as FieldErrorDisplay } from '../ui/field'
 
 interface FieldWrapperProps {
   field: FieldDefinition
@@ -20,38 +19,26 @@ export function FieldWrapper({
   id,
   customLabel,
 }: FieldWrapperProps) {
-  const hasError = !!error
-
   return (
-    <div className={cn('space-y-2', className)}>
-      <Label
-        htmlFor={id}
-        className={cn(
-          'text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70',
-          hasError && 'text-destructive'
-        )}
-      >
+    <Field data-invalid={!!error || undefined} className={className}>
+      <FieldLabel htmlFor={id}>
         {customLabel ?? field.label}
         {field.required && <span className="ml-1 text-destructive">*</span>}
-      </Label>
+      </FieldLabel>
 
-      <div className="relative">{children}</div>
+      {children}
 
-      {field.description && !hasError && (
-        <p id={`${id}-description`} className="text-[13px] text-muted-foreground">
+      {field.description && !error && (
+        <FieldDescription id={`${id}-description`}>
           {field.description}
-        </p>
+        </FieldDescription>
       )}
 
-      {hasError && (
-        <p
-          id={`${id}-error`}
-          className="text-[13px] font-medium text-destructive"
-          role="alert"
-        >
+      {error && (
+        <FieldErrorDisplay id={`${id}-error`}>
           {error.message}
-        </p>
+        </FieldErrorDisplay>
       )}
-    </div>
+    </Field>
   )
 }

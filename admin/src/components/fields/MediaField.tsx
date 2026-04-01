@@ -1,7 +1,6 @@
 import { useState, useCallback } from 'react'
 import { useQuery } from 'convex/react'
 import { useApi } from '../../embed/contexts/ApiContext'
-// IDs are strings when crossing component boundaries
 import { FieldWrapper } from './FieldWrapper'
 import type { BaseFieldProps } from './types'
 import { UploadDropzone, type UploadedFile } from '../UploadDropzone'
@@ -13,14 +12,21 @@ import {
   DialogFooter,
 } from '../ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
-import { Input } from '../ui/input'
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from '../ui/select'
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+  InputGroupText,
+} from '../ui/input-group'
+import { Button } from '../ui/button'
 import { CmsButton } from '../cmsds/CmsButton'
 import { CmsEmptyState } from '../cmsds/CmsEmptyState'
 import { cn } from '../../lib/cn'
@@ -37,6 +43,8 @@ import {
   Search,
   Check,
   AlertTriangle,
+  Expand,
+  ArrowLeft,
 } from 'lucide-react'
 
 export interface MediaFieldProps extends BaseFieldProps<string | null> {
@@ -107,13 +115,10 @@ export function MediaField({
   const [activeTab, setActiveTab] = useState<string>('browse')
   const [searchQuery, setSearchQuery] = useState('')
   const [typeFilter, setTypeFilter] = useState<string>('')
+  const [previewAsset, setPreviewAsset] = useState<any | null>(null)
 
   const allowedMimeTypes = field.options?.allowedMimeTypes ?? []
 
-  // Detect if the stored value is a raw URL instead of a media asset ID.
-  // This happens when data was stored outside the admin panel (e.g. direct
-  // dashboard edits or typed helpers). Skip the getMediaAsset query for URLs
-  // since v.id("mediaItems") would reject them.
   const valueIsUrl = typeof value === 'string' && isUrl(value)
 
   const selectedAsset = useQuery(
@@ -138,6 +143,7 @@ export function MediaField({
     (assetId: string) => {
       onChange(assetId)
       setShowPicker(false)
+      setPreviewAsset(null)
     },
     [onChange]
   )
@@ -148,6 +154,11 @@ export function MediaField({
 
   const handleUploadComplete = useCallback((_results: UploadedFile[]) => {
     setActiveTab('browse')
+  }, [])
+
+  const handleClosePicker = useCallback(() => {
+    setShowPicker(false)
+    setPreviewAsset(null)
   }, [])
 
   const filteredAssets = assetsResult?.page?.filter((asset) => {
@@ -163,7 +174,7 @@ export function MediaField({
 
   return (
     <FieldWrapper field={field} error={error} className={className} id={fieldId}>
-      <div className="space-y-2">
+      <div className="flex flex-col gap-2">
         {value && valueIsUrl ? (
           <div className="flex items-center gap-3 rounded-lg border border-yellow-500/50 bg-yellow-500/5 p-3">
             <div className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted">
@@ -232,7 +243,7 @@ export function MediaField({
                   </p>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <span className="capitalize">{selectedMediaType}</span>
-                    <span>•</span>
+                    <span>·</span>
                     <span>{formatFileSize(selectedAsset.size ?? 0)}</span>
                   </div>
                 </div>
@@ -282,137 +293,211 @@ export function MediaField({
         )}
       </div>
 
-      <Dialog open={showPicker} onOpenChange={setShowPicker}>
-        <DialogContent className="max-w-2xl">
+      <Dialog open={showPicker} onOpenChange={handleClosePicker}>
+        <DialogContent className="max-w-3xl">
           <DialogHeader>
-            <DialogTitle>Select Media</DialogTitle>
+            <DialogTitle>
+              {previewAsset ? (
+                <button
+                  type="button"
+                  onClick={() => setPreviewAsset(null)}
+                  className="flex items-center gap-2 text-left"
+                >
+                  <ArrowLeft className="size-4" />
+                  Back to library
+                </button>
+              ) : (
+                'Select Media'
+              )}
+            </DialogTitle>
           </DialogHeader>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="w-full">
-              <TabsTrigger value="browse" className="flex-1 gap-2">
-                <FolderOpen className="size-4" />
-                Browse Library
-              </TabsTrigger>
-              <TabsTrigger value="upload" className="flex-1 gap-2">
-                <Upload className="size-4" />
-                Upload New
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="browse" className="mt-4 space-y-4">
-              <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    type="search"
-                    placeholder="Search files..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-9"
+          {/* Preview mode */}
+          {previewAsset ? (
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center justify-center rounded-lg bg-muted/30 p-2">
+                {getMediaTypeFromMimeType(previewAsset.mimeType) === 'image' && previewAsset.url ? (
+                  <img
+                    src={previewAsset.url}
+                    alt={previewAsset.title || previewAsset.name}
+                    className="max-h-[60vh] rounded object-contain"
                   />
-                </div>
-                <Select
-                  value={typeFilter || 'all'}
-                  onValueChange={(v) => setTypeFilter(v === 'all' ? '' : v)}
-                >
-                  <SelectTrigger className="w-[140px]">
-                    <SelectValue placeholder="All Types" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Types</SelectItem>
-                    <SelectItem value="image">Images</SelectItem>
-                    <SelectItem value="video">Videos</SelectItem>
-                    <SelectItem value="audio">Audio</SelectItem>
-                    <SelectItem value="document">Documents</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
+                ) : (
+                  <div className="flex flex-col items-center gap-3 py-16 text-muted-foreground">
+                    {getMediaTypeIcon(getMediaTypeFromMimeType(previewAsset.mimeType), 'size-12')}
+                    <span className="text-sm">{previewAsset.name}</span>
+                  </div>
+                )}
               </div>
-
-              {assetsResult === undefined ? (
-                <div className="flex flex-col items-center justify-center py-12">
-                  <div className="size-6 animate-spin rounded-full border-2 border-muted border-t-primary" />
-                  <p className="mt-2 text-sm text-muted-foreground">Loading media...</p>
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-muted-foreground">
+                  <span className="font-medium text-foreground">{previewAsset.name}</span>
+                  <span className="mx-2">·</span>
+                  <span>{formatFileSize(previewAsset.size ?? 0)}</span>
                 </div>
-              ) : filteredAssets && filteredAssets.length > 0 ? (
-                <div className="grid max-h-[300px] grid-cols-4 gap-2 overflow-y-auto">
-                  {filteredAssets.map((asset) => {
-                    const assetMediaType = getMediaTypeFromMimeType(asset.mimeType)
-                    return (
-                    <button
-                      key={asset._id}
-                      type="button"
-                      className={cn(
-                        'group relative flex flex-col overflow-hidden rounded-lg border bg-card transition-all',
-                        'hover:border-primary hover:shadow-sm',
-                        value === asset._id && 'border-primary ring-2 ring-primary/20'
-                      )}
-                      onClick={() => handleSelect(asset._id)}
-                    >
-                      <div className="aspect-square bg-muted">
-                        {assetMediaType === 'image' && asset.url ? (
-                          <img
-                            src={asset.url}
-                            alt={asset.title || asset.name}
-                            className="size-full object-cover"
-                          />
-                        ) : (
-                          <div className="flex size-full items-center justify-center text-muted-foreground">
-                            {getMediaTypeIcon(assetMediaType)}
-                          </div>
-                        )}
-                      </div>
-                      <div className="p-1.5">
-                        <p
-                          className="truncate text-xs font-medium"
-                          title={asset.name}
+                <Button onClick={() => handleSelect(previewAsset._id)}>
+                  Select this file
+                </Button>
+              </div>
+            </div>
+          ) : (
+            /* Browse / Upload mode */
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className="w-full">
+                <TabsTrigger value="browse" className="flex-1 gap-2">
+                  <FolderOpen className="size-4" />
+                  Browse Library
+                </TabsTrigger>
+                <TabsTrigger value="upload" className="flex-1 gap-2">
+                  <Upload className="size-4" />
+                  Upload New
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="browse" className="mt-4 flex flex-col gap-4">
+                <div className="flex gap-2">
+                  <InputGroup className="flex-1">
+                    <InputGroupAddon align="inline-start">
+                      <InputGroupText><Search /></InputGroupText>
+                    </InputGroupAddon>
+                    <InputGroupInput
+                      type="search"
+                      placeholder="Search files..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                  </InputGroup>
+                  <Select
+                    value={typeFilter || 'all'}
+                    onValueChange={(v) => setTypeFilter(v === 'all' ? '' : v)}
+                  >
+                    <SelectTrigger className="w-[140px]">
+                      <SelectValue placeholder="All Types" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectItem value="all">All Types</SelectItem>
+                        <SelectItem value="image">Images</SelectItem>
+                        <SelectItem value="video">Videos</SelectItem>
+                        <SelectItem value="audio">Audio</SelectItem>
+                        <SelectItem value="document">Documents</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {assetsResult === undefined ? (
+                  <div className="flex flex-col items-center justify-center py-12">
+                    <div className="size-6 animate-spin rounded-full border-2 border-muted border-t-primary" />
+                    <p className="mt-2 text-sm text-muted-foreground">Loading media...</p>
+                  </div>
+                ) : filteredAssets && filteredAssets.length > 0 ? (
+                  <div className="grid max-h-[420px] grid-cols-3 gap-3 overflow-y-auto pr-1">
+                    {filteredAssets.map((asset) => {
+                      const assetMediaType = getMediaTypeFromMimeType(asset.mimeType)
+                      const isSelected = value === asset._id
+                      return (
+                        <div
+                          key={asset._id}
+                          className={cn(
+                            'group relative rounded-lg border bg-card transition-all',
+                            'hover:border-primary hover:shadow-sm',
+                            isSelected && 'border-primary ring-2 ring-primary/20'
+                          )}
                         >
-                          {asset.name}
-                        </p>
-                        <p className="text-[10px] text-muted-foreground">
-                          {formatFileSize(asset.size ?? 0)}
-                        </p>
-                      </div>
-                      {value === asset._id && (
-                        <div className="absolute right-1 top-1 flex size-5 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                          <Check className="size-3" />
+                          {/* Image area — click to select */}
+                          <button
+                            type="button"
+                            className="block w-full"
+                            onClick={() => handleSelect(asset._id)}
+                          >
+                            <div
+                              className="relative w-full overflow-hidden rounded-t-lg bg-muted"
+                              style={{ paddingBottom: '100%' }}
+                            >
+                              {assetMediaType === 'image' && asset.url ? (
+                                <img
+                                  src={asset.url}
+                                  alt={asset.title || asset.name}
+                                  className="absolute inset-0 size-full object-cover"
+                                />
+                              ) : (
+                                <div className="absolute inset-0 flex items-center justify-center text-muted-foreground">
+                                  {getMediaTypeIcon(assetMediaType)}
+                                </div>
+                              )}
+                            </div>
+                          </button>
+
+                          {/* Expand button — preview before selecting */}
+                          {assetMediaType === 'image' && asset.url && (
+                            <button
+                              type="button"
+                              className="absolute right-1.5 top-1.5 flex size-7 items-center justify-center rounded-md bg-black/60 text-white opacity-0 transition-opacity hover:bg-black/80 group-hover:opacity-100"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setPreviewAsset(asset)
+                              }}
+                              title="Preview full size"
+                            >
+                              <Expand className="size-3.5" />
+                            </button>
+                          )}
+
+                          {/* Selection indicator */}
+                          {isSelected && (
+                            <div className="absolute left-1.5 top-1.5 flex size-5 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                              <Check className="size-3" />
+                            </div>
+                          )}
+
+                          {/* Filename */}
+                          <div className="p-2">
+                            <p className="truncate text-xs font-medium" title={asset.name}>
+                              {asset.name}
+                            </p>
+                            <p className="text-[10px] text-muted-foreground">
+                              {formatFileSize(asset.size ?? 0)}
+                            </p>
+                          </div>
                         </div>
-                      )}
-                    </button>
-                    )
-                  })}
-                </div>
-              ) : (
-                <CmsEmptyState
-                  icon={<Image className="size-6" />}
-                  title="No media found"
-                  description="Upload some media to get started"
-                  action={{
-                    label: 'Upload Media',
-                    onClick: () => setActiveTab('upload'),
-                  }}
+                      )
+                    })}
+                  </div>
+                ) : (
+                  <CmsEmptyState
+                    icon={<Image className="size-6" />}
+                    title="No media found"
+                    description="Upload some media to get started"
+                    action={{
+                      label: 'Upload Media',
+                      onClick: () => setActiveTab('upload'),
+                    }}
+                  />
+                )}
+              </TabsContent>
+
+              <TabsContent value="upload" className="mt-4">
+                <UploadDropzone
+                  generateUploadUrl={api.generateUploadUrl}
+                  createAsset={api.createMediaAsset}
+                  onUploadComplete={handleUploadComplete}
+                  allowedMimeTypes={allowedMimeTypes}
+                  maxFileSize={field.options?.maxFileSize}
+                  maxConcurrentUploads={3}
                 />
-              )}
-            </TabsContent>
+              </TabsContent>
+            </Tabs>
+          )}
 
-            <TabsContent value="upload" className="mt-4">
-              <UploadDropzone
-                generateUploadUrl={api.generateUploadUrl}
-                createAsset={api.createMediaAsset}
-                onUploadComplete={handleUploadComplete}
-                allowedMimeTypes={allowedMimeTypes}
-                maxFileSize={field.options?.maxFileSize}
-                maxConcurrentUploads={3}
-              />
-            </TabsContent>
-          </Tabs>
-
-          <DialogFooter>
-            <CmsButton variant="secondary" onClick={() => setShowPicker(false)}>
-              Cancel
-            </CmsButton>
-          </DialogFooter>
+          {!previewAsset && (
+            <DialogFooter>
+              <CmsButton variant="secondary" onClick={handleClosePicker}>
+                Cancel
+              </CmsButton>
+            </DialogFooter>
+          )}
         </DialogContent>
       </Dialog>
     </FieldWrapper>

@@ -1,8 +1,7 @@
 import { useId } from 'react'
 import type { BooleanFieldProps } from './types'
-import { Switch } from '~/components/ui/switch'
-import { Label } from '~/components/ui/label'
-import { cn } from '~/lib/cn'
+import { Switch } from '../ui/switch'
+import { Field, FieldLabel, FieldDescription, FieldError } from '../ui/field'
 
 export function BooleanField({
   field,
@@ -28,47 +27,43 @@ export function BooleanField({
   const hasError = !!error
 
   return (
-    <div className={cn('space-y-2', className)}>
-      <div className="flex items-center justify-between">
-        <Label
-          htmlFor={id}
-          className={cn(
-            'text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70',
-            hasError && 'text-destructive'
-          )}
-        >
-          {field.label}
-          {field.required && <span className="ml-1 text-destructive">*</span>}
-        </Label>
+    <Field
+      orientation="horizontal"
+      data-invalid={hasError || undefined}
+      className={className}
+    >
+      <FieldLabel htmlFor={id}>
+        {field.label}
+        {field.required && <span className="ml-1 text-destructive">*</span>}
+      </FieldLabel>
 
-        <div className="flex items-center gap-2">
-          <Switch
-            id={id}
-            checked={value ?? false}
-            onCheckedChange={handleChange}
-            disabled={disabled || readOnly}
-            aria-invalid={hasError}
-            aria-describedby={
-              error ? `${id}-error` : field.description ? `${id}-description` : undefined
-            }
-          />
-          <span className="text-sm text-muted-foreground">
-            {value ? trueLabel : falseLabel}
-          </span>
-        </div>
+      <div className="flex items-center gap-2">
+        <Switch
+          id={id}
+          checked={value ?? false}
+          onCheckedChange={handleChange}
+          disabled={disabled || readOnly}
+          aria-invalid={hasError}
+          aria-describedby={
+            error ? `${id}-error` : field.description ? `${id}-description` : undefined
+          }
+        />
+        <span className="text-sm text-muted-foreground">
+          {value ? trueLabel : falseLabel}
+        </span>
       </div>
 
       {field.description && !hasError && (
-        <p id={`${id}-description`} className="text-[13px] text-muted-foreground">
+        <FieldDescription id={`${id}-description`}>
           {field.description}
-        </p>
+        </FieldDescription>
       )}
 
       {hasError && (
-        <p id={`${id}-error`} className="text-[13px] font-medium text-destructive" role="alert">
+        <FieldError id={`${id}-error`}>
           {error.message}
-        </p>
+        </FieldError>
       )}
-    </div>
+    </Field>
   )
 }

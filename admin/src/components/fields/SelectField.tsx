@@ -4,11 +4,12 @@ import type { BaseFieldProps } from './types'
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '~/components/ui/select'
-import { cn } from '~/lib/cn'
+} from '../ui/select'
+import { cn } from '../../lib/cn'
 
 export interface SelectFieldProps extends BaseFieldProps<string> {
   placeholder?: string
@@ -50,11 +51,13 @@ export function SelectField({
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent>
-          {options.map((option) => (
-            <SelectItem key={option.value} value={option.value}>
-              {option.label}
-            </SelectItem>
-          ))}
+          <SelectGroup>
+            {options.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectGroup>
         </SelectContent>
       </Select>
     </FieldWrapper>

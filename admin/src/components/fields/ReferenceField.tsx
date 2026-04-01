@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo } from 'react'
 import { useQuery } from 'convex/react'
-import { useApi } from '~/embed/contexts/ApiContext'
+import { useApi } from '../../embed/contexts/ApiContext'
 import { FieldWrapper } from './FieldWrapper'
 import type { BaseFieldProps } from './types'
 import {
@@ -9,7 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '~/components/ui/dialog'
+} from '../ui/dialog'
 import {
   Command,
   CommandEmpty,
@@ -17,19 +17,19 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from '~/components/ui/command'
+} from '../ui/command'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '~/components/ui/select'
-import { Badge } from '~/components/ui/badge'
-import { CmsButton } from '~/components/cmsds/CmsButton'
-import { CmsStatusBadge, type ContentStatus } from '~/components/cmsds/CmsStatusBadge'
-import { CmsEmptyState } from '~/components/cmsds/CmsEmptyState'
-import { cn } from '~/lib/cn'
+} from '../ui/select'
+import { Badge } from '../ui/badge'
+import { CmsButton } from '../cmsds/CmsButton'
+import { CmsStatusBadge, type ContentStatus } from '../cmsds/CmsStatusBadge'
+import { CmsEmptyState } from '../cmsds/CmsEmptyState'
+import { cn } from '../../lib/cn'
 import { FileText, Link2, X, Check, Plus } from 'lucide-react'
 
 export interface ReferenceFieldProps extends BaseFieldProps<string | string[] | null> {
@@ -218,13 +218,13 @@ export function ReferenceField({
 
   return (
     <FieldWrapper field={field} error={error} className={className} id={fieldId}>
-      <div className="space-y-2">
+      <div className="flex flex-col gap-2">
         {selectedIds.length > 0 ? (
-          <div className="space-y-2">
+          <div className="flex flex-col gap-2">
             {selectedIds.length === 1 && selectedEntry && renderSelectedEntry(selectedEntry)}
 
             {selectedIds.length > 1 && multipleSelectedEntries.length > 0 && (
-              <div className="space-y-2">
+              <div className="flex flex-col gap-2">
                 {multipleSelectedEntries.map((entry) => renderSelectedEntry(entry))}
               </div>
             )}

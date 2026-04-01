@@ -21,6 +21,7 @@ interface FieldGroupSectionProps {
   fieldErrors: Record<string, FieldError | undefined>
   isSubmitting: boolean
   onFieldChange: (fieldName: string, value: unknown) => void
+  initialOpen?: boolean
 }
 
 /**
@@ -72,8 +73,9 @@ export function FieldGroupSection({
   fieldErrors,
   isSubmitting,
   onFieldChange,
+  initialOpen = false,
 }: FieldGroupSectionProps) {
-  const [isOpen, setIsOpen] = useState(true)
+  const [isOpen, setIsOpen] = useState(initialOpen)
 
   const errorCount = group.fields.filter((f) => fieldErrors[f.name]).length
   const layout = layoutFields(group.fields)
@@ -109,7 +111,7 @@ export function FieldGroupSection({
       </CollapsibleTrigger>
 
       <CollapsibleContent>
-        <div className="space-y-4 px-1 pt-4">
+        <div className="flex flex-col gap-4 px-1 pt-4">
           {layout.map((item, i) => {
             if (item.type === 'grid') {
               return (

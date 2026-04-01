@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { useQuery } from 'convex/react'
-import { useApi } from '~/embed/contexts/ApiContext'
+import { useApi } from '../../embed/contexts/ApiContext'
+import { useTaxonomyId } from '../../hooks/useTaxonomyId'
 import { FieldWrapper } from './FieldWrapper'
 import type { BaseFieldProps } from './types'
 import { asTaxonomyId } from '../../types'
@@ -8,11 +9,11 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '~/components/ui/popover'
-import { Checkbox } from '~/components/ui/checkbox'
-import { Badge } from '~/components/ui/badge'
-import { ScrollArea } from '~/components/ui/scroll-area'
-import { cn } from '~/lib/cn'
+} from '../ui/popover'
+import { Checkbox } from '../ui/checkbox'
+import { Badge } from '../ui/badge'
+import { ScrollArea } from '../ui/scroll-area'
+import { cn } from '../../lib/cn'
 import { ChevronDown, ChevronRight, X, Check, Tag } from 'lucide-react'
 
 interface CategoryTerm {
@@ -43,7 +44,7 @@ export function CategoryField({
 }: CategoryFieldProps) {
   const api = useApi()
   const fieldId = id || `field-${field.name}`
-  const taxonomyId = field.options?.taxonomyId
+  const taxonomyId = useTaxonomyId(field.options)
   const allowMultiple = field.options?.allowMultiple ?? false
 
   const [isOpen, setIsOpen] = useState(false)

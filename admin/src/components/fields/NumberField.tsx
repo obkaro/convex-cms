@@ -1,7 +1,13 @@
-import { useId, type ChangeEvent } from 'react'
+import { useId, useState, useEffect, type ChangeEvent, type KeyboardEvent, type ClipboardEvent } from 'react'
 import { FieldWrapper } from './FieldWrapper'
 import type { NumberFieldProps } from './types'
 import { Input } from '../ui/input'
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+  InputGroupText,
+} from '../ui/input-group'
 import { cn } from '../../lib/cn'
 
 export function NumberField({
@@ -18,18 +24,52 @@ export function NumberField({
   const generatedId = useId()
   const id = providedId ?? `field-${field.name}-${generatedId}`
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const inputValue = e.target.value
+  const { min, max, precision, prefix, suffix } = (field.options ?? {}) as {
+    min?: number
+    max?: number
+    precision?: number
+    prefix?: string
+    suffix?: string
+  }
 
-    if (inputValue === '') {
+  const allowDecimal = precision === undefined || precision > 0
+  const allowNegative = min === undefined || min < 0
+
+  // Local string state so partial values like "3." work during typing
+  const [localValue, setLocalValue] = useState(() => {
+    if (value == null) return ''
+    if (precision !== undefined && precision >= 0) {
+      return value.toFixed(precision)
+    }
+    return String(value)
+  })
+
+  // Sync from parent when value changes externally (e.g. undo, load)
+  useEffect(() => {
+    if (value == null) {
+      if (localValue !== '') setLocalValue('')
+      return
+    }
+    const localNum = parseFloat(localValue)
+    if (!isNaN(localNum) && localNum === value) return
+    if (precision !== undefined && precision >= 0) {
+      setLocalValue(value.toFixed(precision))
+    } else {
+      setLocalValue(String(value))
+    }
+  }, [value, precision]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value
+    setLocalValue(raw)
+
+    if (raw === '') {
       onChange(null)
       return
     }
 
-    const numValue = parseFloat(inputValue)
-
+    const numValue = parseFloat(raw)
     if (!isNaN(numValue)) {
-      const { precision } = field.options ?? {}
       if (precision !== undefined && precision >= 0) {
         const factor = Math.pow(10, precision)
         onChange(Math.round(numValue * factor) / factor)
@@ -39,60 +79,102 @@ export function NumberField({
     }
   }
 
-  const { min, max, step, precision, prefix, suffix } = (field.options ?? {}) as {
-    min?: number
-    max?: number
-    step?: number
-    precision?: number
-    prefix?: string
-    suffix?: string
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    const allowedKeys = [
+      'Backspace', 'Delete', 'Tab', 'Escape', 'Enter',
+      'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End',
+    ]
+    if (allowedKeys.includes(e.key)) return
+    if ((e.ctrlKey || e.metaKey) && ['a', 'c', 'v', 'x', 'z'].includes(e.key)) return
+    if (e.key >= '0' && e.key <= '9') return
+    if (e.key === '.' && allowDecimal && !localValue.includes('.')) return
+    if (e.key === '-' && allowNegative && (e.currentTarget.selectionStart === 0) && !localValue.includes('-')) return
+    e.preventDefault()
   }
-  const computedStep = step ?? (precision !== undefined ? Math.pow(10, -precision) : 'any')
 
-  const input = (
-    <Input
-      type="number"
-      id={id}
-      name={field.name}
-      value={value ?? ''}
-      onChange={handleChange}
-      disabled={disabled}
-      readOnly={readOnly}
-      required={field.required}
-      min={min}
-      max={max}
-      step={computedStep}
-      placeholder={placeholder}
-      className={cn(
-        prefix && 'pl-8',
-        suffix && 'pr-12',
-        error && 'border-destructive focus-visible:ring-destructive'
-      )}
-      aria-invalid={!!error}
-      aria-describedby={
-        error ? `${id}-error` : field.description ? `${id}-description` : undefined
+  const handlePaste = (e: ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault()
+    const text = e.clipboardData.getData('text')
+    const pattern = allowDecimal ? /[^\d.\-]/g : /[^\d\-]/g
+    const sanitized = text.replace(pattern, '')
+    // Only keep the first decimal point and first minus sign
+    const parts = sanitized.split('.')
+    const clean = parts.length > 1 ? parts[0] + '.' + parts.slice(1).join('') : sanitized
+
+    if (clean === '') return
+
+    const input = e.currentTarget
+    const start = input.selectionStart ?? 0
+    const end = input.selectionEnd ?? 0
+    const next = localValue.slice(0, start) + clean + localValue.slice(end)
+
+    setLocalValue(next)
+
+    const numValue = parseFloat(next)
+    if (!isNaN(numValue)) {
+      if (precision !== undefined && precision >= 0) {
+        const factor = Math.pow(10, precision)
+        onChange(Math.round(numValue * factor) / factor)
+      } else {
+        onChange(numValue)
       }
-    />
-  )
+    }
+  }
+
+  const handleBlur = () => {
+    if (localValue === '') return
+    const num = parseFloat(localValue)
+    if (isNaN(num)) return
+    if (precision !== undefined && precision >= 0) {
+      setLocalValue(num.toFixed(precision))
+    } else {
+      // Clean up trailing dots or leading zeros
+      setLocalValue(String(num))
+    }
+  }
+
+  const inputMode = allowDecimal ? 'decimal' : 'numeric'
+  const hasGroup = !!(prefix || suffix)
+
+  const inputProps = {
+    type: 'text' as const,
+    inputMode: inputMode as 'decimal' | 'numeric',
+    id,
+    name: field.name,
+    value: localValue,
+    onChange: handleChange,
+    onKeyDown: handleKeyDown,
+    onBlur: handleBlur,
+    onPaste: handlePaste,
+    disabled,
+    readOnly,
+    required: field.required,
+    placeholder,
+    'aria-invalid': !!error || undefined,
+    'aria-describedby': error ? `${id}-error` : field.description ? `${id}-description` : undefined,
+  }
 
   return (
     <FieldWrapper field={field} error={error} className={className} id={id}>
-      {prefix || suffix ? (
-        <div className="relative">
+      {hasGroup ? (
+        <InputGroup data-disabled={disabled || undefined}>
           {prefix && (
-            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-              {prefix}
-            </span>
+            <InputGroupAddon align="inline-start">
+              <InputGroupText>{prefix}</InputGroupText>
+            </InputGroupAddon>
           )}
-          {input}
+          <InputGroupInput {...inputProps} />
           {suffix && (
-            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-muted-foreground">
-              {suffix}
-            </span>
+            <InputGroupAddon align="inline-end">
+              <InputGroupText className="text-xs font-medium">{suffix}</InputGroupText>
+            </InputGroupAddon>
           )}
-        </div>
+        </InputGroup>
       ) : (
-        input
+        <Input
+          {...inputProps}
+          className={cn(error && 'border-destructive focus-visible:ring-destructive')}
+        />
       )}
       {(min !== undefined || max !== undefined) && (
         <span className="mt-1 block text-xs text-muted-foreground">

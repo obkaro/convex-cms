@@ -1,13 +1,13 @@
-import { useId, type ChangeEvent } from 'react'
+import { useId, useState, useEffect, type ChangeEvent, type KeyboardEvent, type ClipboardEvent } from 'react'
 import { FieldWrapper } from './FieldWrapper'
 import type { MoneyFieldProps } from './types'
-import { Input } from '../ui/input'
-import { cn } from '../../lib/cn'
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+  InputGroupText,
+} from '../ui/input-group'
 
-/**
- * Currency symbols for common ISO 4217 codes.
- * Falls back to the code itself for unknown currencies.
- */
 const CURRENCY_SYMBOLS: Record<string, string> = {
   CAD: '$',
   USD: '$',
@@ -19,18 +19,10 @@ const CURRENCY_SYMBOLS: Record<string, string> = {
   NZD: 'NZ$',
 }
 
-/**
- * Minor unit divisors for currencies.
- * Most currencies have 2 decimal places (100), but some differ.
- */
-const MINOR_UNIT_DIVISORS: Record<string, number> = {
-  JPY: 1,
-  KRW: 1,
-  VND: 1,
-}
+const ZERO_DECIMAL_CURRENCIES = new Set(['JPY', 'KRW', 'VND'])
 
 function getMinorUnitDivisor(currency: string): number {
-  return MINOR_UNIT_DIVISORS[currency] ?? 100
+  return ZERO_DECIMAL_CURRENCIES.has(currency) ? 1 : 100
 }
 
 function getCurrencySymbol(currency: string): string {
@@ -51,59 +43,124 @@ export function MoneyField({
   const generatedId = useId()
   const id = providedId ?? `field-${field.name}-${generatedId}`
 
-  // Get default currency from field options or fall back to CAD
   const defaultCurrency =
     (field.options as Record<string, unknown> | undefined)?.defaultCurrency as string ?? 'CAD'
   const currency = value?.currency ?? defaultCurrency
   const divisor = getMinorUnitDivisor(currency)
   const symbol = getCurrencySymbol(currency)
+  const isZeroDecimal = ZERO_DECIMAL_CURRENCIES.has(currency)
 
-  // Convert minor units to major units for display
-  const displayValue =
-    value?.amount !== undefined && value?.amount !== null
-      ? (value.amount / divisor).toFixed(divisor === 1 ? 0 : 2)
-      : ''
+  // Local string state so the input isn't fighting the user while typing.
+  // Only sync to the parent (as minor units) when the input changes.
+  const [localValue, setLocalValue] = useState(() => {
+    if (value?.amount == null) return ''
+    return isZeroDecimal
+      ? String(value.amount)
+      : String(value.amount / divisor)
+  })
+
+  // Sync from parent when value changes externally (e.g. undo, load)
+  useEffect(() => {
+    const parentDisplay =
+      value?.amount == null
+        ? ''
+        : isZeroDecimal
+          ? String(value.amount)
+          : String(value.amount / divisor)
+
+    // Only update local state if the numeric value actually differs,
+    // to avoid clobbering what the user is typing
+    const localNum = parseFloat(localValue)
+    const parentNum = parseFloat(parentDisplay)
+    if (localValue === '' && parentDisplay === '') return
+    if (!isNaN(localNum) && !isNaN(parentNum) && localNum === parentNum) return
+    if (localValue === '' && parentDisplay !== '') setLocalValue(parentDisplay)
+    if (localValue !== '' && parentDisplay === '') setLocalValue('')
+  }, [value?.amount, currency, divisor, isZeroDecimal]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const inputValue = e.target.value
+    const raw = e.target.value
+    setLocalValue(raw)
 
-    if (inputValue === '') {
+    if (raw === '') {
       onChange(null)
       return
     }
 
-    const numValue = parseFloat(inputValue)
+    const numValue = parseFloat(raw)
     if (!isNaN(numValue)) {
-      // Convert major units to minor units (e.g. 15.00 → 1500)
-      const amount = Math.round(numValue * divisor)
+      const amount = isZeroDecimal ? numValue : Math.round(numValue * divisor)
       onChange({ amount, currency })
     }
   }
 
-  const step = divisor === 1 ? '1' : '0.01'
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    const allowedKeys = [
+      'Backspace', 'Delete', 'Tab', 'Escape', 'Enter',
+      'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End',
+    ]
+    if (allowedKeys.includes(e.key)) return
+    if ((e.ctrlKey || e.metaKey) && ['a', 'c', 'v', 'x', 'z'].includes(e.key)) return
+    if (e.key >= '0' && e.key <= '9') return
+    if (e.key === '.' && !isZeroDecimal && !localValue.includes('.')) return
+    e.preventDefault()
+  }
+
+  const handlePaste = (e: ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault()
+    const text = e.clipboardData.getData('text')
+    const sanitized = text.replace(isZeroDecimal ? /[^\d]/g : /[^\d.]/g, '')
+    // Only keep the first decimal point
+    const parts = sanitized.split('.')
+    const clean = parts.length > 1 ? parts[0] + '.' + parts.slice(1).join('') : sanitized
+
+    if (clean === '') return
+
+    const input = e.currentTarget
+    const start = input.selectionStart ?? 0
+    const end = input.selectionEnd ?? 0
+    const next = localValue.slice(0, start) + clean + localValue.slice(end)
+
+    setLocalValue(next)
+
+    const numValue = parseFloat(next)
+    if (!isNaN(numValue)) {
+      const amount = isZeroDecimal ? numValue : Math.round(numValue * divisor)
+      onChange({ amount, currency })
+    }
+  }
+
+  const handleBlur = () => {
+    if (localValue === '') return
+    const num = parseFloat(localValue)
+    if (isNaN(num)) return
+    if (isZeroDecimal) {
+      setLocalValue(String(Math.round(num)))
+    } else {
+      setLocalValue(num.toFixed(2))
+    }
+  }
 
   return (
     <FieldWrapper field={field} error={error} className={className} id={id}>
-      <div className="relative">
-        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-          {symbol}
-        </span>
-        <Input
-          type="number"
+      <InputGroup data-disabled={disabled || undefined}>
+        <InputGroupAddon align="inline-start">
+          <InputGroupText>{symbol}</InputGroupText>
+        </InputGroupAddon>
+        <InputGroupInput
+          type="text"
+          inputMode={isZeroDecimal ? 'numeric' : 'decimal'}
           id={id}
           name={field.name}
-          value={displayValue}
+          value={localValue}
           onChange={handleChange}
+          onKeyDown={handleKeyDown}
+          onBlur={handleBlur}
+          onPaste={handlePaste}
           disabled={disabled}
           readOnly={readOnly}
           required={field.required}
-          min={0}
-          step={step}
-          placeholder={placeholder ?? '0.00'}
-          className={cn(
-            'pl-8',
-            error && 'border-destructive focus-visible:ring-destructive'
-          )}
+          placeholder={placeholder ?? (isZeroDecimal ? '0' : '0.00')}
           aria-invalid={!!error}
           aria-describedby={
             error
@@ -113,10 +170,10 @@ export function MoneyField({
                 : undefined
           }
         />
-        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-muted-foreground">
-          {currency}
-        </span>
-      </div>
+        <InputGroupAddon align="inline-end">
+          <InputGroupText className="text-xs font-medium">{currency}</InputGroupText>
+        </InputGroupAddon>
+      </InputGroup>
     </FieldWrapper>
   )
 }
