@@ -1,0 +1,65 @@
+/**
+ * Convex CMS — Embed Theme
+ *
+ * Import this file in your app's CSS to enable CMS admin styling:
+ *
+ *   @import "convex-cms/admin/embed-theme.css";
+ *
+ * This provides:
+ * 1. Tailwind v4 color token registration (so bg-sidebar etc. utilities generate)
+ * 2. Scoped CSS variable values for the CMS admin container
+ */
+
+/* --------------------------------------------------------------------------
+   Tailwind v4 theme registration
+   Maps sidebar semantic colors so utilities like bg-sidebar, text-sidebar-foreground,
+   border-sidebar-border etc. are generated in the consumer's Tailwind build.
+   -------------------------------------------------------------------------- */
+
+@theme inline {
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+/* --------------------------------------------------------------------------
+   Root-level fallbacks — light mode
+   Needed because Radix portals (Sheet, Dialog) render at document.body,
+   outside the [data-cms-admin] container. These provide fallback values
+   for portaled CMS UI. If the consumer defines their own --sidebar*
+   variables, those take precedence.
+   -------------------------------------------------------------------------- */
+
+:root {
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.371 0.01 285);
+  --sidebar-primary: oklch(0.205 0.006 285);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.967 0.001 285);
+  --sidebar-accent-foreground: oklch(0.205 0.006 285);
+  --sidebar-border: oklch(0.937 0.003 253);
+  --sidebar-ring: oklch(0.623 0.214 255);
+
+  --sidebar-width: 16rem;
+  --sidebar-width-icon: 3rem;
+}
+
+/* --------------------------------------------------------------------------
+   Root-level fallbacks — dark mode
+   -------------------------------------------------------------------------- */
+
+.dark {
+  --sidebar: oklch(0.205 0.006 285);
+  --sidebar-foreground: oklch(0.967 0.001 285);
+  --sidebar-primary: oklch(0.55 0.2 255);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.25 0.006 285);
+  --sidebar-accent-foreground: oklch(0.967 0.001 285);
+  --sidebar-border: oklch(0.25 0.006 285);
+  --sidebar-ring: oklch(0.623 0.214 255);
+}
