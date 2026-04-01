@@ -212,6 +212,7 @@ export const createWebhookArgs = v.object({
 				v.literal("contentType"),
 				v.literal("mediaAsset"),
 				v.literal("mediaFolder"),
+				v.literal("custom"),
 			),
 		),
 	),
@@ -253,6 +254,7 @@ export const updateWebhookArgs = v.object({
 				v.literal("contentType"),
 				v.literal("mediaAsset"),
 				v.literal("mediaFolder"),
+				v.literal("custom"),
 			),
 		),
 	),
@@ -300,6 +302,7 @@ export const webhookConfigDoc = v.object({
 				v.literal("contentType"),
 				v.literal("mediaAsset"),
 				v.literal("mediaFolder"),
+				v.literal("custom"),
 			),
 		),
 	),
@@ -639,6 +642,7 @@ export const getMatchingWebhooks = internalQuery({
 			v.literal("contentType"),
 			v.literal("mediaAsset"),
 			v.literal("mediaFolder"),
+			v.literal("custom"),
 		),
 		contentTypeName: v.optional(v.string()),
 	},
@@ -1155,7 +1159,7 @@ export const processEventsForDelivery = internalMutation({
 				if (
 					webhook.resourceTypes &&
 					webhook.resourceTypes.length > 0 &&
-					!webhook.resourceTypes.includes(event.resourceType)
+					!(webhook.resourceTypes as string[]).includes(event.resourceType)
 				) {
 					return false;
 				}
@@ -1341,7 +1345,7 @@ export const processWebhooks = internalMutation({
 				if (
 					webhook.resourceTypes &&
 					webhook.resourceTypes.length > 0 &&
-					!webhook.resourceTypes.includes(event.resourceType)
+					!(webhook.resourceTypes as string[]).includes(event.resourceType)
 				) {
 					return false;
 				}
@@ -1502,7 +1506,7 @@ export const triggerWebhookCheck = internalMutation({
 				if (
 					webhook.resourceTypes &&
 					webhook.resourceTypes.length > 0 &&
-					!webhook.resourceTypes.includes(event.resourceType)
+					!(webhook.resourceTypes as string[]).includes(event.resourceType)
 				) {
 					return false;
 				}

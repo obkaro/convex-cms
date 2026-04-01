@@ -13,8 +13,7 @@
  * function, ensuring they stay in sync with schema definitions automatically.
  */
 
-import { Infer,
-v, type Validator } from "convex/values";
+import { v, type Validator, type Infer } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
 import { doc } from "convex-helpers/validators";
 import schema, {
@@ -753,6 +752,7 @@ export const eventResourceTypes = [
 	"contentType",
 	"mediaAsset",
 	"mediaFolder",
+	"custom",
 ] as const;
 
 export type EventResourceType = typeof eventResourceTypes[number];
@@ -760,6 +760,8 @@ export type EventResourceType = typeof eventResourceTypes[number];
 export const eventActions = [
 	"created",
 	"updated",
+	"succeeded",
+	"failed",
 	"published",
 	"unpublished",
 	"deleted",
@@ -775,11 +777,14 @@ export const eventResourceTypeValidator = v.union(
 	v.literal("contentType"),
 	v.literal("mediaAsset"),
 	v.literal("mediaFolder"),
+	v.literal("custom"),
 );
 
 export const eventActionValidator = v.union(
 	v.literal("created"),
 	v.literal("updated"),
+	v.literal("succeeded"),
+	v.literal("failed"),
 	v.literal("published"),
 	v.literal("unpublished"),
 	v.literal("deleted"),

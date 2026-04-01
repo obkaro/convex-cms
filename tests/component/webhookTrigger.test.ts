@@ -36,6 +36,8 @@ describe("Event Type Format Validation", () => {
       "mediaFolder.created",
       "mediaFolder.updated",
       "mediaFolder.deleted",
+      "custom.failed",
+      "custom.succeeded",
     ];
 
     for (const eventType of validEventTypes) {
@@ -44,6 +46,27 @@ describe("Event Type Format Validation", () => {
       expect(resourceType).toBeTruthy();
       expect(action).toBeTruthy();
     }
+  });
+});
+
+describe("Custom Event Support", () => {
+  it("supports custom resource events for app-owned workflows", () => {
+    const payload: WebhookPayload = {
+      deliveryId: "delivery-123",
+      eventType: "payment.failed",
+      resourceType: "custom",
+      resourceId: "order-456",
+      action: "failed",
+      data: {
+        orderNumber: "ORD-260401-001",
+        errorMessage: "Card declined",
+      },
+      timestamp: "2026-04-01T10:30:00.000Z",
+    };
+
+    expect(payload.resourceType).toBe("custom");
+    expect(payload.action).toBe("failed");
+    expect(payload.eventType).toBe("payment.failed");
   });
 });
 

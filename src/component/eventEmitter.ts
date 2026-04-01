@@ -26,7 +26,8 @@
  */
 
 import { v } from "convex/values";
-import { mutation, query, internalMutation, MutationCtx } from "./_generated/server.js";
+import type { MutationCtx } from "./_generated/server.js";
+import { mutation, query, internalMutation } from "./_generated/server.js";
 import {
   eventResourceTypeValidator,
   eventActionValidator,
@@ -39,12 +40,14 @@ import {
 
 /**
  * Resource types that can emit events.
+ * "custom" allows consumer apps to emit their own application-level events.
  */
 export type EventResourceType =
   | "contentEntry"
   | "contentType"
   | "mediaAsset"
-  | "mediaFolder";
+  | "mediaFolder"
+  | "custom";
 
 /**
  * Actions that can be performed on resources.
@@ -52,6 +55,8 @@ export type EventResourceType =
 export type EventAction =
   | "created"
   | "updated"
+  | "succeeded"
+  | "failed"
   | "published"
   | "unpublished"
   | "deleted"
@@ -377,12 +382,15 @@ export const internalEmitEvent = internalMutation({
       v.literal("contentEntry"),
       v.literal("contentType"),
       v.literal("mediaAsset"),
-      v.literal("mediaFolder")
+      v.literal("mediaFolder"),
+      v.literal("custom")
     ),
     resourceId: v.string(),
     action: v.union(
       v.literal("created"),
       v.literal("updated"),
+      v.literal("succeeded"),
+      v.literal("failed"),
       v.literal("published"),
       v.literal("unpublished"),
       v.literal("deleted"),
@@ -482,3 +490,65 @@ export function mediaAssetEventType(action: EventAction): EventType {
 export function mediaFolderEventType(action: EventAction): EventType {
   return `mediaFolder.${action}`;
 }
+
+// =============================================================================
+// Custom Event Emission (for consumer apps)
+// =============================================================================
+
+/**
+ * Public mutation for consumer apps to emit custom application-level events.
+ *
+ * This allows consumer apps to use the CMS event bus for their own
+ * transactional data (e.g., order lifecycle events, user actions).
+ * Custom events flow through the existing webhook infrastructure,
+ * appear in the event log, and can be processed asynchronously.
+ *
+ * @example
+ * ```typescript
+ * // In consumer app mutation:
+ * await ctx.runMutation(components.cms.events.emitCustomEvent, {
+ *   eventType: "order.created",
+ *   resourceId: orderId,
+ *   action: "created",
+ *   payload: { orderNumber, total, customerName },
+ * });
+ * ```
+ */
+export const emitCustomEvent = mutation({
+  args: {
+    eventType: v.string(),
+    resourceId: v.string(),
+    action: v.union(
+      v.literal("created"),
+      v.literal("updated"),
+      v.literal("succeeded"),
+      v.literal("failed"),
+      v.literal("published"),
+      v.literal("unpublished"),
+      v.literal("deleted"),
+      v.literal("restored"),
+      v.literal("duplicated"),
+      v.literal("scheduled"),
+    ),
+    payload: v.optional(v.any()),
+    userId: v.optional(v.string()),
+    correlationId: v.optional(v.string()),
+    metadata: v.optional(v.any()),
+  },
+  returns: v.id("cmsEvents"),
+  handler: async (ctx, args) => {
+    const eventId = await ctx.db.insert("cmsEvents", {
+      eventType: args.eventType,
+      resourceType: "custom",
+      resourceId: args.resourceId,
+      action: args.action,
+      payload: args.payload ?? {},
+      userId: args.userId,
+      processed: false,
+      correlationId: args.correlationId,
+      metadata: args.metadata,
+    });
+
+    return eventId;
+  },
+});
