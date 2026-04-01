@@ -109,6 +109,75 @@ export declare const components: {
         }
       >;
     };
+    cmsUsers: {
+      get: FunctionReference<
+        "query",
+        "internal",
+        { externalUserId: string },
+        {
+          _creationTime: number;
+          _id: string;
+          avatarUrl?: string;
+          createdAt: number;
+          createdBy?: string;
+          displayName?: string;
+          email?: string;
+          externalUserId: string;
+          lastAccessedAt?: number;
+          role: string;
+          status: "active" | "invited" | "revoked";
+          updatedAt?: number;
+          updatedBy?: string;
+        } | null
+      >;
+      invite: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          createdBy?: string;
+          displayName?: string;
+          email: string;
+          role: string;
+        },
+        string
+      >;
+      isEmpty: FunctionReference<"query", "internal", {}, boolean>;
+      list: FunctionReference<
+        "query",
+        "internal",
+        {
+          limit?: number;
+          role?: string;
+          search?: string;
+          status?: "active" | "invited" | "revoked";
+        },
+        any
+      >;
+      revoke: FunctionReference<
+        "mutation",
+        "internal",
+        { externalUserId: string; updatedBy?: string },
+        any
+      >;
+      setRole: FunctionReference<
+        "mutation",
+        "internal",
+        { externalUserId: string; role: string; updatedBy?: string },
+        any
+      >;
+      upsert: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          avatarUrl?: string;
+          defaultRole?: string;
+          displayName?: string;
+          email?: string;
+          externalUserId: string;
+        },
+        { isNew: boolean; role: string; userId: string }
+      >;
+    };
     contentEntries: {
       compareVersions: FunctionReference<
         "query",
@@ -955,13 +1024,17 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
                 options?: {
                   maxLength?: number;
                   minLength?: number;
+                  multiline?: boolean;
                   pattern?: string;
+                  patternMessage?: string;
+                  placeholder?: string;
                 };
                 required: boolean;
                 searchable?: boolean;
@@ -970,6 +1043,7 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -977,7 +1051,9 @@ export declare const components: {
                   max?: number;
                   min?: number;
                   precision?: number;
+                  prefix?: string;
                   step?: number;
+                  suffix?: string;
                 };
                 required: boolean;
                 searchable?: boolean;
@@ -986,6 +1062,7 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -997,12 +1074,15 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
                 options?: {
                   allowedBlocks?: Array<string>;
                   allowedMarks?: Array<string>;
+                  maxLength?: number;
+                  placeholder?: string;
                 };
                 required: boolean;
                 searchable?: boolean;
@@ -1011,12 +1091,14 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
                 options?: {
                   allowedMimeTypes?: Array<string>;
                   maxFileSize?: number;
+                  maxItems?: number;
                   mediaType?:
                     | "image"
                     | "video"
@@ -1032,6 +1114,7 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1043,10 +1126,15 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
-                options?: { options?: Array<{ label: string; value: string }> };
+                options?: {
+                  maxSelections?: number;
+                  minSelections?: number;
+                  options?: Array<{ label: string; value: string }>;
+                };
                 required: boolean;
                 searchable?: boolean;
                 type: "multiSelect";
@@ -1054,6 +1142,7 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1062,6 +1151,7 @@ export declare const components: {
                   maxTags?: number;
                   minTags?: number;
                   taxonomyId?: string;
+                  taxonomyName?: string;
                 };
                 required: boolean;
                 searchable?: boolean;
@@ -1070,10 +1160,17 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
-                options?: { allowMultiple?: boolean };
+                options?: {
+                  allowMultiple?: boolean;
+                  depth?: number;
+                  maxSelections?: number;
+                  taxonomyId?: string;
+                  taxonomyName?: string;
+                };
                 required: boolean;
                 searchable?: boolean;
                 type: "category";
@@ -1081,6 +1178,7 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1092,10 +1190,11 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
-                options?: { max?: number; min?: number };
+                options?: { format?: string; max?: number; min?: number };
                 required: boolean;
                 searchable?: boolean;
                 type: "date";
@@ -1103,10 +1202,16 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
-                options?: { max?: number; min?: number };
+                options?: {
+                  format?: string;
+                  max?: number;
+                  min?: number;
+                  timezone?: string;
+                };
                 required: boolean;
                 searchable?: boolean;
                 type: "datetime";
@@ -1114,17 +1219,53 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
                 options?: {
                   allowedContentTypes?: Array<string>;
+                  maxItems?: number;
                   minItems?: number;
                   multiple?: boolean;
                 };
                 required: boolean;
                 searchable?: boolean;
                 type: "reference";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                group?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options?: {
+                  allowedCurrencies?: Array<string>;
+                  defaultCurrency?: string;
+                  max?: number;
+                  min?: number;
+                };
+                required: boolean;
+                searchable?: boolean;
+                type: "money";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                group?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options?: {
+                  itemLabel?: string;
+                  maxItems?: number;
+                  minItems?: number;
+                  subFields?: any;
+                };
+                required: boolean;
+                searchable?: boolean;
+                type: "arrayObject";
               }
           >;
           icon?: string;
@@ -1145,13 +1286,17 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
                 options?: {
                   maxLength?: number;
                   minLength?: number;
+                  multiline?: boolean;
                   pattern?: string;
+                  patternMessage?: string;
+                  placeholder?: string;
                 };
                 required: boolean;
                 searchable?: boolean;
@@ -1160,6 +1305,7 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1167,7 +1313,9 @@ export declare const components: {
                   max?: number;
                   min?: number;
                   precision?: number;
+                  prefix?: string;
                   step?: number;
+                  suffix?: string;
                 };
                 required: boolean;
                 searchable?: boolean;
@@ -1176,6 +1324,7 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1187,12 +1336,15 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
                 options?: {
                   allowedBlocks?: Array<string>;
                   allowedMarks?: Array<string>;
+                  maxLength?: number;
+                  placeholder?: string;
                 };
                 required: boolean;
                 searchable?: boolean;
@@ -1201,12 +1353,14 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
                 options?: {
                   allowedMimeTypes?: Array<string>;
                   maxFileSize?: number;
+                  maxItems?: number;
                   mediaType?:
                     | "image"
                     | "video"
@@ -1222,6 +1376,7 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1233,10 +1388,15 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
-                options?: { options?: Array<{ label: string; value: string }> };
+                options?: {
+                  maxSelections?: number;
+                  minSelections?: number;
+                  options?: Array<{ label: string; value: string }>;
+                };
                 required: boolean;
                 searchable?: boolean;
                 type: "multiSelect";
@@ -1244,6 +1404,7 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1252,6 +1413,7 @@ export declare const components: {
                   maxTags?: number;
                   minTags?: number;
                   taxonomyId?: string;
+                  taxonomyName?: string;
                 };
                 required: boolean;
                 searchable?: boolean;
@@ -1260,10 +1422,17 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
-                options?: { allowMultiple?: boolean };
+                options?: {
+                  allowMultiple?: boolean;
+                  depth?: number;
+                  maxSelections?: number;
+                  taxonomyId?: string;
+                  taxonomyName?: string;
+                };
                 required: boolean;
                 searchable?: boolean;
                 type: "category";
@@ -1271,6 +1440,7 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1282,10 +1452,11 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
-                options?: { max?: number; min?: number };
+                options?: { format?: string; max?: number; min?: number };
                 required: boolean;
                 searchable?: boolean;
                 type: "date";
@@ -1293,10 +1464,16 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
-                options?: { max?: number; min?: number };
+                options?: {
+                  format?: string;
+                  max?: number;
+                  min?: number;
+                  timezone?: string;
+                };
                 required: boolean;
                 searchable?: boolean;
                 type: "datetime";
@@ -1304,17 +1481,53 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
                 options?: {
                   allowedContentTypes?: Array<string>;
+                  maxItems?: number;
                   minItems?: number;
                   multiple?: boolean;
                 };
                 required: boolean;
                 searchable?: boolean;
                 type: "reference";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                group?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options?: {
+                  allowedCurrencies?: Array<string>;
+                  defaultCurrency?: string;
+                  max?: number;
+                  min?: number;
+                };
+                required: boolean;
+                searchable?: boolean;
+                type: "money";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                group?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options?: {
+                  itemLabel?: string;
+                  maxItems?: number;
+                  minItems?: number;
+                  subFields?: any;
+                };
+                required: boolean;
+                searchable?: boolean;
+                type: "arrayObject";
               }
           >;
           icon?: string;
@@ -1364,13 +1577,17 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
                 options?: {
                   maxLength?: number;
                   minLength?: number;
+                  multiline?: boolean;
                   pattern?: string;
+                  patternMessage?: string;
+                  placeholder?: string;
                 };
                 required: boolean;
                 searchable?: boolean;
@@ -1379,6 +1596,7 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1386,7 +1604,9 @@ export declare const components: {
                   max?: number;
                   min?: number;
                   precision?: number;
+                  prefix?: string;
                   step?: number;
+                  suffix?: string;
                 };
                 required: boolean;
                 searchable?: boolean;
@@ -1395,6 +1615,7 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1406,12 +1627,15 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
                 options?: {
                   allowedBlocks?: Array<string>;
                   allowedMarks?: Array<string>;
+                  maxLength?: number;
+                  placeholder?: string;
                 };
                 required: boolean;
                 searchable?: boolean;
@@ -1420,12 +1644,14 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
                 options?: {
                   allowedMimeTypes?: Array<string>;
                   maxFileSize?: number;
+                  maxItems?: number;
                   mediaType?:
                     | "image"
                     | "video"
@@ -1441,6 +1667,7 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1452,10 +1679,15 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
-                options?: { options?: Array<{ label: string; value: string }> };
+                options?: {
+                  maxSelections?: number;
+                  minSelections?: number;
+                  options?: Array<{ label: string; value: string }>;
+                };
                 required: boolean;
                 searchable?: boolean;
                 type: "multiSelect";
@@ -1463,6 +1695,7 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1471,6 +1704,7 @@ export declare const components: {
                   maxTags?: number;
                   minTags?: number;
                   taxonomyId?: string;
+                  taxonomyName?: string;
                 };
                 required: boolean;
                 searchable?: boolean;
@@ -1479,10 +1713,17 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
-                options?: { allowMultiple?: boolean };
+                options?: {
+                  allowMultiple?: boolean;
+                  depth?: number;
+                  maxSelections?: number;
+                  taxonomyId?: string;
+                  taxonomyName?: string;
+                };
                 required: boolean;
                 searchable?: boolean;
                 type: "category";
@@ -1490,6 +1731,7 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1501,10 +1743,11 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
-                options?: { max?: number; min?: number };
+                options?: { format?: string; max?: number; min?: number };
                 required: boolean;
                 searchable?: boolean;
                 type: "date";
@@ -1512,10 +1755,16 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
-                options?: { max?: number; min?: number };
+                options?: {
+                  format?: string;
+                  max?: number;
+                  min?: number;
+                  timezone?: string;
+                };
                 required: boolean;
                 searchable?: boolean;
                 type: "datetime";
@@ -1523,17 +1772,53 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
                 options?: {
                   allowedContentTypes?: Array<string>;
+                  maxItems?: number;
                   minItems?: number;
                   multiple?: boolean;
                 };
                 required: boolean;
                 searchable?: boolean;
                 type: "reference";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                group?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options?: {
+                  allowedCurrencies?: Array<string>;
+                  defaultCurrency?: string;
+                  max?: number;
+                  min?: number;
+                };
+                required: boolean;
+                searchable?: boolean;
+                type: "money";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                group?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options?: {
+                  itemLabel?: string;
+                  maxItems?: number;
+                  minItems?: number;
+                  subFields?: any;
+                };
+                required: boolean;
+                searchable?: boolean;
+                type: "arrayObject";
               }
           >;
           force?: boolean;
@@ -1569,13 +1854,17 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
                 options?: {
                   maxLength?: number;
                   minLength?: number;
+                  multiline?: boolean;
                   pattern?: string;
+                  patternMessage?: string;
+                  placeholder?: string;
                 };
                 required: boolean;
                 searchable?: boolean;
@@ -1584,6 +1873,7 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1591,7 +1881,9 @@ export declare const components: {
                   max?: number;
                   min?: number;
                   precision?: number;
+                  prefix?: string;
                   step?: number;
+                  suffix?: string;
                 };
                 required: boolean;
                 searchable?: boolean;
@@ -1600,6 +1892,7 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1611,12 +1904,15 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
                 options?: {
                   allowedBlocks?: Array<string>;
                   allowedMarks?: Array<string>;
+                  maxLength?: number;
+                  placeholder?: string;
                 };
                 required: boolean;
                 searchable?: boolean;
@@ -1625,12 +1921,14 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
                 options?: {
                   allowedMimeTypes?: Array<string>;
                   maxFileSize?: number;
+                  maxItems?: number;
                   mediaType?:
                     | "image"
                     | "video"
@@ -1646,6 +1944,7 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1657,10 +1956,15 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
-                options?: { options?: Array<{ label: string; value: string }> };
+                options?: {
+                  maxSelections?: number;
+                  minSelections?: number;
+                  options?: Array<{ label: string; value: string }>;
+                };
                 required: boolean;
                 searchable?: boolean;
                 type: "multiSelect";
@@ -1668,6 +1972,7 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1676,6 +1981,7 @@ export declare const components: {
                   maxTags?: number;
                   minTags?: number;
                   taxonomyId?: string;
+                  taxonomyName?: string;
                 };
                 required: boolean;
                 searchable?: boolean;
@@ -1684,10 +1990,17 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
-                options?: { allowMultiple?: boolean };
+                options?: {
+                  allowMultiple?: boolean;
+                  depth?: number;
+                  maxSelections?: number;
+                  taxonomyId?: string;
+                  taxonomyName?: string;
+                };
                 required: boolean;
                 searchable?: boolean;
                 type: "category";
@@ -1695,6 +2008,7 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1706,10 +2020,11 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
-                options?: { max?: number; min?: number };
+                options?: { format?: string; max?: number; min?: number };
                 required: boolean;
                 searchable?: boolean;
                 type: "date";
@@ -1717,10 +2032,16 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
-                options?: { max?: number; min?: number };
+                options?: {
+                  format?: string;
+                  max?: number;
+                  min?: number;
+                  timezone?: string;
+                };
                 required: boolean;
                 searchable?: boolean;
                 type: "datetime";
@@ -1728,17 +2049,53 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
                 options?: {
                   allowedContentTypes?: Array<string>;
+                  maxItems?: number;
                   minItems?: number;
                   multiple?: boolean;
                 };
                 required: boolean;
                 searchable?: boolean;
                 type: "reference";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                group?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options?: {
+                  allowedCurrencies?: Array<string>;
+                  defaultCurrency?: string;
+                  max?: number;
+                  min?: number;
+                };
+                required: boolean;
+                searchable?: boolean;
+                type: "money";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                group?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options?: {
+                  itemLabel?: string;
+                  maxItems?: number;
+                  minItems?: number;
+                  subFields?: any;
+                };
+                required: boolean;
+                searchable?: boolean;
+                type: "arrayObject";
               }
           >;
           icon?: string;
@@ -1768,13 +2125,17 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
                 options?: {
                   maxLength?: number;
                   minLength?: number;
+                  multiline?: boolean;
                   pattern?: string;
+                  patternMessage?: string;
+                  placeholder?: string;
                 };
                 required: boolean;
                 searchable?: boolean;
@@ -1783,6 +2144,7 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1790,7 +2152,9 @@ export declare const components: {
                   max?: number;
                   min?: number;
                   precision?: number;
+                  prefix?: string;
                   step?: number;
+                  suffix?: string;
                 };
                 required: boolean;
                 searchable?: boolean;
@@ -1799,6 +2163,7 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1810,12 +2175,15 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
                 options?: {
                   allowedBlocks?: Array<string>;
                   allowedMarks?: Array<string>;
+                  maxLength?: number;
+                  placeholder?: string;
                 };
                 required: boolean;
                 searchable?: boolean;
@@ -1824,12 +2192,14 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
                 options?: {
                   allowedMimeTypes?: Array<string>;
                   maxFileSize?: number;
+                  maxItems?: number;
                   mediaType?:
                     | "image"
                     | "video"
@@ -1845,6 +2215,7 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1856,10 +2227,15 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
-                options?: { options?: Array<{ label: string; value: string }> };
+                options?: {
+                  maxSelections?: number;
+                  minSelections?: number;
+                  options?: Array<{ label: string; value: string }>;
+                };
                 required: boolean;
                 searchable?: boolean;
                 type: "multiSelect";
@@ -1867,6 +2243,7 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1875,6 +2252,7 @@ export declare const components: {
                   maxTags?: number;
                   minTags?: number;
                   taxonomyId?: string;
+                  taxonomyName?: string;
                 };
                 required: boolean;
                 searchable?: boolean;
@@ -1883,10 +2261,17 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
-                options?: { allowMultiple?: boolean };
+                options?: {
+                  allowMultiple?: boolean;
+                  depth?: number;
+                  maxSelections?: number;
+                  taxonomyId?: string;
+                  taxonomyName?: string;
+                };
                 required: boolean;
                 searchable?: boolean;
                 type: "category";
@@ -1894,6 +2279,7 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
@@ -1905,10 +2291,11 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
-                options?: { max?: number; min?: number };
+                options?: { format?: string; max?: number; min?: number };
                 required: boolean;
                 searchable?: boolean;
                 type: "date";
@@ -1916,10 +2303,16 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
-                options?: { max?: number; min?: number };
+                options?: {
+                  format?: string;
+                  max?: number;
+                  min?: number;
+                  timezone?: string;
+                };
                 required: boolean;
                 searchable?: boolean;
                 type: "datetime";
@@ -1927,17 +2320,53 @@ export declare const components: {
             | {
                 defaultValue?: any;
                 description?: string;
+                group?: string;
                 label: string;
                 localized?: boolean;
                 name: string;
                 options?: {
                   allowedContentTypes?: Array<string>;
+                  maxItems?: number;
                   minItems?: number;
                   multiple?: boolean;
                 };
                 required: boolean;
                 searchable?: boolean;
                 type: "reference";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                group?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options?: {
+                  allowedCurrencies?: Array<string>;
+                  defaultCurrency?: string;
+                  max?: number;
+                  min?: number;
+                };
+                required: boolean;
+                searchable?: boolean;
+                type: "money";
+              }
+            | {
+                defaultValue?: any;
+                description?: string;
+                group?: string;
+                label: string;
+                localized?: boolean;
+                name: string;
+                options?: {
+                  itemLabel?: string;
+                  maxItems?: number;
+                  minItems?: number;
+                  subFields?: any;
+                };
+                required: boolean;
+                searchable?: boolean;
+                type: "arrayObject";
               }
           >;
           icon?: string;
@@ -1981,13 +2410,17 @@ export declare const components: {
               | {
                   defaultValue?: any;
                   description?: string;
+                  group?: string;
                   label: string;
                   localized?: boolean;
                   name: string;
                   options?: {
                     maxLength?: number;
                     minLength?: number;
+                    multiline?: boolean;
                     pattern?: string;
+                    patternMessage?: string;
+                    placeholder?: string;
                   };
                   required: boolean;
                   searchable?: boolean;
@@ -1996,6 +2429,7 @@ export declare const components: {
               | {
                   defaultValue?: any;
                   description?: string;
+                  group?: string;
                   label: string;
                   localized?: boolean;
                   name: string;
@@ -2003,7 +2437,9 @@ export declare const components: {
                     max?: number;
                     min?: number;
                     precision?: number;
+                    prefix?: string;
                     step?: number;
+                    suffix?: string;
                   };
                   required: boolean;
                   searchable?: boolean;
@@ -2012,6 +2448,7 @@ export declare const components: {
               | {
                   defaultValue?: any;
                   description?: string;
+                  group?: string;
                   label: string;
                   localized?: boolean;
                   name: string;
@@ -2023,12 +2460,15 @@ export declare const components: {
               | {
                   defaultValue?: any;
                   description?: string;
+                  group?: string;
                   label: string;
                   localized?: boolean;
                   name: string;
                   options?: {
                     allowedBlocks?: Array<string>;
                     allowedMarks?: Array<string>;
+                    maxLength?: number;
+                    placeholder?: string;
                   };
                   required: boolean;
                   searchable?: boolean;
@@ -2037,12 +2477,14 @@ export declare const components: {
               | {
                   defaultValue?: any;
                   description?: string;
+                  group?: string;
                   label: string;
                   localized?: boolean;
                   name: string;
                   options?: {
                     allowedMimeTypes?: Array<string>;
                     maxFileSize?: number;
+                    maxItems?: number;
                     mediaType?:
                       | "image"
                       | "video"
@@ -2058,6 +2500,7 @@ export declare const components: {
               | {
                   defaultValue?: any;
                   description?: string;
+                  group?: string;
                   label: string;
                   localized?: boolean;
                   name: string;
@@ -2071,10 +2514,13 @@ export declare const components: {
               | {
                   defaultValue?: any;
                   description?: string;
+                  group?: string;
                   label: string;
                   localized?: boolean;
                   name: string;
                   options?: {
+                    maxSelections?: number;
+                    minSelections?: number;
                     options?: Array<{ label: string; value: string }>;
                   };
                   required: boolean;
@@ -2084,6 +2530,7 @@ export declare const components: {
               | {
                   defaultValue?: any;
                   description?: string;
+                  group?: string;
                   label: string;
                   localized?: boolean;
                   name: string;
@@ -2092,6 +2539,7 @@ export declare const components: {
                     maxTags?: number;
                     minTags?: number;
                     taxonomyId?: string;
+                    taxonomyName?: string;
                   };
                   required: boolean;
                   searchable?: boolean;
@@ -2100,10 +2548,17 @@ export declare const components: {
               | {
                   defaultValue?: any;
                   description?: string;
+                  group?: string;
                   label: string;
                   localized?: boolean;
                   name: string;
-                  options?: { allowMultiple?: boolean };
+                  options?: {
+                    allowMultiple?: boolean;
+                    depth?: number;
+                    maxSelections?: number;
+                    taxonomyId?: string;
+                    taxonomyName?: string;
+                  };
                   required: boolean;
                   searchable?: boolean;
                   type: "category";
@@ -2111,6 +2566,7 @@ export declare const components: {
               | {
                   defaultValue?: any;
                   description?: string;
+                  group?: string;
                   label: string;
                   localized?: boolean;
                   name: string;
@@ -2122,10 +2578,11 @@ export declare const components: {
               | {
                   defaultValue?: any;
                   description?: string;
+                  group?: string;
                   label: string;
                   localized?: boolean;
                   name: string;
-                  options?: { max?: number; min?: number };
+                  options?: { format?: string; max?: number; min?: number };
                   required: boolean;
                   searchable?: boolean;
                   type: "date";
@@ -2133,10 +2590,16 @@ export declare const components: {
               | {
                   defaultValue?: any;
                   description?: string;
+                  group?: string;
                   label: string;
                   localized?: boolean;
                   name: string;
-                  options?: { max?: number; min?: number };
+                  options?: {
+                    format?: string;
+                    max?: number;
+                    min?: number;
+                    timezone?: string;
+                  };
                   required: boolean;
                   searchable?: boolean;
                   type: "datetime";
@@ -2144,17 +2607,53 @@ export declare const components: {
               | {
                   defaultValue?: any;
                   description?: string;
+                  group?: string;
                   label: string;
                   localized?: boolean;
                   name: string;
                   options?: {
                     allowedContentTypes?: Array<string>;
+                    maxItems?: number;
                     minItems?: number;
                     multiple?: boolean;
                   };
                   required: boolean;
                   searchable?: boolean;
                   type: "reference";
+                }
+              | {
+                  defaultValue?: any;
+                  description?: string;
+                  group?: string;
+                  label: string;
+                  localized?: boolean;
+                  name: string;
+                  options?: {
+                    allowedCurrencies?: Array<string>;
+                    defaultCurrency?: string;
+                    max?: number;
+                    min?: number;
+                  };
+                  required: boolean;
+                  searchable?: boolean;
+                  type: "money";
+                }
+              | {
+                  defaultValue?: any;
+                  description?: string;
+                  group?: string;
+                  label: string;
+                  localized?: boolean;
+                  name: string;
+                  options?: {
+                    itemLabel?: string;
+                    maxItems?: number;
+                    minItems?: number;
+                    subFields?: any;
+                  };
+                  required: boolean;
+                  searchable?: boolean;
+                  type: "arrayObject";
                 }
             >;
             icon?: string;
@@ -2176,6 +2675,30 @@ export declare const components: {
         { retentionDays?: number },
         { deletedCount: number }
       >;
+      emitCustomEvent: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          action:
+            | "created"
+            | "updated"
+            | "succeeded"
+            | "failed"
+            | "published"
+            | "unpublished"
+            | "deleted"
+            | "restored"
+            | "duplicated"
+            | "scheduled";
+          correlationId?: string;
+          eventType: string;
+          metadata?: any;
+          payload?: any;
+          resourceId: string;
+          userId?: string;
+        },
+        string
+      >;
       getResourceEvents: FunctionReference<
         "query",
         "internal",
@@ -2186,7 +2709,8 @@ export declare const components: {
             | "contentEntry"
             | "contentType"
             | "mediaAsset"
-            | "mediaFolder";
+            | "mediaFolder"
+            | "custom";
         },
         Array<{
           _creationTime: number;
@@ -2194,6 +2718,8 @@ export declare const components: {
           action:
             | "created"
             | "updated"
+            | "succeeded"
+            | "failed"
             | "published"
             | "unpublished"
             | "deleted"
@@ -2211,7 +2737,8 @@ export declare const components: {
             | "contentEntry"
             | "contentType"
             | "mediaAsset"
-            | "mediaFolder";
+            | "mediaFolder"
+            | "custom";
           userId?: string;
         }>
       >;
@@ -2225,6 +2752,8 @@ export declare const components: {
           action:
             | "created"
             | "updated"
+            | "succeeded"
+            | "failed"
             | "published"
             | "unpublished"
             | "deleted"
@@ -2242,7 +2771,8 @@ export declare const components: {
             | "contentEntry"
             | "contentType"
             | "mediaAsset"
-            | "mediaFolder";
+            | "mediaFolder"
+            | "custom";
           userId?: string;
         }>
       >;
@@ -2253,6 +2783,8 @@ export declare const components: {
           action?:
             | "created"
             | "updated"
+            | "succeeded"
+            | "failed"
             | "published"
             | "unpublished"
             | "deleted"
@@ -2266,7 +2798,8 @@ export declare const components: {
             | "contentEntry"
             | "contentType"
             | "mediaAsset"
-            | "mediaFolder";
+            | "mediaFolder"
+            | "custom";
         },
         {
           events: Array<{
@@ -2275,6 +2808,8 @@ export declare const components: {
             action:
               | "created"
               | "updated"
+              | "succeeded"
+              | "failed"
               | "published"
               | "unpublished"
               | "deleted"
@@ -2292,7 +2827,8 @@ export declare const components: {
               | "contentEntry"
               | "contentType"
               | "mediaAsset"
-              | "mediaFolder";
+              | "mediaFolder"
+              | "custom";
             userId?: string;
           }>;
           hasMore: boolean;
@@ -2368,7 +2904,9 @@ export declare const components: {
                 | "select"
                 | "multiSelect"
                 | "tags"
-                | "category";
+                | "category"
+                | "money"
+                | "arrayObject";
             }>;
             icon?: string;
             name: string;
@@ -2470,7 +3008,9 @@ export declare const components: {
                   | "select"
                   | "multiSelect"
                   | "tags"
-                  | "category";
+                  | "category"
+                  | "money"
+                  | "arrayObject";
               }>;
               icon?: string;
               name: string;
@@ -2577,7 +3117,9 @@ export declare const components: {
                   | "select"
                   | "multiSelect"
                   | "tags"
-                  | "category";
+                  | "category"
+                  | "money"
+                  | "arrayObject";
               }>;
               icon?: string;
               name: string;
@@ -3945,6 +4487,48 @@ export declare const components: {
         }>
       >;
     };
+    notifications: {
+      createDelivery: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          channel: "email" | "sms" | "push";
+          metadata?: any;
+          recipient: string;
+          templateId: string;
+          variables?: any;
+        },
+        string
+      >;
+      getDelivery: FunctionReference<
+        "query",
+        "internal",
+        { deliveryId: string },
+        any
+      >;
+      getDeliveryStats: FunctionReference<"query", "internal", {}, any>;
+      listDeliveries: FunctionReference<
+        "query",
+        "internal",
+        {
+          channel?: "email" | "sms" | "push";
+          limit?: number;
+          recipient?: string;
+          status?: "pending" | "sending" | "sent" | "failed";
+        },
+        any
+      >;
+      updateDeliveryStatus: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          deliveryId: string;
+          error?: string;
+          status: "pending" | "sending" | "sent" | "failed";
+        },
+        null
+      >;
+    };
     ragContentIndexer: {
       getIndexingStats: FunctionReference<
         "query",
@@ -4737,7 +5321,11 @@ export declare const components: {
           maxRetries?: number;
           name: string;
           resourceTypes?: Array<
-            "contentEntry" | "contentType" | "mediaAsset" | "mediaFolder"
+            | "contentEntry"
+            | "contentType"
+            | "mediaAsset"
+            | "mediaFolder"
+            | "custom"
           >;
           secret?: string;
           timeoutMs?: number;
@@ -4796,7 +5384,11 @@ export declare const components: {
           maxRetries?: number;
           name: string;
           resourceTypes?: Array<
-            "contentEntry" | "contentType" | "mediaAsset" | "mediaFolder"
+            | "contentEntry"
+            | "contentType"
+            | "mediaAsset"
+            | "mediaFolder"
+            | "custom"
           >;
           timeoutMs?: number;
           updatedBy?: string;
@@ -4883,7 +5475,11 @@ export declare const components: {
           maxRetries?: number;
           name: string;
           resourceTypes?: Array<
-            "contentEntry" | "contentType" | "mediaAsset" | "mediaFolder"
+            | "contentEntry"
+            | "contentType"
+            | "mediaAsset"
+            | "mediaFolder"
+            | "custom"
           >;
           timeoutMs?: number;
           updatedBy?: string;
@@ -4907,7 +5503,11 @@ export declare const components: {
           maxRetries?: number;
           name: string;
           resourceTypes?: Array<
-            "contentEntry" | "contentType" | "mediaAsset" | "mediaFolder"
+            | "contentEntry"
+            | "contentType"
+            | "mediaAsset"
+            | "mediaFolder"
+            | "custom"
           >;
           timeoutMs?: number;
           updatedBy?: string;
@@ -4945,7 +5545,11 @@ export declare const components: {
           maxRetries?: number;
           name?: string;
           resourceTypes?: Array<
-            "contentEntry" | "contentType" | "mediaAsset" | "mediaFolder"
+            | "contentEntry"
+            | "contentType"
+            | "mediaAsset"
+            | "mediaFolder"
+            | "custom"
           >;
           secret?: string;
           timeoutMs?: number;
@@ -4965,7 +5569,11 @@ export declare const components: {
           maxRetries?: number;
           name: string;
           resourceTypes?: Array<
-            "contentEntry" | "contentType" | "mediaAsset" | "mediaFolder"
+            | "contentEntry"
+            | "contentType"
+            | "mediaAsset"
+            | "mediaFolder"
+            | "custom"
           >;
           timeoutMs?: number;
           updatedBy?: string;

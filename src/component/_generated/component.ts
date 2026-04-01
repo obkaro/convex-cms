@@ -2688,6 +2688,31 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         { deletedCount: number },
         Name
       >;
+      emitCustomEvent: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          action:
+            | "created"
+            | "updated"
+            | "succeeded"
+            | "failed"
+            | "published"
+            | "unpublished"
+            | "deleted"
+            | "restored"
+            | "duplicated"
+            | "scheduled";
+          correlationId?: string;
+          eventType: string;
+          metadata?: any;
+          payload?: any;
+          resourceId: string;
+          userId?: string;
+        },
+        string,
+        Name
+      >;
       getResourceEvents: FunctionReference<
         "query",
         "internal",
@@ -2698,7 +2723,8 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | "contentEntry"
             | "contentType"
             | "mediaAsset"
-            | "mediaFolder";
+            | "mediaFolder"
+            | "custom";
         },
         Array<{
           _creationTime: number;
@@ -2706,6 +2732,8 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           action:
             | "created"
             | "updated"
+            | "succeeded"
+            | "failed"
             | "published"
             | "unpublished"
             | "deleted"
@@ -2723,7 +2751,8 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | "contentEntry"
             | "contentType"
             | "mediaAsset"
-            | "mediaFolder";
+            | "mediaFolder"
+            | "custom";
           userId?: string;
         }>,
         Name
@@ -2738,6 +2767,8 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           action:
             | "created"
             | "updated"
+            | "succeeded"
+            | "failed"
             | "published"
             | "unpublished"
             | "deleted"
@@ -2755,7 +2786,8 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | "contentEntry"
             | "contentType"
             | "mediaAsset"
-            | "mediaFolder";
+            | "mediaFolder"
+            | "custom";
           userId?: string;
         }>,
         Name
@@ -2767,6 +2799,8 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           action?:
             | "created"
             | "updated"
+            | "succeeded"
+            | "failed"
             | "published"
             | "unpublished"
             | "deleted"
@@ -2780,7 +2814,8 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | "contentEntry"
             | "contentType"
             | "mediaAsset"
-            | "mediaFolder";
+            | "mediaFolder"
+            | "custom";
         },
         {
           events: Array<{
@@ -2789,6 +2824,8 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             action:
               | "created"
               | "updated"
+              | "succeeded"
+              | "failed"
               | "published"
               | "unpublished"
               | "deleted"
@@ -2806,7 +2843,8 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
               | "contentEntry"
               | "contentType"
               | "mediaAsset"
-              | "mediaFolder";
+              | "mediaFolder"
+              | "custom";
             userId?: string;
           }>;
           hasMore: boolean;
@@ -5346,7 +5384,11 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           maxRetries?: number;
           name: string;
           resourceTypes?: Array<
-            "contentEntry" | "contentType" | "mediaAsset" | "mediaFolder"
+            | "contentEntry"
+            | "contentType"
+            | "mediaAsset"
+            | "mediaFolder"
+            | "custom"
           >;
           secret?: string;
           timeoutMs?: number;
@@ -5408,7 +5450,11 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           maxRetries?: number;
           name: string;
           resourceTypes?: Array<
-            "contentEntry" | "contentType" | "mediaAsset" | "mediaFolder"
+            | "contentEntry"
+            | "contentType"
+            | "mediaAsset"
+            | "mediaFolder"
+            | "custom"
           >;
           timeoutMs?: number;
           updatedBy?: string;
@@ -5499,7 +5545,11 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           maxRetries?: number;
           name: string;
           resourceTypes?: Array<
-            "contentEntry" | "contentType" | "mediaAsset" | "mediaFolder"
+            | "contentEntry"
+            | "contentType"
+            | "mediaAsset"
+            | "mediaFolder"
+            | "custom"
           >;
           timeoutMs?: number;
           updatedBy?: string;
@@ -5524,7 +5574,11 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           maxRetries?: number;
           name: string;
           resourceTypes?: Array<
-            "contentEntry" | "contentType" | "mediaAsset" | "mediaFolder"
+            | "contentEntry"
+            | "contentType"
+            | "mediaAsset"
+            | "mediaFolder"
+            | "custom"
           >;
           timeoutMs?: number;
           updatedBy?: string;
@@ -5566,7 +5620,11 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           maxRetries?: number;
           name?: string;
           resourceTypes?: Array<
-            "contentEntry" | "contentType" | "mediaAsset" | "mediaFolder"
+            | "contentEntry"
+            | "contentType"
+            | "mediaAsset"
+            | "mediaFolder"
+            | "custom"
           >;
           secret?: string;
           timeoutMs?: number;
@@ -5586,7 +5644,11 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           maxRetries?: number;
           name: string;
           resourceTypes?: Array<
-            "contentEntry" | "contentType" | "mediaAsset" | "mediaFolder"
+            | "contentEntry"
+            | "contentType"
+            | "mediaAsset"
+            | "mediaFolder"
+            | "custom"
           >;
           timeoutMs?: number;
           updatedBy?: string;
