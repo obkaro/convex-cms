@@ -6,9 +6,9 @@
  */
 
 import { useState } from "react";
+import { version } from "../../../../package.json";
 import { useQuery } from "convex/react";
 import { Layers, ChevronDown } from "lucide-react";
-import { cn } from "../../lib/cn";
 import { useAdminConfig } from "../../contexts";
 import { Icon } from "../../lib/icons";
 import { useEmbedNavigation, type EmbedRoute } from "../navigation";
@@ -18,6 +18,21 @@ import {
   CollapsibleTrigger,
   CollapsibleContent,
 } from "../../components/ui/collapsible";
+import {
+  Sidebar as ShadcnSidebar,
+  SidebarHeader,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+  SidebarMenuSub,
+  SidebarMenuSubItem,
+  SidebarMenuSubButton,
+  useSidebar,
+} from "../../components/ui/sidebar";
 import { ContentTypeFormModal } from "../../components/ContentTypeFormModal";
 import type { NavItem } from "../../lib/admin-config";
 
@@ -28,6 +43,7 @@ function pathToRoute(path: string): EmbedRoute {
   if (path.startsWith("/content")) return "content";
   if (path.startsWith("/media")) return "media";
   if (path.startsWith("/taxonomies")) return "taxonomies";
+  if (path.startsWith("/users")) return "users";
   if (path.startsWith("/settings")) return "settings";
   if (path.startsWith("/trash")) return "trash";
   return "dashboard";
@@ -36,8 +52,9 @@ function pathToRoute(path: string): EmbedRoute {
 export function EmbedSidebar() {
   const { currentPath, navigate, navigateToContentType } = useEmbedNavigation();
   const config = useAdminConfig();
-  const { navItems, branding, layout } = config;
+  const { navItems, branding } = config;
   const api = useApi();
+  const { setOpenMobile, isMobile } = useSidebar();
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
@@ -61,9 +78,14 @@ export function EmbedSidebar() {
     normalizedPath.startsWith("/entries/new/") ||
     normalizedPath.startsWith("/entries/");
 
+  const closeMobileSheet = () => {
+    if (isMobile) setOpenMobile(false);
+  };
+
   const handleNavClick = (item: NavItem) => {
     const route = pathToRoute(item.path);
     navigate(route);
+    closeMobileSheet();
   };
 
   const renderNavItem = (item: NavItem) => {
@@ -72,99 +94,86 @@ export function EmbedSidebar() {
     }
 
     return (
-      <button
-        key={item.id}
-        type="button"
-        onClick={() => handleNavClick(item)}
-        className={cn(
-          "flex w-full hover:cursor-pointer items-center gap-3 rounded-md px-2 py-2 text-left text-sm font-medium transition-colors",
-          isActive(item.path, item.exact)
-            ? "bg-sidebar-accent text-sidebar-accent-foreground"
-            : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
-        )}
-      >
-        <Icon name={item.icon} className="size-5" />
-        <span className="flex-1">{item.label}</span>
-        {item.badge && (
-          <span className="rounded-full bg-sidebar-primary px-2 py-0.5 text-xs text-sidebar-primary-foreground">
-            {item.badge}
-          </span>
-        )}
-      </button>
+      <SidebarMenuItem key={item.id}>
+        <SidebarMenuButton
+          isActive={isActive(item.path, item.exact)}
+          onClick={() => handleNavClick(item)}
+        >
+          <Icon name={item.icon} className="size-5" />
+          <span>{item.label}</span>
+          {item.badge && (
+            <span className="ml-auto rounded-full bg-sidebar-primary px-2 py-0.5 text-xs text-sidebar-primary-foreground">
+              {item.badge}
+            </span>
+          )}
+        </SidebarMenuButton>
+      </SidebarMenuItem>
     );
   };
 
   const renderContentMenu = (item: NavItem) => (
-    <Collapsible key={item.id} defaultOpen={isContentActive}>
-      <CollapsibleTrigger
-        className={cn(
-          "flex w-full hover:cursor-pointer items-center gap-3 rounded-md px-2 py-2 text-sm font-medium transition-colors",
-          isContentActive
-            ? "bg-sidebar-accent text-sidebar-accent-foreground"
-            : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground",
-          "group"
-        )}
-      >
-        <Icon name={item.icon} className="size-5" />
-        <span className="flex-1 text-left">{item.label}</span>
-        <ChevronDown className="size-4 transition-transform duration-200 group-data-[state=open]:rotate-180" />
-      </CollapsibleTrigger>
-      <CollapsibleContent>
-        <div className="ml-5 mt-1 space-y-1 border-l border-sidebar-border pl-3">
-          <button
-            type="button"
-            onClick={() => navigate("content")}
-            className={cn(
-              "flex w-full hover:cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors",
-              normalizedPath === "/content"
-                ? "bg-sidebar-accent/60 text-sidebar-accent-foreground"
-                : "text-sidebar-foreground/80 hover:bg-sidebar-accent/30 hover:text-sidebar-accent-foreground"
+    <Collapsible key={item.id} defaultOpen={isContentActive} className="group/collapsible">
+      <SidebarMenuItem>
+        <CollapsibleTrigger asChild>
+          <SidebarMenuButton isActive={isContentActive}>
+            <Icon name={item.icon} className="size-5" />
+            <span>{item.label}</span>
+            <ChevronDown className="ml-auto size-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-180" />
+          </SidebarMenuButton>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <SidebarMenuSub>
+            <SidebarMenuSubItem>
+              <SidebarMenuSubButton
+                isActive={normalizedPath === "/content"}
+                onClick={() => {
+                  navigate("content");
+                  closeMobileSheet();
+                }}
+              >
+                All Entries
+              </SidebarMenuSubButton>
+            </SidebarMenuSubItem>
+            {contentTypes.map((type) => (
+              <SidebarMenuSubItem key={type._id}>
+                <SidebarMenuSubButton
+                  isActive={normalizedPath === `/entries/type/${type._id}`}
+                  onClick={() => {
+                    navigateToContentType(type._id);
+                    closeMobileSheet();
+                  }}
+                >
+                  {type.displayName}
+                </SidebarMenuSubButton>
+              </SidebarMenuSubItem>
+            ))}
+            {contentTypes.length === 0 && contentTypesResult !== undefined && (
+              <SidebarMenuSubItem>
+                <SidebarMenuSubButton
+                  onClick={() => setIsCreateModalOpen(true)}
+                  className="text-sidebar-foreground/60"
+                >
+                  + Create content type
+                </SidebarMenuSubButton>
+              </SidebarMenuSubItem>
             )}
-          >
-            All Entries
-          </button>
-          {contentTypes.map((type) => (
-            <button
-              key={type._id}
-              type="button"
-              onClick={() => navigateToContentType(type._id)}
-              className={cn(
-                "flex w-full hover:cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors",
-                normalizedPath === `/entries/type/${type._id}`
-                  ? "bg-sidebar-accent/60 text-sidebar-accent-foreground"
-                  : "text-sidebar-foreground/80 hover:bg-sidebar-accent/30 hover:text-sidebar-accent-foreground"
-              )}
-            >
-              {type.displayName}
-            </button>
-          ))}
-          {contentTypes.length === 0 && contentTypesResult !== undefined && (
-            <button
-              type="button"
-              onClick={() => setIsCreateModalOpen(true)}
-              className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-sidebar-foreground/60 hover:bg-sidebar-accent/30 hover:text-sidebar-accent-foreground"
-            >
-              + Create content type
-            </button>
-          )}
-        </div>
-      </CollapsibleContent>
+          </SidebarMenuSub>
+        </CollapsibleContent>
+      </SidebarMenuItem>
     </Collapsible>
   );
 
-  const sidebarWidth = layout.sidebarWidth;
-
   return (
     <>
-      <aside
-        className="fixed inset-y-0 left-0 z-50 flex flex-col border-r bg-sidebar"
-        style={{ width: sidebarWidth }}
-      >
-        <div className="flex h-14 items-center gap-2 px-4">
+      <ShadcnSidebar collapsible="offcanvas" className="bg-sidebar">
+        <SidebarHeader className="border-none">
           <button
             type="button"
-            onClick={() => navigate("dashboard")}
-            className="flex items-center gap-2 font-semibold text-sidebar-foreground"
+            onClick={() => {
+              navigate("dashboard");
+              closeMobileSheet();
+            }}
+            className="flex h-14 items-center gap-2 px-2 font-semibold text-sidebar-foreground"
           >
             {branding.logo ? (
               <img src={branding.logo} alt={branding.appName} className="size-8 bg-primary" />
@@ -175,35 +184,31 @@ export function EmbedSidebar() {
             )}
             <span className="text-base">{branding.appName}</span>
           </button>
-        </div>
+        </SidebarHeader>
 
-        <nav className="flex-1 space-y-6 overflow-y-auto p-4">
+        <SidebarContent>
           {navItems.main.length > 0 && (
-            <div className="space-y-1">
-              <span className="px-2 text-xs font-medium uppercase tracking-wider text-sidebar-foreground/60">
-                Main
-              </span>
-              <div className="space-y-1 pt-2">{navItems.main.map(renderNavItem)}</div>
-            </div>
+            <SidebarGroup>
+              <SidebarGroupLabel>Main</SidebarGroupLabel>
+              <SidebarMenu>{navItems.main.map(renderNavItem)}</SidebarMenu>
+            </SidebarGroup>
           )}
 
           {navItems.config.length > 0 && (
-            <div className="space-y-1">
-              <span className="px-2 text-xs font-medium uppercase tracking-wider text-sidebar-foreground/60">
-                Configuration
-              </span>
-              <div className="space-y-1 pt-2">{navItems.config.map(renderNavItem)}</div>
-            </div>
+            <SidebarGroup>
+              <SidebarGroupLabel>Configuration</SidebarGroupLabel>
+              <SidebarMenu>{navItems.config.map(renderNavItem)}</SidebarMenu>
+            </SidebarGroup>
           )}
-        </nav>
+        </SidebarContent>
 
-        <div className="p-4">
+        <SidebarFooter className="border-t border-sidebar-border">
           <div className="flex items-center justify-between text-xs text-sidebar-foreground/60">
             <span>Version</span>
-            <span className="font-mono">0.0.11</span>
+            <span className="font-mono">{version}</span>
           </div>
-        </div>
-      </aside>
+        </SidebarFooter>
+      </ShadcnSidebar>
 
       <ContentTypeFormModal
         isOpen={isCreateModalOpen}

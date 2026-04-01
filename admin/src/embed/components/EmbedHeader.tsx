@@ -7,6 +7,8 @@
 import { ChevronLeft, Bell, HelpCircle, User, LogOut, Moon, Sun } from "lucide-react";
 import { useAdminConfig, useTheme, useAuth } from "../../contexts";
 import { useEmbedNavigation } from "../navigation";
+import { SidebarTrigger } from "../../components/ui/sidebar";
+import { Separator } from "../../components/ui/separator";
 
 export function EmbedHeader() {
   const { goBack, canGoBack, currentRoute } = useEmbedNavigation();
@@ -28,8 +30,10 @@ export function EmbedHeader() {
   const title = routeTitles[currentRoute.route] || "Dashboard";
 
   return (
-    <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b border-border bg-background px-6">
-      <div className="flex items-center gap-4">
+    <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b border-border bg-background px-3 md:px-6">
+      <div className="flex items-center gap-2 md:gap-4">
+        <SidebarTrigger className="md:hidden" />
+        <Separator orientation="vertical" className="data-[orientation=vertical]:h-4 md:hidden" />
         {canGoBack && (
           <button
             type="button"
@@ -37,13 +41,13 @@ export function EmbedHeader() {
             className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
           >
             <ChevronLeft className="size-4" />
-            Back
+            <span className="hidden sm:inline">Back</span>
           </button>
         )}
-        <h1 className="text-lg font-semibold text-foreground">{title}</h1>
+        <h1 className="text-base font-semibold text-foreground md:text-lg">{title}</h1>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1 md:gap-2">
         {canToggleDarkMode && (
           <button
             type="button"
@@ -57,7 +61,7 @@ export function EmbedHeader() {
 
         <button
           type="button"
-          className="flex size-9 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
+          className="hidden items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground md:flex md:size-9"
           title="Notifications"
         >
           <Bell className="size-5" />
@@ -65,14 +69,14 @@ export function EmbedHeader() {
 
         <button
           type="button"
-          className="flex size-9 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
+          className="hidden items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground md:flex md:size-9"
           title="Help"
         >
           <HelpCircle className="size-5" />
         </button>
 
         {isAuthenticated && user && (
-          <div className="ml-2 flex items-center gap-2 border-l border-border pl-4">
+          <div className="ml-1 flex items-center gap-2 border-l border-border pl-2 md:ml-2 md:pl-4">
             <div className="flex size-8 items-center justify-center rounded-full bg-primary text-primary-foreground">
               {user.avatarUrl ? (
                 <img
@@ -85,7 +89,7 @@ export function EmbedHeader() {
               )}
             </div>
             {user.name && (
-              <span className="text-sm font-medium text-foreground">
+              <span className="hidden text-sm font-medium text-foreground md:inline">
                 {user.name}
               </span>
             )}

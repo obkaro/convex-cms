@@ -1,6 +1,6 @@
 import { useRouterState, useNavigate, Link } from '@tanstack/react-router'
-import { useAuth, useAdminConfig, useBreadcrumbContext } from '~/contexts'
-import { getRole } from '~/lib/cmsExports'
+import { useAuth, useAdminConfig, useBreadcrumbContext } from '../contexts'
+import { getRole } from '../lib/cmsExports'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -8,7 +8,9 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from '~/components/ui/breadcrumb'
+} from './ui/breadcrumb'
+import { SidebarTrigger } from './ui/sidebar'
+import { Separator } from './ui/separator'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,14 +18,14 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '~/components/ui/dropdown-menu'
-import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar'
-import { Button } from '~/components/ui/button'
+} from './ui/dropdown-menu'
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
+import { Button } from './ui/button'
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '~/components/ui/popover'
+} from './ui/popover'
 import {
   Bell,
   HelpCircle,
@@ -37,7 +39,7 @@ import {
   Code,
   MessageSquare,
 } from 'lucide-react'
-import { cn as _cn } from '~/lib/cn'
+import { cn as _cn } from '../lib/cn'
 import { Fragment } from 'react'
 
 interface BreadcrumbData {
@@ -158,6 +160,10 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b border-border bg-background/95 px-6 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="flex items-center gap-2">
+        <SidebarTrigger className="md:hidden" />
+        <Separator orientation="vertical" className="mr-2 data-[orientation=vertical]:h-4 md:hidden" />
+      </div>
       <Breadcrumb>
         <BreadcrumbList>
           {breadcrumbs.map((crumb, index) => (
@@ -211,10 +217,10 @@ export function Header() {
             <div className="pb-2">
               <h4 className="font-medium">Help & Resources</h4>
             </div>
-            <div className="space-y-4">
+            <div className="flex flex-col gap-4">
               <div>
                 <h5 className="mb-2 text-xs font-medium text-muted-foreground">Keyboard Shortcuts</h5>
-                <div className="space-y-1">
+                <div className="flex flex-col gap-1">
                   {KEYBOARD_SHORTCUTS.map((shortcut, index) => (
                     <div key={index} className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">{shortcut.description}</span>
@@ -234,7 +240,7 @@ export function Header() {
               </div>
               <div>
                 <h5 className="mb-2 text-xs font-medium text-muted-foreground">Resources</h5>
-                <div className="space-y-1">
+                <div className="flex flex-col gap-1">
                   {HELP_RESOURCES.map((resource) => (
                     <a
                       key={resource.label}
@@ -267,7 +273,7 @@ export function Header() {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel className="font-normal">
-              <div className="flex flex-col space-y-1">
+              <div className="flex flex-col gap-1">
                 <p className="text-sm font-medium">{userDisplayName}</p>
                 {user?.email && (
                   <p className="text-xs text-muted-foreground">{user.email}</p>

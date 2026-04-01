@@ -9,6 +9,7 @@ import type { ReactNode } from "react";
 import { EmbedSidebar } from "./EmbedSidebar";
 import { EmbedHeader } from "./EmbedHeader";
 import { useAdminConfig } from "../../contexts";
+import { SidebarProvider, SidebarInset } from "../../components/ui/sidebar";
 
 interface EmbedLayoutProps {
   children: ReactNode;
@@ -18,12 +19,19 @@ export function EmbedLayout({ children }: EmbedLayoutProps) {
   const { layout } = useAdminConfig();
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <SidebarProvider
+      defaultOpen={true}
+      style={
+        {
+          "--sidebar-width": `${layout.sidebarWidth}px`,
+        } as React.CSSProperties
+      }
+    >
       <EmbedSidebar />
-      <div className="flex flex-1 flex-col" style={{ marginLeft: layout.sidebarWidth }}>
+      <SidebarInset>
         <EmbedHeader />
-        <main className="flex-1 overflow-auto p-6">{children}</main>
-      </div>
-    </div>
+        <div className="flex-1 overflow-auto p-3 md:p-6">{children}</div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
-import { useAdminConfig } from "~/contexts";
+import { useAdminConfig } from "../contexts";
+import { SidebarProvider, SidebarInset } from "./ui/sidebar";
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -11,12 +12,19 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const { layout } = useAdminConfig();
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <SidebarProvider
+      defaultOpen={true}
+      style={
+        {
+          "--sidebar-width": `${layout.sidebarWidth}px`,
+        } as React.CSSProperties
+      }
+    >
       <Sidebar />
-      <div className="flex flex-1 flex-col" style={{ marginLeft: layout.sidebarWidth }}>
+      <SidebarInset>
         <Header />
-        <main className="flex-1 overflow-auto p-6">{children}</main>
-      </div>
-    </div>
+        <div className="flex-1 overflow-auto p-3 md:p-6">{children}</div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }
