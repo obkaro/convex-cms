@@ -17,6 +17,12 @@ export type AdminOperation =
   | { type: "getSettings" }
   | { type: "updateSettings" }
   | { type: "resetSettings" }
+  // Users
+  | { type: "listCmsUsers" }
+  | { type: "getCmsUser" }
+  | { type: "setCmsUserRole" }
+  | { type: "inviteCmsUser" }
+  | { type: "removeCmsUser" }
   // Content Types
   | { type: "listContentTypes" }
   | { type: "getContentType"; id?: string; name?: string }
@@ -146,29 +152,47 @@ export interface FeatureFlagsConfig {
 /**
  * Options for configuring the admin API.
  */
+/**
+ * Return type from the auth callback.
+ * Can be a simple user ID string, a rich profile object, or null for anonymous.
+ */
+export type AuthResult =
+  | string
+  | { userId: string; name?: string; email?: string; avatarUrl?: string }
+  | null;
+
 export interface AdminApiOptions {
   /**
    * Optional authentication callback.
    *
    * Called before each operation to validate access. Should throw if
-   * unauthorized. Returns the authenticated user's ID (or null for anonymous).
+   * unauthorized.
    *
-   * If not provided, all operations are allowed (useful for development).
+   * Return either:
+   * - A user ID string (backward compatible)
+   * - A profile object `{ userId, name?, email?, avatarUrl? }` for richer user display
+   * - `null` for anonymous access
+   *
+   * When a profile object is returned, the CMS auto-registers the user with
+   * their display name and email in the Users page.
    *
    * @example
    * ```typescript
    * auth: async (ctx, operation) => {
    *   const identity = await ctx.auth.getUserIdentity();
    *   if (!identity) throw new Error("Unauthorized");
-   *   // Could also check operation.type for fine-grained access control
-   *   return identity.subject;
+   *   return {
+   *     userId: identity.subject,
+   *     name: identity.name,
+   *     email: identity.email,
+   *   };
    * }
    * ```
    */
   auth?: (
-    ctx: { auth: Auth },
+    ctx: { auth: Auth; db?: any },
     operation: AdminOperation
-  ) => Promise<string | null>;
+  ) => Promise<AuthResult>;
 
   /**
    * Feature flags for the CMS.
@@ -198,6 +222,8 @@ export interface AdminApiOptions {
  */
 export interface AuthContext {
   auth: Auth;
+  /** Available in mutation contexts for profile lookups */
+  db?: any;
 }
 
 /**

@@ -8,3 +8,4 @@ export { EmbedTrash } from "./Trash";
 export { EmbedTaxonomies } from "./Taxonomies";
 export { EmbedNewEntry } from "./NewEntry";
 export { EmbedEntry } from "./Entry";
+export { EmbedUsers } from "./Users";

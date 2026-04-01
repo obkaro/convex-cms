@@ -65,6 +65,7 @@ export const resources = [
 	"contentEntries",
 	"mediaItems",
 	"settings",
+	"users",
 ] as const;
 
 export type Resource = typeof resources[number];
@@ -77,6 +78,7 @@ export const resourceValidator = v.union(
 	v.literal("contentEntries"),
 	v.literal("mediaItems"),
 	v.literal("settings"),
+	v.literal("users"),
 );
 
 /**
@@ -237,6 +239,10 @@ export const ADMIN_ROLE: RoleDefinition = {
 		// Settings - full access
 		{ resource: "settings", action: "manage" },
 		...readOnly("settings"),
+
+		// Users - admin only
+		...fullCrud("users"),
+		{ resource: "users", action: "manage" },
 	],
 };
 

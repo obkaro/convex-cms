@@ -40,8 +40,15 @@ const navigationSchema = z.object({
   showTaxonomies: z.boolean().default(true),
   showContentTypes: z.boolean().default(true),
   showTrash: z.boolean().default(true),
+  showUsers: z.boolean().default(true),
   showSettings: z.boolean().default(true),
   customItems: z.array(navItemSchema).default([]),
+});
+
+const roleSchema = z.object({
+  value: z.string(),
+  label: z.string(),
+  description: z.string().optional(),
 });
 
 const themeSchema = z.object({
@@ -55,6 +62,13 @@ export const adminConfigSchema = z.object({
   layout: layoutSchema.default(() => layoutSchema.parse({})),
   navigation: navigationSchema.default(() => navigationSchema.parse({})),
   theme: themeSchema.default(() => themeSchema.parse({})),
+  /**
+   * Custom roles for the Users page role dropdown.
+   * By default, these are appended to the built-in roles (admin/editor/author/viewer).
+   * Set `overrideBuiltInRoles: true` to replace the built-in roles entirely.
+   */
+  customRoles: z.array(roleSchema).default([]),
+  overrideBuiltInRoles: z.boolean().default(false),
 });
 
 export type AdminConfig = z.infer<typeof adminConfigSchema>;
@@ -79,6 +93,7 @@ export const DEFAULT_NAV_ITEMS: NavItem[] = [
     section: "config",
   },
   { id: "trash", path: "/trash", label: "Trash", icon: "Trash2", section: "config" },
+  { id: "users", path: "/users", label: "Users", icon: "Users", section: "config" },
   { id: "settings", path: "/settings", label: "Settings", icon: "Settings", section: "config" },
 ];
 
@@ -94,6 +109,7 @@ export function getVisibleNavItems(config: AdminConfig): { main: NavItem[]; conf
     taxonomies: config.navigation.showTaxonomies,
     "content-types": config.navigation.showContentTypes,
     trash: config.navigation.showTrash,
+    users: config.navigation.showUsers,
     settings: config.navigation.showSettings,
   };
 

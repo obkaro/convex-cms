@@ -17,28 +17,28 @@ import {
 	SettingsPage,
 	TaxonomiesPage,
 	TrashPage,
-} from "~/pages";
-import { ContentEntryEditor } from "~/components/ContentEntryEditor";
+} from "../pages";
+import { ContentEntryEditor } from "../components/ContentEntryEditor";
 import type {
 	ContentType,
 	ContentEntry,
-} from "~/components/ContentEntryEditor";
-import { usePermissions, useBreadcrumbLabel } from "~/hooks";
-import { CmsPageHeader } from "~/components/cmsds/CmsPageHeader";
-import { CmsToolbar } from "~/components/cmsds/CmsToolbar";
-import { CmsButton } from "~/components/cmsds/CmsButton";
-import { CmsStatusBadge } from "~/components/cmsds/CmsStatusBadge";
-import { CmsEmptyState } from "~/components/cmsds/CmsEmptyState";
-import { CmsConfirmDialog } from "~/components/cmsds/CmsDialog";
-import { TaxonomyFilter } from "~/components/filters/TaxonomyFilter";
-import { Input } from "~/components/ui/input";
+} from "../components/ContentEntryEditor";
+import { usePermissions, useBreadcrumbLabel } from "../hooks";
+import { CmsPageHeader } from "../components/cmsds/CmsPageHeader";
+import { CmsToolbar } from "../components/cmsds/CmsToolbar";
+import { CmsButton } from "../components/cmsds/CmsButton";
+import { CmsStatusBadge } from "../components/cmsds/CmsStatusBadge";
+import { CmsEmptyState } from "../components/cmsds/CmsEmptyState";
+import { CmsConfirmDialog } from "../components/cmsds/CmsDialog";
+import { TaxonomyFilter } from "../components/filters/TaxonomyFilter";
+import { Input } from "../components/ui/input";
 import {
 	Select,
 	SelectContent,
 	SelectItem,
 	SelectTrigger,
 	SelectValue,
-} from "~/components/ui/select";
+} from "../components/ui/select";
 import {
 	Search,
 	Plus,
@@ -47,10 +47,10 @@ import {
 	ChevronDown,
 	ArrowUpDown,
 } from "lucide-react";
-import { useSettingsConfig } from "~/contexts";
-import { AdminLayout } from "~/components";
-import { adminApi } from "~/lib/adminApi";
-import { useTanStackNavigation } from "~/lib/tanstack-adapter";
+import { useSettingsConfig } from "../contexts";
+import { AdminLayout } from "../components";
+import { adminApi } from "../lib/adminApi";
+import { useTanStackNavigation } from "../lib/tanstack-adapter";
 
 // --- Root ---
 

@@ -13,3 +13,4 @@ export { MediaPage, type MediaPageProps } from "./MediaPage";
 export { SettingsPage, type SettingsPageProps } from "./SettingsPage";
 export { TaxonomiesPage, type TaxonomiesPageProps } from "./TaxonomiesPage";
 export { TrashPage, type TrashPageProps } from "./TrashPage";
+export { UsersPage } from "./UsersPage";

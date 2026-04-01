@@ -62,6 +62,7 @@ import { createVersionsOperations } from "./versions.js";
 import { createMediaOperations } from "./media.js";
 import { createTaxonomiesOperations } from "./taxonomies.js";
 import { createSettingsOperations } from "./settings.js";
+import { createUserOperations } from "./users.js";
 
 /**
  * Creates the admin API with all CRUD operations for content management.
@@ -144,10 +145,33 @@ function createAdminAPIImpl(
     ctx: AuthContext,
     operation: AdminOperation
   ): Promise<string | null> => {
-    if (auth) {
-      return await auth(ctx, operation);
+    if (!auth) return null;
+
+    const result = await auth(ctx, operation);
+    if (!result) return null;
+
+    // Normalize auth result to userId + optional profile
+    const isProfile = typeof result === "object";
+    const userId = isProfile ? result.userId : result;
+    const profileName = isProfile ? result.name : undefined;
+    const profileEmail = isProfile ? result.email : undefined;
+    const profileAvatar = isProfile ? result.avatarUrl : undefined;
+
+    // Auto-register user in CMS on admin API access (mutations only — queries don't have runMutation)
+    if (userId && typeof (ctx as any).runMutation === "function") {
+      try {
+        await (ctx as any).runMutation(component.cmsUsers.upsert, {
+          externalUserId: userId,
+          displayName: profileName,
+          email: profileEmail,
+          avatarUrl: profileAvatar,
+        });
+      } catch {
+        // Non-critical: don't block the operation if registration fails
+      }
     }
-    return null;
+
+    return userId;
   };
 
   // Create all domain operations
@@ -161,6 +185,7 @@ function createAdminAPIImpl(
   const mediaOps = createMediaOperations(component, checkAuth);
   const taxonomiesOps = createTaxonomiesOperations(component, checkAuth);
   const settingsOps = createSettingsOperations(component, checkAuth, { features });
+  const usersOps = createUserOperations(component, checkAuth);
 
   return {
     // =========================================================================
@@ -174,6 +199,14 @@ function createAdminAPIImpl(
     getSettings: settingsOps.getSettings,
     updateSettings: settingsOps.updateSettings,
     resetSettings: settingsOps.resetSettings,
+
+    // Users
+    listCmsUsers: usersOps.listCmsUsers,
+    getCmsUser: usersOps.getCmsUser,
+    setCmsUserRole: usersOps.setCmsUserRole,
+    inviteCmsUser: usersOps.inviteCmsUser,
+    removeCmsUser: usersOps.removeCmsUser,
+    registerSelf: usersOps.registerSelf,
 
     // Content Types
     listContentTypes: contentTypesOps.listContentTypes,

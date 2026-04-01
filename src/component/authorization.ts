@@ -198,6 +198,7 @@ function getResourceLabel(resource: Resource): string {
     contentEntries: "content entries",
     mediaItems: "media items",
     settings: "settings",
+    users: "users",
   };
   return labels[resource] ?? resource;
 }

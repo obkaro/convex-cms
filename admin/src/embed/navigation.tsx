@@ -20,6 +20,7 @@ export type EmbedRoute =
   | "content-types"
   | "media"
   | "taxonomies"
+  | "users"
   | "settings"
   | "trash"
   | "entries";
@@ -56,6 +57,8 @@ function routeToPath(route: EmbedRoute, params: Record<string, string>): string 
       return "/media";
     case "taxonomies":
       return "/taxonomies";
+    case "users":
+      return "/users";
     case "settings":
       return "/settings";
     case "trash":

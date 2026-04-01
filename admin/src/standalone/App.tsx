@@ -1,7 +1,7 @@
 import { ConvexProvider, ConvexReactClient } from "convex/react";
 import { useMemo, type ReactNode } from "react";
 import { RouterProvider } from "@tanstack/react-router";
-import { RouteGuard } from "~/components";
+import { RouteGuard } from "../components";
 import {
 	AuthProvider,
 	BreadcrumbProvider,
@@ -10,11 +10,11 @@ import {
 	type GetUserHook,
 	type GetUserRoleHook,
 	type LogoutHook,
-} from "~/contexts";
-import { ApiProvider } from "~/embed/contexts/ApiContext";
-import type { AdminConfig } from "~/lib/admin-config";
-import { resolveAdminConfig } from "~/lib/admin-config";
-import { adminApi } from "~/lib/adminApi";
+} from "../contexts";
+import { ApiProvider } from "../embed/contexts/ApiContext";
+import type { AdminConfig } from "../lib/admin-config";
+import { resolveAdminConfig } from "../lib/admin-config";
+import { adminApi } from "../lib/adminApi";
 import { getCmsConfig } from "./config";
 import { router } from "./router";
 

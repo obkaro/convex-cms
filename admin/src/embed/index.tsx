@@ -1,41 +1,16 @@
 /**
  * Embeddable CMS Admin Component
  *
- * Use this component to embed the CMS admin UI into your existing React app.
- * Provides a fully functional admin interface with router-agnostic navigation.
+ * Prerequisites:
+ * 1. Render inside a ConvexProvider.
+ * 2. Add Tailwind v4 source scanning in your CSS (see admin-ui-setup guide).
+ * 3. Pass className="h-screen" for correct layout height.
  *
- * IMPORTANT: The CmsAdmin component must be rendered within a ConvexProvider.
- * Your app should already have this if you're using Convex.
- *
- * @example
- * ```tsx
- * import { CmsAdmin } from "convex-cms/admin";
- * import { api } from "./convex/_generated/api";
- *
- * function App() {
- *   return (
- *     <ConvexProvider client={convex}>
- *       <CmsAdmin
- *         api={api.admin}
- *         auth={{
- *           getUser: () => currentUser,
- *           getUserRole: (userId) => userRoles[userId] ?? null,
- *           onLogout: () => signOut(),
- *         }}
- *         config={{
- *           branding: { appName: "My CMS" },
- *           navigation: { showTaxonomies: false },
- *         }}
- *         basePath="/admin"
- *       />
- *     </ConvexProvider>
- *   );
- * }
- * ```
+ * See docs/guides/admin-ui-setup.md for full setup instructions.
  */
 
-import { useConvex } from "convex/react";
-import { useMemo } from "react";
+import { useConvex, useMutation } from "convex/react";
+import { useMemo, useEffect, useRef } from "react";
 import { cn } from "../lib/cn";
 import { SettingsConfigProvider } from "../contexts/SettingsConfigContext";
 import {
@@ -66,6 +41,7 @@ import {
   EmbedTaxonomies,
   EmbedNewEntry,
   EmbedEntry,
+  EmbedUsers,
 } from "./pages";
 
 function adaptAuthConfig(auth: CmsAdminAuthConfig): {
@@ -99,6 +75,8 @@ function EmbedRouter() {
         return <EmbedTaxonomies />;
       case "trash":
         return <EmbedTrash />;
+      case "users":
+        return <EmbedUsers />;
       case "entries": {
         // Handle new entry action
         if (currentRoute.params.action === "new") {
@@ -143,6 +121,27 @@ export function CmsAdmin({
     () => (api.getSettings ? { getSettings: api.getSettings } : undefined),
     [api]
   );
+
+  // Auto-register the current user's profile in CMS on mount
+  const registerSelf = api.registerSelf ? useMutation(api.registerSelf) : null;
+  const hasRegistered = useRef(false);
+  useEffect(() => {
+    if (hasRegistered.current || !registerSelf) return;
+    hasRegistered.current = true;
+
+    // Get user profile from the auth config and send to server
+    Promise.resolve(auth.getUser()).then((user) => {
+      if (user) {
+        registerSelf({
+          displayName: user.name,
+          email: user.email,
+          avatarUrl: user.avatarUrl,
+        }).catch(() => {
+          // Non-critical — profile registration failed silently
+        });
+      }
+    });
+  }, [registerSelf, auth]);
 
   if (!convex) {
     return (
