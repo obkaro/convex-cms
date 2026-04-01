@@ -1,4 +1,4 @@
-import type { AdminConfig } from "~/lib/admin-config";
+import type { AdminConfig } from "../lib/admin-config";
 
 interface CmsConfig {
 	convexUrl: string;

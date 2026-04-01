@@ -3,9 +3,9 @@ import {
   Dialog,
   DialogContent,
   DialogTitle,
-} from '~/components/ui/dialog'
-import { CmsButton } from '~/components/cmsds/CmsButton'
-import { cn } from '~/lib/cn'
+} from '../ui/dialog'
+import { CmsButton } from '../cmsds/CmsButton'
+import { cn } from '../../lib/cn'
 import {
   X,
   ChevronLeft,
@@ -299,7 +299,7 @@ export function MediaPreviewModal({
 
           {/* Info sidebar */}
           <div className="w-72 shrink-0 overflow-y-auto border-l bg-background">
-            <div className="space-y-4 p-4">
+            <div className="flex flex-col gap-4 p-4">
               <h3 className="font-semibold">File Information</h3>
 
               <InfoRow label="Filename" value={asset.name} />
@@ -360,7 +360,7 @@ function InfoRow({
   capitalize?: boolean
 }) {
   return (
-    <div className="space-y-0.5">
+    <div className="flex flex-col gap-0.5">
       <p className="text-xs font-medium text-muted-foreground">{label}</p>
       <p className={cn('break-words text-sm', capitalize && 'capitalize')}>
         {value}

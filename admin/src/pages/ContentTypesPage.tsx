@@ -7,7 +7,7 @@
 
 import { useState, useMemo, useCallback } from "react";
 import { useQuery } from "convex/react";
-import { ContentTypeFormModal } from "~/components/ContentTypeFormModal";
+import { ContentTypeFormModal } from "../components/ContentTypeFormModal";
 
 interface ContentTypeField {
 	name: string;
@@ -34,10 +34,10 @@ import {
 	CmsFilterBar,
 	CmsTable,
 	type CmsTableColumn,
-} from "~/components/cmsds";
-import { Checkbox } from "~/components/ui/checkbox";
-import { Badge } from "~/components/ui/badge";
-import { cn } from "~/lib/cn";
+} from "../components/cmsds";
+import { Checkbox } from "../components/ui/checkbox";
+import { Badge } from "../components/ui/badge";
+import { cn } from "../lib/cn";
 import {
 	Grid3X3,
 	List,
@@ -57,8 +57,8 @@ import {
 	Code2,
 	Eye,
 } from "lucide-react";
-import type { AdminNavigation } from "~/lib/navigation";
-import { CmsAdminApi } from "~/embed/contexts/ApiContext";
+import type { AdminNavigation } from "../lib/navigation";
+import type { CmsAdminApi } from "../embed/contexts/ApiContext";
 
 type ViewMode = "grid" | "list";
 
@@ -267,7 +267,7 @@ export function ContentTypesPage({ api, navigation }: ContentTypesPageProps) {
 	);
 
 	return (
-		<div className="space-y-6 p-6">
+		<div className="flex flex-col gap-4 md:gap-6">
 			<CmsPageHeader
 				title="Content Types"
 				description="Define the structure of your content with custom fields and validation rules."
@@ -278,7 +278,7 @@ export function ContentTypesPage({ api, navigation }: ContentTypesPageProps) {
 					value: searchQuery,
 					onChange: setSearchQuery,
 					placeholder: "Search content types...",
-					className: "w-64",
+					className: "w-full md:w-64",
 				}}
 				actions={
 					<div className="flex items-center gap-3">

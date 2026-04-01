@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { cn } from '~/lib/cn'
+import { cn } from '../../lib/cn'
 
 export interface CmsPageHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
   title: string
@@ -19,9 +19,9 @@ export function CmsPageHeader({
   return (
     <div className={cn('mb-6', className)} {...props}>
       {breadcrumbs && <div className="mb-2">{breadcrumbs}</div>}
-      <div className="flex items-start justify-between gap-4">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
             {title}
           </h1>
           {description && (

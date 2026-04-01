@@ -1,10 +1,10 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { useQuery, useMutation } from 'convex/react'
-import { useApi } from '~/embed/contexts/ApiContext'
-import { Badge } from '~/components/ui/badge'
-import { Input } from '~/components/ui/input'
-import { Button } from '~/components/ui/button'
-import { cn } from '~/lib/cn'
+import { useApi } from '../../embed/contexts/ApiContext'
+import { Badge } from '../ui/badge'
+import { Input } from '../ui/input'
+import { Button } from '../ui/button'
+import { cn } from '../../lib/cn'
 import { X, Plus, Loader2, Tag } from 'lucide-react'
 
 interface TaxonomyTermDisplay {
@@ -186,7 +186,7 @@ export function MediaTaxonomyPicker({
     )
 
   return (
-    <div className={cn('space-y-2', className)}>
+    <div className={cn('flex flex-col gap-2', className)}>
       <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
         <Tag className="size-4" />
         {taxonomyName}

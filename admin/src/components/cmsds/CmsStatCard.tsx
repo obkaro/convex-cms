@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { CmsSurface } from './CmsSurface'
-import { cn } from '~/lib/cn'
+import { cn } from '../../lib/cn'
 
 export interface CmsStatCardProps {
   title: string
@@ -26,7 +26,7 @@ export function CmsStatCard({
   const content = (
     <>
       <div className="flex items-start justify-between">
-        <div className="space-y-1">
+        <div className="flex flex-col gap-1">
           <p className="text-sm font-medium text-muted-foreground">{title}</p>
           {isLoading ? (
             <div className="h-8 w-16 animate-pulse rounded bg-muted" />

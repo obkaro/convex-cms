@@ -6,9 +6,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '~/components/ui/dialog'
+} from '../ui/dialog'
 import { CmsButton } from './CmsButton'
-import { cn } from '~/lib/cn'
+import { cn } from '../../lib/cn'
 
 export interface CmsDialogProps {
   open: boolean
@@ -131,7 +131,7 @@ export function CmsConfirmDialog({
         </>
       }
     >
-      <div className="space-y-3">
+      <div className="flex flex-col gap-3">
         <p className="text-sm text-muted-foreground">{description}</p>
         {error && (
           <p className="text-sm text-destructive">{error}</p>

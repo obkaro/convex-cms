@@ -6,9 +6,9 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '~/components/ui/table'
-import { Checkbox } from '~/components/ui/checkbox'
-import { cn } from '~/lib/cn'
+} from '../ui/table'
+import { Checkbox } from '../ui/checkbox'
+import { cn } from '../../lib/cn'
 import { ChevronDown, ChevronUp, ChevronsUpDown } from 'lucide-react'
 
 export interface CmsTableColumn<T> {

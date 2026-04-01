@@ -16,12 +16,12 @@ import {
 	CmsFilterBar,
 	CmsTable,
 	type CmsTableColumn,
-} from "~/components/cmsds";
-import { Badge } from "~/components/ui/badge";
-import { Alert, AlertDescription } from "~/components/ui/alert";
+} from "../components/cmsds";
+import { Badge } from "../components/ui/badge";
+import { Alert, AlertDescription } from "../components/ui/alert";
 import { Trash2, RotateCcw, AlertTriangle, X } from "lucide-react";
-import type { AdminNavigation } from "~/lib/navigation";
-import { CmsAdminApi } from "~/embed/contexts/ApiContext";
+import type { AdminNavigation } from "../lib/navigation";
+import type { CmsAdminApi } from "../embed/contexts/ApiContext";
 
 interface TrashItem {
 	_id: string;
@@ -214,7 +214,7 @@ export function TrashPage({ api, navigation: _navigation }: TrashPageProps) {
 	);
 
 	return (
-		<div className="space-y-6 p-6">
+		<div className="flex flex-col gap-4 md:gap-6">
 			<div className="flex items-start justify-between">
 				<CmsPageHeader
 					title="Trash"
@@ -252,7 +252,7 @@ export function TrashPage({ api, navigation: _navigation }: TrashPageProps) {
 					value: searchQuery,
 					onChange: setSearchQuery,
 					placeholder: "Search deleted items...",
-					className: "w-64",
+					className: "w-full md:w-64",
 				}}
 				filters={[
 					{
@@ -266,7 +266,7 @@ export function TrashPage({ api, navigation: _navigation }: TrashPageProps) {
 								label: type.displayName,
 							})),
 						],
-						className: "w-48",
+						className: "w-full sm:w-48",
 					},
 				]}
 			/>

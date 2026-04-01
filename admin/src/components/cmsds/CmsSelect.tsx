@@ -4,8 +4,8 @@ import {
 	SelectItem,
 	SelectTrigger,
 	SelectValue,
-} from "~/components/ui/select";
-import { cn } from "~/lib/cn";
+} from "../ui/select";
+import { cn } from "../../lib/cn";
 
 export interface CmsSelectOption {
 	value: string;

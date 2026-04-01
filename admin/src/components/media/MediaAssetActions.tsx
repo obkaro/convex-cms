@@ -4,8 +4,8 @@ import {
 	DropdownMenuItem,
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
-} from "~/components/ui/dropdown-menu";
-import { CmsButton } from "~/components/cmsds/CmsButton";
+} from "../ui/dropdown-menu";
+import { CmsButton } from "../cmsds/CmsButton";
 import {
 	Eye,
 	Pencil,

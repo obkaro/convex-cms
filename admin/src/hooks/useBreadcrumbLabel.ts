@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useBreadcrumbContext } from '~/contexts/BreadcrumbContext'
+import { useBreadcrumbContext } from '../contexts/BreadcrumbContext'
 
 export function useBreadcrumbLabel(path: string, label: string | undefined) {
   const { setOverride, clearOverride } = useBreadcrumbContext()

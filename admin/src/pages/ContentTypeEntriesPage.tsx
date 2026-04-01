@@ -7,7 +7,7 @@
 
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useQuery, useMutation } from "convex/react";
-import { usePermissions } from "~/hooks";
+import { usePermissions } from "../hooks";
 import {
   CmsPageHeader,
   CmsButton,
@@ -19,10 +19,10 @@ import {
   CmsTable,
   type CmsTableColumn,
   CmsPagination,
-} from "~/components/cmsds";
+} from "../components/cmsds";
 import { Plus, FileText } from "lucide-react";
-import type { AdminNavigation } from "~/lib/navigation";
-import type { CmsAdminApi } from "~/embed/contexts/ApiContext";
+import type { AdminNavigation } from "../lib/navigation";
+import type { CmsAdminApi } from "../embed/contexts/ApiContext";
 
 type SortField = "title" | "status" | "updatedAt" | "createdAt";
 type SortDirection = "asc" | "desc";
@@ -260,7 +260,7 @@ export function ContentTypeEntriesPage({
 
   if (contentType === undefined || entriesResult === undefined) {
     return (
-      <div className="space-y-6 p-6">
+      <div className="flex flex-col gap-4 md:gap-6">
         <div className="flex flex-col items-center justify-center py-12">
           <div className="size-8 animate-spin rounded-full border-2 border-muted border-t-primary" />
           <p className="mt-4 text-sm text-muted-foreground">Loading entries...</p>
@@ -271,7 +271,7 @@ export function ContentTypeEntriesPage({
 
   if (contentType === null) {
     return (
-      <div className="space-y-6 p-6">
+      <div className="flex flex-col gap-4 md:gap-6">
         <CmsEmptyState
           icon={<FileText className="size-6" />}
           title="Content Type Not Found"
@@ -288,7 +288,7 @@ export function ContentTypeEntriesPage({
   const hasFilters = searchQuery || selectedStatus !== "all";
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="flex flex-col gap-4 md:gap-6">
       <CmsPageHeader
         title={contentType.displayName}
         description={contentType.description}
@@ -307,7 +307,7 @@ export function ContentTypeEntriesPage({
           value: searchQuery,
           onChange: setSearchQuery,
           placeholder: "Search entries...",
-          className: "w-64",
+          className: "w-full md:w-64",
         }}
         filters={[
           {
@@ -324,7 +324,7 @@ export function ContentTypeEntriesPage({
               { value: "scheduled", label: "Scheduled" },
               { value: "archived", label: "Archived" },
             ],
-            className: "w-36",
+            className: "w-full sm:w-36",
           },
         ]}
         onClearFilters={hasFilters ? clearFilters : undefined}

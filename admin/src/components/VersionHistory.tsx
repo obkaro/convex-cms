@@ -1,14 +1,14 @@
 import { useState, useCallback } from 'react'
 import { useQuery, useMutation } from 'convex/react'
-import { useApi } from '~/embed/contexts/ApiContext'
+import { useApi } from '../embed/contexts/ApiContext'
 import { VersionCompare } from './VersionCompare'
 import { VersionRollbackModal } from './VersionRollbackModal'
-import { CmsButton } from '~/components/cmsds/CmsButton'
-import { CmsStatusBadge } from '~/components/cmsds/CmsStatusBadge'
-import { Badge } from '~/components/ui/badge'
-import { ScrollArea } from '~/components/ui/scroll-area'
+import { CmsButton } from './cmsds/CmsButton'
+import { CmsStatusBadge } from './cmsds/CmsStatusBadge'
+import { Badge } from './ui/badge'
+import { ScrollArea } from './ui/scroll-area'
 import { X, CheckCircle, History } from 'lucide-react'
-import { cn } from '~/lib/cn'
+import { cn } from '../lib/cn'
 
 interface VersionHistoryProps {
   entryId: string
@@ -170,7 +170,7 @@ export function VersionHistory({
               Save changes to start building version history
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="flex flex-col gap-3">
               {versions.map((version, index) => {
                 const isCurrent = version.versionNumber === currentVersion
                 const prevVersion = versions[index + 1]

@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { cn } from '~/lib/cn'
+import { cn } from '../../lib/cn'
 
 export interface CmsSurfaceProps extends React.HTMLAttributes<HTMLDivElement> {
   elevation?: 'base' | 'elevated' | 'floating'

@@ -7,19 +7,19 @@
 
 import { useState, useCallback } from "react";
 import { useQuery, useMutation } from "convex/react";
-import { TaxonomyEditor } from "~/components/TaxonomyEditor";
-import { TermTree } from "~/components/TermTree";
-import { CmsPageHeader } from "~/components/cmsds/CmsPageHeader";
-import { CmsEmptyState } from "~/components/cmsds/CmsEmptyState";
-import { CmsSurface } from "~/components/cmsds/CmsSurface";
-import { CmsButton } from "~/components/cmsds/CmsButton";
-import { CmsConfirmDialog } from "~/components/cmsds/CmsDialog";
-import { Badge } from "~/components/ui/badge";
-import { ScrollArea } from "~/components/ui/scroll-area";
-import { cn } from "~/lib/cn";
+import { TaxonomyEditor } from "../components/TaxonomyEditor";
+import { TermTree } from "../components/TermTree";
+import { CmsPageHeader } from "../components/cmsds/CmsPageHeader";
+import { CmsEmptyState } from "../components/cmsds/CmsEmptyState";
+import { CmsSurface } from "../components/cmsds/CmsSurface";
+import { CmsButton } from "../components/cmsds/CmsButton";
+import { CmsConfirmDialog } from "../components/cmsds/CmsDialog";
+import { Badge } from "../components/ui/badge";
+import { ScrollArea } from "../components/ui/scroll-area";
+import { cn } from "../lib/cn";
 import { Plus, Tag, FolderTree, Pencil, Trash2 } from "lucide-react";
-import type { AdminNavigation } from "~/lib/navigation";
-import { CmsAdminApi } from "~/embed/contexts/ApiContext";
+import type { AdminNavigation } from "../lib/navigation";
+import type { CmsAdminApi } from "../embed/contexts/ApiContext";
 
 interface Taxonomy {
 	_id: string;

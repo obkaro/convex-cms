@@ -1,7 +1,6 @@
 export { CmsButton, type CmsButtonProps } from './CmsButton'
 export { CmsSurface, type CmsSurfaceProps } from './CmsSurface'
 export { CmsStatusBadge, type CmsStatusBadgeProps, type ContentStatus } from './CmsStatusBadge'
-export { CmsField, type CmsFieldProps } from './CmsField'
 export { CmsEmptyState, type CmsEmptyStateProps } from './CmsEmptyState'
 export { CmsPageHeader, type CmsPageHeaderProps } from './CmsPageHeader'
 export { CmsToolbar, type CmsToolbarProps } from './CmsToolbar'

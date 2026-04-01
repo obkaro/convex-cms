@@ -1,6 +1,6 @@
 import { AlertTriangle } from 'lucide-react'
-import { CmsDialog } from '~/components/cmsds/CmsDialog'
-import { CmsButton } from '~/components/cmsds/CmsButton'
+import { CmsDialog } from './cmsds/CmsDialog'
+import { CmsButton } from './cmsds/CmsButton'
 
 interface BreakingChangesWarningDialogProps {
   isOpen: boolean
@@ -41,10 +41,10 @@ export function BreakingChangesWarningDialog({
         </>
       }
     >
-      <div className="space-y-4">
+      <div className="flex flex-col gap-4">
         <div className="diff-modified flex items-start gap-3 rounded-lg border p-3">
           <AlertTriangle className="mt-0.5 size-5 shrink-0 text-diff-modified" />
-          <div className="space-y-1">
+          <div className="flex flex-col gap-1">
             <p className="text-sm font-medium text-diff-modified">
               These changes may affect existing content
             </p>
@@ -55,11 +55,11 @@ export function BreakingChangesWarningDialog({
           </div>
         </div>
 
-        <div className="space-y-2">
+        <div className="flex flex-col gap-2">
           <p className="text-sm font-medium text-foreground">
             {breakingChanges.length} breaking change{breakingChanges.length !== 1 ? 's' : ''} detected:
           </p>
-          <ul className="space-y-2">
+          <ul className="flex flex-col gap-2">
             {breakingChanges.map((change, index) => (
               <li
                 key={index}

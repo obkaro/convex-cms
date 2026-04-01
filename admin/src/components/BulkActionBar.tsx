@@ -1,9 +1,9 @@
 import { useState, useCallback } from 'react'
 import { useMutation } from 'convex/react'
-import { useApi } from '~/embed/contexts/ApiContext'
+import { useApi } from '../embed/contexts/ApiContext'
 import { BulkOperationModal } from './BulkOperationModal'
-import { CmsButton } from '~/components/cmsds/CmsButton'
-import { Badge } from '~/components/ui/badge'
+import { CmsButton } from './cmsds/CmsButton'
+import { Badge } from './ui/badge'
 import { X } from 'lucide-react'
 
 type BulkAction = 'publish' | 'unpublish' | 'delete' | 'archive'

@@ -7,8 +7,8 @@
 
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { useQuery } from "convex/react";
-import { usePermissions } from "~/hooks";
-import { BulkActionBar } from "~/components/BulkActionBar";
+import { usePermissions } from "../hooks";
+import { BulkActionBar } from "../components/BulkActionBar";
 import {
   CmsPageHeader,
   CmsEmptyState,
@@ -18,16 +18,16 @@ import {
   CmsFilterBar,
   CmsTable,
   type CmsTableColumn,
-} from "~/components/cmsds";
+} from "../components/cmsds";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "~/components/ui/dropdown-menu";
+} from "../components/ui/dropdown-menu";
 import { Plus, FileText, ChevronDown } from "lucide-react";
-import type { AdminNavigation } from "~/lib/navigation";
-import { CmsAdminApi } from "~/embed/contexts/ApiContext";
+import type { AdminNavigation } from "../lib/navigation";
+import type { CmsAdminApi } from "../embed/contexts/ApiContext";
 
 type ContentType = {
   _id: string;
@@ -174,7 +174,7 @@ export function ContentPage({ api, navigation }: ContentPageProps) {
 
   if (isLoading) {
     return (
-      <div className="space-y-6 p-6">
+      <div className="flex flex-col gap-4 md:gap-6">
         <CmsPageHeader
           title="Content"
           description="Browse and manage content entries across all content types."
@@ -190,7 +190,7 @@ export function ContentPage({ api, navigation }: ContentPageProps) {
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="flex flex-col gap-4 md:gap-6">
       <CmsPageHeader
         title="Content"
         description="Browse and manage content entries across all content types."
@@ -201,7 +201,7 @@ export function ContentPage({ api, navigation }: ContentPageProps) {
           value: searchQuery,
           onChange: setSearchQuery,
           placeholder: "Search content...",
-          className: "w-64",
+          className: "w-full md:w-64",
         }}
         filters={[
           {
@@ -215,7 +215,7 @@ export function ContentPage({ api, navigation }: ContentPageProps) {
                 label: type.displayName,
               })),
             ],
-            className: "w-48",
+            className: "w-full sm:w-48",
           },
           {
             key: "status",
@@ -228,7 +228,7 @@ export function ContentPage({ api, navigation }: ContentPageProps) {
               { value: "scheduled", label: "Scheduled" },
               { value: "archived", label: "Archived" },
             ],
-            className: "w-36",
+            className: "w-full sm:w-36",
           },
         ]}
         actions={

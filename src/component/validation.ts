@@ -8,7 +8,7 @@
  * Supports both plain field values and localized field values (LocalizedFieldValue<T>)
  * for fields marked as `localized: true` in their field definition.
  */
-import { FieldType } from "./validators.js";
+import type { FieldType } from "./validators.js";
 import {
   isLocalizedFieldValue,
   type LocalizedFieldValue,

@@ -1,11 +1,11 @@
 import { useState, useCallback, useEffect } from 'react'
 import { useMutation } from 'convex/react'
-import { useApi } from '~/embed/contexts/ApiContext'
-import { CmsDialog } from '~/components/cmsds/CmsDialog'
-import { CmsButton } from '~/components/cmsds/CmsButton'
-import { CmsField } from '~/components/cmsds/CmsField'
-import { Input } from '~/components/ui/input'
-import { Textarea } from '~/components/ui/textarea'
+import { useApi } from '../../embed/contexts/ApiContext'
+import { CmsDialog } from '../cmsds/CmsDialog'
+import { CmsButton } from '../cmsds/CmsButton'
+import { Field, FieldLabel, FieldDescription } from '../ui/field'
+import { Input } from '../ui/input'
+import { Textarea } from '../ui/textarea'
 
 export interface MediaFolderForEdit {
   _id: string
@@ -92,27 +92,28 @@ export function MediaFolderEditDialog({
         </>
       }
     >
-      <div className="space-y-4">
+      <div className="flex flex-col gap-4">
         {error && (
           <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
             {error}
           </div>
         )}
 
-        <CmsField label="Folder Name" required htmlFor="folder-name">
+        <Field>
+          <FieldLabel htmlFor="folder-name">
+            Folder Name
+            <span className="ml-1 text-destructive">*</span>
+          </FieldLabel>
           <Input
             id="folder-name"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Enter folder name"
           />
-        </CmsField>
+        </Field>
 
-        <CmsField
-          label="Description"
-          description="A brief description of the folder contents"
-          htmlFor="folder-description"
-        >
+        <Field>
+          <FieldLabel htmlFor="folder-description">Description</FieldLabel>
           <Textarea
             id="folder-description"
             value={description}
@@ -120,7 +121,8 @@ export function MediaFolderEditDialog({
             placeholder="Enter description (optional)"
             rows={3}
           />
-        </CmsField>
+          <FieldDescription>A brief description of the folder contents</FieldDescription>
+        </Field>
       </div>
     </CmsDialog>
   )

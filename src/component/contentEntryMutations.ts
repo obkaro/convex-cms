@@ -26,14 +26,14 @@ import { generateSlug } from "./lib/slugGenerator.js";
 import { ensureUniqueSlug } from "./lib/slugUniqueness.js";
 import {
 	validateContentData,
-	ContentTypeSchema,
-	FieldDefinition,
+	type ContentTypeSchema,
+	type FieldDefinition,
 } from "./validation.js";
 import { validateLockForUpdate } from "./contentLock.js";
 import {
 	emitEvent,
 	contentEntryEventType,
-	ContentEntryEventPayload,
+	type ContentEntryEventPayload,
 } from "./eventEmitter.js";
 import {
 	contentTypeNotFound,

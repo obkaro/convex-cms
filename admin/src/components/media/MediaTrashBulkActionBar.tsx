@@ -1,4 +1,4 @@
-import { CmsButton } from '~/components/cmsds/CmsButton'
+import { CmsButton } from '../cmsds/CmsButton'
 import { RotateCcw, Trash2, X } from 'lucide-react'
 
 interface MediaTrashBulkActionBarProps {

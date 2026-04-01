@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { cn } from '~/lib/cn'
+import { cn } from '../../lib/cn'
 import { CmsButton, type CmsButtonProps } from './CmsButton'
 
 export interface CmsEmptyStateProps extends React.HTMLAttributes<HTMLDivElement> {

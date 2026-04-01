@@ -31,7 +31,7 @@ import {
 import {
 	emitEvent,
 	mediaAssetEventType,
-	MediaAssetEventPayload,
+	type MediaAssetEventPayload,
 } from "./eventEmitter.js";
 import {
 	mediaFolderNotFound,

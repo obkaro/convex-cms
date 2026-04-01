@@ -1,6 +1,6 @@
 import * as React from "react";
-import { Badge } from "~/components/ui/badge";
-import { cn } from "~/lib/cn";
+import { Badge } from "../ui/badge";
+import { cn } from "../../lib/cn";
 
 export type ContentStatus = "draft" | "published" | "scheduled" | "archived";
 

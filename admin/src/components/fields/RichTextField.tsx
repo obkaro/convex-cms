@@ -1,10 +1,10 @@
 import { useId, type ChangeEvent, useState, useCallback } from 'react'
 import { FieldWrapper } from './FieldWrapper'
 import type { RichTextFieldProps } from './types'
-import { Textarea } from '~/components/ui/textarea'
-import { Button } from '~/components/ui/button'
-import { Separator } from '~/components/ui/separator'
-import { cn } from '~/lib/cn'
+import { Textarea } from '../ui/textarea'
+import { Button } from '../ui/button'
+import { Separator } from '../ui/separator'
+import { cn } from '../../lib/cn'
 import { Bold, Italic, Heading2, Link, List, Quote, Code } from 'lucide-react'
 
 interface ToolbarAction {

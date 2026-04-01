@@ -1,9 +1,9 @@
 import { useState, useCallback, useEffect, useId } from 'react'
 import { FieldWrapper } from './FieldWrapper'
 import type { BaseFieldProps } from './types'
-import { Textarea } from '~/components/ui/textarea'
-import { Button } from '~/components/ui/button'
-import { cn } from '~/lib/cn'
+import { Textarea } from '../ui/textarea'
+import { Button } from '../ui/button'
+import { cn } from '../../lib/cn'
 import { Check, AlertCircle } from 'lucide-react'
 
 export interface JsonFieldProps extends BaseFieldProps<unknown> {

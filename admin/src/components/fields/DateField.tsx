@@ -2,15 +2,15 @@ import { useState, useId, type ChangeEvent } from 'react'
 import { CalendarIcon, X } from 'lucide-react'
 import { FieldWrapper } from './FieldWrapper'
 import type { DateFieldProps } from './types'
-import { Button } from '~/components/ui/button'
-import { Calendar } from '~/components/ui/calendar'
-import { Input } from '~/components/ui/input'
+import { Button } from '../ui/button'
+import { Calendar } from '../ui/calendar'
+import { Input } from '../ui/input'
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '~/components/ui/popover'
-import { cn } from '~/lib/cn'
+} from '../ui/popover'
+import { cn } from '../../lib/cn'
 
 function formatDateTimeLocal(date: Date): string {
   const year = date.getFullYear()

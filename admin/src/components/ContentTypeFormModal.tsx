@@ -566,11 +566,11 @@ export function ContentTypeFormModal({
 					)
 				}
 			>
-				<form onSubmit={handleSubmit} className="space-y-6">
+				<form onSubmit={handleSubmit} className="flex flex-col gap-6">
 					{isCodeDefined && (
 						<div className="flex items-start gap-3 rounded-lg border border-violet-200 bg-violet-50 p-3">
 							<Code2 className="mt-0.5 size-5 shrink-0 text-violet-600" />
-							<div className="space-y-1">
+							<div className="flex flex-col gap-1">
 								<p className="text-sm font-medium text-violet-900">
 									Managed by Code
 								</p>
@@ -584,12 +584,12 @@ export function ContentTypeFormModal({
 					)}
 
 					{/* Basic Info Section */}
-					<div className="space-y-4">
+					<div className="flex flex-col gap-4">
 						<h4 className="text-sm font-semibold text-foreground">
 							Basic Information
 						</h4>
 
-						<div className="space-y-2">
+						<div className="flex flex-col gap-2">
 							<Label htmlFor="displayName">
 								Display Name <span className="text-destructive">*</span>
 							</Label>
@@ -604,7 +604,7 @@ export function ContentTypeFormModal({
 							/>
 						</div>
 
-						<div className="space-y-2">
+						<div className="flex flex-col gap-2">
 							<Label htmlFor="machineName">
 								System Name <span className="text-destructive">*</span>
 							</Label>
@@ -628,7 +628,7 @@ export function ContentTypeFormModal({
 							</p>
 						</div>
 
-						<div className="space-y-2">
+						<div className="flex flex-col gap-2">
 							<Label htmlFor="description">Description</Label>
 							<Textarea
 								id="description"
@@ -654,7 +654,7 @@ export function ContentTypeFormModal({
 					</div>
 
 					{/* Fields Section */}
-					<div className="space-y-4">
+					<div className="flex flex-col gap-4">
 						<div className="flex items-center justify-between">
 							<h4 className="text-sm font-semibold text-foreground">Fields</h4>
 							{!isReadOnly && (
@@ -672,7 +672,7 @@ export function ContentTypeFormModal({
 							)}
 						</div>
 
-						<div className="space-y-2">
+						<div className="flex flex-col gap-2">
 							{fields.map((field, index) => (
 								<div
 									key={index}
@@ -771,8 +771,8 @@ export function ContentTypeFormModal({
 									</button>
 								</div>
 
-								<div className="space-y-4">
-									<div className="space-y-2">
+								<div className="flex flex-col gap-4">
+									<div className="flex flex-col gap-2">
 										<Label htmlFor="fieldLabel">
 											Label <span className="text-destructive">*</span>
 										</Label>
@@ -793,7 +793,7 @@ export function ContentTypeFormModal({
 										/>
 									</div>
 
-									<div className="space-y-2">
+									<div className="flex flex-col gap-2">
 										<Label htmlFor="fieldName">
 											Name <span className="text-destructive">*</span>
 										</Label>
@@ -812,7 +812,7 @@ export function ContentTypeFormModal({
 										/>
 									</div>
 
-									<div className="space-y-2">
+									<div className="flex flex-col gap-2">
 										<Label htmlFor="fieldType">
 											Type <span className="text-destructive">*</span>
 										</Label>
@@ -861,7 +861,7 @@ export function ContentTypeFormModal({
 										</Label>
 									</div>
 
-									<div className="space-y-2">
+									<div className="flex flex-col gap-2">
 										<Label htmlFor="fieldDescription">Help Text</Label>
 										<Input
 											id="fieldDescription"
@@ -895,12 +895,12 @@ export function ContentTypeFormModal({
 
 					{/* Display Settings */}
 					{textFields.length > 0 && (
-						<div className="space-y-4">
+						<div className="flex flex-col gap-4">
 							<h4 className="text-sm font-semibold text-foreground">
 								Display Settings
 							</h4>
 
-							<div className="space-y-2">
+							<div className="flex flex-col gap-2">
 								<Label htmlFor="titleField">Title Field</Label>
 								<Select
 									value={titleField || "none"}
@@ -924,7 +924,7 @@ export function ContentTypeFormModal({
 								</p>
 							</div>
 
-							<div className="space-y-2">
+							<div className="flex flex-col gap-2">
 								<Label htmlFor="slugField">Slug Field</Label>
 								<Select
 									value={slugField || "none"}
@@ -1004,11 +1004,11 @@ function SelectOptionsEditor({
 	};
 
 	return (
-		<div className="space-y-2">
+		<div className="flex flex-col gap-2">
 			<Label>
 				Options <span className="text-destructive">*</span>
 			</Label>
-			<div className="space-y-2">
+			<div className="flex flex-col gap-2">
 				{options.map((option, index) => (
 					<div key={index} className="flex items-center gap-2">
 						<Input

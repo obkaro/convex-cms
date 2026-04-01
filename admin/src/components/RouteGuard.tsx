@@ -27,7 +27,7 @@
 
 import type { ReactNode } from 'react';
 import { useAuth, type PermissionCheck } from '../contexts/AuthContext';
-import type { RoleName } from '~/lib/cmsExports';
+import type { RoleName } from '../lib/cmsExports';
 import { Loader2 } from 'lucide-react';
 
 // =============================================================================

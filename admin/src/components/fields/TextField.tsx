@@ -1,8 +1,8 @@
 import { useId, type ChangeEvent } from 'react'
 import { FieldWrapper } from './FieldWrapper'
 import type { TextFieldProps } from './types'
-import { Input } from '~/components/ui/input'
-import { cn } from '~/lib/cn'
+import { Input } from '../ui/input'
+import { cn } from '../../lib/cn'
 
 export function TextField({
   field,

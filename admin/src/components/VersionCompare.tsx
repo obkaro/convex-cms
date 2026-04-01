@@ -1,10 +1,10 @@
 import { useQuery } from 'convex/react'
-import { useApi } from '~/embed/contexts/ApiContext'
-import { CmsButton } from '~/components/cmsds/CmsButton'
-import { Badge } from '~/components/ui/badge'
-import { ScrollArea } from '~/components/ui/scroll-area'
+import { useApi } from '../embed/contexts/ApiContext'
+import { CmsButton } from './cmsds/CmsButton'
+import { Badge } from './ui/badge'
+import { ScrollArea } from './ui/scroll-area'
 import { X, ArrowRight, Plus, Minus, RefreshCw, GitCompare } from 'lucide-react'
-import { cn } from '~/lib/cn'
+import { cn } from '../lib/cn'
 
 interface VersionCompareProps {
   entryId: string
@@ -182,7 +182,7 @@ export function VersionCompare({
                 </p>
               )}
 
-              <div className="space-y-3">
+              <div className="flex flex-col gap-3">
                 {comparison.fieldDiffs.map((change, index) => (
                   <div
                     key={index}
@@ -208,7 +208,7 @@ export function VersionCompare({
                       </Badge>
                     </div>
 
-                    <div className="mt-2 space-y-2">
+                    <div className="mt-2 flex flex-col gap-2">
                       {change.changeType !== 'added' && (
                         <div className="rounded border border-diff-removed-border bg-card p-2">
                           <p className="mb-1 text-xs font-medium text-diff-removed">

@@ -1,6 +1,6 @@
 import * as React from 'react'
-import { Label } from '~/components/ui/label'
-import { cn } from '~/lib/cn'
+import { Label } from '../ui/label'
+import { cn } from '../../lib/cn'
 
 export interface CmsFieldProps {
   label?: string
@@ -22,7 +22,7 @@ export function CmsField({
   children,
 }: CmsFieldProps) {
   return (
-    <div className={cn('space-y-2', className)}>
+    <div className={cn('flex flex-col gap-2', className)}>
       {label && (
         <Label
           htmlFor={htmlFor}

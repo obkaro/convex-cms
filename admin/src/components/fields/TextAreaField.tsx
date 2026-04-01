@@ -1,8 +1,8 @@
 import { useId, type ChangeEvent, useRef, useEffect } from 'react'
 import { FieldWrapper } from './FieldWrapper'
 import type { TextAreaFieldProps } from './types'
-import { Textarea } from '~/components/ui/textarea'
-import { cn } from '~/lib/cn'
+import { Textarea } from '../ui/textarea'
+import { cn } from '../../lib/cn'
 
 export function TextAreaField({
   field,

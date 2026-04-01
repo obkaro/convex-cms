@@ -1,7 +1,7 @@
-import { CmsDialog } from '~/components/cmsds/CmsDialog'
-import { CmsButton } from '~/components/cmsds/CmsButton'
+import { CmsDialog } from './cmsds/CmsDialog'
+import { CmsButton } from './cmsds/CmsButton'
 import { CheckCircle, AlertTriangle } from 'lucide-react'
-import { cn as _cn } from '~/lib/cn'
+import { cn as _cn } from '../lib/cn'
 
 type BulkAction = 'publish' | 'unpublish' | 'delete' | 'archive'
 
@@ -99,7 +99,7 @@ export function BulkOperationModal({
       }
     >
       {result ? (
-        <div className="space-y-4">
+        <div className="flex flex-col gap-4">
           {result.failed === 0 ? (
             <div className="flex flex-col items-center gap-3 py-4 text-center">
               <div className="flex size-12 items-center justify-center rounded-full bg-diff-added-bg text-diff-added">
@@ -114,7 +114,7 @@ export function BulkOperationModal({
               </p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="flex flex-col gap-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="diff-added rounded-lg border p-3 text-center">
                   <p className="text-2xl font-semibold text-diff-added">
@@ -135,7 +135,7 @@ export function BulkOperationModal({
                   <p className="mb-2 text-sm font-medium text-diff-modified">
                     Errors:
                   </p>
-                  <ul className="space-y-1 text-xs text-diff-modified-foreground">
+                  <ul className="flex flex-col gap-1 text-xs text-diff-modified-foreground">
                     {result.errors.slice(0, 5).map((error, index) => (
                       <li key={index} className="truncate">
                         • {error}
@@ -153,7 +153,7 @@ export function BulkOperationModal({
           )}
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="flex flex-col gap-3">
           <p className="text-sm text-muted-foreground">
             You are about to {action}{' '}
             <span className="font-semibold text-foreground">

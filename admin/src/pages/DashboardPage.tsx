@@ -12,12 +12,12 @@ import {
 	CardDescription,
 	CardHeader,
 	CardTitle,
-} from "~/components/ui/card";
-import { CmsPageHeader, CmsStatCard } from "~/components/cmsds";
-import { SchemaDriftWarning } from "~/components/SchemaDriftWarning";
+} from "../components/ui/card";
+import { CmsPageHeader, CmsStatCard } from "../components/cmsds";
+import { SchemaDriftWarning } from "../components/SchemaDriftWarning";
 import { FileText, Image, Layers, Settings, TrendingUp } from "lucide-react";
-import type { AdminNavigation } from "~/lib/navigation";
-import type { CmsAdminApi } from "~/embed/contexts/ApiContext";
+import type { AdminNavigation } from "../lib/navigation";
+import type { CmsAdminApi } from "../embed/contexts/ApiContext";
 
 interface DashboardPageProps {
 	api: CmsAdminApi;
@@ -30,7 +30,7 @@ export function DashboardPage({ api, navigation }: DashboardPageProps) {
 	const hasError = stats === null;
 
 	return (
-		<div className="space-y-8">
+		<div className="flex flex-col gap-8">
 			<CmsPageHeader
 				title="Dashboard"
 				description="Welcome to Convex CMS Admin. Manage your content, media, and publishing workflows."
@@ -65,7 +65,7 @@ export function DashboardPage({ api, navigation }: DashboardPageProps) {
 				/>
 			</div>
 
-			<section className="space-y-4">
+			<section className="flex flex-col gap-4">
 				<div className="flex items-center gap-2">
 					<TrendingUp className="size-5 text-muted-foreground" />
 					<h2 className="text-lg font-semibold">Quick Stats</h2>

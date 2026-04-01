@@ -1,6 +1,6 @@
 import * as React from 'react'
-import { cn } from '~/lib/cn'
-import { Input } from '~/components/ui/input'
+import { cn } from '../../lib/cn'
+import { Input } from '../ui/input'
 import { Search } from 'lucide-react'
 
 export interface CmsToolbarProps extends React.HTMLAttributes<HTMLDivElement> {

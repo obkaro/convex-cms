@@ -5,7 +5,7 @@ import {
 	ChevronsRight,
 } from "lucide-react";
 import { CmsButton } from "./CmsButton";
-import { cn } from "~/lib/cn";
+import { cn } from "../../lib/cn";
 
 export interface CmsPaginationProps {
 	currentPage: number;

@@ -1,12 +1,12 @@
 import { useState, useCallback, useMemo } from 'react'
 import { useQuery } from 'convex/react'
-import { useApi } from '~/embed/contexts/ApiContext'
-import { CmsButton } from '~/components/cmsds/CmsButton'
+import { useApi } from '../../embed/contexts/ApiContext'
+import { CmsButton } from '../cmsds/CmsButton'
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '~/components/ui/popover'
+} from '../ui/popover'
 import {
   Command,
   CommandEmpty,
@@ -15,10 +15,10 @@ import {
   CommandItem,
   CommandList,
   CommandSeparator,
-} from '~/components/ui/command'
-import { Badge } from '~/components/ui/badge'
-import { Checkbox } from '~/components/ui/checkbox'
-import { cn } from '~/lib/cn'
+} from '../ui/command'
+import { Badge } from '../ui/badge'
+import { Checkbox } from '../ui/checkbox'
+import { cn } from '../../lib/cn'
 import { Tags, ChevronDown, X, Check } from 'lucide-react'
 
 interface TaxonomyTerm {

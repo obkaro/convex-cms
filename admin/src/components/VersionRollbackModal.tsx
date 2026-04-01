@@ -1,5 +1,5 @@
-import { CmsDialog } from '~/components/cmsds/CmsDialog'
-import { CmsButton } from '~/components/cmsds/CmsButton'
+import { CmsDialog } from './cmsds/CmsDialog'
+import { CmsButton } from './cmsds/CmsButton'
 import { AlertTriangle } from 'lucide-react'
 
 interface VersionRollbackModalProps {
@@ -36,7 +36,7 @@ export function VersionRollbackModal({
         </>
       }
     >
-      <div className="space-y-4">
+      <div className="flex flex-col gap-4">
         <p className="text-sm text-muted-foreground">
           You are about to rollback from{' '}
           <span className="font-semibold text-foreground">
@@ -52,11 +52,11 @@ export function VersionRollbackModal({
         <div className="diff-modified rounded-lg border p-3">
           <div className="flex gap-2">
             <AlertTriangle className="mt-0.5 size-4 shrink-0 text-diff-modified" />
-            <div className="space-y-2">
+            <div className="flex flex-col gap-2">
               <p className="text-sm font-medium text-diff-modified">
                 This action will:
               </p>
-              <ul className="space-y-1 text-sm text-diff-modified-foreground">
+              <ul className="flex flex-col gap-1 text-sm text-diff-modified-foreground">
                 <li>
                   • Create a new version with the content from version{' '}
                   {targetVersion}

@@ -1,12 +1,12 @@
 import { useState, useCallback, useEffect } from 'react'
 import { useMutation } from 'convex/react'
-import { useApi } from '~/embed/contexts/ApiContext'
-import { CmsDialog } from '~/components/cmsds/CmsDialog'
-import { CmsButton } from '~/components/cmsds/CmsButton'
-import { Input } from '~/components/ui/input'
-import { Label } from '~/components/ui/label'
-import { Textarea } from '~/components/ui/textarea'
-import { Checkbox } from '~/components/ui/checkbox'
+import { useApi } from '../embed/contexts/ApiContext'
+import { CmsDialog } from './cmsds/CmsDialog'
+import { CmsButton } from './cmsds/CmsButton'
+import { Input } from './ui/input'
+import { Label } from './ui/label'
+import { Textarea } from './ui/textarea'
+import { Checkbox } from './ui/checkbox'
 
 interface Taxonomy {
   _id: string
@@ -186,14 +186,14 @@ export function TaxonomyEditor({
         </>
       }
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         {submitError && (
           <div className="diff-removed rounded-lg border px-3 py-2 text-sm">
             {submitError}
           </div>
         )}
 
-        <div className="space-y-2">
+        <div className="flex flex-col gap-2">
           <Label htmlFor="displayName">
             Display Name <span className="text-destructive">*</span>
           </Label>
@@ -210,7 +210,7 @@ export function TaxonomyEditor({
           )}
         </div>
 
-        <div className="space-y-2">
+        <div className="flex flex-col gap-2">
           <Label htmlFor="name">
             Slug <span className="text-destructive">*</span>
           </Label>
@@ -235,7 +235,7 @@ export function TaxonomyEditor({
           )}
         </div>
 
-        <div className="space-y-2">
+        <div className="flex flex-col gap-2">
           <Label htmlFor="description">Description</Label>
           <Textarea
             id="description"
@@ -248,7 +248,7 @@ export function TaxonomyEditor({
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
+          <div className="flex flex-col gap-2">
             <Label htmlFor="icon">Icon</Label>
             <Input
               id="icon"
@@ -260,7 +260,7 @@ export function TaxonomyEditor({
             <p className="text-xs text-muted-foreground">Emoji or icon name</p>
           </div>
 
-          <div className="space-y-2">
+          <div className="flex flex-col gap-2">
             <Label htmlFor="sortOrder">Sort Order</Label>
             <Input
               id="sortOrder"
@@ -274,7 +274,7 @@ export function TaxonomyEditor({
           </div>
         </div>
 
-        <div className="space-y-4 pt-2">
+        <div className="flex flex-col gap-4 pt-2">
           <div className="flex items-start gap-3">
             <Checkbox
               id="isHierarchical"
@@ -284,7 +284,7 @@ export function TaxonomyEditor({
               }
               disabled={isSubmitting || isEditing}
             />
-            <div className="space-y-0.5">
+            <div className="flex flex-col gap-0.5">
               <Label
                 htmlFor="isHierarchical"
                 className="cursor-pointer font-medium"
@@ -311,7 +311,7 @@ export function TaxonomyEditor({
               }
               disabled={isSubmitting}
             />
-            <div className="space-y-0.5">
+            <div className="flex flex-col gap-0.5">
               <Label
                 htmlFor="allowInlineCreation"
                 className="cursor-pointer font-medium"
@@ -333,7 +333,7 @@ export function TaxonomyEditor({
               }
               disabled={isSubmitting}
             />
-            <div className="space-y-0.5">
+            <div className="flex flex-col gap-0.5">
               <Label htmlFor="isActive" className="cursor-pointer font-medium">
                 Active
               </Label>

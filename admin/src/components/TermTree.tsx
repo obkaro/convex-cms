@@ -1,14 +1,14 @@
 import { useState, useCallback } from 'react'
 import { useQuery, useMutation } from 'convex/react'
-import { useApi } from '~/embed/contexts/ApiContext'
-import { CmsDialog, CmsConfirmDialog } from '~/components/cmsds/CmsDialog'
-import { CmsButton } from '~/components/cmsds/CmsButton'
-import { CmsEmptyState } from '~/components/cmsds/CmsEmptyState'
-import { Input } from '~/components/ui/input'
-import { Label } from '~/components/ui/label'
-import { Textarea } from '~/components/ui/textarea'
+import { useApi } from '../embed/contexts/ApiContext'
+import { CmsDialog, CmsConfirmDialog } from './cmsds/CmsDialog'
+import { CmsButton } from './cmsds/CmsButton'
+import { CmsEmptyState } from './cmsds/CmsEmptyState'
+import { Input } from './ui/input'
+import { Label } from './ui/label'
+import { Textarea } from './ui/textarea'
 import { ChevronRight, ChevronDown, Plus, Pencil, Trash2, Tags } from 'lucide-react'
-import { cn } from '~/lib/cn'
+import { cn } from '../lib/cn'
 
 interface Term {
   _id: string
@@ -187,7 +187,7 @@ export function TermTree({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium text-foreground">Terms</h3>
         <CmsButton variant="secondary" size="sm" onClick={() => handleCreateTerm()}>
@@ -436,14 +436,14 @@ function TermEditModal({
         </>
       }
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         {submitError && (
           <div className="diff-removed rounded-lg border px-3 py-2 text-sm">
             {submitError}
           </div>
         )}
 
-        <div className="space-y-2">
+        <div className="flex flex-col gap-2">
           <Label htmlFor="termName">
             Name <span className="text-destructive">*</span>
           </Label>
@@ -460,7 +460,7 @@ function TermEditModal({
           )}
         </div>
 
-        <div className="space-y-2">
+        <div className="flex flex-col gap-2">
           <Label htmlFor="termSlug">
             Slug <span className="text-destructive">*</span>
           </Label>
@@ -480,7 +480,7 @@ function TermEditModal({
           )}
         </div>
 
-        <div className="space-y-2">
+        <div className="flex flex-col gap-2">
           <Label htmlFor="termDescription">Description</Label>
           <Textarea
             id="termDescription"
@@ -493,7 +493,7 @@ function TermEditModal({
         </div>
 
         <div className="grid grid-cols-3 gap-3">
-          <div className="space-y-2">
+          <div className="flex flex-col gap-2">
             <Label htmlFor="termColor">Color</Label>
             <Input
               id="termColor"
@@ -505,7 +505,7 @@ function TermEditModal({
             />
           </div>
 
-          <div className="space-y-2">
+          <div className="flex flex-col gap-2">
             <Label htmlFor="termIcon">Icon</Label>
             <Input
               id="termIcon"
@@ -516,7 +516,7 @@ function TermEditModal({
             />
           </div>
 
-          <div className="space-y-2">
+          <div className="flex flex-col gap-2">
             <Label htmlFor="termSortOrder">Sort Order</Label>
             <Input
               id="termSortOrder"

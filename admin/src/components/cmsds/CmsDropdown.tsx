@@ -5,7 +5,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '~/components/ui/dropdown-menu'
+} from '../ui/dropdown-menu'
 import { CmsButton } from './CmsButton'
 import { MoreHorizontal } from 'lucide-react'
 

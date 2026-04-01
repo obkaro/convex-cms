@@ -1,6 +1,6 @@
 import * as React from 'react'
-import { Input } from '~/components/ui/input'
-import { cn } from '~/lib/cn'
+import { Input } from '../ui/input'
+import { cn } from '../../lib/cn'
 
 export interface CmsInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   error?: boolean

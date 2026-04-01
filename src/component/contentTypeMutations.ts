@@ -20,7 +20,7 @@ import type { FieldDefinition } from "./validation.js";
 import {
   emitEvent,
   contentTypeEventType,
-  ContentTypeEventPayload,
+  type ContentTypeEventPayload,
 } from "./eventEmitter.js";
 import { fieldTypes } from "./schema.js";
 import {

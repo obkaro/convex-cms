@@ -1,9 +1,9 @@
 import { useState, useMemo } from 'react'
 import { useQuery, useMutation } from 'convex/react'
-import { useApi } from '~/embed/contexts/ApiContext'
-import { CmsDialog } from '~/components/cmsds/CmsDialog'
-import { CmsButton } from '~/components/cmsds/CmsButton'
-import { cn } from '~/lib/cn'
+import { useApi } from '../../embed/contexts/ApiContext'
+import { CmsDialog } from '../cmsds/CmsDialog'
+import { CmsButton } from '../cmsds/CmsButton'
+import { cn } from '../../lib/cn'
 import { Folder, Home, ChevronRight } from 'lucide-react'
 
 interface MediaMoveModalProps {
@@ -104,7 +104,7 @@ export function MediaMoveModal({
         </>
       }
     >
-      <div className="space-y-2">
+      <div className="flex flex-col gap-2">
         {error && (
           <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
             {error}

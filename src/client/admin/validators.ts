@@ -6,7 +6,7 @@
  * plain strings when crossing the component boundary.
  */
 
-import { Infer, v } from "convex/values";
+import { type Infer, v } from "convex/values";
 import { omit } from "convex-helpers";
 import {
   baseFieldDefinition,

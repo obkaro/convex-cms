@@ -1,11 +1,11 @@
 import { useState, useCallback, useEffect } from 'react'
 import { useMutation, useQuery } from 'convex/react'
-import { useApi } from '~/embed/contexts/ApiContext'
-import { CmsDialog } from '~/components/cmsds/CmsDialog'
-import { CmsButton } from '~/components/cmsds/CmsButton'
-import { CmsField } from '~/components/cmsds/CmsField'
-import { Input } from '~/components/ui/input'
-import { Textarea } from '~/components/ui/textarea'
+import { useApi } from '../../embed/contexts/ApiContext'
+import { CmsDialog } from '../cmsds/CmsDialog'
+import { CmsButton } from '../cmsds/CmsButton'
+import { Field, FieldLabel, FieldDescription } from '../ui/field'
+import { Input } from '../ui/input'
+import { Textarea } from '../ui/textarea'
 import { MediaTaxonomyPicker } from './MediaTaxonomyPicker'
 
 export interface MediaAssetForEdit {
@@ -126,40 +126,39 @@ export function MediaAssetEditDialog({
         </>
       }
     >
-      <div className="space-y-4">
+      <div className="flex flex-col gap-4">
         {error && (
           <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
             {error}
           </div>
         )}
 
-        <CmsField label="Filename" required htmlFor="asset-name">
+        <Field>
+          <FieldLabel htmlFor="asset-name">
+            Filename
+            <span className="ml-1 text-destructive">*</span>
+          </FieldLabel>
           <Input
             id="asset-name"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Enter filename"
           />
-        </CmsField>
+        </Field>
 
-        <CmsField
-          label="Title"
-          description="A human-readable title for the file"
-          htmlFor="asset-title"
-        >
+        <Field>
+          <FieldLabel htmlFor="asset-title">Title</FieldLabel>
           <Input
             id="asset-title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Enter title (optional)"
           />
-        </CmsField>
+          <FieldDescription>A human-readable title for the file</FieldDescription>
+        </Field>
 
-        <CmsField
-          label="Description"
-          description="A brief description of the file"
-          htmlFor="asset-description"
-        >
+        <Field>
+          <FieldLabel htmlFor="asset-description">Description</FieldLabel>
           <Textarea
             id="asset-description"
             value={description}
@@ -167,36 +166,33 @@ export function MediaAssetEditDialog({
             placeholder="Enter description (optional)"
             rows={3}
           />
-        </CmsField>
+          <FieldDescription>A brief description of the file</FieldDescription>
+        </Field>
 
-        <CmsField
-          label="Alt Text"
-          description="Alternative text for accessibility (important for images)"
-          htmlFor="asset-alt"
-        >
+        <Field>
+          <FieldLabel htmlFor="asset-alt">Alt Text</FieldLabel>
           <Input
             id="asset-alt"
             value={altText}
             onChange={(e) => setAltText(e.target.value)}
             placeholder="Describe the image content"
           />
-        </CmsField>
+          <FieldDescription>Alternative text for accessibility (important for images)</FieldDescription>
+        </Field>
 
-        <CmsField
-          label="Quick Tags"
-          description="Comma-separated tags for simple organization"
-          htmlFor="asset-tags"
-        >
+        <Field>
+          <FieldLabel htmlFor="asset-tags">Quick Tags</FieldLabel>
           <Input
             id="asset-tags"
             value={tagsInput}
             onChange={(e) => setTagsInput(e.target.value)}
             placeholder="e.g., hero, blog, product"
           />
-        </CmsField>
+          <FieldDescription>Comma-separated tags for simple organization</FieldDescription>
+        </Field>
 
         {taxonomies.length > 0 && asset && (
-          <div className="space-y-4 pt-2 border-t">
+          <div className="flex flex-col gap-4 border-t pt-2">
             <p className="text-sm text-muted-foreground">
               Organize with taxonomy terms
             </p>

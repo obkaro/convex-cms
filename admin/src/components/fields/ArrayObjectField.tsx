@@ -181,7 +181,7 @@ export function ArrayObjectField({
 
   return (
     <FieldWrapper field={field} error={error} className={className} id={id}>
-      <div className="space-y-2">
+      <div className="flex flex-col gap-2">
         {items.length === 0 && (
           <p className="py-4 text-center text-sm text-muted-foreground">
             No items yet
@@ -259,7 +259,7 @@ export function ArrayObjectField({
 
                 {/* Card content */}
                 <CollapsibleContent>
-                  <div className="space-y-4 border-t border-border px-3 py-3">
+                  <div className="flex flex-col gap-4 border-t border-border px-3 py-3">
                     {subFields.map((subField) => (
                       <FieldRenderer
                         key={subField.name}

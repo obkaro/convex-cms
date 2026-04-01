@@ -1,4 +1,4 @@
-import type { CmsAdminApi } from "~/embed/contexts/ApiContext";
+import type { CmsAdminApi } from "../embed/contexts/ApiContext";
 
 const fnSymbol = Symbol.for("functionName");
 
