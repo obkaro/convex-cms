@@ -55,12 +55,13 @@
       "default": "./dist/test.js"
     },
     "./admin": {
-      "types": "./admin/src/embed/index.tsx",
+      "types": "./admin/dist/types/admin/src/embed/index.d.ts",
       "default": "./admin/src/embed/index.tsx"
     },
     "./admin/globals.css": "./admin/src/styles/globals.css",
     "./admin/theme.css": "./admin/src/styles/theme.css",
     "./admin/tailwind-config.css": "./admin/src/styles/tailwind-config.css",
+    "./admin/embed-theme.css": "./admin/src/embed/theme.css",
     "./admin/src": "./admin/src",
     "./admin/tailwind.preset": "./admin/tailwind.preset.cjs",
     "./admin/index.css": "./admin/src/index.css"
@@ -69,6 +70,7 @@
     "dist",
     "admin-dist",
     "admin/src",
+    "admin/dist/types",
     "admin/tailwind.preset.cjs",
     "README.md"
   ],
@@ -76,11 +78,12 @@
     "convex-cms": "./dist/cli/index.js"
   },
   "scripts": {
-    "build": "pnpm build:component && pnpm build:cli && pnpm build:admin",
+    "build": "pnpm build:component && pnpm build:cli && pnpm build:admin && pnpm build:admin-types",
     "build:component": "tsc --project tsconfig.build.json",
     "build:codegen": "pnpm convex codegen --component-dir ./src/component && pnpm build",
     "build:cli": "tsc --project tsconfig.cli.json",
     "build:admin": "cd admin && pnpm build && rm -rf ../admin-dist && cp -r dist ../admin-dist",
+    "build:admin-types": "cd admin && tsc --project tsconfig.types.json",
     "build:clean": "rm -rf dist *.tsbuildinfo && pnpm build:codegen",
     "dev": "npm-run-all2 --parallel dev:*",
     "dev:component": "pnpm convex codegen --component-dir ./src/component",
@@ -117,10 +120,7 @@
   },
   "homepage": "https://github.com/obkaro/convex-cms#readme",
   "peerDependencies": {
-    "convex": "^1.31.6",
-    "react": "^18.3.1 || ^19.0.0",
     "@convex-dev/agent": "^0.3.0",
-    "zod": "^3.23.0",
     "@radix-ui/react-accordion": "^1.2.0",
     "@radix-ui/react-alert-dialog": "^1.1.0",
     "@radix-ui/react-avatar": "^1.1.0",
@@ -136,9 +136,12 @@
     "@radix-ui/react-switch": "^1.2.0",
     "@radix-ui/react-tabs": "^1.1.0",
     "@radix-ui/react-tooltip": "^1.2.0",
+    "convex": "^1.34.0",
     "lucide-react": ">=0.400.0",
+    "react": "^18.3.1 || ^19.0.0",
     "react-hook-form": "^7.50.0",
-    "tailwindcss": "^4.0.0"
+    "tailwindcss": "^4.0.0",
+    "zod": "^3.23.0"
   },
   "peerDependenciesMeta": {
     "react": {
@@ -210,9 +213,9 @@
     "@eslint/js": "^9.39.2",
     "@playwright/test": "^1.57.0",
     "@types/node": "^25.0.10",
-    "@types/react": "^19.2.9",
+    "@types/react": "^19.2.14",
     "chokidar-cli": "^3.0.0",
-    "convex": "^1.31.6",
+    "convex": "^1.34.1",
     "convex-test": "^0.0.41",
     "eslint": "^9.39.2",
     "npm-run-all2": "^8.0.4",
