@@ -224,6 +224,7 @@ export interface SyncResult {
   created: number;
   updated: number;
   unchanged: number;
+  removedOrphans: number;
 }
 
 /**
@@ -240,7 +241,7 @@ async function syncCodeDefinedTypes(
   component: ComponentApi
 ): Promise<SyncResult> {
   const codeTypes = getAllCodeDefinedTypes();
-  const result: SyncResult = { created: 0, updated: 0, unchanged: 0 };
+  const result: SyncResult = { created: 0, updated: 0, unchanged: 0, removedOrphans: 0 };
 
   for (const codeType of codeTypes) {
     const existing = await ctx.runQuery(component.contentTypes.get, {
@@ -287,6 +288,25 @@ async function syncCodeDefinedTypes(
     }
   }
 
+  // Clean up orphaned code-defined types no longer in the code registry
+  const codeSlugs = new Set(codeTypes.map((t) => t.slug));
+  const dbResult = await ctx.runQuery(component.contentTypes.list, {
+    isActive: true,
+  });
+
+  for (const dbType of dbResult.page) {
+    if (dbType.createdBy === "code" && !codeSlugs.has(dbType.name)) {
+      // This type was code-defined but no longer exists in code — remove it
+      await ctx.runMutation(component.contentTypeMutations.deleteContentType, {
+        id: dbType._id,
+        cascade: true,
+        hardDelete: false,
+        deletedBy: "code-sync",
+      });
+      result.removedOrphans++;
+    }
+  }
+
   return result;
 }
 
@@ -323,6 +343,7 @@ export function createContentTypesOperations(
         created: v.number(),
         updated: v.number(),
         unchanged: v.number(),
+        removedOrphans: v.number(),
       }),
       handler: async (ctx) => {
         await checkAuth(ctx, { type: "syncContentTypes" });

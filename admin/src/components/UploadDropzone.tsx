@@ -3,10 +3,10 @@ import {
   useMediaUploadQueue,
   type UploadQueueFile,
   type UploadQueueFileStatus,
-} from '~/lib/cmsExports'
+} from '../lib/cmsExports'
 import type { FunctionReference } from 'convex/server'
-import { CmsButton } from '~/components/cmsds/CmsButton'
-import { cn } from '~/lib/cn'
+import { CmsButton } from './cmsds/CmsButton'
+import { cn } from '../lib/cn'
 import { Upload, Check, X, RefreshCw, AlertCircle } from 'lucide-react'
 
 export interface UploadDropzoneProps {
@@ -116,16 +116,25 @@ export function UploadDropzone({
     [validateFile, queue]
   )
 
+  // Use a counter to handle drag enter/leave on child elements.
+  // dragenter fires when entering children, dragleave fires when leaving them.
+  // Only deactivate when the counter reaches 0 (fully left the dropzone).
+  const dragCounterRef = useRef(0)
+
   const handleDragEnter = useCallback((e: React.DragEvent) => {
     e.preventDefault()
     e.stopPropagation()
+    dragCounterRef.current++
     setIsDragActive(true)
   }, [])
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    setIsDragActive(false)
+    dragCounterRef.current--
+    if (dragCounterRef.current === 0) {
+      setIsDragActive(false)
+    }
   }, [])
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -137,6 +146,7 @@ export function UploadDropzone({
     (e: React.DragEvent) => {
       e.preventDefault()
       e.stopPropagation()
+      dragCounterRef.current = 0
       setIsDragActive(false)
       if (e.dataTransfer.files?.length) {
         addFiles(e.dataTransfer.files)
@@ -178,12 +188,12 @@ export function UploadDropzone({
   const hasCompletedOrFailed = completedCount > 0 || errorCount > 0
 
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col gap-4">
       {validationErrors.size > 0 && (
         <div className="rounded-md border border-destructive/50 bg-destructive/10 p-3">
           <div className="flex items-start gap-2">
             <AlertCircle className="mt-0.5 size-4 shrink-0 text-destructive" />
-            <div className="flex-1 space-y-1">
+            <div className="flex flex-col gap-1 flex-1">
               {Array.from(validationErrors.entries()).map(([filename, error]) => (
                 <p key={filename} className="text-sm text-destructive">
                   <span className="font-medium">{filename}:</span> {error}
@@ -233,7 +243,7 @@ export function UploadDropzone({
       )}
 
       {queue.files.length > 0 && (
-        <div className="space-y-3">
+        <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm">
               <span className="font-medium">
@@ -287,7 +297,7 @@ export function UploadDropzone({
             </div>
           )}
 
-          <div className="space-y-2">
+          <div className="flex max-h-64 flex-col gap-2 overflow-y-auto">
             {queue.files.map((uploadFile: UploadQueueFile) => (
               <div
                 key={uploadFile.id}

@@ -7,25 +7,25 @@
 
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { useQuery, useMutation } from "convex/react";
-import { UploadDropzone, type UploadedFile } from "~/components/UploadDropzone";
+import { UploadDropzone, type UploadedFile } from "../components/UploadDropzone";
 import {
   CmsPageHeader,
   CmsEmptyState,
   CmsButton,
   CmsFilterBar,
-} from "~/components/cmsds";
-import { TaxonomyFilter } from "~/components/filters/TaxonomyFilter";
+} from "../components/cmsds";
+import { TaxonomyFilter } from "../components/filters/TaxonomyFilter";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from "~/components/ui/dialog";
-import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
-import { Checkbox } from "~/components/ui/checkbox";
-import { cn } from "~/lib/cn";
+} from "../components/ui/dialog";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
+import { Checkbox } from "../components/ui/checkbox";
+import { cn } from "../lib/cn";
 import {
   Image,
   Video,
@@ -44,25 +44,25 @@ import {
 import {
   MediaPreviewModal,
   type MediaAsset,
-} from "~/components/media/MediaPreviewModal";
+} from "../components/media/MediaPreviewModal";
 import {
   MediaAssetEditDialog,
   type MediaAssetForEdit,
-} from "~/components/media/MediaAssetEditDialog";
+} from "../components/media/MediaAssetEditDialog";
 import {
   MediaFolderEditDialog,
   type MediaFolderForEdit,
-} from "~/components/media/MediaFolderEditDialog";
-import { MediaAssetActions } from "~/components/media/MediaAssetActions";
-import { MediaFolderActions } from "~/components/media/MediaFolderActions";
-import { MediaBulkActionBar } from "~/components/media/MediaBulkActionBar";
-import { MediaTrashBulkActionBar } from "~/components/media/MediaTrashBulkActionBar";
-import { MediaMoveModal } from "~/components/media/MediaMoveModal";
-import { CmsConfirmDialog } from "~/components/cmsds/CmsDialog";
-import { Tabs, TabsList, TabsTrigger } from "~/components/ui/tabs";
-import { Badge } from "~/components/ui/badge";
-import type { AdminNavigation } from "~/lib/navigation";
-import type { CmsAdminApi } from "~/embed/contexts/ApiContext";
+} from "../components/media/MediaFolderEditDialog";
+import { MediaAssetActions } from "../components/media/MediaAssetActions";
+import { MediaFolderActions } from "../components/media/MediaFolderActions";
+import { MediaBulkActionBar } from "../components/media/MediaBulkActionBar";
+import { MediaTrashBulkActionBar } from "../components/media/MediaTrashBulkActionBar";
+import { MediaMoveModal } from "../components/media/MediaMoveModal";
+import { CmsConfirmDialog } from "../components/cmsds/CmsDialog";
+import { Tabs, TabsList, TabsTrigger } from "../components/ui/tabs";
+import { Badge } from "../components/ui/badge";
+import type { AdminNavigation } from "../lib/navigation";
+import type { CmsAdminApi } from "../embed/contexts/ApiContext";
 
 type MediaView = "library" | "trash";
 type MediaType = "image" | "video" | "audio" | "document" | "other";
@@ -478,7 +478,7 @@ export function MediaPage({ api, navigation, settings }: MediaPageProps) {
   }, [assetsResult?.page, termFilteredMediaIds]);
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="flex flex-col gap-4 md:gap-6">
       <CmsPageHeader
         title="Media Library"
         description="Upload, organize, and manage media assets for your content."
@@ -543,7 +543,7 @@ export function MediaPage({ api, navigation, settings }: MediaPageProps) {
           value: searchQuery,
           onChange: setSearchQuery,
           placeholder: "Search files...",
-          className: "w-64",
+          className: "w-full md:w-64",
         }}
         filters={[
           {
@@ -558,7 +558,7 @@ export function MediaPage({ api, navigation, settings }: MediaPageProps) {
               { value: "document", label: "Documents" },
               { value: "other", label: "Other" },
             ],
-            className: "w-36",
+            className: "w-full sm:w-36",
           },
         ]}
         actions={
@@ -898,8 +898,8 @@ export function MediaPage({ api, navigation, settings }: MediaPageProps) {
           <DialogHeader>
             <DialogTitle>Create New Folder</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
+          <div className="flex flex-col gap-4 py-4">
+            <div className="flex flex-col gap-2">
               <Label htmlFor="folder-name">Folder Name</Label>
               <Input
                 id="folder-name"

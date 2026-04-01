@@ -7,27 +7,30 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useQuery, useMutation } from "convex/react";
-import { RouteGuard } from "~/components";
-import { usePermissions } from "~/hooks";
-import { useAdminConfig, useTheme } from "~/contexts";
-import { CmsPageHeader } from "~/components/cmsds/CmsPageHeader";
-import { CmsSurface } from "~/components/cmsds/CmsSurface";
-import { CmsButton } from "~/components/cmsds/CmsButton";
+import { RouteGuard } from "../components";
+import { usePermissions } from "../hooks";
+import { useAdminConfig, useTheme } from "../contexts";
+import { CmsPageHeader } from "../components/cmsds/CmsPageHeader";
+import { CmsSurface } from "../components/cmsds/CmsSurface";
+import { CmsButton } from "../components/cmsds/CmsButton";
 import {
 	Select,
 	SelectContent,
 	SelectItem,
 	SelectTrigger,
 	SelectValue,
-} from "~/components/ui/select";
-import { Switch } from "~/components/ui/switch";
-import { Label } from "~/components/ui/label";
-import { Badge } from "~/components/ui/badge";
-import { Alert, AlertDescription } from "~/components/ui/alert";
-import { cn } from "~/lib/cn";
+} from "../components/ui/select";
+import { Switch } from "../components/ui/switch";
+import { Label } from "../components/ui/label";
+import { Badge } from "../components/ui/badge";
+import { Alert, AlertDescription } from "../components/ui/alert";
+import {
+	ToggleGroup,
+	ToggleGroupItem,
+} from "../components/ui/toggle-group";
 import { Check, X, Sun, Moon, Monitor, Lock, Info } from "lucide-react";
-import type { AdminNavigation } from "~/lib/navigation";
-import { CmsAdminApi } from "~/embed/contexts/ApiContext";
+import type { AdminNavigation } from "../lib/navigation";
+import type { CmsAdminApi } from "../embed/contexts/ApiContext";
 
 interface FeatureFlags {
 	versioning: boolean;
@@ -93,7 +96,7 @@ function AppearanceSection() {
 	return (
 		<CmsSurface elevation="base" className="p-6">
 			<h2 className="mb-4 text-lg font-semibold text-foreground">Appearance</h2>
-			<div className="space-y-4">
+			<div className="flex flex-col gap-4">
 				<div className="flex items-center justify-between">
 					<div>
 						<Label className="text-sm font-medium">Theme</Label>
@@ -101,24 +104,18 @@ function AppearanceSection() {
 							Choose your preferred color theme for the admin interface.
 						</p>
 					</div>
-					<div className="flex gap-1 rounded-lg border bg-muted/50 p-1">
+					<ToggleGroup
+						type="single"
+						value={theme}
+						onValueChange={(val) => val && setTheme(val as Theme)}
+					>
 						{THEME_OPTIONS.map((option) => (
-							<button
-								key={option.value}
-								type="button"
-								onClick={() => setTheme(option.value)}
-								className={cn(
-									"flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
-									theme === option.value
-										? "bg-background text-foreground shadow-sm"
-										: "text-muted-foreground hover:text-foreground",
-								)}
-							>
+							<ToggleGroupItem key={option.value} value={option.value}>
 								{option.icon}
 								{option.label}
-							</button>
+							</ToggleGroupItem>
 						))}
-					</div>
+					</ToggleGroup>
 				</div>
 			</div>
 		</CmsSurface>
@@ -134,13 +131,13 @@ export interface SettingsPageProps {
 function SettingsPageUnconfigured() {
 	return (
 		<RouteGuard requiredPermission={{ resource: "settings", action: "manage" }}>
-			<div className="space-y-6 p-6">
+			<div className="flex flex-col gap-4 md:gap-6">
 				<CmsPageHeader
 					title="Settings"
 					description="Configure your CMS settings and preferences."
 				/>
 
-				<div className="space-y-6">
+				<div className="flex flex-col gap-6">
 					<AppearanceSection />
 
 					<Alert>
@@ -179,7 +176,7 @@ function SettingsPageUnconfigured() {
 							Showing default feature flags. Configure settings in your admin
 							API to customize.
 						</p>
-						<div className="space-y-4">
+						<div className="flex flex-col gap-4">
 							{(
 								[
 									"versioning",
@@ -205,7 +202,7 @@ function SettingsPageUnconfigured() {
 
 					<CmsSurface elevation="base" className="p-6">
 						<h2 className="mb-4 text-lg font-semibold text-foreground">API</h2>
-						<div className="space-y-4">
+						<div className="flex flex-col gap-4">
 							<div>
 								<Label className="text-sm font-medium">
 									Convex Deployment URL
@@ -365,7 +362,7 @@ function SettingsPageConfigured({
 			<RouteGuard
 				requiredPermission={{ resource: "settings", action: "manage" }}
 			>
-				<div className="space-y-6 p-6">
+				<div className="flex flex-col gap-4 md:gap-6">
 					<CmsPageHeader
 						title="Settings"
 						description="Configure your CMS settings and preferences."
@@ -386,7 +383,7 @@ function SettingsPageConfigured({
 
 	return (
 		<RouteGuard requiredPermission={{ resource: "settings", action: "manage" }}>
-			<div className="space-y-6 p-6">
+			<div className="flex flex-col gap-4 md:gap-6">
 				<div className="flex items-start justify-between">
 					<CmsPageHeader
 						title="Settings"
@@ -432,7 +429,7 @@ function SettingsPageConfigured({
 					)}
 				</div>
 
-				<div className="space-y-6">
+				<div className="flex flex-col gap-6">
 					<AppearanceSection />
 
 					{features.localization && (
@@ -440,7 +437,7 @@ function SettingsPageConfigured({
 							<h2 className="mb-4 text-lg font-semibold text-foreground">
 								General
 							</h2>
-							<div className="space-y-4">
+							<div className="flex flex-col gap-4">
 								<div className="flex items-center justify-between">
 									<div>
 										<Label className="text-sm font-medium">
@@ -482,7 +479,7 @@ function SettingsPageConfigured({
 						<p className="mb-4 text-sm text-muted-foreground">
 							Feature flags are defined in your Convex configuration and cannot be changed from the UI.
 						</p>
-						<div className="space-y-4">
+						<div className="flex flex-col gap-4">
 							<div className="flex items-center justify-between opacity-75">
 								<div>
 									<Label className="text-sm font-medium">Versioning</Label>
@@ -529,7 +526,7 @@ function SettingsPageConfigured({
 
 					<CmsSurface elevation="base" className="p-6">
 						<h2 className="mb-4 text-lg font-semibold text-foreground">API</h2>
-						<div className="space-y-4">
+						<div className="flex flex-col gap-4">
 							<div>
 								<Label className="text-sm font-medium">
 									Convex Deployment URL
