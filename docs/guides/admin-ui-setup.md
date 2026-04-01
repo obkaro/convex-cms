@@ -119,6 +119,28 @@ This uses mock authentication with a demo admin user.
 
 Embed the Admin UI in your React application for production use. The `CmsAdmin` component must be rendered inside a `ConvexProvider`.
 
+### Required: Tailwind Source Scanning
+
+The admin ships as `.tsx` source files. Tailwind v4 doesn't scan `node_modules`, so add this to your CSS entry:
+
+```css
+@source "../node_modules/convex-cms/admin/src/**/*.{ts,tsx}";
+```
+
+Without this, the admin renders with completely broken layout and styles.
+
+### Required: Explicit Height
+
+Pass `className="h-screen"` on `CmsAdmin` (or a calculated height if you have a header):
+
+```tsx
+<CmsAdmin api={api.admin} auth={authConfig} className="h-screen" />
+// With a 64px header:
+<CmsAdmin api={api.admin} auth={authConfig} className="h-[calc(100vh-64px)]" />
+```
+
+### Basic Example
+
 ```tsx
 import { ConvexProvider, ConvexReactClient } from "convex/react";
 import { CmsAdmin } from "convex-cms/admin";
@@ -131,6 +153,7 @@ function AdminPage() {
     <ConvexProvider client={convex}>
       <CmsAdmin
         api={api.admin}
+        className="h-screen"
         auth={{
           getUser: () => ({
             id: currentUser.id,
@@ -205,6 +228,7 @@ function AdminPage() {
   return (
     <CmsAdmin
       api={api.admin}
+      className="h-screen"
       auth={{
         getUser: () => ({
           id: user.id,
@@ -213,7 +237,6 @@ function AdminPage() {
           avatarUrl: user.imageUrl,
         }),
         getUserRole: () => {
-          // Get role from Clerk public metadata
           return (user.publicMetadata?.cmsRole as string) ?? "viewer";
         },
         onLogout: () => signOut(),
@@ -226,31 +249,31 @@ function AdminPage() {
 ### With Convex Auth
 
 ```tsx
-import { useConvexAuth } from "convex/react";
-import { useQuery } from "convex/react";
+import { useConvexAuth, useQuery } from "convex/react";
+import { useAuthActions } from "@convex-dev/auth/react";
 import { CmsAdmin } from "convex-cms/admin";
 import { api } from "./convex/_generated/api";
 
 function AdminPage() {
   const { isAuthenticated, isLoading } = useConvexAuth();
-  const user = useQuery(api.users.me);
+  const user = useQuery(api.users.me, isAuthenticated ? {} : "skip");
+  const { signOut } = useAuthActions();
 
-  if (isLoading) return <div>Loading...</div>;
-  if (!isAuthenticated) return <div>Please sign in</div>;
+  if (isLoading || user === undefined) return <div>Loading...</div>;
+  if (!isAuthenticated || !user) return <div>Please sign in</div>;
 
   return (
     <CmsAdmin
       api={api.admin}
+      className="h-screen"
       auth={{
-        getUser: () => user ? {
+        getUser: () => ({
           id: user._id,
           name: user.name,
           email: user.email,
-        } : null,
-        getUserRole: () => user?.cmsRole ?? null,
-        onLogout: async () => {
-          // Your logout logic
-        },
+        }),
+        getUserRole: () => user.cmsRole ?? null,
+        onLogout: () => signOut(),
       }}
     />
   );
@@ -273,18 +296,14 @@ function AdminPage() {
   return (
     <CmsAdmin
       api={api.admin}
+      className="h-screen"
       auth={{
         getUser: () => ({
           id: user.id,
           name: user.name,
           email: user.email,
         }),
-        getUserRole: async (userId) => {
-          // Fetch role from your backend
-          const response = await fetch(`/api/users/${userId}/role`);
-          const { role } = await response.json();
-          return role;
-        },
+        getUserRole: () => user.role ?? "viewer",
         onLogout: logout,
       }}
     />
@@ -317,13 +336,13 @@ export const {
     // Optional: check operation type for fine-grained control
     if (operation.type === "deleteContentType") {
       // Only allow admins to delete content types
-      const isAdmin = await checkUserIsAdmin(identity.subject);
+      const isAdmin = await checkUserIsAdmin(identity.tokenIdentifier);
       if (!isAdmin) {
         throw new Error("Only admins can delete content types");
       }
     }
 
-    return identity.subject;
+    return identity.tokenIdentifier;
   },
 });
 ```
@@ -382,6 +401,7 @@ const config = defineAdminConfig({
   api={api.admin}
   auth={authConfig}
   config={config}
+  className="h-screen"
 />
 ```
 
@@ -401,6 +421,81 @@ const config = defineAdminConfig({
 | **Bulk Operations** | Publish, unpublish, delete multiple items |
 | **Trash** | Soft-deleted items with restore option |
 | **Content Locking** | Prevent editing conflicts |
+| **Users** | Manage CMS user roles and access |
+
+---
+
+## User Management
+
+The admin UI includes a built-in Users page for managing CMS access. No user table setup required — the CMS manages user roles internally.
+
+### How It Works
+
+1. **Auto-registration**: When a user accesses the CMS, they're automatically registered via the `auth` callback
+2. **First-user bootstrap**: If no CMS users exist, the first user is automatically assigned the `admin` role
+3. **Profile sync**: The admin UI calls `registerSelf` on mount to sync the user's display name and email from your `getUser()` callback
+
+### Custom Roles
+
+By default, the Users page shows the 4 built-in roles (Admin, Editor, Author, Viewer). You can customize the role list:
+
+```tsx
+<CmsAdmin
+  api={api.admin}
+  auth={authConfig}
+  config={{
+    // Replace built-in roles with your own
+    overrideBuiltInRoles: true,
+    customRoles: [
+      { value: "admin", label: "Admin", description: "Full access" },
+      { value: "editor", label: "Editor", description: "Manage content" },
+      { value: "kitchen", label: "Kitchen Staff", description: "Kitchen only" },
+    ],
+  }}
+/>
+```
+
+| Config Option | Type | Default | Description |
+|---------------|------|---------|-------------|
+| `customRoles` | `Array<{ value, label, description? }>` | `[]` | Additional roles for the role dropdown |
+| `overrideBuiltInRoles` | `boolean` | `false` | Replace built-in roles entirely with `customRoles` |
+
+### Auth Callback Profile
+
+The `auth` callback in `defineAdminAPI` can return a profile object to enrich user data in the Users page:
+
+```typescript
+auth: async (ctx, operation) => {
+  const identity = await ctx.auth.getUserIdentity();
+  if (!identity) throw new Error("Unauthorized");
+
+  // Simple: return just the user ID
+  return identity.tokenIdentifier;
+
+  // Rich: return profile for the Users page
+  return {
+    userId: identity.tokenIdentifier,
+    name: "Ovie",
+    email: "ovie@restaurant.ca",
+  };
+}
+```
+
+### Backend Setup
+
+Export the user management operations from your `convex/admin.ts`:
+
+```typescript
+export const {
+  // ... existing exports ...
+  listCmsUsers,
+  getCmsUser,
+  setCmsUserRole,
+  inviteCmsUser,
+  removeCmsUser,
+  registerSelf,
+} = defineAdminAPI(components.cms, { ... });
+```
 
 ---
 
@@ -419,7 +514,8 @@ Click the **Sync Now** button in the warning banner to automatically:
 
 1. Create database records for new code-defined types
 2. Update existing code-defined types with changed fields
-3. Leave manually-created database types unchanged
+3. Remove orphaned code-defined types no longer in your code (soft-deleted with entries)
+4. Leave manually-created database types unchanged
 
 The warning disappears once all code-defined types are in sync.
 
@@ -436,6 +532,10 @@ For programmatic drift detection, see [Schema Drift Detection](../api/code-first
 ---
 
 ## Troubleshooting
+
+### Admin layout is broken (sidebar not full height, missing styles)
+
+Add the Tailwind `@source` directive — see [Required: Tailwind Source Scanning](#required-tailwind-source-scanning). This is the most common embed issue.
 
 ### "Convex URL not found"
 

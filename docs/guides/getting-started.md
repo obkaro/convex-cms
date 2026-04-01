@@ -321,6 +321,52 @@ Run `pnpm convex dev` to regenerate types after making changes to your Convex fu
 
 ---
 
+## Taxonomy Helpers
+
+Query taxonomy terms from your Convex functions with typed helpers:
+
+```typescript
+// convex/cms.ts
+import { createTaxonomyHelpers } from "convex-cms";
+import { components } from "./_generated/api";
+
+export const taxonomies = createTaxonomyHelpers(components.cms);
+```
+
+```typescript
+// convex/menu.ts
+import { taxonomies } from "./cms";
+
+export const getCategories = query({
+  args: {},
+  handler: async (ctx) => {
+    return taxonomies.getTerms(ctx, "menu_categories");
+  },
+});
+```
+
+Available methods:
+
+| Method | Description |
+|--------|-------------|
+| `getTerms(ctx, taxonomyName)` | Get all terms sorted by sortOrder |
+| `getTerm(ctx, taxonomyName, termSlug)` | Get a single term by slug |
+| `listTaxonomies(ctx)` | List all active taxonomies |
+
+Returns typed `TaxonomyTerm` objects with `_id`, `name`, `slug`, `icon`, `color`, `sortOrder`, `depth`, `usageCount`.
+
+## Automatic Field Resolution
+
+The typed helpers (`createTypedHelpers`) automatically resolve two field types:
+
+**Taxonomy fields** (`renderAs: "tags"` or `renderAs: "category"` with `taxonomyName`): Term IDs in entry data are replaced with human-readable names. Consumers get `["Halal", "Gluten-Free"]` instead of raw IDs.
+
+**Media fields** (`renderAs: "media"`): Asset IDs are replaced with public storage URLs. Consumers get a URL ready for `<img src>` instead of a Convex document ID.
+
+This happens transparently in `get()`, `getBySlug()`, and `list()` — no consumer code needed.
+
+---
+
 ## Next Steps
 
 1. **[Query Builder](./query-builder.md)** for fluent API queries

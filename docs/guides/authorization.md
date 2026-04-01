@@ -531,7 +531,59 @@ authorizationHooks: {
 
 ---
 
+## User Management
+
+The CMS includes a built-in Users page accessible from the admin sidebar. User roles are stored in a `cmsUserRoles` component table — the CMS owns role storage, so your app doesn't need a `role` field on its users table.
+
+### Auto-Registration
+
+Users are registered in the CMS the first time they access the admin UI. The `registerSelf` mutation syncs their display name and email from your `getUser()` auth callback.
+
+### First-User Bootstrap
+
+If the `cmsUserRoles` table is empty, the first user to trigger a CMS mutation is automatically assigned the `admin` role. No CLI bootstrapping required.
+
+### Custom Roles
+
+The 4 built-in roles (`admin`, `editor`, `author`, `viewer`) can be extended with app-specific roles. Custom roles use the same RBAC permission system — a role with no defined permissions has zero CMS access.
+
+This is useful for app-level routing (e.g., a `kitchen` role that grants access to a kitchen dashboard but has no CMS permissions):
+
+```tsx
+<CmsAdmin
+  config={{
+    overrideBuiltInRoles: true,
+    customRoles: [
+      { value: "admin", label: "Admin", description: "Full access" },
+      { value: "editor", label: "Editor", description: "Content management" },
+      { value: "kitchen", label: "Kitchen", description: "Kitchen dashboard only" },
+    ],
+  }}
+/>
+```
+
+### Querying User Roles
+
+To check a user's CMS role from your Convex functions:
+
+```typescript
+export const getMyCmsRole = query({
+  args: {},
+  handler: async (ctx): Promise<string | null> => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return null;
+    const cmsUser = await ctx.runQuery(api.admin.getCmsUser, {
+      externalUserId: identity.tokenIdentifier,
+    });
+    return cmsUser?.role ?? null;
+  },
+});
+```
+
+---
+
 See also:
+- [Admin UI Setup](./admin-ui-setup.md): User management configuration
 - [Configuration Reference](../api/configuration.md)
 - [Media Management Guide](./media.md)
 

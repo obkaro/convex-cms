@@ -276,7 +276,7 @@ const landscapeImages = await ctx.runQuery(
 
 ## Using with Field Types
 
-Content types can include `tags` and `category` field types that integrate with taxonomies:
+Content types can include `tags` and `category` field types that integrate with taxonomies. You can reference a taxonomy by ID (`taxonomyId`) or by name (`taxonomyName`). Use `taxonomyName` in code-first definitions where IDs aren't known at definition time:
 
 ```typescript
 const blogPost = await cms.contentTypes.create(ctx, {
@@ -314,6 +314,35 @@ const blogPost = await cms.contentTypes.create(ctx, {
   ],
 });
 ```
+
+For code-first definitions using `defineContentType`, use `taxonomyName` in field metadata:
+
+```typescript
+export const menuItem = defineContentType({
+  name: "Menu Item",
+  validator: v.object({
+    dietaryTags: v.optional(v.array(v.string())),
+    // ...
+  }),
+  meta: {
+    fields: {
+      dietaryTags: {
+        renderAs: "tags",
+        taxonomyName: "dietary_tags",  // Resolved by name at render time
+        allowCreate: false,
+      },
+    },
+  },
+});
+```
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `taxonomyId` | `string` | Direct taxonomy ID (use when ID is known) |
+| `taxonomyName` | `string` | Taxonomy name (resolved at render time — use in code-first definitions) |
+| `allowCreate` | `boolean` | Allow creating new terms inline (tags only) |
+| `allowMultiple` | `boolean` | Allow selecting multiple categories (category only) |
+| `maxTags` | `number` | Maximum number of tags (tags only) |
 
 ## Usage Tracking
 

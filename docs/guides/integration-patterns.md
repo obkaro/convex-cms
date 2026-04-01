@@ -218,6 +218,7 @@ export const getPostBySlug = query({
 
 ```tsx
 // app/admin/page.tsx - embedded Admin UI
+// CmsAdmin must be inside a ConvexProvider (typically in your layout)
 import { CmsAdmin } from "convex-cms/admin";
 import { api } from "@/convex/_generated/api";
 
@@ -225,8 +226,8 @@ export default function AdminPage() {
   return (
     <CmsAdmin
       api={api.admin}
-      convexUrl={process.env.NEXT_PUBLIC_CONVEX_URL!}
       auth={authConfig}
+      className="h-screen"
     />
   );
 }

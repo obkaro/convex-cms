@@ -78,6 +78,19 @@ app.use(convexCms);  // Mount the CMS component
 export default app;
 ```
 
+### Custom App Events
+
+Convex CMS also exposes a custom event path for application-owned workflows that
+should reuse the component's event log and webhook delivery system without
+moving transactional data into the CMS. Typical examples include order,
+payment, notification, and operational events such as `order.created`,
+`payment.failed`, or `notification.failed`.
+
+- The app still owns the canonical tables and business rules
+- The CMS component stores and delivers the emitted custom events
+- Webhook subscriptions can now filter on the `custom` resource type in
+  addition to content and media resource types
+
 ## Data Flow
 
 ### Creating Content

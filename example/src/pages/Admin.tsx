@@ -5,11 +5,18 @@
  * The component provides a complete admin interface with navigation,
  * content management, media library, and more.
  *
- * IMPORTANT: The parent container must have explicit height for the admin
- * to render correctly. Use h-screen for full viewport or calculate height
- * if you have a header (e.g., h-[calc(100vh-64px)]).
+ * SETUP REQUIREMENTS:
  *
- * For production use, you would integrate your actual auth provider
+ * 1. Tailwind v4 source scanning — add to your CSS entry file:
+ *    @source "../node_modules/convex-cms/admin/src/**\/*.{ts,tsx}";
+ *    Without this, the admin layout and styles will be broken.
+ *
+ * 2. Explicit height — pass className="h-screen" for full viewport,
+ *    or h-[calc(100vh-64px)] if your app has a header.
+ *
+ * 3. ConvexProvider — CmsAdmin must be rendered inside a ConvexProvider.
+ *
+ * For production use, integrate your actual auth provider
  * in the auth config (Clerk, Auth0, Convex Auth, etc.).
  */
 

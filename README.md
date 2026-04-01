@@ -113,6 +113,12 @@ Leverage included features or extend and customize within your own convex functi
 - **Content locking.** Prevent concurrent edit conflicts
 - **Soft delete & trash.** Configurable retention with restore
 
+### User Management
+- **Built-in Users page.** List, invite, and manage CMS users from the admin UI
+- **Auto-registration.** Users are registered automatically on first CMS access
+- **First-user bootstrap.** First user gets admin role — no CLI setup needed
+- **Custom roles.** Define app-specific roles (e.g., "kitchen") alongside built-in ones
+
 ### Integration
 - **RBAC.** 4 built-in roles + custom roles with fine-grained permissions
 - **Multi-locale.** Content localization with fallback chains
@@ -128,7 +134,7 @@ Leverage included features or extend and customize within your own convex functi
 - **Pre-built React interface.** CLI mode for development, embeddable for production
 - **Visual content editing.** Rich text, media picker, reference selector
 
-## Admin UI Modes
+## Admin UI
 
 | Mode | Command | Best For |
 |------|---------|----------|
@@ -137,30 +143,23 @@ Leverage included features or extend and customize within your own convex functi
 
 Both modes call the same functions from your `convex/admin.ts`.
 
-### Embedding with Theme Modes
+### Embedding
 
-When embedding CmsAdmin in your React app, you can control how it handles CSS variables:
+Two requirements for the embed to render correctly:
 
-```tsx
-// Isolated mode (default) - admin uses its own theme
-<CmsAdmin api={api.admin} auth={authConfig} themeMode="isolated" />
-
-// Inherit mode - admin inherits your app's CSS variables (for shadcn apps)
-<CmsAdmin api={api.admin} auth={authConfig} themeMode="inherit" />
-```
-
-| Mode | Behavior |
-|------|----------|
-| `isolated` | Admin defines all CSS variables, ignoring parent app styles |
-| `inherit` | Admin inherits parent's shadcn variables, only defines sidebar fallbacks |
+**1. Tailwind source scanning** — the admin ships as `.tsx` source. Tailwind v4 doesn't scan `node_modules`, so add this to your CSS:
 
 ```css
-/* your-app/src/index.css */
-@import "tailwindcss";
-@source "../node_modules/convex-cms/admin/dist/**/*.js";
+@source "../node_modules/convex-cms/admin/src/**/*.{ts,tsx}";
 ```
 
-This tells Tailwind to scan the admin's compiled JavaScript for utility classes.
+**2. Explicit height** — pass `className="h-screen"` (or calculated height if you have a header):
+
+```tsx
+<CmsAdmin api={api.admin} auth={authConfig} className="h-screen" />
+```
+
+→ [Full embed setup with auth examples](./docs/guides/admin-ui-setup.md)
 
 
 
@@ -193,8 +192,9 @@ This tells Tailwind to scan the admin's compiled JavaScript for utility classes.
 
 ## Requirements
 
-- Convex ^1.17.0
+- Convex ^1.34.0
 - Node.js 18+
+- Tailwind CSS v4 (for embedded admin UI)
 
 
 
