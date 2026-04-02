@@ -19,6 +19,8 @@ describe("Event Type Builders", () => {
   it("should build content entry event types", () => {
     expect(contentEntryEventType("created")).toBe("contentEntry.created");
     expect(contentEntryEventType("updated")).toBe("contentEntry.updated");
+    expect(contentEntryEventType("succeeded")).toBe("contentEntry.succeeded");
+    expect(contentEntryEventType("failed")).toBe("contentEntry.failed");
     expect(contentEntryEventType("published")).toBe("contentEntry.published");
     expect(contentEntryEventType("unpublished")).toBe("contentEntry.unpublished");
     expect(contentEntryEventType("deleted")).toBe("contentEntry.deleted");
@@ -82,7 +84,7 @@ describe("Event Type String Formats", () => {
     allEventTypes.add(mediaFolderEventType("deleted"));
 
     // All should be unique - count should equal number of items added
-    // 8 content entry + 3 content type + 4 media asset + 3 media folder = 18
-    expect(allEventTypes.size).toBe(18);
+    // 10 content entry + 3 content type + 4 media asset + 3 media folder = 20
+    expect(allEventTypes.size).toBe(20);
   });
 });

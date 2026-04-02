@@ -1,235 +1,240 @@
 {
-  "name": "convex-cms",
-  "version": "0.0.15",
-  "packageManager": "pnpm@10.28.2",
-  "description": "A developer-first Convex Component for content management with flexible RBAC and AI-ready architecture",
-  "type": "module",
-  "workspaces": [
-    "admin"
-  ],
-  "main": "./dist/client/index.js",
-  "module": "./dist/client/index.js",
-  "types": "./dist/client/index.d.ts",
-  "exports": {
-    "./package.json": "./package.json",
-    ".": {
-      "types": "./dist/client/index.d.ts",
-      "default": "./dist/client/index.js"
-    },
-    "./convex.config.js": {
-      "types": "./dist/component/convex.config.d.ts",
-      "default": "./dist/component/convex.config.js"
-    },
-    "./convex.config": {
-      "types": "./dist/component/convex.config.d.ts",
-      "default": "./dist/component/convex.config.js"
-    },
-    "./types": {
-      "types": "./dist/client/types.d.ts",
-      "default": "./dist/client/types.js"
-    },
-    "./roles": {
-      "types": "./dist/component/roles.d.ts",
-      "default": "./dist/component/roles.js"
-    },
-    "./config": {
-      "types": "./dist/client/config.d.ts",
-      "default": "./dist/client/config.js"
-    },
-    "./react": {
-      "types": "./dist/react/index.d.ts",
-      "default": "./dist/react/index.js"
-    },
-    "./agent": {
-      "types": "./dist/client/agentTools.d.ts",
-      "default": "./dist/client/agentTools.js"
-    },
-    "./_generated/component.js": {
-      "types": "./dist/component/_generated/component.d.ts"
-    },
-    "./_generated/component": {
-      "types": "./dist/component/_generated/component.d.ts"
-    },
-    "./test": {
-      "types": "./dist/test.d.ts",
-      "default": "./dist/test.js"
-    },
-    "./admin": {
-      "types": "./admin/dist/types/admin/src/embed/index.d.ts",
-      "default": "./admin/src/embed/index.tsx"
-    },
-    "./admin/globals.css": "./admin/src/styles/globals.css",
-    "./admin/theme.css": "./admin/src/styles/theme.css",
-    "./admin/tailwind-config.css": "./admin/src/styles/tailwind-config.css",
-    "./admin/embed-theme.css": "./admin/src/embed/theme.css",
-    "./admin/src": "./admin/src",
-    "./admin/tailwind.preset": "./admin/tailwind.preset.cjs",
-    "./admin/index.css": "./admin/src/index.css"
-  },
-  "files": [
-    "dist",
-    "admin-dist",
-    "admin/src",
-    "admin/dist/types",
-    "admin/tailwind.preset.cjs",
-    "README.md"
-  ],
-  "bin": {
-    "convex-cms": "./dist/cli/index.js"
-  },
-  "scripts": {
-    "build": "pnpm build:component && pnpm build:cli && pnpm build:admin && pnpm build:admin-types",
-    "build:component": "tsc --project tsconfig.build.json",
-    "build:codegen": "pnpm convex codegen --component-dir ./src/component && pnpm build",
-    "build:cli": "tsc --project tsconfig.cli.json",
-    "build:admin": "cd admin && pnpm build && rm -rf ../admin-dist && cp -r dist ../admin-dist",
-    "build:admin-types": "cd admin && tsc --project tsconfig.types.json",
-    "build:clean": "rm -rf dist *.tsbuildinfo && pnpm build:codegen",
-    "dev": "npm-run-all2 --parallel dev:*",
-    "dev:component": "pnpm convex codegen --component-dir ./src/component",
-    "dev:build": "tsc --project tsconfig.build.json --watch",
-    "dev:example": "cd example && pnpm convex dev",
-    "dev:watch": "chokidar 'src/**/*.ts' -c 'pnpm build:component' --silent",
-    "test": "vitest run --typecheck",
-    "test:watch": "vitest --typecheck",
-    "lint": "eslint src/",
-    "typecheck": "tsc --noEmit",
-    "typecheck:all": "tsc --noEmit && cd example && pnpm tsc --noEmit",
-    "codegen": "pnpm convex codegen --component-dir ./src/component",
-    "codegen:all": "pnpm codegen && pnpm build:component && cd example && pnpm convex codegen && cd ../admin && pnpm convex codegen",
-    "verify": "pnpm codegen:all && pnpm typecheck:all && pnpm lint && pnpm test",
-    "preversion": "pnpm verify",
-    "alpha": "pnpm version prerelease --preid=alpha && git push --follow-tags",
-    "release": "pnpm version patch && git push --follow-tags"
-  },
-  "keywords": [
-    "convex",
-    "cms",
-    "headless-cms",
-    "content-management",
-    "convex-component"
-  ],
-  "author": "obkaro",
-  "license": "Apache-2.0",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/obkaro/convex-cms.git"
-  },
-  "bugs": {
-    "url": "https://github.com/obkaro/convex-cms/issues"
-  },
-  "homepage": "https://github.com/obkaro/convex-cms#readme",
-  "peerDependencies": {
-    "@convex-dev/agent": "^0.3.0",
-    "@radix-ui/react-accordion": "^1.2.0",
-    "@radix-ui/react-alert-dialog": "^1.1.0",
-    "@radix-ui/react-avatar": "^1.1.0",
-    "@radix-ui/react-checkbox": "^1.3.0",
-    "@radix-ui/react-dialog": "^1.1.0",
-    "@radix-ui/react-dropdown-menu": "^2.1.0",
-    "@radix-ui/react-label": "^2.1.0",
-    "@radix-ui/react-popover": "^1.1.0",
-    "@radix-ui/react-scroll-area": "^1.2.0",
-    "@radix-ui/react-select": "^2.2.0",
-    "@radix-ui/react-separator": "^1.1.0",
-    "@radix-ui/react-slot": "^1.2.0",
-    "@radix-ui/react-switch": "^1.2.0",
-    "@radix-ui/react-tabs": "^1.1.0",
-    "@radix-ui/react-tooltip": "^1.2.0",
-    "convex": "^1.34.0",
-    "lucide-react": ">=0.400.0",
-    "react": "^18.3.1 || ^19.0.0",
-    "react-hook-form": "^7.50.0",
-    "tailwindcss": "^4.0.0",
-    "zod": "^3.23.0"
-  },
-  "peerDependenciesMeta": {
-    "react": {
-      "optional": true
-    },
-    "@convex-dev/agent": {
-      "optional": true
-    },
-    "zod": {
-      "optional": true
-    },
-    "@radix-ui/react-accordion": {
-      "optional": true
-    },
-    "@radix-ui/react-alert-dialog": {
-      "optional": true
-    },
-    "@radix-ui/react-avatar": {
-      "optional": true
-    },
-    "@radix-ui/react-checkbox": {
-      "optional": true
-    },
-    "@radix-ui/react-dialog": {
-      "optional": true
-    },
-    "@radix-ui/react-dropdown-menu": {
-      "optional": true
-    },
-    "@radix-ui/react-label": {
-      "optional": true
-    },
-    "@radix-ui/react-popover": {
-      "optional": true
-    },
-    "@radix-ui/react-scroll-area": {
-      "optional": true
-    },
-    "@radix-ui/react-select": {
-      "optional": true
-    },
-    "@radix-ui/react-separator": {
-      "optional": true
-    },
-    "@radix-ui/react-slot": {
-      "optional": true
-    },
-    "@radix-ui/react-switch": {
-      "optional": true
-    },
-    "@radix-ui/react-tabs": {
-      "optional": true
-    },
-    "@radix-ui/react-tooltip": {
-      "optional": true
-    },
-    "lucide-react": {
-      "optional": true
-    },
-    "react-hook-form": {
-      "optional": true
-    },
-    "tailwindcss": {
-      "optional": true
-    }
-  },
-  "devDependencies": {
-    "@convex-dev/agent": "^0.3.2",
-    "@eslint/js": "^9.39.2",
-    "@playwright/test": "^1.57.0",
-    "@types/node": "^25.0.10",
-    "@types/react": "^19.2.14",
-    "chokidar-cli": "^3.0.0",
-    "convex": "^1.34.1",
-    "convex-test": "^0.0.41",
-    "eslint": "^9.39.2",
-    "npm-run-all2": "^8.0.4",
-    "pkg-pr-new": "^0.0.62",
-    "prettier": "^3.8.1",
-    "typescript": "^5.9.3",
-    "typescript-eslint": "^8.53.1",
-    "vitest": "^4.0.18",
-    "zod": "^4.3.6"
-  },
-  "dependencies": {
-    "@clack/prompts": "^0.10.0",
-    "commander": "^14.0.2",
-    "convex-helpers": "^0.1.111",
-    "open": "^11.0.0"
-  }
+	"name": "convex-cms",
+	"version": "0.0.15",
+	"packageManager": "pnpm@10.28.2",
+	"description": "A developer-first Convex Component for content management with flexible RBAC and AI-ready architecture",
+	"type": "module",
+	"workspaces": [
+		"admin"
+	],
+	"main": "./dist/client/index.js",
+	"module": "./dist/client/index.js",
+	"types": "./dist/client/index.d.ts",
+	"exports": {
+		"./package.json": "./package.json",
+		".": {
+			"types": "./dist/client/index.d.ts",
+			"default": "./dist/client/index.js"
+		},
+		"./convex.config.js": {
+			"types": "./dist/component/convex.config.d.ts",
+			"default": "./dist/component/convex.config.js"
+		},
+		"./convex.config": {
+			"types": "./dist/component/convex.config.d.ts",
+			"default": "./dist/component/convex.config.js"
+		},
+		"./types": {
+			"types": "./dist/client/types.d.ts",
+			"default": "./dist/client/types.js"
+		},
+		"./roles": {
+			"types": "./dist/component/roles.d.ts",
+			"default": "./dist/component/roles.js"
+		},
+		"./config": {
+			"types": "./dist/client/config.d.ts",
+			"default": "./dist/client/config.js"
+		},
+		"./react": {
+			"types": "./dist/react/index.d.ts",
+			"default": "./dist/react/index.js"
+		},
+		"./agent": {
+			"types": "./dist/client/agentTools.d.ts",
+			"default": "./dist/client/agentTools.js"
+		},
+		"./_generated/component.js": {
+			"types": "./dist/component/_generated/component.d.ts"
+		},
+		"./_generated/component": {
+			"types": "./dist/component/_generated/component.d.ts"
+		},
+		"./test": {
+			"types": "./dist/test.d.ts",
+			"default": "./dist/test.js"
+		},
+		"./admin": {
+			"types": "./admin/dist/types/admin/src/embed/index.d.ts",
+			"default": "./admin/src/embed/index.tsx"
+		},
+		"./admin/globals.css": "./admin/src/styles/globals.css",
+		"./admin/theme.css": "./admin/src/styles/theme.css",
+		"./admin/tailwind-config.css": "./admin/src/styles/tailwind-config.css",
+		"./admin/embed-theme.css": "./admin/src/embed/theme.css",
+		"./admin/src": "./admin/src",
+		"./admin/tailwind.preset": "./admin/tailwind.preset.cjs",
+		"./admin/index.css": "./admin/src/index.css"
+	},
+	"files": [
+		"dist",
+		"admin-dist",
+		"admin/src",
+		"admin/dist/types",
+		"admin/tailwind.preset.cjs",
+		"README.md"
+	],
+	"bin": {
+		"convex-cms": "./dist/cli/index.js"
+	},
+	"scripts": {
+		"build": "pnpm build:component && pnpm build:cli && pnpm build:admin && pnpm build:admin-types",
+		"build:component": "tsc --project tsconfig.build.json",
+		"build:codegen": "pnpm convex codegen --component-dir ./src/component && pnpm build",
+		"build:cli": "tsc --project tsconfig.cli.json",
+		"build:admin": "cd admin && pnpm build && rm -rf ../admin-dist && cp -r dist ../admin-dist",
+		"build:admin-types": "cd admin && tsc --project tsconfig.types.json",
+		"build:clean": "rm -rf dist *.tsbuildinfo && pnpm build:codegen",
+		"dev": "npm-run-all2 --parallel dev:*",
+		"dev:component": "pnpm convex codegen --component-dir ./src/component",
+		"dev:build": "tsc --project tsconfig.build.json --watch",
+		"dev:example": "cd example && pnpm convex dev",
+		"dev:watch": "chokidar 'src/**/*.ts' -c 'pnpm build:component' --silent",
+		"test": "vitest run --typecheck",
+		"test:watch": "vitest --typecheck",
+		"lint": "eslint src/",
+		"typecheck": "tsc --noEmit",
+		"typecheck:all": "tsc --noEmit && cd example && pnpm tsc --noEmit",
+		"codegen": "pnpm convex codegen --component-dir ./src/component",
+		"codegen:all": "pnpm codegen && pnpm build:component && cd example && pnpm convex codegen && cd ../admin && pnpm convex codegen",
+		"verify": "pnpm codegen:all && pnpm typecheck:all && pnpm lint && pnpm test",
+		"preversion": "pnpm verify",
+		"alpha": "pnpm version prerelease --preid=alpha && git push --follow-tags",
+		"release": "pnpm version patch && git push --follow-tags"
+	},
+	"keywords": [
+		"convex",
+		"cms",
+		"headless-cms",
+		"content-management",
+		"convex-component"
+	],
+	"author": "obkaro",
+	"license": "Apache-2.0",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/obkaro/convex-cms.git"
+	},
+	"bugs": {
+		"url": "https://github.com/obkaro/convex-cms/issues"
+	},
+	"homepage": "https://github.com/obkaro/convex-cms#readme",
+	"peerDependencies": {
+		"@convex-dev/agent": "^0.3.0",
+		"@radix-ui/react-accordion": "^1.2.0",
+		"@radix-ui/react-alert-dialog": "^1.1.0",
+		"@radix-ui/react-avatar": "^1.1.0",
+		"@radix-ui/react-checkbox": "^1.3.0",
+		"@radix-ui/react-dialog": "^1.1.0",
+		"@radix-ui/react-dropdown-menu": "^2.1.0",
+		"@radix-ui/react-label": "^2.1.0",
+		"@radix-ui/react-popover": "^1.1.0",
+		"@radix-ui/react-scroll-area": "^1.2.0",
+		"@radix-ui/react-select": "^2.2.0",
+		"@radix-ui/react-separator": "^1.1.0",
+		"@radix-ui/react-slot": "^1.2.0",
+		"@radix-ui/react-switch": "^1.2.0",
+		"@radix-ui/react-tabs": "^1.1.0",
+		"@radix-ui/react-tooltip": "^1.2.0",
+		"convex": "^1.34.0",
+		"lucide-react": ">=0.400.0",
+		"react": "^18.3.1 || ^19.0.0",
+		"react-hook-form": "^7.50.0",
+		"tailwindcss": "^4.0.0",
+		"zod": "^3.23.0"
+	},
+	"peerDependenciesMeta": {
+		"react": {
+			"optional": true
+		},
+		"@convex-dev/agent": {
+			"optional": true
+		},
+		"zod": {
+			"optional": true
+		},
+		"@radix-ui/react-accordion": {
+			"optional": true
+		},
+		"@radix-ui/react-alert-dialog": {
+			"optional": true
+		},
+		"@radix-ui/react-avatar": {
+			"optional": true
+		},
+		"@radix-ui/react-checkbox": {
+			"optional": true
+		},
+		"@radix-ui/react-dialog": {
+			"optional": true
+		},
+		"@radix-ui/react-dropdown-menu": {
+			"optional": true
+		},
+		"@radix-ui/react-label": {
+			"optional": true
+		},
+		"@radix-ui/react-popover": {
+			"optional": true
+		},
+		"@radix-ui/react-scroll-area": {
+			"optional": true
+		},
+		"@radix-ui/react-select": {
+			"optional": true
+		},
+		"@radix-ui/react-separator": {
+			"optional": true
+		},
+		"@radix-ui/react-slot": {
+			"optional": true
+		},
+		"@radix-ui/react-switch": {
+			"optional": true
+		},
+		"@radix-ui/react-tabs": {
+			"optional": true
+		},
+		"@radix-ui/react-tooltip": {
+			"optional": true
+		},
+		"lucide-react": {
+			"optional": true
+		},
+		"react-hook-form": {
+			"optional": true
+		},
+		"tailwindcss": {
+			"optional": true
+		}
+	},
+	"devDependencies": {
+		"@convex-dev/agent": "^0.3.2",
+		"@eslint/js": "^9.39.2",
+		"@playwright/test": "^1.57.0",
+		"@types/node": "^25.0.10",
+		"@types/react": "^19.2.14",
+		"chokidar-cli": "^3.0.0",
+		"convex": "^1.34.1",
+		"convex-test": "^0.0.41",
+		"eslint": "^9.39.2",
+		"npm-run-all2": "^8.0.4",
+		"pkg-pr-new": "^0.0.62",
+		"prettier": "^3.8.1",
+		"typescript": "^5.9.3",
+		"typescript-eslint": "^8.53.1",
+		"vitest": "^4.0.18",
+		"zod": "^4.3.6"
+	},
+	"dependencies": {
+		"@clack/prompts": "^0.10.0",
+		"commander": "^14.0.2",
+		"convex-helpers": "^0.1.111",
+		"open": "^11.0.0"
+	},
+	"pnpm": {
+		"overrides": {
+			"@types/react": "^19.2.14"
+		}
+	}
 }

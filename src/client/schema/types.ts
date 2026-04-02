@@ -28,7 +28,25 @@
  * ```
  */
 
-import type { Validator } from "convex/values";
+
+/**
+ * Structural constraint for CMS object validators.
+ *
+ * Matches the properties VObject inherits from BaseValidator (type, fieldPaths,
+ * isOptional, isConvexValidator) plus VObject's own `kind` discriminant.
+ * Intentionally excludes VObject's generic methods (omit, pick, partial, extend)
+ * which cause a TypeScript contravariance error when comparing concrete
+ * VObject<SpecificFields> against VObject<GeneralFields>.
+ *
+ * Use TValidator["type"] instead of Infer<TValidator> for data type extraction.
+ */
+export type CmsObjectValidator = {
+  kind: "object";
+  isOptional: "required";
+  isConvexValidator: true;
+  type: Record<string, unknown>;
+  fieldPaths: string;
+};
 
 // =============================================================================
 // Field Metadata Types
@@ -500,7 +518,7 @@ export interface ContentTypeMeta<TFieldNames extends string = string> {
  * @typeParam TValidator - The Convex validator for the content data shape
  */
 export interface ContentTypeConfig<
-  TValidator extends Validator<Record<string, unknown>, "required", string>
+  TValidator extends CmsObjectValidator
 > {
   /**
    * Unique machine-readable name for this content type.
@@ -536,7 +554,7 @@ export interface ContentTypeConfig<
    * CMS-specific metadata for display and configuration.
    */
   meta: ContentTypeMeta<
-    TValidator extends Validator<infer T, "required", string>
+    TValidator extends { type: infer T }
       ? T extends Record<string, unknown>
         ? keyof T & string
         : string
@@ -552,11 +570,7 @@ export interface ContentTypeConfig<
  */
 export interface ContentTypeDefinition<
   TSlug extends string = string,
-  TValidator extends Validator<Record<string, unknown>, "required", string> = Validator<
-    Record<string, unknown>,
-    "required",
-    string
-  >
+  TValidator extends CmsObjectValidator = CmsObjectValidator
 > {
   /**
    * Human-readable display name for the content type.
@@ -615,7 +629,7 @@ export interface ContentTypeDefinition<
  */
 export type InferContentType<T extends ContentTypeDefinition> =
   T extends ContentTypeDefinition<string, infer V>
-    ? V extends Validator<infer Data, "required", string>
+    ? V extends { type: infer Data }
       ? Data
       : never
     : never;
@@ -654,10 +668,10 @@ export type ContentSchema = Record<string, ContentTypeDefinition>;
  * ```
  */
 export type InferSchema<T extends ContentSchema> = {
-  [K in keyof T as T[K] extends ContentTypeDefinition<infer Slug, Validator<Record<string, unknown>, "required", string>>
+  [K in keyof T as T[K] extends ContentTypeDefinition<infer Slug, CmsObjectValidator>
     ? Slug
     : never]: T[K] extends ContentTypeDefinition<string, infer V>
-    ? V extends Validator<infer Data, "required", string>
+    ? V extends { type: infer Data }
       ? Data
       : never
     : never;
@@ -673,7 +687,7 @@ export type InferSchema<T extends ContentSchema> = {
  * ```
  */
 export type SchemaContentTypeNames<T extends ContentSchema> = {
-  [K in keyof T]: T[K] extends ContentTypeDefinition<infer Slug, Validator<Record<string, unknown>, "required", string>>
+  [K in keyof T]: T[K] extends ContentTypeDefinition<infer Slug, CmsObjectValidator>
     ? Slug
     : never;
 }[keyof T];
@@ -701,7 +715,7 @@ export type SchemaContentType<
  */
 export type ContentTypeFieldNames<T extends ContentTypeDefinition> =
   T extends ContentTypeDefinition<string, infer V>
-    ? V extends Validator<infer Data, "required", string>
+    ? V extends { type: infer Data }
       ? Data extends Record<string, unknown>
         ? keyof Data & string
         : never

@@ -57,7 +57,6 @@ import type {
 	FunctionReturnType,
 } from "convex/server";
 import type { PaginationResult } from "convex/server";
-import type { Validator } from "convex/values";
 import type { ContentTypeDefinition } from "../client/schema/types.js";
 
 // =============================================================================
@@ -949,12 +948,13 @@ export function useMediaUploadQueue<
  * Infer data type from content type definition.
  * Uses the validator's generic type to extract the TypeScript type.
  */
-export type InferData<T extends ContentTypeDefinition> =
-	T extends ContentTypeDefinition<string, infer V>
-		? V extends Validator<infer Data, "required", string>
-			? Data
-			: unknown
-		: unknown;
+export type InferData<
+	T extends ContentTypeDefinition
+> = T extends ContentTypeDefinition<string, infer V>
+	? V extends { type: infer Data }
+		? Data
+		: unknown
+	: unknown;
 
 /**
  * Content entry with typed data field.
@@ -1083,7 +1083,7 @@ export function useCmsEntry<TDef extends ContentTypeDefinition>(
 					contentTypeName: definition.slug,
 					slug: args.slug,
 					status: args.status,
-				},
+			  },
 	);
 
 	return result as TypedEntry<Data> | null | undefined;
@@ -1112,16 +1112,18 @@ type UpdateArgs<TData> = {
 	updatedBy?: string;
 };
 
-type TypedMutationReturn<TData, TOp extends MutationOperation> =
-	TOp extends "create"
-		? (args: CreateArgs<TData>) => Promise<TypedEntry<TData>>
-		: TOp extends "update"
-			? (args: UpdateArgs<TData>) => Promise<TypedEntry<TData>>
-			: TOp extends "publish" | "unpublish"
-				? (args: { id: string }) => Promise<TypedEntry<TData>>
-				: TOp extends "delete"
-					? (args: { id: string }) => Promise<void>
-					: never;
+type TypedMutationReturn<
+	TData,
+	TOp extends MutationOperation
+> = TOp extends "create"
+	? (args: CreateArgs<TData>) => Promise<TypedEntry<TData>>
+	: TOp extends "update"
+	? (args: UpdateArgs<TData>) => Promise<TypedEntry<TData>>
+	: TOp extends "publish" | "unpublish"
+	? (args: { id: string }) => Promise<TypedEntry<TData>>
+	: TOp extends "delete"
+	? (args: { id: string }) => Promise<void>
+	: never;
 
 /**
  * Get a typed mutation for content entries.
@@ -1148,7 +1150,7 @@ type TypedMutationReturn<TData, TOp extends MutationOperation> =
  */
 export function useTypedMutation<
 	TDef extends ContentTypeDefinition,
-	TOp extends MutationOperation,
+	TOp extends MutationOperation
 >(
 	adminApi: BaseAdminAPI,
 	definition: TDef,

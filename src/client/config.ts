@@ -115,7 +115,7 @@ export interface AdminApiCmsConfig {
 	 */
 	auth?: (
 		ctx: { auth: Auth },
-		operation: AdminOperation
+		operation: AdminOperation,
 	) => Promise<string | null>;
 }
 
@@ -164,7 +164,7 @@ export interface UnifiedCmsConfig extends SharedCmsConfig {
  * Discriminates by checking for unified-specific properties.
  */
 export function isUnifiedCmsConfig(
-	config: unknown
+	config: unknown,
 ): config is UnifiedCmsConfig {
 	if (!config || typeof config !== "object") return false;
 
@@ -262,7 +262,7 @@ export function extractAdminConfig(config: UnifiedCmsConfig): AdminApiOptions {
 					scheduling: config.features.scheduling,
 					localization: config.features.localization,
 					mediaManagement: config.features.mediaManagement,
-				}
+			  }
 			: undefined,
 	};
 }
@@ -271,7 +271,7 @@ export function extractAdminConfig(config: UnifiedCmsConfig): AdminApiOptions {
  * Extract UI config from UnifiedCmsConfig for CmsAdmin component.
  */
 export function extractUiConfig(
-	config: UnifiedCmsConfig
+	config: UnifiedCmsConfig,
 ): Partial<AdminConfig> {
 	return config.ui ?? {};
 }

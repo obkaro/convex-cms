@@ -46,8 +46,8 @@
  * ```
  */
 
-import type { Validator } from "convex/values";
 import type {
+  CmsObjectValidator,
   ContentTypeConfig,
   ContentTypeDefinition,
   ContentTypeMeta,
@@ -175,7 +175,7 @@ function validateSlug(slug: string, originalName: string): void {
  */
 export function defineContentType<
   const TName extends string,
-  TValidator extends Validator<Record<string, unknown>, "required", string>
+  TValidator extends CmsObjectValidator
 >(
   config: ContentTypeConfig<TValidator> & { name: TName }
 ): ContentTypeDefinition<ToSlugType<TName>, TValidator> {
@@ -428,7 +428,7 @@ interface ExtractedField {
  * @internal
  */
 function extractValidatorFields(
-  validator: Validator<Record<string, unknown>, "required", string>
+  validator: CmsObjectValidator
 ): ExtractedField[] {
   const fields: ExtractedField[] = [];
 

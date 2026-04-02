@@ -88,6 +88,7 @@ export {
 
 // Core definition types
 export type {
+	CmsObjectValidator,
 	ContentTypeConfig,
 	ContentTypeDefinition,
 	ContentTypeMeta,

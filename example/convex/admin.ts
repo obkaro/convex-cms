@@ -1,10 +1,31 @@
 import { components } from "./_generated/api";
-import { defineAdminAPI } from "convex-cms";
+import { defineAdminAPI, type BaseAdminAPI } from "convex-cms";
+import type { FunctionReference, RegisteredMutation, RegisteredQuery } from "convex/server";
 import { changelogEntry, roadmapItem } from "./cms";
+
+type PublicAdminExports<T> =
+	T extends FunctionReference<"query", any, infer Args, infer Returns, any>
+		? RegisteredQuery<"public", Args, Returns>
+		: T extends FunctionReference<"mutation", any, infer Args, infer Returns, any>
+			? RegisteredMutation<"public", Args, Returns>
+			: T extends object
+				? { [K in keyof T]: PublicAdminExports<T[K]> }
+				: T;
+
+const adminApi = defineAdminAPI(components.cms, {
+	contentTypes: { changelogEntry, roadmapItem },
+});
 
 export const {
 	// Dashboard
 	getDashboardStats,
+	// Users
+	listCmsUsers,
+	getCmsUser,
+	setCmsUserRole,
+	inviteCmsUser,
+	removeCmsUser,
+	registerSelf,
 	// Content Types
 	listContentTypes,
 	getContentType,
@@ -123,6 +144,4 @@ export const {
 	getSettings,
 	updateSettings,
 	resetSettings,
-} = defineAdminAPI(components.cms, {
-	contentTypes: { changelogEntry, roadmapItem },
-});
+}: PublicAdminExports<BaseAdminAPI> = adminApi;

@@ -39,13 +39,13 @@ const codeDefinedTypes = new Map<string, ContentTypeDefinition>();
  * @throws Error if a type with the same slug is already registered
  */
 export function registerContentType(definition: ContentTypeDefinition): void {
-  if (codeDefinedTypes.has(definition.slug)) {
-    throw new Error(
-      `Content type "${definition.slug}" is already registered. ` +
-        `Content type slugs must be unique across all code-defined types.`
-    );
-  }
-  codeDefinedTypes.set(definition.slug, definition);
+	if (codeDefinedTypes.has(definition.slug)) {
+		throw new Error(
+			`Content type "${definition.slug}" is already registered. ` +
+				`Content type slugs must be unique across all code-defined types.`,
+		);
+	}
+	codeDefinedTypes.set(definition.slug, definition);
 }
 
 /**
@@ -55,7 +55,7 @@ export function registerContentType(definition: ContentTypeDefinition): void {
  * @returns The definition, or null if not found in the code registry
  */
 export function getCodeDefinedType(slug: string): ContentTypeDefinition | null {
-  return codeDefinedTypes.get(slug) ?? null;
+	return codeDefinedTypes.get(slug) ?? null;
 }
 
 /**
@@ -64,7 +64,7 @@ export function getCodeDefinedType(slug: string): ContentTypeDefinition | null {
  * @returns Array of all registered content type definitions
  */
 export function getAllCodeDefinedTypes(): ContentTypeDefinition[] {
-  return Array.from(codeDefinedTypes.values());
+	return Array.from(codeDefinedTypes.values());
 }
 
 /**
@@ -73,7 +73,7 @@ export function getAllCodeDefinedTypes(): ContentTypeDefinition[] {
  * @returns Array of registered content type slugs
  */
 export function getCodeDefinedTypeNames(): string[] {
-  return Array.from(codeDefinedTypes.keys());
+	return Array.from(codeDefinedTypes.keys());
 }
 
 /**
@@ -83,7 +83,7 @@ export function getCodeDefinedTypeNames(): string[] {
  * @returns true if the type is code-defined
  */
 export function isCodeDefinedType(slug: string): boolean {
-  return codeDefinedTypes.has(slug);
+	return codeDefinedTypes.has(slug);
 }
 
 /**
@@ -93,7 +93,7 @@ export function isCodeDefinedType(slug: string): boolean {
  * are registered at module load time and should remain stable.
  */
 export function clearRegistry(): void {
-  codeDefinedTypes.clear();
+	codeDefinedTypes.clear();
 }
 
 /**
@@ -102,5 +102,5 @@ export function clearRegistry(): void {
  * @returns Number of code-defined content types
  */
 export function getRegistrySize(): number {
-  return codeDefinedTypes.size;
+	return codeDefinedTypes.size;
 }

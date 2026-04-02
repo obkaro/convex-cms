@@ -1218,6 +1218,7 @@ export {
 // Re-export schema types
 export type {
   // Core definition types
+  CmsObjectValidator,
   ContentTypeConfig,
   ContentTypeDefinition,
   ContentTypeMeta,

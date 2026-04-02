@@ -333,7 +333,7 @@ describe("Content Type Mutation Validators", () => {
 	// =============================================================================
 
 	describe("Field types", () => {
-		it("should include all 11 supported field types", () => {
+		it("should include all 15 supported field types", () => {
 			expect(fieldTypes).toContain("text");
 			expect(fieldTypes).toContain("richText");
 			expect(fieldTypes).toContain("number");
@@ -347,7 +347,9 @@ describe("Content Type Mutation Validators", () => {
 			expect(fieldTypes).toContain("multiSelect");
 			expect(fieldTypes).toContain("tags");
 			expect(fieldTypes).toContain("category");
-			expect(fieldTypes).toHaveLength(13);
+			expect(fieldTypes).toContain("money");
+			expect(fieldTypes).toContain("arrayObject");
+			expect(fieldTypes).toHaveLength(15);
 		});
 	});
 

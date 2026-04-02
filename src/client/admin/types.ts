@@ -396,6 +396,20 @@ type EntryOrNull = Entry | null;
 type EntryReturn = Entry;
 
 /**
+ * Rebuilds Convex function types as explicit public RegisteredQuery /
+ * RegisteredMutation types so Convex's ApiFromModules/FilterApi utilities keep
+ * recognizing them after mapped-type transformations.
+ */
+type PreservePublicAdminExports<T> =
+  T extends RegisteredQuery<any, infer Args, infer Returns>
+    ? RegisteredQuery<"public", Args, Returns>
+    : T extends RegisteredMutation<any, infer Args, infer Returns>
+      ? RegisteredMutation<"public", Args, Returns>
+      : T extends object
+        ? { [K in keyof T]: PreservePublicAdminExports<T[K]> }
+        : T;
+
+/**
  * Narrows a single key to its typed version if it's a narrowed key.
  * Uses RegisteredQuery/RegisteredMutation to match what FilterApi expects.
  */
@@ -405,7 +419,7 @@ type NarrowKey<K, TSlugs extends string, TOriginal> =
   : K extends "getEntryBySlug" ? RegisteredQuery<"public", GetEntryBySlugArgs<TSlugs>, EntryOrNull>
   : K extends "getEntryBySlugAndTypeName" ? RegisteredQuery<"public", GetEntryBySlugArgs<TSlugs>, EntryOrNull>
   : K extends "getScheduledEntries" ? RegisteredQuery<"public", GetScheduledEntriesArgs<TSlugs>, PaginatedEntriesReturn>
-  : TOriginal;
+  : PreservePublicAdminExports<TOriginal>;
 
 /**
  * Narrows entries namespace keys.
@@ -417,7 +431,7 @@ type NarrowEntriesKey<K, TSlugs extends string, TOriginal> =
   : K extends "getBySlug" ? RegisteredQuery<"public", GetEntryBySlugArgs<TSlugs>, EntryOrNull>
   : K extends "getBySlugAndTypeName" ? RegisteredQuery<"public", GetEntryBySlugArgs<TSlugs>, EntryOrNull>
   : K extends "getScheduled" ? RegisteredQuery<"public", GetScheduledEntriesArgs<TSlugs>, PaginatedEntriesReturn>
-  : TOriginal;
+  : PreservePublicAdminExports<TOriginal>;
 
 /**
  * Typed entries namespace using pure mapped type.
