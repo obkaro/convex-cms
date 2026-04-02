@@ -8,6 +8,7 @@
     "dev:convex": "convex dev",
     "dev:vite": "vite",
     "build": "vite build",
+    "build:embed": "vite build --config vite.config.lib.ts",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src/"

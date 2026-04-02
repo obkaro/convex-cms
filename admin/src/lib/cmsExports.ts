@@ -1,9 +1,9 @@
 // Re-export CMS utilities that admin components need.
-// Uses relative source paths so the admin embed works both from source (link:)
-// and when pre-built. These specific modules are browser-safe (no convex/server).
-export { getRole, getRolePermissions } from '../../../src/component/roles';
-export type { RoleName } from '../../../src/component/roles';
-export type { BaseAdminAPI } from '../../../src/client/admin/index';
-export type { FieldType, ContentType } from '../../../src/client/types';
-export { useMediaUploadQueue } from '../../../src/react/index';
-export type { UploadQueueFile, UploadQueueFileStatus } from '../../../src/react/index';
+// Import through package entrypoints so the embed resolves Convex/React
+// from the consuming app instead of walking back into this repo's source tree.
+export { getRole, getRolePermissions } from "convex-cms/roles";
+export type { RoleName } from "convex-cms/roles";
+export type { BaseAdminAPI } from "convex-cms";
+export type { FieldType, ContentType } from "convex-cms/types";
+export { useMediaUploadQueue } from "convex-cms/react";
+export type { UploadQueueFile, UploadQueueFileStatus } from "convex-cms/react";

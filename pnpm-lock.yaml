@@ -6,6 +6,7 @@ settings:
 
 overrides:
   '@types/react': ^19.2.14
+  convex: ^1.34.1
 
 importers:
 
@@ -220,11 +221,11 @@ importers:
         specifier: ^1.1.1
         version: 1.1.1(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       convex:
-        specifier: ^1.31.6
-        version: 1.31.6(react@19.2.4)
+        specifier: ^1.34.1
+        version: 1.34.1(react@19.2.4)
       convex-helpers:
         specifier: ^0.1.111
-        version: 0.1.111(@standard-schema/spec@1.1.0)(convex@1.31.6(react@19.2.4))(react@19.2.4)(typescript@5.9.3)(zod@4.3.6)
+        version: 0.1.111(@standard-schema/spec@1.1.0)(convex@1.34.1(react@19.2.4))(react@19.2.4)(typescript@5.9.3)(zod@4.3.6)
       date-fns:
         specifier: ^4.1.0
         version: 4.1.0
@@ -389,14 +390,14 @@ importers:
         specifier: ^1.1.1
         version: 1.1.1(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       convex:
-        specifier: ^1.31.6
-        version: 1.31.6(react@19.2.4)
+        specifier: ^1.34.1
+        version: 1.34.1(react@19.2.4)
       convex-cms:
         specifier: workspace:*
         version: link:..
       convex-helpers:
         specifier: ^0.1.111
-        version: 0.1.111(@standard-schema/spec@1.1.0)(convex@1.31.6(react@19.2.4))(react@19.2.4)(typescript@5.9.3)(zod@3.25.76)
+        version: 0.1.111(@standard-schema/spec@1.1.0)(convex@1.34.1(react@19.2.4))(react@19.2.4)(typescript@5.9.3)(zod@3.25.76)
       date-fns:
         specifier: ^4.1.0
         version: 4.1.0
@@ -457,7 +458,7 @@ importers:
         version: 10.4.23(postcss@8.5.6)
       convex-test:
         specifier: ^0.0.41
-        version: 0.0.41(convex@1.31.6(react@19.2.4))
+        version: 0.0.41(convex@1.34.1(react@19.2.4))
       npm-run-all2:
         specifier: ^8.0.4
         version: 8.0.4
@@ -608,7 +609,7 @@ packages:
     peerDependencies:
       '@ai-sdk/provider-utils': ^3.0.7
       ai: ^5.0.29
-      convex: ^1.24.8
+      convex: ^1.34.1
       convex-helpers: ^0.1.103
       react: ^18.3.1 || ^19.0.0
     peerDependenciesMeta:
@@ -2689,7 +2690,7 @@ packages:
     hasBin: true
     peerDependencies:
       '@standard-schema/spec': ^1.0.0
-      convex: ^1.25.4
+      convex: ^1.34.1
       hono: ^4.0.5
       react: ^17.0.2 || ^18.0.0 || ^19.0.0
       typescript: ^5.5
@@ -2709,23 +2710,7 @@ packages:
   convex-test@0.0.41:
     resolution: {integrity: sha512-GPHeYFOi70n7UtW0eCEQFVhzl/+m8PvbWkDCbKpHLybI1MrScf4sVpGeM0cC2qmtxiduxa2nLPbehPalhh9oyQ==}
     peerDependencies:
-      convex: ^1.16.4
-
-  convex@1.31.6:
-    resolution: {integrity: sha512-9cIsOzepa3s9DURRF+fZHxbNuzLgilg9XGQCc45v0Xx4FemqeIezpPFSJF9WHC9ckk43TDUUXLecvLVt9djPkw==}
-    engines: {node: '>=18.0.0', npm: '>=7.0.0'}
-    hasBin: true
-    peerDependencies:
-      '@auth0/auth0-react': ^2.0.1
-      '@clerk/clerk-react': ^4.12.8 || ^5.0.0
-      react: ^18.0.0 || ^19.0.0-0 || ^19.0.0
-    peerDependenciesMeta:
-      '@auth0/auth0-react':
-        optional: true
-      '@clerk/clerk-react':
-        optional: true
-      react:
-        optional: true
+      convex: ^1.34.1
 
   convex@1.34.1:
     resolution: {integrity: sha512-ooyFnZVVq0u6b5zt0Ptq8QB2ixhf/2vXe+PIcUtdtrs0lq/TwpkmmruHdqkFmWgMd6N+Tmfy8AGkz6QnZUYZBA==}
@@ -6406,23 +6391,14 @@ snapshots:
 
   convert-source-map@2.0.0: {}
 
-  convex-helpers@0.1.111(@standard-schema/spec@1.1.0)(convex@1.31.6(react@19.2.4))(react@19.2.4)(typescript@5.9.3)(zod@3.25.76):
+  convex-helpers@0.1.111(@standard-schema/spec@1.1.0)(convex@1.34.1(react@19.2.4))(react@19.2.4)(typescript@5.9.3)(zod@3.25.76):
     dependencies:
-      convex: 1.31.6(react@19.2.4)
+      convex: 1.34.1(react@19.2.4)
     optionalDependencies:
       '@standard-schema/spec': 1.1.0
       react: 19.2.4
       typescript: 5.9.3
       zod: 3.25.76
-
-  convex-helpers@0.1.111(@standard-schema/spec@1.1.0)(convex@1.31.6(react@19.2.4))(react@19.2.4)(typescript@5.9.3)(zod@4.3.6):
-    dependencies:
-      convex: 1.31.6(react@19.2.4)
-    optionalDependencies:
-      '@standard-schema/spec': 1.1.0
-      react: 19.2.4
-      typescript: 5.9.3
-      zod: 4.3.6
 
   convex-helpers@0.1.111(@standard-schema/spec@1.1.0)(convex@1.34.1(react@19.2.4))(react@19.2.4)(typescript@5.9.3)(zod@4.3.6):
     dependencies:
@@ -6433,20 +6409,9 @@ snapshots:
       typescript: 5.9.3
       zod: 4.3.6
 
-  convex-test@0.0.41(convex@1.31.6(react@19.2.4)):
-    dependencies:
-      convex: 1.31.6(react@19.2.4)
-
   convex-test@0.0.41(convex@1.34.1(react@19.2.4)):
     dependencies:
       convex: 1.34.1(react@19.2.4)
-
-  convex@1.31.6(react@19.2.4):
-    dependencies:
-      esbuild: 0.27.0
-      prettier: 3.8.1
-    optionalDependencies:
-      react: 19.2.4
 
   convex@1.34.1(react@19.2.4):
     dependencies:

@@ -31,10 +31,6 @@
       "convex-cms/admin/globals.css": ["../admin/src/styles/globals.css"],
       "convex-cms/admin/src/*": ["../admin/src/*"],
       "convex-cms/admin": ["../admin/src/embed/index.tsx"],
-      "convex-cms/react": ["../src/react/index.ts"],
-      "convex-cms/roles": ["../src/component/roles.ts"],
-      "convex-cms/types": ["../src/client/types.ts"],
-      "convex-cms/config": ["../src/client/config.ts"],
       "convex-cms": ["../src/client/index.ts"]
     }
   },

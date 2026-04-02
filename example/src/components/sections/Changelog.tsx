@@ -1,9 +1,9 @@
 import { useCmsQuery, type InferData } from "convex-cms/react";
 import { api } from "@convex/_generated/api";
-import { changelogEntry } from "@convex/cms";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Calendar } from "lucide-react";
+import { changelogEntry } from "../../../shared/cmsDefinitions";
 
 type ChangelogData = InferData<typeof changelogEntry>;
 type ChangeType = ChangelogData["type"][number];

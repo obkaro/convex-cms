@@ -3,8 +3,8 @@ import { api } from "@convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowDown, Circle, Loader2, CheckCircle2 } from "lucide-react";
-import { changelogEntry } from "@convex/cms";
 import { useCmsQuery } from "convex-cms/react";
+import { changelogEntry } from "../../../shared/cmsDefinitions";
 
 export function Hero() {
 	const roadmap = useQuery(api.content.getRoadmapByStatus);

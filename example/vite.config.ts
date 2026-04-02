@@ -10,22 +10,19 @@ export default defineConfig({
     port: 5174,
   },
   resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
-      "@convex": path.resolve(__dirname, "./convex"),
-      "~": path.resolve(__dirname, "../admin/src"),
-      // CSS paths FIRST (most specific) - Vite matches greedily
-      "convex-cms/admin/index.css": path.resolve(__dirname, "../admin/src/index.css"),
-      // Subpath exports
-      "convex-cms/admin/src": path.resolve(__dirname, "../admin/src"),
-      "convex-cms/admin": path.resolve(__dirname, "../admin/src/embed/index.tsx"),
-      "convex-cms/react": path.resolve(__dirname, "../src/react/index.ts"),
-      "convex-cms/roles": path.resolve(__dirname, "../src/component/roles.ts"),
-      "convex-cms/types": path.resolve(__dirname, "../src/client/types.ts"),
-      "convex-cms/config": path.resolve(__dirname, "../src/client/config.ts"),
-      // Main package LAST
-      "convex-cms": path.resolve(__dirname, "../src/client/index.ts"),
-    },
+    alias: [
+      { find: "@", replacement: path.resolve(__dirname, "./src") },
+      { find: "@convex", replacement: path.resolve(__dirname, "./convex") },
+      { find: "~", replacement: path.resolve(__dirname, "../admin/src") },
+      { find: /^convex-cms\/admin\/index\.css$/, replacement: path.resolve(__dirname, "../admin/src/index.css") },
+      { find: /^convex-cms\/admin\/globals\.css$/, replacement: path.resolve(__dirname, "../admin/src/styles/globals.css") },
+      { find: /^convex-cms\/admin\/theme\.css$/, replacement: path.resolve(__dirname, "../admin/src/styles/theme.css") },
+      { find: /^convex-cms\/admin\/tailwind-config\.css$/, replacement: path.resolve(__dirname, "../admin/src/styles/tailwind-config.css") },
+      { find: /^convex-cms\/admin\/embed-theme\.css$/, replacement: path.resolve(__dirname, "../admin/src/embed/theme.css") },
+      { find: /^convex-cms\/admin\/src$/, replacement: path.resolve(__dirname, "../admin/src") },
+      { find: /^convex-cms\/admin$/, replacement: path.resolve(__dirname, "../admin/src/embed/index.tsx") },
+      { find: /^convex-cms$/, replacement: path.resolve(__dirname, "../src/client/index.ts") },
+    ],
   },
   optimizeDeps: {
     include: [
