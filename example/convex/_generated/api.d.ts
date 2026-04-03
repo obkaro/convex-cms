@@ -134,6 +134,12 @@ export declare const components: {
           updatedBy?: string;
         } | null
       >;
+      getByEmail: FunctionReference<
+        "query",
+        "internal",
+        { email: string; status?: "active" | "invited" | "revoked" },
+        any
+      >;
       invite: FunctionReference<
         "mutation",
         "internal",
