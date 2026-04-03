@@ -90,6 +90,30 @@ export const get = query({
 });
 
 /**
+ * Get a CMS user by email, optionally filtered by status.
+ * Useful for checking pending invites from query context.
+ */
+export const getByEmail = query({
+  args: {
+    email: v.string(),
+    status: v.optional(
+      v.union(v.literal("active"), v.literal("invited"), v.literal("revoked"))
+    ),
+  },
+  handler: async (ctx, args) => {
+    const results = await ctx.db
+      .query("cmsUserRoles")
+      .withIndex("by_email", (q) => q.eq("email", args.email))
+      .take(10);
+
+    if (args.status) {
+      return results.find((r) => r.status === args.status) ?? null;
+    }
+    return results[0] ?? null;
+  },
+});
+
+/**
  * Check if the cmsUserRoles table is empty (for first-user bootstrap).
  */
 export const isEmpty = query({
@@ -142,7 +166,30 @@ export const upsert = mutation({
       return { userId: existing._id, role: existing.role, isNew: false };
     }
 
-    // New user — check if this is the first user (auto-admin)
+    // Check if there's a pending invite matching this email.
+    // Invites are keyed by "invited:{email}" but the real user authenticates
+    // with an opaque auth ID — bridge the two by claiming the invite record.
+    if (args.email) {
+      const invited = await ctx.db
+        .query("cmsUserRoles")
+        .withIndex("by_email", (q) => q.eq("email", args.email!))
+        .filter((q) => q.eq(q.field("status"), "invited"))
+        .first();
+
+      if (invited) {
+        await ctx.db.patch(invited._id, {
+          externalUserId: args.externalUserId,
+          displayName: args.displayName ?? invited.displayName,
+          avatarUrl: args.avatarUrl ?? invited.avatarUrl,
+          lastAccessedAt: Date.now(),
+          updatedAt: Date.now(),
+          status: "active",
+        });
+        return { userId: invited._id, role: invited.role, isNew: false };
+      }
+    }
+
+    // Truly new user — check if this is the first user (auto-admin)
     const tableEmpty = (await ctx.db.query("cmsUserRoles").first()) === null;
     const role = tableEmpty ? "admin" : (args.defaultRole ?? "viewer");
 
@@ -203,7 +250,7 @@ export const invite = mutation({
     // Check if a user with this email already exists
     const existing = await ctx.db
       .query("cmsUserRoles")
-      .filter((q) => q.eq(q.field("email"), args.email))
+      .withIndex("by_email", (q) => q.eq("email", args.email))
       .first();
 
     if (existing) {

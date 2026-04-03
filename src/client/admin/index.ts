@@ -157,8 +157,9 @@ function createAdminAPIImpl(
     const profileEmail = isProfile ? result.email : undefined;
     const profileAvatar = isProfile ? result.avatarUrl : undefined;
 
-    // Auto-register user in CMS on admin API access (mutations only — queries don't have runMutation)
-    if (userId && typeof (ctx as any).runMutation === "function") {
+    // Auto-register user in CMS on admin API access (mutations only — queries don't have runMutation).
+    // Skip for registerSelf — it does its own upsert with client-provided profile data.
+    if (userId && operation.type !== "registerSelf" && typeof (ctx as any).runMutation === "function") {
       try {
         await (ctx as any).runMutation(component.cmsUsers.upsert, {
           externalUserId: userId,

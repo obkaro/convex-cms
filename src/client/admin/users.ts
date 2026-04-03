@@ -108,7 +108,7 @@ export function createUserOperations(
         avatarUrl: v.optional(v.string()),
       },
       handler: async (ctx, args) => {
-        const userId = await checkAuth(ctx, { type: "registerSelf" as any });
+        const userId = await checkAuth(ctx, { type: "registerSelf" });
         if (!userId) return null;
 
         await ctx.runMutation(component.cmsUsers.upsert, {

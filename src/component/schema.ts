@@ -567,6 +567,7 @@ const schema = defineSchema({
 		status: v.union(v.literal("active"), v.literal("invited"), v.literal("revoked")),
 	})
 		.index("by_external_user_id", ["externalUserId"])
+		.index("by_email", ["email"])
 		.index("by_role", ["role"])
 		.index("by_status", ["status"]),
 	trashConfig: defineTable({

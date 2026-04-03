@@ -23,6 +23,7 @@ export type AdminOperation =
   | { type: "setCmsUserRole" }
   | { type: "inviteCmsUser" }
   | { type: "removeCmsUser" }
+  | { type: "registerSelf" }
   // Content Types
   | { type: "listContentTypes" }
   | { type: "getContentType"; id?: string; name?: string }
