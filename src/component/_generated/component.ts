@@ -107,6 +107,13 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         } | null,
         Name
       >;
+      getByEmail: FunctionReference<
+        "query",
+        "internal",
+        { email: string; status?: "active" | "invited" | "revoked" },
+        any,
+        Name
+      >;
       invite: FunctionReference<
         "mutation",
         "internal",
